@@ -1,0 +1,42 @@
+{
+  "name": "perstack-monorepo",
+  "private": true,
+  "scripts": {
+    "clean": "turbo run clean",
+    "check-deps": "pnpx knip --config ./knip.json",
+    "dev": "turbo run dev",
+    "reset": "turbo run reset",
+    "build": "turbo run build",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm run clean && pnpm run build && changeset publish",
+    "test": "vitest run --project unit --coverage --coverage.reporter=lcov --coverage.reporter=text",
+    "test:watch": "vitest watch --project unit",
+    "test:e2e": "vitest run --project e2e",
+    "test:e2e:watch": "vitest watch --project e2e",
+    "format-and-lint": "biome check .",
+    "format-and-lint:fix": "biome check . --write",
+    "typecheck": "turbo run typecheck --continue",
+    "validate:changeset": "tsx scripts/validate-changeset.ts",
+    "validate:versions": "tsx scripts/validate-version-sync.ts",
+    "check:schema-diff": "tsx scripts/check-schema-diff.ts",
+    "validate:all": "pnpm validate:versions && pnpm validate:changeset && pnpm check:schema-diff"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.8",
+    "@tsconfig/node22": "^22.0.5",
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.0.14",
+    "biome": "^0.3.3",
+    "knip": "5.70.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "turbo": "latest",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@10.10.0"
+}

@@ -1,0 +1,127 @@
+import { Callout } from 'nextra/components'
+
+# Runtime
+
+The Perstack runtime combines probabilistic LLM reasoning with deterministic state management — making agent execution predictable, reproducible, and auditable.
+
+## Agent loop
+
+The runtime executes Experts through an agent loop:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  1. Reason    →  LLM decides next action            │
+│  2. Act       →  Runtime executes tool              │
+│  3. Record    →  Checkpoint saved                   │
+│  4. Repeat    →  Until completion or limit          │
+└─────────────────────────────────────────────────────┘
+```
+
+The loop ends when:
+- LLM calls `attemptCompletion` (task done)
+- `maxSteps` limit reached
+- External signal (SIGTERM/SIGINT)
+
+This design lets the LLM autonomously decide when a task is complete — no hardcoded exit conditions.
+
+### Stopping and resuming
+
+```bash
+npx perstack run my-expert "query" --max-steps 50
+```
+
+| Stop condition | Behavior | Resume from |
+|----------------|----------|-------------|
+| `attemptCompletion` | Task complete | N/A |
+| `maxSteps` reached | Graceful stop at step boundary | Last checkpoint |
+| SIGTERM/SIGINT | Immediate stop | Previous checkpoint |
+
+Checkpoints enable pause/resume across process restarts — useful for long-running tasks, debugging, and resource management.
+
+## Deterministic state
+
+LLMs are probabilistic — same input can produce different outputs. Perstack draws a clear boundary:
+
+| Probabilistic (LLM) | Deterministic (Runtime) |
+|---------------------|-------------------------|
+| Which tool to call | Tool execution |
+| Final report content | State recording |
+| Reasoning | Checkpoint creation |
+
+The "thinking" is probabilistic; the "doing" and "recording" are deterministic. This boundary enables:
+- **Reproducibility**: Replay from any checkpoint with identical state
+- **Testability**: Mock the LLM, test the runtime deterministically
+
+### Event, Step, Checkpoint
+
+Runtime state is built on three concepts:
+
+| Concept | What it represents |
+|---------|-------------------|
+| **Event** | A single state transition (tool call, result, etc.) |
+| **Step** | One cycle of the agent loop |
+| **Checkpoint** | Complete snapshot at step end — everything needed to resume |
+
+This combines **Event Sourcing** (complete history) with **Checkpoint/Restore** (efficient resume).
+
+### The `perstack/` directory
+
+The runtime stores execution history in `perstack/runs/` within the workspace:
+
+```
+/workspace
+└── perstack/
+    └── runs/
+        └── {runId}/
+            ├── run-setting.json                          # Run configuration
+            ├── checkpoint-{timestamp}-{step}-{id}.json   # Execution snapshots
+            └── event-{timestamp}-{step}-{type}.json      # Execution events
+```
+
+This directory is managed automatically — don't modify it manually.
+
+## Event notification
+
+The runtime emits events for every state change. Two options:
+
+### stdout (default)
+
+Events are written to stdout as JSON. This is the safest option for sandboxed environments — no network access required.
+
+```bash
+npx perstack run my-expert "query"
+```
+
+Your infrastructure reads stdout and decides what to do with events. See [Sandbox Integration](/understanding-perstack/sandbox-integration) for the rationale.
+
+### Custom event listener
+
+When embedding the runtime programmatically, use a callback:
+
+```typescript
+import { run } from "@perstack/runtime"
+
+await run(params, {
+  eventListener: (event) => {
+    // Send to your monitoring system, database, etc.
+  }
+})
+```
+
+## Skills (MCP)
+
+Experts use tools through MCP (Model Context Protocol). The runtime handles:
+
+- **Lifecycle**: Start MCP servers with Expert, clean up on exit
+- **Environment isolation**: Only `requiredEnv` variables are passed
+- **Error recovery**: MCP failures are fed back to LLM, not thrown as runtime errors
+
+For skill configuration, see [Skills](/making-experts/skills).
+
+## Providers and models
+
+Perstack uses standard LLM features available from most providers:
+- Chat completion (including PDF/image in messages)
+- Tool calling
+
+For supported providers and models, see [Providers and Models](/references/providers-and-models).

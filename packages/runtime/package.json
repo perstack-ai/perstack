@@ -1,0 +1,54 @@
+{
+  "name": "@perstack/runtime",
+  "version": "0.0.48",
+  "description": "Perstack Runtime",
+  "author": "Wintermute Technologies, Inc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": "./dist/src/index.js"
+    },
+    "types": {
+      ".": "./dist/src/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^3.0.62",
+    "@ai-sdk/anthropic": "^2.0.50",
+    "@ai-sdk/azure": "^2.0.77",
+    "@ai-sdk/google": "^2.0.44",
+    "@ai-sdk/google-vertex": "^3.0.24",
+    "@ai-sdk/openai": "^2.0.75",
+    "@modelcontextprotocol/sdk": "^1.23.0",
+    "@paralleldrive/cuid2": "^3.0.4",
+    "@perstack/api-client": "workspace:*",
+    "@perstack/core": "workspace:*",
+    "ai": "^5.0.104",
+    "ollama-ai-provider-v2": "^1.5.5",
+    "ts-dedent": "^2.2.0",
+    "xstate": "^5.24.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.5",
+    "@types/node": "^24.10.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

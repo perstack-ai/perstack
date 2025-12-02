@@ -1,0 +1,145 @@
+import { Callout } from 'nextra/components'
+
+# Experts
+
+Experts are the core building block of Perstack — modular micro-agents designed for reuse.
+
+<Callout type="default">
+The term "Expert" is familiar in AI (e.g., Mixture of Experts), but here it means something specific: a specialist component with a single, well-defined role.
+</Callout>
+
+## Why Experts?
+
+Traditional agent development produces monolithic agents optimized for specific use cases. They work, but they don't transfer. You can't take a "research agent" from one project and reuse it in another without significant rework.
+
+Experts solve this by inverting the design:
+
+| Traditional Agent | Expert |
+|-------------------|--------|
+| Represents a user | Serves an application |
+| Does many things | Does one thing well |
+| Application-specific | Purpose-specific, context-independent |
+| Hard to reuse | Designed for reuse |
+
+An **agent** represents a user — it acts on their behalf across many tasks.
+An **Expert** is a specialist component — it helps an application achieve a specific goal.
+
+This distinction matters. When you build an Expert, you're not building an application. You're building a reusable capability that any application can leverage.
+
+## What is an Expert?
+
+An Expert is defined by three things:
+
+### 1. Purpose (description)
+
+A clear statement of what the Expert does. Unlike `instruction` (which is private to the Expert), `description` is exposed to other Experts as a tool description when delegating.
+
+When Expert A can delegate to Expert B, the runtime presents Expert B as a callable tool to Expert A — with `description` as the tool's description. This is how Expert A decides:
+- Which delegate to call
+- What query to write
+
+A good description tells potential callers what this Expert can do, when to use it, and what to include in the query.
+
+```toml
+[experts."code-reviewer"]
+description = """
+Reviews TypeScript code for type safety, error handling, and security issues.
+Provide the file path to review. Returns actionable feedback with code examples.
+"""
+```
+
+### 2. Domain knowledge (instruction)
+
+The knowledge that transforms a general-purpose LLM into a specialist. This includes:
+- What the Expert is expected to achieve
+- Domain-specific concepts, rules, and constraints
+- Completion criteria and priority tradeoffs
+- Guidelines for using assigned skills
+
+```toml
+instruction = """
+You are a TypeScript code reviewer for production systems.
+
+Review criteria:
+- Type safety: No `any` types, all types explicitly defined
+- Error handling: All errors must use codes from `error-codes.ts`
+- Security: Flag even minor risks
+
+Provide actionable feedback with code examples.
+"""
+```
+
+### 3. Capabilities (skills, delegates)
+
+What the Expert can do:
+- **Skills**: Tools available through MCP (file access, web search, APIs)
+- **Delegates**: Other Experts this Expert can call
+
+```toml
+delegates = ["security-analyst"]
+
+[experts."code-reviewer".skills."static-analysis"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@eslint/mcp"
+```
+
+## How Experts work
+
+### Execution model
+
+When you run an Expert:
+
+1. The runtime loads the Expert definition from `perstack.toml` or Registry
+2. The instruction becomes the system prompt (with [runtime meta-instructions](https://github.com/perstack-ai/perstack/blob/main/packages/runtime/src/messages/instruction-message.ts))
+3. Your query becomes the user message
+4. The LLM reasons and calls tools (skills) as needed
+5. Each step produces a checkpoint — a complete snapshot of the execution state
+
+The runtime manages the execution loop. The Expert definition declares *what* to achieve; the runtime handles *how*.
+
+### Delegation
+
+Experts collaborate through delegation, not shared context.
+
+```
+Expert A                              Expert B
+    │                                     
+    ├─ sees delegates as tools            
+    │  (description → tool description)   
+    │                                     
+    ├─ calls delegate ──────────────────→ starts fresh
+    │  (writes query)                     (empty history, own instruction)
+    │                                     │
+    │  [checkpoint saved]                 ├─ executes task
+    │                                     │
+    ├─ resumes ←─────────────────────────── returns result
+    │  (receives result)                  
+    ▼                                     
+```
+
+Note the asymmetry: Expert A sees Expert B's `description` (public interface), but never its `instruction` (private implementation). This is what makes Experts composable — the caller only needs to know *what* a delegate does, not *how* it does it.
+
+**Key design decisions:**
+
+| Aspect | Design | Rationale |
+|--------|--------|-----------|
+| **Message history** | Not shared | Each Expert has a single responsibility; mixing contexts breaks focus |
+| **Communication** | Natural language | No schema versioning, maximum flexibility, humans and Experts use the same interface |
+| **State exchange** | Workspace files | Persistent, inspectable, works across restarts |
+
+This is intentional. Shared context leads to prompt bloat, context window exhaustion, and confused LLM reasoning. Isolated Experts stay focused.
+
+### Workspace
+
+The workspace is a shared filesystem where Experts read and write files. Unlike message history, the workspace persists across Expert boundaries — this is how Experts exchange complex data.
+
+How you organize workspace files is up to you. The runtime reserves `perstack/` for execution history — see [Runtime](/understanding-perstack/runtime) for details.
+
+## What's next
+
+Ready to build Experts? See the Making Experts guide:
+
+- [Making Experts](/making-experts) — defining Experts in `perstack.toml`
+- [Best Practices](/making-experts/best-practices) — design guidelines for effective Experts
+- [Skills](/making-experts/skills) — adding MCP tools to your Experts

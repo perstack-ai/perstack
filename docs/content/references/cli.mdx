@@ -1,0 +1,216 @@
+# CLI Reference
+
+## Running Experts
+
+### `perstack start`
+
+Interactive workbench for developing and testing Experts.
+
+```bash
+perstack start [expertKey] [query] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key (optional — prompts if not provided)
+- `[query]`: Input query (optional — prompts if not provided)
+
+Opens a text-based UI for iterating on Expert definitions. See [Running Experts](/using-experts/running-experts).
+
+### `perstack run`
+
+Headless execution for production and automation.
+
+```bash
+perstack run <expertKey> <query> [options]
+```
+
+**Arguments:**
+- `<expertKey>`: Expert key (required)
+  - Examples: `my-expert`, `@org/my-expert`, `@org/my-expert@1.0.0`
+- `<query>`: Input query (required)
+
+Outputs JSON events to stdout.
+
+## Shared Options
+
+Both `start` and `run` accept the same options:
+
+### Model and Provider
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--provider <provider>` | LLM provider | `anthropic` |
+| `--model <model>` | Model name | `claude-sonnet-4-5` |
+| `--temperature <temp>` | Temperature (0.0-1.0) | `0.3` |
+
+Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-bedrock`, `google-vertex`
+
+### Execution Control
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--max-steps <n>` | Maximum steps | unlimited |
+| `--max-retries <n>` | Max retry attempts | `5` |
+| `--timeout <ms>` | Timeout per generation (ms) | `60000` |
+
+### Configuration
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--config <path>` | Path to `perstack.toml` | Auto-discover from cwd |
+| `--env-path <path...>` | Environment file paths | `.env`, `.env.local` |
+
+### Run Management
+
+| Option | Description |
+|--------|-------------|
+| `--run-id <id>` | Custom run ID (default: auto-generated) |
+| `--continue` | Continue latest run with new query |
+| `--continue-run <id>` | Continue specific run |
+| `--resume-from <id>` | Resume from specific checkpoint |
+
+### Interactive
+
+| Option | Description |
+|--------|-------------|
+| `-i, --interactive-tool-call-result` | Treat query as interactive tool call result |
+
+Use with `--continue` to respond to interactive tool calls.
+
+### Other
+
+| Option | Description |
+|--------|-------------|
+| `--verbose` | Enable verbose logging |
+
+## Examples
+
+```bash
+# Basic execution
+npx perstack run my-expert "Review this code"
+
+# With model options
+npx perstack run my-expert "query" \
+  --provider google \
+  --model gemini-2.5-pro \
+  --temperature 0.7 \
+  --max-steps 100
+
+# Continue execution
+npx perstack run my-expert "initial query"
+npx perstack run my-expert "follow-up" --continue
+
+# Continue specific run
+npx perstack run my-expert "continue" --continue-run abc123
+
+# Custom config
+npx perstack run my-expert "query" \
+  --config ./configs/production.toml \
+  --env-path .env.production
+
+# Registry Experts
+npx perstack run tic-tac-toe "Let's play!"
+npx perstack run @org/expert@1.0.0 "query"
+```
+
+## Registry Management
+
+### `perstack publish`
+
+Publish an Expert to the registry.
+
+```bash
+perstack publish [expertName] [options]
+```
+
+**Arguments:**
+- `[expertName]`: Expert name from `perstack.toml` (prompts if not provided)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--config <path>` | Path to `perstack.toml` |
+| `--dry-run` | Validate without publishing |
+
+**Example:**
+```bash
+perstack publish my-expert
+perstack publish my-expert --dry-run
+```
+
+Requires `PERSTACK_API_KEY` environment variable. See [Publishing](/making-experts/publishing).
+
+### `perstack unpublish`
+
+Remove an Expert version from the registry.
+
+```bash
+perstack unpublish [expertKey] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key with version (e.g., `my-expert@1.0.0`)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--config <path>` | Path to `perstack.toml` |
+| `--force` | Skip confirmation (required for non-interactive) |
+
+**Example:**
+```bash
+perstack unpublish                          # Interactive mode
+perstack unpublish my-expert@1.0.0 --force  # Non-interactive
+```
+
+### `perstack tag`
+
+Add or update tags on an Expert version.
+
+```bash
+perstack tag [expertKey] [tags...] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key with version (e.g., `my-expert@1.0.0`)
+- `[tags...]`: Tags to set (e.g., `stable`, `beta`)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--config <path>` | Path to `perstack.toml` |
+
+**Example:**
+```bash
+perstack tag                              # Interactive mode
+perstack tag my-expert@1.0.0 stable beta  # Set tags directly
+```
+
+### `perstack status`
+
+Change the status of an Expert version.
+
+```bash
+perstack status [expertKey] [status] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key with version (e.g., `my-expert@1.0.0`)
+- `[status]`: New status (`available`, `deprecated`, `disabled`)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--config <path>` | Path to `perstack.toml` |
+
+**Example:**
+```bash
+perstack status                           # Interactive mode
+perstack status my-expert@1.0.0 deprecated
+```
+
+| Status | Meaning |
+|--------|---------|
+| `available` | Normal, visible in registry |
+| `deprecated` | Still usable but discouraged |
+| `disabled` | Cannot be executed |

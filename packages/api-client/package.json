@@ -1,0 +1,43 @@
+{
+  "name": "@perstack/api-client",
+  "version": "0.0.26",
+  "description": "Perstack API Client",
+  "author": "Wintermute Technologies, Inc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./v1/index.ts",
+    "./v1": "./v1/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": "./dist/v1/index.js",
+      "./v1": "./dist/v1/index.js"
+    },
+    "types": {
+      ".": "./dist/v1/index.d.ts",
+      "./v1": "./dist/v1/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && tsup --config ./tsup.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@perstack/core": "workspace:*",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.5",
+    "@types/node": "^24.10.1",
+    "msw": "^2.12.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  }
+}

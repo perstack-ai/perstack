@@ -1,0 +1,80 @@
+import { createId } from "@paralleldrive/cuid2"
+import { describe, expect, it, vi } from "vitest"
+import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
+import { StateMachineLogics } from "../index.js"
+
+vi.mock("node:fs/promises", () => ({
+  readFile: vi.fn().mockImplementation(() => {
+    return Promise.resolve(Buffer.from("encoded_image"))
+  }),
+}))
+
+describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
+  it("processes image file tool result correctly", async () => {
+    const imageInfo = {
+      path: "/test/image.png",
+      mimeType: "image/png",
+      size: 1024,
+    }
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCall: {
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        args: { path: "/test/image.png" },
+      },
+      toolResult: {
+        id: "tr_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        result: [
+          {
+            type: "textPart" as const,
+            text: JSON.stringify(imageInfo),
+            id: createId(),
+          },
+        ],
+      },
+    })
+    await expect(
+      StateMachineLogics.ResolvingImageFile({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).resolves.toStrictEqual({
+      type: "finishToolCall",
+      id: expect.any(String),
+      expertKey: setting.expertKey,
+      timestamp: expect.any(Number),
+      runId: setting.runId,
+      stepNumber: checkpoint.stepNumber,
+      newMessages: [
+        {
+          type: "toolMessage",
+          id: expect.any(String),
+          contents: [
+            {
+              type: "toolResultPart",
+              id: expect.any(String),
+              toolCallId: "tc_123",
+              toolName: "readImageFile",
+              contents: [
+                {
+                  type: "imageInlinePart",
+                  id: expect.any(String),
+                  encodedData: Buffer.from("encoded_image").toString("base64"),
+                  mimeType: "image/png",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+})

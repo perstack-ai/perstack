@@ -1,0 +1,478 @@
+# Contributing to Perstack
+
+Thank you for your interest in contributing to Perstack.
+This guide explains our development workflow, with a focus on our type management and versioning strategy.
+
+## TL;DR - Quick Reference
+
+### I just want to fix a bug
+```bash
+pnpm changeset
+# Select: Only your package
+# Type: patch
+```
+
+### I'm adding a new feature (no schema change)
+```bash
+pnpm changeset
+# Select: @perstack/core + ALL packages (except docs)
+# Type: minor (for all)
+```
+
+### I changed core schemas
+**Be careful.** Read the [full versioning guide](#versioning-strategy) first.
+Core changes ripple through everything. You need to understand the impact.
+If you're not sure, ask in the PR.
+
+## Table of Contents
+
+- [Core Philosophy](#core-philosophy)
+- [Quick Start](#quick-start)
+- [Type Management](#type-management)
+- [Versioning Strategy](#versioning-strategy)
+- [Development Workflow](#development-workflow)
+- [Common Scenarios](#common-scenarios)
+- [Troubleshooting](#troubleshooting)
+
+## Core Philosophy
+
+Perstack uses **centralized schema management** where `@perstack/core` serves as the single source of truth for all cross-package types. This design choice emerged from a simple principle:
+
+> **When types cross boundaries, chaos follows unless there's a single authority.**
+
+### Why This Matters
+
+Traditional monorepos often let each package define its own types, leading to:
+- Type drift between packages
+- Impossible-to-track breaking changes
+- Integration hell during version bumps
+
+We chose a different path: the version number of `@perstack/core` is the contract. When core changes, the contract changes. Simple.
+
+**User Experience Guarantee:**
+
+This unified versioning strategy ensures users can trust the version number. When a user runs Perstack 1.2.x, they can confidently use any feature documented for version 1.2, knowing that:
+- The runtime supports all 1.2.x schemas
+- The `perstack.toml` directives for 1.2 are available
+- The CLI commands match the documented 1.2 API
+
+No guessing. No "this should work but doesn't." If the version matches, the feature works.
+
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/perstack-ai/perstack.git
+cd perstack
+pnpm install
+pnpm build
+
+# Make changes and create changeset
+git checkout -b feature/your-feature
+# ... edit code ...
+pnpm changeset
+pnpm typecheck && pnpm test
+git commit -m "feat: your changes"
+```
+
+## Type Management
+
+### The Contract System
+
+Think of `@perstack/core`'s version as a contract:
+
+```
+major.minor.patch
+  │     │     │
+  │     │     └─ Implementation quality (bugs, performance)
+  │     └─────── Interface additions (backward compatible)
+  └───────────── Interface changes (breaking)
+```
+
+**Rule:** All packages must share the same `major.minor` version. When any package needs a minor/major bump, all packages bump together. This ensures the entire system speaks the same language.
+
+### Package Dependency Graph
+
+```
+@perstack/core (schemas, types)
+    │
+    ├─→ @perstack/runtime (execution)
+    ├─→ @perstack/api-client (API layer)
+    ├─→ @perstack/tui (terminal UI)
+    └─→ @perstack/perstack (CLI orchestrator)
+    
+@perstack/base (tool schemas defined inline, not exported)
+```
+
+### Schema Modification Rules
+
+| Change Type        | Version Bump | Example               | Affects                   |
+| ------------------ | ------------ | --------------------- | ------------------------- |
+| Add optional field | Minor        | `field?: string`      | Core + dependents (minor) |
+| Add required field | Major        | `field: string`       | Core + dependents (major) |
+| Remove any field   | Major        | Delete property       | Core + dependents (major) |
+| Change field type  | Major        | `string` → `number`   | Core + dependents (major) |
+| Rename field       | Major        | `oldName` → `newName` | Core + dependents (major) |
+| Documentation only | Patch        | JSDoc updates         | Single package (patch)    |
+
+## Versioning Strategy
+
+### Decision Flow
+
+```
+START: What did you change?
+│
+├─ Changed core schemas?
+│  │
+│  ├─ Added optional field? → MINOR bump (core + all dependents)
+│  ├─ Added required field? → MAJOR bump (core + all dependents)
+│  └─ Removed/changed field? → MAJOR bump (core + all dependents)
+│
+├─ Added new feature (no schema change)?
+│  └─ → MINOR bump (core + all dependents)
+│
+└─ Fixed bug/improved performance?
+   └─ → PATCH bump (affected package only)
+```
+
+### Version Sync Rules
+
+**Unified Minor/Major:**
+- All packages share the same `major.minor` version
+- When any package needs minor bump → all packages bump to `x.(y+1).0`
+- When any package needs major bump → all packages bump to `(x+1).0.0`
+
+**Independent Patches:**
+- Runtime can be `1.2.5` while api-client is `1.2.3` (same `major.minor`, different patches)
+
+## Development Workflow
+
+### 1. Branch and Edit
+
+```bash
+git checkout -b fix/memory-leak
+# ... edit code, add tests ...
+```
+
+### 2. Create Changeset
+
+The changeset wizard will guide you, but here's what to select:
+
+**For Patches (bug fixes, performance):**
+```bash
+pnpm changeset
+# Select: Only the affected package
+# Type: patch
+# Message: "Fixed memory leak in cleanup"
+```
+
+**For Minor (new features):**
+```bash
+pnpm changeset
+# Select: @perstack/core + ALL packages (except docs)
+# Type: minor (for all selected)
+# Message: "Added streaming support to expert execution"
+```
+
+**For Major (breaking changes):**
+```bash
+pnpm changeset
+# Select: @perstack/core + ALL packages (except docs)
+# Type: major (for all selected)
+# Message: "BREAKING: Removed deprecated temperature field"
+```
+
+### 3. Validate
+
+```bash
+pnpm typecheck  # Must pass
+pnpm test       # Must pass
+pnpm build      # Must succeed
+```
+
+### 4. Commit and Push
+
+```bash
+git add .
+git commit -m "fix: memory leak in skill manager cleanup"
+git push origin fix/memory-leak
+```
+
+### 5. Create PR
+
+Open a pull request. CI will validate:
+- ✓ Type checking across all packages
+- ✓ Schema diff detection
+- ✓ Changeset validation
+- ✓ Version sync compliance
+- ✓ All tests passing
+
+## Common Scenarios
+
+### Scenario 1: Adding a New Expert Feature
+
+You want to add an optional `metadata` field to experts.
+
+```typescript
+// packages/core/src/schemas/expert.ts
+export const expertSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  metadata: z.record(z.unknown()).optional()  // ← New
+})
+```
+
+**Changeset:**
+```bash
+pnpm changeset
+# Select: ALL packages (@perstack/core, @perstack/runtime, @perstack/api-client, @perstack/base, @perstack/tui, perstack)
+# Type: minor (for all)
+```
+
+**Result:** All packages bump from `x.y.z` → `x.(y+1).0`
+
+### Scenario 2: Fixing a Runtime Bug
+
+You fixed a memory leak in the runtime, no type changes.
+
+```bash
+pnpm changeset
+# Select: @perstack/runtime only
+# Type: patch
+```
+
+**Result:** Only runtime bumps `1.2.3` → `1.2.4`
+
+### Scenario 3: Breaking Change
+
+You need to remove a deprecated field from core schemas.
+
+```typescript
+// Before
+export const runParamsSchema = z.object({
+  temperature: z.number().optional(),  // ← Removing this
+  providerConfig: z.object({
+    temperature: z.number().optional()
+  })
+})
+
+// After
+export const runParamsSchema = z.object({
+  providerConfig: z.object({
+    temperature: z.number().optional()
+  })
+})
+```
+
+**Changeset:**
+```markdown
+---
+"@perstack/core": major
+"@perstack/runtime": major
+"@perstack/api-client": major
+"@perstack/base": major
+"@perstack/tui": major
+"@perstack/perstack": major
+---
+
+BREAKING: Removed deprecated `temperature` field from RunParams
+
+Migration:
+- Before: `{ temperature: 0.7 }`
+- After: `{ providerConfig: { temperature: 0.7 } }`
+
+All code using the old field must be updated.
+```
+
+**Result:** All packages bump to next major version
+
+### Scenario 4: Documentation Update
+
+You updated README and JSDoc comments.
+
+```bash
+pnpm changeset
+# Select: @perstack/runtime (or whichever package)
+# Type: patch
+```
+
+**Result:** Only the documented package bumps patch version
+
+## Troubleshooting
+
+### "Version sync check failed"
+
+**Problem:** Core is `1.3.0` but runtime is still `1.2.5`
+
+**Solution:** Your changeset must bump runtime to `1.3.x`:
+```bash
+# Delete old changeset
+rm .changeset/your-changeset.md
+# Create new one with correct packages
+pnpm changeset
+# Select: runtime (with minor bump)
+```
+
+### "Type error in dependent package"
+
+**Problem:** Changed core types but forgot to update runtime
+
+**Solution:** 
+1. Fix the type errors in runtime
+2. Include runtime in your changeset
+3. Both core and runtime must have matching `major.minor`
+
+### "Changeset validation failed"
+
+**Problem:** Added required field to core schema but only bumped minor
+
+**Solution:**
+```bash
+# Delete incorrect changeset
+rm .changeset/your-changeset.md
+# Create correct one
+pnpm changeset
+# Select: @perstack/core + all dependents
+# Type: major (for all)
+```
+
+### "Why doesn't @perstack/base export its tool schemas?"
+
+**Answer:** Tool input schemas are defined inline for MCP SDK registration. They don't cross package boundaries - they're only used within the MCP server implementation. This is an isolated exception that doesn't violate our centralized management principle.
+
+### "Do I need to bump all packages for a minor change?"
+
+**Yes, for minor/major bumps.** All packages must have the same `major.minor` version:
+- Any minor bump → Yes, bump ALL packages (including @perstack/base)
+- Any major bump → Yes, bump ALL packages
+- Bug fix (patch) → No, bump affected package only
+
+## Special Cases
+
+### @perstack/base
+
+This package defines tool input schemas inline rather than centralizing them in `@perstack/core` because:
+- Tool schemas are only used for MCP SDK registration
+- They don't cross package boundaries
+- They're never exported to other packages
+
+**Rule:** Keep tool schemas in `@perstack/base/src/tools/` defined inline and never export them.
+
+**Version Sync:** Despite not depending on `@perstack/core`, `@perstack/base` participates in unified versioning for ecosystem consistency. When any package has a minor/major bump, all packages (including base) sync their `major.minor` versions.
+
+### Breaking Changes Best Practices
+
+1. **Deprecate First** (if possible)
+   ```typescript
+   /** @deprecated Use providerConfig.temperature instead */
+   temperature?: number
+   ```
+
+2. **Provide Migration Guide**
+   ```markdown
+   ### Migration: v1.x → v2.0
+   
+   **Changed:** RunParams structure
+   **Impact:** High - affects all expert executions
+   **Action Required:** Update all `temperature` usages
+   ```
+
+3. **Major Version Coordination**
+   - Update all packages in single PR
+   - Test integration scenarios
+   - Update documentation
+
+## CI/CD Pipeline
+
+### Pre-commit Hooks
+- Type checking
+- Linting
+- Version sync validation
+
+### PR Checks
+- ✓ All tests passing
+- ✓ Type checking across packages
+- ✓ Schema diff validation
+- ✓ Changeset presence and correctness
+- ✓ Version sync compliance
+
+### Release Process
+1. Merge PR with changeset to `main`
+2. Changesets bot creates "Version Packages" PR
+3. Review CHANGELOG and version bumps
+4. Merge "Version Packages" PR
+5. CI publishes to npm automatically
+
+## Code Style
+
+### Commit Messages
+
+Follow conventional commits:
+
+```
+feat: add metadata support to experts
+fix: resolve memory leak in cleanup
+docs: update API documentation
+refactor: simplify schema validation
+test: add integration tests
+chore: update dependencies
+```
+
+### TypeScript Style
+
+```typescript
+// ✓ Good
+export interface ExpertConfig {
+  name: string
+  version: string
+  metadata?: Record<string, unknown>
+}
+
+// ✗ Avoid
+export interface ExpertConfig {
+  name: any  // Too loose
+  version: string
+  metadata: object  // Use Record instead
+}
+```
+
+### Zod Schema Style
+
+```typescript
+// ✓ Good: Descriptive field names, clear optional markers
+export const expertSchema = z.object({
+  name: z.string(),
+  version: z.string().regex(/^\d+\.\d+\.\d+$/),
+  metadata: z.record(z.unknown()).optional(),
+  tags: z.array(z.string()).default([])
+})
+
+// ✗ Avoid: Ambiguous types, missing validation
+export const expertSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  data: z.any()  // Too vague
+})
+```
+
+## Getting Help
+
+- **Questions:** [Open a discussion](https://github.com/perstack-ai/perstack/discussions)
+- **Bugs:** [Open an issue](https://github.com/perstack-ai/perstack/issues) with reproduction
+- **Features:** [Open an issue](https://github.com/perstack-ai/perstack/issues) with use case
+
+## Code Review Checklist
+
+Before requesting review, ensure:
+
+- [ ] Changeset created with appropriate version bump
+- [ ] All tests pass (`pnpm test`)
+- [ ] Types check across all packages (`pnpm typecheck`)
+- [ ] Documentation updated (README, JSDoc, CHANGELOG via changeset)
+- [ ] Migration guide included (for breaking changes)
+- [ ] No unintended version sync issues
+
+---
+
+Thank you for contributing to Perstack.
+Your attention to version management helps keep the entire ecosystem stable and predictable.

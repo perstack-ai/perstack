@@ -1,0 +1,40 @@
+name: Validate Type Management
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate version sync
+        run: pnpm validate:versions
+      - name: Validate changesets
+        run: pnpm validate:changeset
+        if: github.event_name == 'pull_request'
+      - name: Check schema diff
+        run: pnpm check:schema-diff
+        if: github.event_name == 'pull_request'
+      - name: Type check
+        run: pnpm typecheck
+      - name: Build all packages
+        run: pnpm build
+
