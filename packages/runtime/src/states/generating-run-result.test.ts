@@ -98,11 +98,11 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     })
     mockGetModel.mockReturnValue(errorModel)
     const event = await StateMachineLogics.GeneratingRunResult({
-      setting,
-      checkpoint,
-      step,
-      eventListener: async () => {},
-      skillManagers: {},
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
     })
     expect(event.type).toBe("retry")
   })
