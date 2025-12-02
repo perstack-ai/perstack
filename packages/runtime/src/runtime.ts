@@ -1,5 +1,3 @@
-import { existsSync } from "node:fs"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { createId } from "@paralleldrive/cuid2"
 import {
@@ -12,19 +10,29 @@ import {
   runParamsSchema,
   type Step,
 } from "@perstack/core"
-import { createActor } from "xstate"
 import pkg from "../package.json" with { type: "json" }
+import {
+  buildDelegateToState,
+  buildDelegationReturnState,
+  createInitialCheckpoint,
+  createNextStepCheckpoint,
+} from "./checkpoint-helpers.js"
 import {
   defaultRetrieveCheckpoint,
   defaultStoreCheckpoint,
   defaultStoreEvent,
 } from "./default-store.js"
 import { RunEventEmitter } from "./events/event-emitter.js"
+import { executeStateMachine } from "./execute-state-machine.js"
 import { getContextWindow } from "./model.js"
-import { resolveExpertToRun } from "./resolve-expert-to-run.js"
-import { runtimeStateMachine, StateMachineLogics } from "./runtime-state-machine.js"
-import { closeSkillManagers, getSkillManagers } from "./skill-manager.js"
-import { createEmptyUsage } from "./usage.js"
+import {
+  defaultGetRunDir,
+  type FileSystem,
+  type GetRunDirFn,
+  storeRunSetting,
+} from "./run-setting-store.js"
+import { type ResolveExpertToRunFn, setupExperts } from "./setup-experts.js"
+import { getSkillManagers } from "./skill-manager.js"
 
 export async function run(
   runInput: RunParamsInput,
@@ -34,9 +42,12 @@ export async function run(
       checkpoint: Checkpoint,
       step: Step,
     ) => Promise<boolean>
-    retrieveCheckpoint?: (checkpointId: string) => Promise<Checkpoint>
+    retrieveCheckpoint?: (runId: string, checkpointId: string) => Promise<Checkpoint>
     storeCheckpoint?: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
     eventListener?: (event: RunEvent | RuntimeEvent) => void
+    resolveExpertToRun?: ResolveExpertToRunFn
+    fileSystem?: FileSystem
+    getRunDir?: GetRunDirFn
   },
 ): Promise<Checkpoint> {
   const runParams = runParamsSchema.parse(runInput)
@@ -55,9 +66,10 @@ export async function run(
     process.chdir(setting.workspace)
   }
 
-  await storeRunSetting(setting)
+  const getRunDir = options?.getRunDir ?? defaultGetRunDir
+  await storeRunSetting(setting, options?.fileSystem, getRunDir)
   while (true) {
-    const { expertToRun, experts } = await setupExperts(setting)
+    const { expertToRun, experts } = await setupExperts(setting, options?.resolveExpertToRun)
     if (options?.eventListener) {
       const initEvent = createRuntimeEvent("initializeRuntime", setting.runId, {
         runtimeVersion: pkg.version,
@@ -79,104 +91,33 @@ export async function run(
       setting,
       options?.eventListener,
     )
-    const runActor = createActor(runtimeStateMachine, {
-      input: {
-        setting: {
-          ...setting,
-          experts,
-        },
-        initialCheckpoint: checkpoint
-          ? {
-              ...checkpoint,
-              id: createId(),
-              stepNumber: checkpoint.stepNumber + 1,
-            }
-          : {
-              id: createId(),
-              runId: setting.runId,
-              expert: {
-                key: setting.expertKey,
-                name: expertToRun.name,
-                version: expertToRun.version,
-              },
-              stepNumber: 1,
-              status: "init",
-              messages: [],
-              usage: createEmptyUsage(),
-              contextWindow,
-              contextWindowUsage: contextWindow ? 0.0 : undefined,
-            },
-        eventListener,
-        skillManagers,
-      },
-    })
-    const runResultCheckpoint = await new Promise<Checkpoint>((resolve, reject) => {
-      runActor.subscribe(async (runState) => {
-        try {
-          if (runState.value === "Stopped") {
-            const { checkpoint, skillManagers } = runState.context
-            if (!checkpoint) {
-              throw new Error("Checkpoint is undefined")
-            }
-            await closeSkillManagers(skillManagers)
-            resolve(checkpoint)
-          } else {
-            const event = await StateMachineLogics[runState.value](runState.context)
-            if ("checkpoint" in event) {
-              await storeCheckpoint(event.checkpoint, event.timestamp)
-            }
-            await eventEmitter.emit(event)
-            if (options?.shouldContinueRun) {
-              const shouldContinue = await options.shouldContinueRun(
-                runState.context.setting,
-                runState.context.checkpoint,
-                runState.context.step,
-              )
-              if (!shouldContinue) {
-                runActor.stop()
-                resolve(runState.context.checkpoint)
-                return
-              }
-            }
-            runActor.send(event)
-          }
-        } catch (error) {
-          reject(error)
-        }
-      })
-      runActor.start()
+    const initialCheckpoint = checkpoint
+      ? createNextStepCheckpoint(createId(), checkpoint)
+      : createInitialCheckpoint(createId(), {
+          runId: setting.runId,
+          expertKey: setting.expertKey,
+          expert: expertToRun,
+          contextWindow,
+        })
+    const runResultCheckpoint = await executeStateMachine({
+      setting: { ...setting, experts },
+      initialCheckpoint,
+      eventListener,
+      skillManagers,
+      eventEmitter,
+      storeCheckpoint,
+      shouldContinueRun: options?.shouldContinueRun,
     })
     switch (runResultCheckpoint.status) {
       case "completed": {
         if (runResultCheckpoint.delegatedBy) {
-          const { messages, delegatedBy } = runResultCheckpoint
-          const { expert, toolCallId, toolName, checkpointId } = delegatedBy
-          const delegateResultMessage = messages[messages.length - 1]
-          if (delegateResultMessage.type !== "expertMessage") {
-            throw new Error("Delegation error: delegation result message is incorrect")
-          }
-          const delegateText = delegateResultMessage.contents.find(
-            (content) => content.type === "textPart",
+          const parentCheckpoint = await retrieveCheckpoint(
+            setting.runId,
+            runResultCheckpoint.delegatedBy.checkpointId,
           )
-          if (!delegateText) {
-            throw new Error("Delegation error: delegation result message does not contain a text")
-          }
-          setting = {
-            ...setting,
-            expertKey: expert.key,
-            input: {
-              interactiveToolCallResult: {
-                toolCallId,
-                toolName,
-                text: delegateText.text,
-              },
-            },
-          }
-          checkpoint = {
-            ...(await retrieveCheckpoint(setting.runId, checkpointId)),
-            stepNumber: runResultCheckpoint.stepNumber,
-            usage: runResultCheckpoint.usage,
-          }
+          const result = buildDelegationReturnState(setting, runResultCheckpoint, parentCheckpoint)
+          setting = result.setting
+          checkpoint = result.checkpoint
           break
         }
         return runResultCheckpoint
@@ -185,38 +126,9 @@ export async function run(
         return runResultCheckpoint
       }
       case "stoppedByDelegate": {
-        if (!runResultCheckpoint.delegateTo) {
-          throw new Error("Delegation error: delegate to is undefined")
-        }
-        const { expert, toolCallId, toolName, query } = runResultCheckpoint.delegateTo
-        setting = {
-          ...setting,
-          expertKey: expert.key,
-          input: {
-            text: query,
-          },
-        }
-        checkpoint = {
-          ...runResultCheckpoint,
-          status: "init",
-          messages: [],
-          expert: {
-            key: expert.key,
-            name: expert.name,
-            version: expert.version,
-          },
-          delegatedBy: {
-            expert: {
-              key: expertToRun.key,
-              name: expertToRun.name,
-              version: expertToRun.version,
-            },
-            toolCallId,
-            toolName,
-            checkpointId: runResultCheckpoint.id,
-          },
-          usage: runResultCheckpoint.usage,
-        }
+        const result = buildDelegateToState(setting, runResultCheckpoint, expertToRun)
+        setting = result.setting
+        checkpoint = result.checkpoint
         break
       }
       case "stoppedByExceededMaxSteps": {
@@ -231,23 +143,6 @@ export async function run(
   }
 }
 
-async function setupExperts(setting: RunSetting) {
-  const { expertKey } = setting
-  const experts = { ...setting.experts }
-  const clientOptions = {
-    perstackApiBaseUrl: setting.perstackApiBaseUrl,
-    perstackApiKey: setting.perstackApiKey,
-  }
-  const expertToRun = await resolveExpertToRun(expertKey, experts, clientOptions)
-  for (const delegateName of expertToRun.delegates) {
-    const delegate = await resolveExpertToRun(delegateName, experts, clientOptions)
-    if (!delegate) {
-      throw new Error(`Delegate ${delegateName} not found`)
-    }
-  }
-  return { expertToRun, experts }
-}
-
 function getEventListener(options?: { eventListener?: (event: RunEvent | RuntimeEvent) => void }) {
   const listener =
     options?.eventListener ?? ((e: RunEvent | RuntimeEvent) => console.log(JSON.stringify(e)))
@@ -259,19 +154,4 @@ function getEventListener(options?: { eventListener?: (event: RunEvent | Runtime
   }
 }
 
-async function storeRunSetting(setting: RunSetting) {
-  const runDir = getRunDir(setting.runId)
-  if (existsSync(runDir)) {
-    const runSettingPath = path.resolve(runDir, "run-setting.json")
-    const runSetting = JSON.parse(await readFile(runSettingPath, "utf-8")) as RunSetting
-    runSetting.updatedAt = Date.now()
-    await writeFile(runSettingPath, JSON.stringify(runSetting), "utf-8")
-  } else {
-    await mkdir(runDir, { recursive: true })
-    await writeFile(path.resolve(runDir, "run-setting.json"), JSON.stringify(setting), "utf-8")
-  }
-}
-
-export function getRunDir(runId: string) {
-  return `${process.cwd()}/perstack/runs/${runId}`
-}
+export { defaultGetRunDir as getRunDir }

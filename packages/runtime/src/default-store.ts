@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import type { RunEvent } from "@perstack/core"
 import { type Checkpoint, checkpointSchema } from "@perstack/core"
-import { getRunDir } from "./runtime.js"
+import { defaultGetRunDir as getRunDir } from "./run-setting-store.js"
 
 export async function defaultRetrieveCheckpoint(
   runId: string,
