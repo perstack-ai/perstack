@@ -137,4 +137,66 @@ describe("@repo/api-client: parseSSE", () => {
 
     expect(results).toEqual([{ complete: true }])
   })
+
+  it("should throw on malformed JSON", async () => {
+    const encoder = new TextEncoder()
+    const sseData = `event: message\ndata: {invalid json}\n\n`
+
+    let readCount = 0
+    const reader = {
+      read: async () => {
+        if (readCount++ === 0) {
+          return { done: false, value: encoder.encode(sseData) }
+        }
+        return { done: true, value: undefined }
+      },
+    } as ReadableStreamDefaultReader<Uint8Array>
+
+    const generator = parseSSE(reader)
+    await expect(generator.next()).rejects.toThrow(SyntaxError)
+  })
+
+  it("should skip events with missing data field", async () => {
+    const encoder = new TextEncoder()
+    const sseData = `event: message\n\n\nevent: message\ndata: {"valid": true}\n\n`
+
+    let readCount = 0
+    const reader = {
+      read: async () => {
+        if (readCount++ === 0) {
+          return { done: false, value: encoder.encode(sseData) }
+        }
+        return { done: true, value: undefined }
+      },
+    } as ReadableStreamDefaultReader<Uint8Array>
+
+    const results = []
+    for await (const event of parseSSE(reader)) {
+      results.push(event)
+    }
+
+    expect(results).toEqual([{ valid: true }])
+  })
+
+  it("should skip events with data but no event type", async () => {
+    const encoder = new TextEncoder()
+    const sseData = `data: {"no": "event"}\n\nevent: message\ndata: {"has": "event"}\n\n`
+
+    let readCount = 0
+    const reader = {
+      read: async () => {
+        if (readCount++ === 0) {
+          return { done: false, value: encoder.encode(sseData) }
+        }
+        return { done: true, value: undefined }
+      },
+    } as ReadableStreamDefaultReader<Uint8Array>
+
+    const results = []
+    for await (const event of parseSSE(reader)) {
+      results.push(event)
+    }
+
+    expect(results).toEqual([{ has: "event" }])
+  })
 })

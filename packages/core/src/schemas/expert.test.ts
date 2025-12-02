@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { ZodError } from "zod"
 import { expertSchema } from "./expert.js"
 
 describe("@perstack/core: expertSchema", () => {
@@ -12,6 +13,35 @@ describe("@perstack/core: expertSchema", () => {
     expect(result.key).toBe("test-expert")
     expect(result.skills["@perstack/base"]).toBeDefined()
     expect(result.skills["@perstack/base"].name).toBe("@perstack/base")
+  })
+
+  it("throws on invalid skill type", () => {
+    expect(() =>
+      expertSchema.parse({
+        key: "test-expert",
+        name: "test-expert",
+        version: "1.0.0",
+        instruction: "Test instruction",
+        skills: {
+          invalid: {
+            type: "invalidSkillType",
+            command: "npx",
+          },
+        },
+      }),
+    ).toThrow(ZodError)
+  })
+
+  it("throws on missing required fields", () => {
+    expect(() => expertSchema.parse({})).toThrow(ZodError)
+    expect(() => expertSchema.parse({ key: "test" })).toThrow(ZodError)
+    expect(() =>
+      expertSchema.parse({
+        key: "test",
+        name: "test",
+        version: "1.0.0",
+      }),
+    ).toThrow(ZodError)
   })
 
   it("transforms skills to include name", () => {
