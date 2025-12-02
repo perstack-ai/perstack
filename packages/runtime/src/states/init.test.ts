@@ -227,4 +227,23 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       ],
     })
   })
+
+  it("throws error when resuming with undefined text", async () => {
+    const setting = createRunSetting({
+      input: { text: undefined },
+    })
+    const checkpoint = createCheckpoint({
+      status: "proceeding",
+    })
+    const step = createStep()
+    await expect(
+      StateMachineLogics.Init({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).rejects.toThrow("Input message is undefined")
+  })
 })
