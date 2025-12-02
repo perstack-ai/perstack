@@ -138,7 +138,9 @@ perstack publish my-expert
 perstack publish my-expert --dry-run
 ```
 
-Requires `PERSTACK_API_KEY` environment variable. See [Publishing](/making-experts/publishing).
+Requires `PERSTACK_API_KEY` environment variable.
+
+**Note:** Published Experts must use `npx` or `uvx` as skill commands. Arbitrary commands are not allowed for security reasons. See [Publishing](/making-experts/publishing#skill-requirements).
 
 ### `perstack unpublish`
 

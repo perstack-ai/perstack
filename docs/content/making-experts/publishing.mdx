@@ -11,6 +11,59 @@ Ensure your Expert is ready:
 3. **Minimal skills** — only include skills the Expert actually needs
 4. **Version-ready** — follow [SemVer](https://semver.org) for versioning
 
+## Skill requirements
+
+Published Experts have restrictions on MCP skills for security:
+
+### Allowed commands
+
+Only `npx` and `uvx` are permitted as skill commands:
+
+```toml
+[experts."my-expert".skills."@some/mcp-tool"]
+type = "mcpStdioSkill"
+command = "npx"           # ✓ allowed
+packageName = "@some/mcp-tool"
+
+[experts."my-expert".skills."python-tool"]
+type = "mcpStdioSkill"
+command = "uvx"           # ✓ allowed
+packageName = "python-tool"
+```
+
+Arbitrary commands (e.g., `node`, `python`, `./script.sh`) are **not allowed** for published Experts.
+
+### Why this restriction?
+
+The registry only accepts MCP skills from trusted package registries (npm, PyPI via uvx). This provides:
+
+- **Supply chain security** — packages are subject to registry policies
+- **Reproducibility** — same package version produces same behavior
+- **Auditability** — package sources are publicly inspectable
+
+### Using custom commands locally
+
+For local development, `perstack.toml` accepts any command:
+
+```toml
+[experts."local-expert".skills."custom"]
+type = "mcpStdioSkill"
+command = "node"                    # works locally
+args = ["./my-mcp-server.js"]
+```
+
+These Experts work with `perstack start` and `perstack run`, but cannot be published.
+
+### Future: Docker-based skills
+
+Docker-based MCP skills are planned, enabling:
+
+- Custom runtime environments
+- Isolated execution
+- Cross-platform compatibility
+
+Stay tuned for updates.
+
 ## Publishing via CLI
 
 Use the `perstack publish` command to publish Experts from your `perstack.toml`:
