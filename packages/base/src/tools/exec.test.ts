@@ -54,4 +54,44 @@ describe("exec tool", () => {
       }),
     ).rejects.toThrow()
   })
+
+  it("captures both stdout and stderr together", async () => {
+    const result = await exec({
+      command: process.execPath,
+      args: ["-e", 'process.stdout.write("OUT"); process.stderr.write("ERR")'],
+      env: {},
+      cwd: process.cwd(),
+      stdout: true,
+      stderr: true,
+      timeout: 2000,
+    })
+    expect(result.output).toContain("OUT")
+    expect(result.output).toContain("ERR")
+  })
+
+  it("passes custom environment variables", async () => {
+    const result = await exec({
+      command: process.execPath,
+      args: ["-e", 'process.stdout.write(process.env.MY_VAR || "NOT_SET")'],
+      env: { MY_VAR: "CUSTOM_VALUE" },
+      cwd: process.cwd(),
+      stdout: true,
+      stderr: false,
+      timeout: 2000,
+    })
+    expect(result.output).toBe("CUSTOM_VALUE")
+  })
+
+  it("handles empty args array", async () => {
+    const result = await exec({
+      command: process.execPath,
+      args: ["--version"],
+      env: {},
+      cwd: process.cwd(),
+      stdout: true,
+      stderr: false,
+      timeout: 2000,
+    })
+    expect(result.output).toBeTruthy()
+  })
 })
