@@ -6,7 +6,7 @@ import "./global.css"
 
 export const metadata = {
   title: "Perstack",
-  description: "Perstack is a platform for building and running AI agents.",
+  description: "Perstack is Expert Stack for Agent-first Development",
 }
 
 const banner = <Banner storageKey="some-key">Perstack 0.0.1 is released 🎉</Banner>
