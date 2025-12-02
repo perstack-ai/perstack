@@ -1,4 +1,4 @@
-import { execFile, type ExecException } from "node:child_process"
+import { type ExecException, execFile } from "node:child_process"
 import { promisify } from "node:util"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
