@@ -359,6 +359,18 @@ export class SkillManager {
   }
 }
 
+async function initSkillManagersWithCleanup(
+  managers: SkillManager[],
+  allManagers: SkillManager[],
+): Promise<void> {
+  const results = await Promise.allSettled(managers.map((m) => m.init()))
+  const firstRejected = results.find((r) => r.status === "rejected")
+  if (firstRejected) {
+    await Promise.all(allManagers.map((m) => m.close().catch(() => {})))
+    throw (firstRejected as PromiseRejectedResult).reason
+  }
+}
+
 export async function getSkillManagers(
   expert: Expert,
   experts: Record<string, Expert>,
@@ -366,85 +378,62 @@ export async function getSkillManagers(
   eventListener?: (event: RunEvent | RuntimeEvent) => void,
 ): Promise<Record<string, SkillManager>> {
   const { perstackBaseSkillCommand, env, runId } = setting
-  const skillManagers: Record<string, SkillManager> = {}
   const { skills } = expert
   if (!skills["@perstack/base"]) {
     throw new Error("Base skill is not defined")
   }
-  const mcpSkillManagers = await Promise.all(
-    Object.values(skills)
-      .filter((skill) => skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill")
-      .map(async (skill) => {
-        if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
-          const matchesBaseByPackage =
-            skill.command === "npx" && skill.packageName === "@perstack/base"
-          const matchesBaseByArgs =
-            skill.command === "npx" &&
-            Array.isArray(skill.args) &&
-            skill.args.includes("@perstack/base")
-          if (matchesBaseByPackage || matchesBaseByArgs) {
-            const [overrideCommand, ...overrideArgs] = perstackBaseSkillCommand
-            if (!overrideCommand) {
-              throw new Error("perstackBaseSkillCommand must have at least one element")
-            }
-            skill.command = overrideCommand
-            skill.packageName = undefined
-            skill.args = overrideArgs
-            skill.lazyInit = false
-          }
+  const allManagers: SkillManager[] = []
+  const mcpSkills = Object.values(skills).filter(
+    (skill) => skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill",
+  )
+  for (const skill of mcpSkills) {
+    if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
+      const matchesBaseByPackage = skill.command === "npx" && skill.packageName === "@perstack/base"
+      const matchesBaseByArgs =
+        skill.command === "npx" &&
+        Array.isArray(skill.args) &&
+        skill.args.includes("@perstack/base")
+      if (matchesBaseByPackage || matchesBaseByArgs) {
+        const [overrideCommand, ...overrideArgs] = perstackBaseSkillCommand
+        if (!overrideCommand) {
+          throw new Error("perstackBaseSkillCommand must have at least one element")
         }
-        const skillManager = new SkillManager(
-          {
-            type: "mcp",
-            skill,
-            env,
-          },
-          runId,
-          eventListener,
-        )
-        await skillManager.init()
-        return skillManager
-      }),
-  )
-  const interactiveSkillManagers = await Promise.all(
-    Object.values(skills)
-      .filter((skill) => skill.type === "interactiveSkill")
-      .map(async (interactiveSkill) => {
-        const skillManager = new SkillManager(
-          {
-            type: "interactive",
-            interactiveSkill,
-          },
-          runId,
-          eventListener,
-        )
-        await skillManager.init()
-        return skillManager
-      }),
-  )
-  const delegateSkillManagers = await Promise.all(
-    expert.delegates.map(async (delegateExpertName) => {
-      const delegate = experts[delegateExpertName]
-      const skillManager = new SkillManager(
-        {
-          type: "delegate",
-          expert: delegate,
-        },
-        runId,
-        eventListener,
-      )
-      await skillManager.init()
-      return skillManager
-    }),
-  )
-  for (const skillManager of mcpSkillManagers) {
-    skillManagers[skillManager.name] = skillManager
+        skill.command = overrideCommand
+        skill.packageName = undefined
+        skill.args = overrideArgs
+        skill.lazyInit = false
+      }
+    }
   }
-  for (const skillManager of interactiveSkillManagers) {
-    skillManagers[skillManager.name] = skillManager
-  }
-  for (const skillManager of delegateSkillManagers) {
-    skillManagers[skillManager.name] = skillManager
+  const mcpSkillManagers = mcpSkills.map((skill) => {
+    const manager = new SkillManager({ type: "mcp", skill, env }, runId, eventListener)
+    allManagers.push(manager)
+    return manager
+  })
+  await initSkillManagersWithCleanup(mcpSkillManagers, allManagers)
+  const interactiveSkills = Object.values(skills).filter(
+    (skill) => skill.type === "interactiveSkill",
+  )
+  const interactiveSkillManagers = interactiveSkills.map((interactiveSkill) => {
+    const manager = new SkillManager(
+      { type: "interactive", interactiveSkill },
+      runId,
+      eventListener,
+    )
+    allManagers.push(manager)
+    return manager
+  })
+  await initSkillManagersWithCleanup(interactiveSkillManagers, allManagers)
+  const delegateSkillManagers = expert.delegates.map((delegateExpertName) => {
+    const delegate = experts[delegateExpertName]
+    const manager = new SkillManager({ type: "delegate", expert: delegate }, runId, eventListener)
+    allManagers.push(manager)
+    return manager
+  })
+  await initSkillManagersWithCleanup(delegateSkillManagers, allManagers)
+  const skillManagers: Record<string, SkillManager> = {}
+  for (const manager of allManagers) {
+    skillManagers[manager.name] = manager
   }
   return skillManagers
 }
