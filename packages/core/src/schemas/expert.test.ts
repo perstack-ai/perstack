@@ -66,15 +66,15 @@ describe("@perstack/core: expertSchema", () => {
       version: "1.0.0",
       instruction: "Test instruction",
       skills: {
-        "interactive": {
+        interactive: {
           type: "interactiveSkill",
           tools: {
-            "ask": { inputJsonSchema: '{}' },
+            ask: { inputJsonSchema: "{}" },
           },
         },
       },
     })
-    expect(result.skills["interactive"].type).toBe("interactiveSkill")
-    expect(result.skills["interactive"].name).toBe("interactive")
+    expect(result.skills.interactive.type).toBe("interactiveSkill")
+    expect(result.skills.interactive.name).toBe("interactive")
   })
 })

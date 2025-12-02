@@ -52,4 +52,3 @@ describe("@perstack/runtime: run validation", () => {
     await expect(run(invalidInput)).rejects.toThrow("Workspace path must be absolute")
   })
 })
-

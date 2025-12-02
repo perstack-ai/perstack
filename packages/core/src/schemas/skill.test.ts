@@ -64,8 +64,8 @@ describe("@perstack/core: interactiveSkillSchema", () => {
       type: "interactiveSkill",
       name: "multi-tool-skill",
       tools: {
-        "tool-a": { inputJsonSchema: '{}' },
-        "tool-b": { inputJsonSchema: '{}' },
+        "tool-a": { inputJsonSchema: "{}" },
+        "tool-b": { inputJsonSchema: "{}" },
       },
     })
     expect(result.tools["tool-a"].name).toBe("tool-a")
