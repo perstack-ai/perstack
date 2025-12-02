@@ -253,9 +253,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     mockGetModel.mockReturnValue(
       createMockLanguageModel({
         finishReason: "length",
-        toolCalls: [
-          { type: "tool-call", toolCallId: "tc_4", toolName: "testTool", input: "{}" },
-        ],
+        toolCalls: [{ type: "tool-call", toolCallId: "tc_4", toolName: "testTool", input: "{}" }],
       }),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
@@ -276,9 +274,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     mockGetModel.mockReturnValue(
       createMockLanguageModel({
         finishReason: "error" as "stop",
-        toolCalls: [
-          { type: "tool-call", toolCallId: "tc_5", toolName: "testTool", input: "{}" },
-        ],
+        toolCalls: [{ type: "tool-call", toolCallId: "tc_5", toolName: "testTool", input: "{}" }],
       }),
     )
     await expect(
@@ -301,9 +297,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       createMockLanguageModel({
         finishReason: "tool-calls",
         text: "Thinking about this...",
-        toolCalls: [
-          { type: "tool-call", toolCallId: "tc_6", toolName: "testTool", input: "{}" },
-        ],
+        toolCalls: [{ type: "tool-call", toolCallId: "tc_6", toolName: "testTool", input: "{}" }],
       }),
     )
     const event = await StateMachineLogics.GeneratingToolCall({

@@ -109,7 +109,12 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
             mimeType: "image/png",
             id: createId(),
           },
-          { type: "fileBinaryPart" as const, data: "binary", mimeType: "application/pdf", id: createId() },
+          {
+            type: "fileBinaryPart" as const,
+            data: "binary",
+            mimeType: "application/pdf",
+            id: createId(),
+          },
         ],
       },
     })
