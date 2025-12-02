@@ -56,6 +56,7 @@ export async function executeStateMachine(params: ExecuteStateMachineParams): Pr
             )
             if (!shouldContinue) {
               runActor.stop()
+              await closeSkillManagers(runState.context.skillManagers)
               resolve(runState.context.checkpoint)
               return
             }
@@ -63,6 +64,7 @@ export async function executeStateMachine(params: ExecuteStateMachineParams): Pr
           runActor.send(event)
         }
       } catch (error) {
+        await closeSkillManagers(skillManagers).catch(() => {})
         reject(error)
       }
     })
