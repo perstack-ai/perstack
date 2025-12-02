@@ -47,6 +47,44 @@ Experts can only access files within the workspace directory:
 
 The workspace is the only shared boundary between your system and the Expert. Control what goes in, verify what comes out.
 
+### How it works
+
+All file operations in `@perstack/base` use path validation:
+
+1. **Path resolution**: Relative paths resolved against current working directory
+2. **Symlink resolution**: `fs.realpath()` resolves symlinks to their actual target
+3. **Boundary check**: Resolved path must start with workspace path
+4. **Reserved paths**: `/perstack` directory is always denied (runtime-managed)
+
+### What it protects against
+
+| Attack | Protection |
+|--------|------------|
+| Path traversal (`../../../etc/passwd`) | Resolved path checked against workspace |
+| Symlink escape (symlink → `/etc`) | `realpath()` resolves before boundary check |
+| Absolute path injection (`/etc/passwd`) | Must resolve within workspace |
+
+### Limitations
+
+**TOCTOU (Time-of-check to time-of-use)**: A symlink could theoretically be modified between validation and actual file operation. In practice, this requires:
+- Attacker-controlled code running in the same environment
+- Precise timing to modify symlink between check and use
+
+**Mitigation**: Run Experts in isolated containers with read-only root filesystem. The workspace directory should be the only writable location.
+
+### Best practices
+
+```bash
+# Docker: read-only root, writable workspace only
+docker run --rm \
+  --read-only \
+  --tmpfs /tmp \
+  -v $(pwd)/workspace:/workspace \
+  my-expert
+```
+
+For maximum security, combine workspace isolation with infrastructure isolation.
+
 ## Skill isolation
 
 MCP servers run with minimal privilege:
