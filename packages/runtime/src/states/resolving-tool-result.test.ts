@@ -86,4 +86,45 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
       }),
     ).rejects.toThrow("No tool call or tool result found")
   })
+
+  it("filters non-text and non-image parts from result", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCall: {
+        id: "tc_456",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        args: { path: "/test/image.png" },
+      },
+      toolResult: {
+        id: "tr_456",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        result: [
+          { type: "textPart" as const, text: "Image description", id: createId() },
+          {
+            type: "imageInlinePart" as const,
+            encodedData: "base64data",
+            mimeType: "image/png",
+            id: createId(),
+          },
+          { type: "fileBinaryPart" as const, data: "binary", mimeType: "application/pdf", id: createId() },
+        ],
+      },
+    })
+    const result = await StateMachineLogics.ResolvingToolResult({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(result.type).toBe("finishToolCall")
+    if (result.type !== "finishToolCall") throw new Error("Expected finishToolCall")
+    const toolMessage = result.newMessages[0]
+    const toolResultPart = toolMessage.contents[0]
+    if (toolResultPart.type !== "toolResultPart") throw new Error("Expected toolResultPart")
+    expect(toolResultPart.contents).toHaveLength(2)
+  })
 })
