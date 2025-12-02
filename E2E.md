@@ -34,7 +34,7 @@ $CLI status --help
 
 ```bash
 # Valid expert
-$CLI publish tick-tack-toe --dry-run
+$CLI publish tic-tac-toe --dry-run
 
 # Invalid expert
 $CLI publish nonexistent --dry-run
@@ -69,10 +69,10 @@ $CLI tag expert@1.0.0
 
 ```bash
 # Nonexistent config
-$CLI publish tick-tack-toe --dry-run --config nonexistent.toml
+$CLI publish tic-tac-toe --dry-run --config nonexistent.toml
 
 # No config in directory
-cd /tmp && $CLI publish tick-tack-toe --dry-run
+cd /tmp && $CLI publish tic-tac-toe --dry-run
 ```
 
 **Expected**: Error message indicating config file not found, exit code 1.
@@ -98,7 +98,7 @@ $CLI --help > /dev/null && echo "OK: --help"
 $CLI --version > /dev/null && echo "OK: --version"
 
 echo "=== Publish Dry Run ==="
-$CLI publish tick-tack-toe --dry-run > /dev/null && echo "OK: publish dry-run"
+$CLI publish tic-tac-toe --dry-run > /dev/null && echo "OK: publish dry-run"
 $CLI publish nonexistent --dry-run 2>&1 && exit 1 || echo "OK: publish invalid expert"
 
 echo "=== Argument Validation ==="
@@ -107,7 +107,7 @@ $CLI unpublish no-version --force 2>&1 && exit 1 || echo "OK: unpublish invalid 
 $CLI status expert@1.0.0 invalid-status 2>&1 && exit 1 || echo "OK: status invalid value"
 
 echo "=== Config Handling ==="
-$CLI publish tick-tack-toe --dry-run --config nonexistent.toml 2>&1 && exit 1 || echo "OK: nonexistent config"
+$CLI publish tic-tac-toe --dry-run --config nonexistent.toml 2>&1 && exit 1 || echo "OK: nonexistent config"
 
 echo "All tests passed!"
 ```
