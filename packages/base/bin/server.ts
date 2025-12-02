@@ -12,6 +12,7 @@ import { registerDeleteFile } from "../src/tools/delete-file.js"
 import { registerEditTextFile } from "../src/tools/edit-text-file.js"
 import { registerExec } from "../src/tools/exec.js"
 import { registerGetFileInfo } from "../src/tools/get-file-info.js"
+import { registerHealthCheck } from "../src/tools/health-check.js"
 import { registerListDirectory } from "../src/tools/list-directory.js"
 import { registerMoveFile } from "../src/tools/move-file.js"
 import { registerReadImageFile } from "../src/tools/read-image-file.js"
@@ -46,6 +47,7 @@ async function main() {
       registerClearTodo(server)
       registerExec(server)
       registerGetFileInfo(server)
+      registerHealthCheck(server)
       registerReadTextFile(server)
       registerReadImageFile(server)
       registerReadPdfFile(server)

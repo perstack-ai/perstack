@@ -54,6 +54,7 @@ registerWriteTextFile(server)
 
 ### Utilities
 - `exec` - Execute system commands
+- `healthCheck` - Check MCP server health status
 - `think` - Sequential thinking for problem analysis
 - `todo` - Task list management
 - `clearTodo` - Clear task list

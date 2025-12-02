@@ -61,6 +61,7 @@ All file operations are restricted to the workspace directory (where `perstack r
 | [`think`](#think) | Runtime | Record step-by-step reasoning |
 | [`todo`](#todo) | Runtime | Manage task list |
 | [`clearTodo`](#cleartodo) | Runtime | Clear task list |
+| [`healthCheck`](#healthcheck) | System | Check MCP server health |
 | [`exec`](#exec) | System | Execute system commands |
 | [`readTextFile`](#readtextfile) | File | Read text files |
 | [`readImageFile`](#readimagefile) | File | Read image files (PNG, JPEG, GIF, WebP) |
@@ -78,6 +79,31 @@ All file operations are restricted to the workspace directory (where `perstack r
 ---
 
 ## System Execution
+
+### healthCheck
+
+Returns MCP server health status and diagnostics.
+
+**Parameters:** None
+
+**Returns:**
+```json
+{
+  "status": "ok",
+  "workspace": "/path/to/workspace",
+  "uptime": "42s",
+  "memory": { "heapUsed": "25MB", "heapTotal": "50MB" },
+  "pid": 12345
+}
+```
+
+**Use cases:**
+- Verify MCP server is running and responsive
+- Check workspace configuration
+- Monitor server uptime and memory usage
+- Debug connection issues
+
+---
 
 ### exec
 
