@@ -384,16 +384,16 @@ Unit tests target pure functions, schema validations, and isolated logic.
 
 **Out of scope (use E2E instead):**
 
-| File/Area | Reason |
-| --------- | ------ |
-| `packages/runtime/src/runtime.ts` (`run` function) | Complex state machine orchestration with MCP connections |
-| `packages/runtime/src/skill-manager.ts` (MCP init) | Requires live MCP server connections |
-| `packages/base/bin/server.ts` | MCP server entry point |
-| `packages/base/src/tools/*.ts` (`registerXxx`) | MCP SDK registration, tested via E2E |
-| `packages/perstack/` (CLI commands) | CLI entry points, tested via E2E |
-| `packages/tui/` | React/Ink UI components |
-| `packages/api-client/v1/client.ts` (method wrappers) | Simple delegation to tested functions |
-| `packages/core/src/schemas/skill-manager.ts` | Type definitions only, no runtime code |
+| File/Area                                            | Reason                                                   |
+| ---------------------------------------------------- | -------------------------------------------------------- |
+| `packages/runtime/src/runtime.ts` (`run` function)   | Complex state machine orchestration with MCP connections |
+| `packages/runtime/src/skill-manager.ts` (MCP init)   | Requires live MCP server connections                     |
+| `packages/base/bin/server.ts`                        | MCP server entry point                                   |
+| `packages/base/src/tools/*.ts` (`registerXxx`)       | MCP SDK registration, tested via E2E                     |
+| `packages/perstack/` (CLI commands)                  | CLI entry points, tested via E2E                         |
+| `packages/tui/`                                      | React/Ink UI components                                  |
+| `packages/api-client/v1/client.ts` (method wrappers) | Simple delegation to tested functions                    |
+| `packages/core/src/schemas/skill-manager.ts`         | Type definitions only, no runtime code                   |
 
 When adding new code, follow this principle: **If it requires MCP connections or CLI invocation to test meaningfully, skip unit tests and rely on E2E.**
 
