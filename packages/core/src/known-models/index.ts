@@ -132,13 +132,13 @@ export const knownModels = [
     models: [
       {
         name: "deepseek-chat",
-        contextWindow: 64_000,
+        contextWindow: 128_000,
         maxOutputTokens: 8_192,
       },
       {
         name: "deepseek-reasoner",
-        contextWindow: 64_000,
-        maxOutputTokens: 8_192,
+        contextWindow: 128_000,
+        maxOutputTokens: 64_000,
       },
     ],
   },
