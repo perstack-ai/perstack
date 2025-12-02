@@ -178,6 +178,26 @@ describe("@perstack/messages: message", () => {
       })
     })
 
+    it("converts instruction message without cache", () => {
+      const result = messageToCoreMessage({
+        type: "instructionMessage" as const,
+        id: "msg-1",
+        cache: false,
+        contents: [
+          {
+            id: "content-1",
+            type: "textPart" as const,
+            text: "You are a helpful assistant.",
+          },
+        ],
+      })
+      expect(result).toEqual({
+        role: "system",
+        content: "You are a helpful assistant.",
+        providerOptions: undefined,
+      })
+    })
+
     describe("user message conversion", () => {
       it("converts user message", () => {
         const result = messageToCoreMessage({
@@ -337,6 +357,78 @@ describe("@perstack/messages: message", () => {
           providerOptions: {
             anthropic: { cacheControl: { type: "ephemeral" } },
           },
+        })
+      })
+
+      it("converts tool message with image content", () => {
+        const result = messageToCoreMessage({
+          type: "toolMessage" as const,
+          id: "msg-1",
+          cache: false,
+          contents: [
+            {
+              id: "content-1",
+              type: "toolResultPart" as const,
+              toolCallId: "call-456",
+              toolName: "readImage",
+              contents: [
+                {
+                  type: "imageInlinePart",
+                  encodedData: "base64imagedata",
+                  mimeType: "image/png",
+                  id: "content-2",
+                },
+              ],
+              isError: false,
+            },
+          ],
+        })
+        expect(result).toEqual({
+          role: "tool",
+          content: [
+            {
+              type: "tool-result",
+              toolCallId: "call-456",
+              toolName: "readImage",
+              output: {
+                type: "content",
+                value: [
+                  {
+                    type: "media",
+                    data: "base64imagedata",
+                    mediaType: "image/png",
+                  },
+                ],
+              },
+            },
+          ],
+          providerOptions: undefined,
+        })
+      })
+
+      it("converts user message without cache", () => {
+        const result = messageToCoreMessage({
+          type: "userMessage" as const,
+          id: "msg-1",
+          contents: [{ id: "content-1", type: "textPart" as const, text: "Hello!" }],
+        })
+        expect(result).toEqual({
+          role: "user",
+          content: [{ type: "text", text: "Hello!" }],
+          providerOptions: undefined,
+        })
+      })
+
+      it("converts expert message without cache", () => {
+        const result = messageToCoreMessage({
+          type: "expertMessage" as const,
+          id: "msg-1",
+          contents: [{ id: "content-1", type: "textPart" as const, text: "Response" }],
+        })
+        expect(result).toEqual({
+          role: "assistant",
+          content: [{ type: "text", text: "Response" }],
+          providerOptions: undefined,
         })
       })
     })
