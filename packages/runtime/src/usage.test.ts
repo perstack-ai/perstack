@@ -54,6 +54,21 @@ describe("@perstack/runtime: usage", () => {
         cachedInputTokens: 50,
       })
     })
+
+    it("handles undefined values with defaults", () => {
+      const result = {
+        text: "Hello",
+        usage: {},
+      } as unknown as GenerateTextResult<ToolSet, never>
+      const usage = usageFromGenerateTextResult(result)
+      expect(usage).toStrictEqual({
+        inputTokens: 0,
+        outputTokens: 0,
+        reasoningTokens: 0,
+        totalTokens: 0,
+        cachedInputTokens: 0,
+      })
+    })
   })
 
   describe("sumUsage()", () => {
