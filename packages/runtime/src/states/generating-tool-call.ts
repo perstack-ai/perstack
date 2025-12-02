@@ -40,7 +40,6 @@ export async function generatingToolCallLogic({
     })
   } catch (error) {
     if (error instanceof Error) {
-      console.error(error)
       const reason = JSON.stringify({ error: error.name, message: error.message })
       return retry(setting, checkpoint, {
         reason,

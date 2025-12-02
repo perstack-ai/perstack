@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process"
+import { execFile, type ExecException } from "node:child_process"
 import { promisify } from "node:util"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
@@ -7,6 +7,10 @@ import { validatePath } from "../lib/path.js"
 import { successToolResult } from "../lib/tool-result.js"
 
 const execFileAsync = promisify(execFile)
+type ExecError = ExecException & { stdout?: string; stderr?: string }
+function isExecError(error: unknown): error is ExecError {
+  return error instanceof Error && "code" in error
+}
 type ExecInput = {
   command: string
   args: string[]
@@ -82,35 +86,30 @@ export function registerExec(server: McpServer) {
       try {
         return successToolResult(await exec(input))
       } catch (error: unknown) {
-        const execError = error as {
-          message?: string
-          stdout?: string
-          stderr?: string
-          killed?: boolean
-          signal?: string
-        }
-        let message = ""
-        if (
-          execError &&
-          (execError.killed || execError.signal === "SIGTERM") &&
-          typeof input.timeout === "number"
-        ) {
-          message = `Command timed out after ${input.timeout}ms.`
-        } else if (error instanceof Error) {
-          if (error.message.includes("timeout")) {
+        let message: string
+        let stdout: string | undefined
+        let stderr: string | undefined
+        if (isExecError(error)) {
+          if ((error.killed || error.signal === "SIGTERM") && typeof input.timeout === "number") {
+            message = `Command timed out after ${input.timeout}ms.`
+          } else if (error.message.includes("timeout")) {
             message = `Command timed out after ${input.timeout}ms.`
           } else {
             message = error.message
           }
+          stdout = error.stdout
+          stderr = error.stderr
+        } else if (error instanceof Error) {
+          message = error.message
         } else {
           message = "An unknown error occurred."
         }
         const result: { error: string; stdout?: string; stderr?: string } = { error: message }
-        if (execError.stdout && input.stdout) {
-          result.stdout = execError.stdout
+        if (stdout && input.stdout) {
+          result.stdout = stdout
         }
-        if (execError.stderr && input.stderr) {
-          result.stderr = execError.stderr
+        if (stderr && input.stderr) {
+          result.stderr = stderr
         }
         return { content: [{ type: "text", text: JSON.stringify(result) }] }
       }
