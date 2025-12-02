@@ -371,6 +371,32 @@ When making changes, update ALL relevant documentation:
 - **E2E tests:** Manual testing by following `E2E.md` — agent should read and execute the procedures
 - **Coverage:** V8 provider, lcov output
 
+### Unit Test Scope
+
+Unit tests target pure functions, schema validations, and isolated logic.
+
+**In scope (unit testable):**
+- Zod schema parsing and transforms (`packages/core/src/schemas/`)
+- Pure utility functions (`parseExpertKey`, `createEvent`, etc.)
+- State machine logic functions (`packages/runtime/src/states/*.ts`)
+- Message conversion functions
+- API response parsing
+
+**Out of scope (use E2E instead):**
+
+| File/Area | Reason |
+| --------- | ------ |
+| `packages/runtime/src/runtime.ts` (`run` function) | Complex state machine orchestration with MCP connections |
+| `packages/runtime/src/skill-manager.ts` (MCP init) | Requires live MCP server connections |
+| `packages/base/bin/server.ts` | MCP server entry point |
+| `packages/base/src/tools/*.ts` (`registerXxx`) | MCP SDK registration, tested via E2E |
+| `packages/perstack/` (CLI commands) | CLI entry points, tested via E2E |
+| `packages/tui/` | React/Ink UI components |
+| `packages/api-client/v1/client.ts` (method wrappers) | Simple delegation to tested functions |
+| `packages/core/src/schemas/skill-manager.ts` | Type definitions only, no runtime code |
+
+When adding new code, follow this principle: **If it requires MCP connections or CLI invocation to test meaningfully, skip unit tests and rely on E2E.**
+
 ## CI Pipeline
 
 - **quality**: Lint, format, typecheck, knip (unused deps)
