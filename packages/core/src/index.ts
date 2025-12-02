@@ -1,4 +1,5 @@
 export * from "./constants/constants.js"
+export * from "./utils/zod-error.js"
 export * from "./schemas/checkpoint.js"
 export * from "./schemas/expert.js"
 export * from "./schemas/message-part.js"

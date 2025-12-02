@@ -1,4 +1,4 @@
-import { runCommandInputSchema } from "@perstack/core"
+import { parseWithFriendlyError, runCommandInputSchema } from "@perstack/core"
 import { run } from "@perstack/runtime"
 import { Command } from "commander"
 import { resolveRunContext } from "./lib/context.js"
@@ -30,7 +30,7 @@ export const runCommand = new Command()
   .option("--resume-from <checkpointId>", "Resume from a specific checkpoint")
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
   .action(async (expertKey, query, options) => {
-    const input = runCommandInputSchema.parse({ expertKey, query, options })
+    const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
 
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises"
 import path from "node:path"
-import { type PerstackConfig, perstackConfigSchema } from "@perstack/core"
+import { type PerstackConfig, parseWithFriendlyError, perstackConfigSchema } from "@perstack/core"
 import TOML from "smol-toml"
 
 export async function getPerstackConfig(configPath?: string): Promise<PerstackConfig> {
@@ -37,5 +37,5 @@ async function findPerstackConfigStringRecursively(cwd: string): Promise<string 
 
 async function parsePerstackConfig(config: string): Promise<PerstackConfig> {
   const toml = TOML.parse(config ?? "")
-  return perstackConfigSchema.parse(toml)
+  return parseWithFriendlyError(perstackConfigSchema, toml, "perstack.toml")
 }
