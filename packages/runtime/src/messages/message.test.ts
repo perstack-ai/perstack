@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { createInstructionMessage } from "./instruction-message.js"
 import {
   createExpertMessage,
   createToolMessage,
@@ -338,6 +339,121 @@ describe("@perstack/messages: message", () => {
           },
         })
       })
+    })
+  })
+})
+
+describe("@perstack/messages: instruction-message", () => {
+  describe("createInstructionMessage", () => {
+    it("creates instruction message with basic expert", () => {
+      const expert = {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        instruction: "You are a test expert.",
+        skills: {},
+        delegates: [],
+        tags: [],
+      }
+      const result = createInstructionMessage(expert, {})
+      expect(result.type).toBe("instructionMessage")
+      expect(result.cache).toBe(true)
+      expect(result.contents[0].type).toBe("textPart")
+      expect(result.contents[0].text).toContain("You are a test expert.")
+    })
+
+    it("includes skill rules when present", () => {
+      const expert = {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        instruction: "Test instruction",
+        skills: {
+          "test-skill": {
+            type: "mcpStdioSkill" as const,
+            name: "test-skill",
+            command: "npx",
+            args: ["-y", "test"],
+            requiredEnv: [],
+            pick: [],
+            omit: [],
+            lazyInit: false,
+            rule: "Always use this skill carefully.",
+          },
+        },
+        delegates: [],
+        tags: [],
+      }
+      const result = createInstructionMessage(expert, {})
+      expect(result.contents[0].text).toContain("Always use this skill carefully.")
+      expect(result.contents[0].text).toContain('"test-skill" skill rules:')
+    })
+
+    it("skips skill rules when not present", () => {
+      const expert = {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        instruction: "Test instruction",
+        skills: {
+          "test-skill": {
+            type: "mcpStdioSkill" as const,
+            name: "test-skill",
+            command: "npx",
+            args: ["-y", "test"],
+            requiredEnv: [],
+            pick: [],
+            omit: [],
+            lazyInit: false,
+          },
+        },
+        delegates: [],
+        tags: [],
+      }
+      const result = createInstructionMessage(expert, {})
+      expect(result.contents[0].text).not.toContain('"test-skill" skill rules:')
+    })
+
+    it("includes delegate rules when delegate exists", () => {
+      const expert = {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        instruction: "Test instruction",
+        skills: {},
+        delegates: ["delegate-expert"],
+        tags: [],
+      }
+      const experts = {
+        "test-expert": expert,
+        "delegate-expert": {
+          key: "delegate-expert",
+          name: "Delegate Expert",
+          version: "1.0.0",
+          description: "A delegate expert for testing",
+          instruction: "Delegate instruction",
+          skills: {},
+          delegates: [],
+          tags: [],
+        },
+      }
+      const result = createInstructionMessage(expert, experts)
+      expect(result.contents[0].text).toContain('About "Delegate Expert":')
+      expect(result.contents[0].text).toContain("A delegate expert for testing")
+    })
+
+    it("skips delegate rules when delegate not found", () => {
+      const expert = {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        instruction: "Test instruction",
+        skills: {},
+        delegates: ["nonexistent-delegate"],
+        tags: [],
+      }
+      const result = createInstructionMessage(expert, {})
+      expect(result.contents[0].text).not.toContain('About "')
     })
   })
 })
