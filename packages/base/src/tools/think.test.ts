@@ -25,7 +25,7 @@ describe("think tool", () => {
 
     it("tracks thought history across multiple calls", async () => {
       const result1 = await think({ thought: "First thought", nextThoughtNeeded: true })
-      const result2 = await think({ thought: "Second thought", nextThoughtNeeded: true })
+      const _result2 = await think({ thought: "Second thought", nextThoughtNeeded: true })
       const result3 = await think({ thought: "Third thought", nextThoughtNeeded: false })
       expect(result3.thoughtHistoryLength).toBeGreaterThan(result1.thoughtHistoryLength)
       expect(result3.nextThoughtNeeded).toBe(false)
