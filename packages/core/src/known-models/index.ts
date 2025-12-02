@@ -128,6 +128,21 @@ export const knownModels = [
     ],
   },
   {
+    provider: "deepseek",
+    models: [
+      {
+        name: "deepseek-chat",
+        contextWindow: 64_000,
+        maxOutputTokens: 8_192,
+      },
+      {
+        name: "deepseek-reasoner",
+        contextWindow: 64_000,
+        maxOutputTokens: 8_192,
+      },
+    ],
+  },
+  {
     provider: "ollama",
     models: [
       // https://platform.openai.com/docs/models/gpt-oss-20b

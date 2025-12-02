@@ -33,6 +33,7 @@ npx perstack run my-expert "query" --provider google --model gemini-2.5-pro
 | Anthropic | `anthropic` | Claude models (default) |
 | Google | `google` | Gemini models |
 | OpenAI | `openai` | GPT and reasoning models |
+| DeepSeek | `deepseek` | DeepSeek models |
 | Ollama | `ollama` | Local model hosting |
 | Azure OpenAI | `azure-openai` | Azure-hosted OpenAI models |
 | Amazon Bedrock | `amazon-bedrock` | AWS Bedrock-hosted models |
@@ -157,6 +158,39 @@ headers = { "X-Custom-Header" = "value" }         # Optional
 ```bash
 export OPENAI_API_KEY=sk-proj-...
 npx perstack run my-expert "query" --provider openai --model gpt-5
+```
+
+## DeepSeek
+
+**Environment variables:**
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DEEPSEEK_API_KEY` | Yes | API key |
+| `DEEPSEEK_BASE_URL` | No | Custom endpoint |
+
+**perstack.toml settings:**
+```toml
+[provider]
+providerName = "deepseek"
+[provider.setting]
+baseUrl = "https://custom-endpoint.example.com"  # Optional
+headers = { "X-Custom-Header" = "value" }        # Optional
+```
+
+| Setting | Type | Description |
+|---------|------|-------------|
+| `baseUrl` | string | Custom API endpoint |
+| `headers` | object | Custom HTTP headers |
+
+**Models:**
+| Model | Context | Max Output |
+|-------|---------|------------|
+| `deepseek-chat` | 64K | 8K |
+| `deepseek-reasoner` | 64K | 8K |
+
+```bash
+export DEEPSEEK_API_KEY=sk-...
+npx perstack run my-expert "query" --provider deepseek --model deepseek-chat
 ```
 
 ## Ollama

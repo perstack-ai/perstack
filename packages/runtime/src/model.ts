@@ -1,6 +1,7 @@
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createAzure } from "@ai-sdk/azure"
+import { createDeepSeek } from "@ai-sdk/deepseek"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createVertex } from "@ai-sdk/google-vertex"
 import { createOpenAI } from "@ai-sdk/openai"
@@ -72,6 +73,14 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         headers: providerConfig.headers,
       })
       return vertex(modelId)
+    }
+    case "deepseek": {
+      const deepseek = createDeepSeek({
+        apiKey: providerConfig.apiKey,
+        baseURL: providerConfig.baseUrl,
+        headers: providerConfig.headers,
+      })
+      return deepseek(modelId)
     }
   }
 }

@@ -10,6 +10,7 @@ export const providerNameSchema = z.enum([
   "azure-openai",
   "amazon-bedrock",
   "google-vertex",
+  "deepseek",
 ])
 export type ProviderName = z.infer<typeof providerNameSchema>
 
@@ -77,7 +78,13 @@ export const googleVertexProviderConfigSchema = z.object({
   headers: headersSchema,
 })
 export type GoogleVertexProviderConfig = z.infer<typeof googleVertexProviderConfigSchema>
-
+export const deepseekProviderConfigSchema = z.object({
+  providerName: z.literal(providerNameSchema.enum.deepseek),
+  apiKey: z.string(),
+  baseUrl: z.string().optional(),
+  headers: headersSchema,
+})
+export type DeepseekProviderConfig = z.infer<typeof deepseekProviderConfigSchema>
 export const providerConfigSchema = z.discriminatedUnion("providerName", [
   anthropicProviderConfigSchema,
   googleGenerativeAiProviderConfigSchema,
@@ -86,5 +93,6 @@ export const providerConfigSchema = z.discriminatedUnion("providerName", [
   azureOpenAiProviderConfigSchema,
   amazonBedrockProviderConfigSchema,
   googleVertexProviderConfigSchema,
+  deepseekProviderConfigSchema,
 ])
 export type ProviderConfig = z.infer<typeof providerConfigSchema>

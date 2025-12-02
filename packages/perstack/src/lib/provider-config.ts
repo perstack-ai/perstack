@@ -90,5 +90,15 @@ export function getProviderConfig(
         headers: setting.headers as Record<string, string> | undefined,
       }
     }
+    case "deepseek": {
+      const apiKey = env.DEEPSEEK_API_KEY
+      if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
+      return {
+        providerName: "deepseek",
+        apiKey,
+        baseUrl: (setting.baseUrl as string | undefined) ?? env.DEEPSEEK_BASE_URL,
+        headers: setting.headers as Record<string, string> | undefined,
+      }
+    }
   }
 }
