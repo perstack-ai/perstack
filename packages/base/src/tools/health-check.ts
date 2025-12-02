@@ -23,19 +23,19 @@ export function registerHealthCheck(server: McpServer) {
   server.registerTool(
     "healthCheck",
     {
-      title: "Health Check",
+      title: "Perstack Runtime Health Check",
       description: dedent`
-        Returns MCP server health status and diagnostics.
+        Returns Perstack runtime health status and diagnostics.
         Use cases:
-        - Verify MCP server is running and responsive
+        - Verify Perstack runtime is running and responsive
         - Check workspace configuration
-        - Monitor server uptime and memory usage
+        - Monitor runtime uptime and memory usage
         How it works:
-        - Returns server status, workspace path, uptime, and memory usage
-        - Always returns "ok" status if server can respond
+        - Returns runtime status, workspace path, uptime, and memory usage
+        - Always returns "ok" status if runtime can respond
         - Useful for debugging connection issues
         Notes:
-        - This is a diagnostic tool for the MCP server itself
+        - This is a diagnostic tool for Perstack runtime itself
         - Does not access or modify files
       `,
       inputSchema: {},

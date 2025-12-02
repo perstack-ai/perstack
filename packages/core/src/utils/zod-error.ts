@@ -1,4 +1,4 @@
-import { type ZodSchema, ZodError } from "zod"
+import type { ZodError, ZodSchema } from "zod"
 
 export function formatZodError(error: ZodError): string {
   const issues = error.issues.map((issue) => {
@@ -8,7 +8,11 @@ export function formatZodError(error: ZodError): string {
   return `Validation failed:\n${issues.join("\n")}`
 }
 
-export function parseWithFriendlyError<T>(schema: ZodSchema<T>, data: unknown, context?: string): T {
+export function parseWithFriendlyError<T>(
+  schema: ZodSchema<T>,
+  data: unknown,
+  context?: string,
+): T {
   const result = schema.safeParse(data)
   if (result.success) {
     return result.data
