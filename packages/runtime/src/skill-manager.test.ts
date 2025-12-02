@@ -288,6 +288,45 @@ describe("@perstack/runtime: SkillManager", () => {
       await expect(skillManager.close()).resolves.toBeUndefined()
     })
   })
+
+  describe("init error handling", () => {
+    it("resets state when init fails with lazyInit false", async () => {
+      const skill = createMcpSkill({ lazyInit: false })
+      const skillManager = new SkillManager({ type: "mcp", skill, env: {} }, testRunId)
+      const sm = skillManager as unknown as SkillManagerInternal
+      vi.spyOn(sm, "_initMcpSkill").mockRejectedValue(new Error("Init failed"))
+      await expect(skillManager.init()).rejects.toThrow("Init failed")
+      expect(skillManager.isInitialized()).toBe(false)
+    })
+
+    it("throws error when init called while already initializing", async () => {
+      const skill = createMcpSkill({ lazyInit: false })
+      const skillManager = new SkillManager({ type: "mcp", skill, env: {} }, testRunId)
+      const sm = skillManager as unknown as SkillManagerInternal
+      vi.spyOn(sm, "_initMcpSkill").mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, 100)),
+      )
+      const initPromise = skillManager.init()
+      await expect(skillManager.init()).rejects.toThrow("already initializing")
+      await initPromise
+    })
+  })
+
+  describe("MCP SSE skill type", () => {
+    it("initializes mcp sse skill", () => {
+      const skill = {
+        type: "mcpSseSkill" as const,
+        name: "sse-skill",
+        endpoint: "https://example.com/sse",
+        pick: [],
+        omit: [],
+      }
+      const skillManager = new SkillManager({ type: "mcp", skill, env: {} }, testRunId)
+      expect(skillManager.type).toBe("mcp")
+      expect(skillManager.name).toBe("sse-skill")
+      expect(skillManager.lazyInit).toBe(false)
+    })
+  })
 })
 
 describe("@perstack/runtime: closeSkillManagers", () => {
