@@ -397,6 +397,58 @@ Unit tests target pure functions, schema validations, and isolated logic.
 
 When adding new code, follow this principle: **If it requires MCP connections or CLI invocation to test meaningfully, skip unit tests and rely on E2E.**
 
+### Test File Format
+
+**Blank lines in test files:** Add a blank line before `describe()` and `it()` blocks for readability.
+
+**Rules:**
+- NO blank line immediately after `describe()` opening brace
+- Blank line BEFORE each `it()` block (except the first one in a describe)
+- Blank line BEFORE nested `describe()` blocks
+
+**Example (good):**
+```typescript
+import { describe, expect, it } from "vitest"
+
+describe("MyModule", () => {
+  it("does something", () => {
+    expect(true).toBe(true)
+  })
+
+  it("does another thing", () => {
+    expect(1 + 1).toBe(2)
+  })
+
+  describe("nested suite", () => {
+    it("handles edge case", () => {
+      expect("test").toBeDefined()
+    })
+
+    it("handles another case", () => {
+      expect(1).toBe(1)
+    })
+  })
+})
+```
+
+**Example (bad):**
+```typescript
+describe("MyModule", () => {
+
+  it("does something", () => {  // BAD: blank line after describe
+    expect(true).toBe(true)
+  })
+  it("does another thing", () => {  // BAD: no blank line before it
+    expect(1 + 1).toBe(2)
+  })
+  describe("nested suite", () => {  // BAD: no blank line before describe
+    it("handles edge case", () => {
+      expect("test").toBeDefined()
+    })
+  })
+})
+```
+
 ## CI Pipeline
 
 - **quality**: Lint, format, typecheck, knip (unused deps)
