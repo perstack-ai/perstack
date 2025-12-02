@@ -235,27 +235,24 @@ function toolCallPartToCoreToolCallPart(part: ToolCallPart): ToolCallModelPart {
   }
 }
 function toolResultPartToCoreToolResultPart(part: ToolResultPart): ToolResultModelPart {
-  const content = part.contents[0]
-  const output =
+  const { contents } = part
+  if (contents.length === 1 && contents[0].type === "textPart") {
+    return {
+      type: "tool-result",
+      toolCallId: part.toolCallId,
+      toolName: part.toolName,
+      output: { type: "text" as const, value: contents[0].text },
+    }
+  }
+  const contentValue = contents.map((content) =>
     content.type === "textPart"
-      ? {
-          type: "text" as const,
-          value: content.text,
-        }
-      : {
-          type: "content" as const,
-          value: [
-            {
-              type: "media" as const,
-              data: content.encodedData,
-              mediaType: content.mimeType,
-            },
-          ],
-        }
+      ? { type: "text" as const, text: content.text }
+      : { type: "media" as const, data: content.encodedData, mediaType: content.mimeType },
+  )
   return {
     type: "tool-result",
     toolCallId: part.toolCallId,
     toolName: part.toolName,
-    output,
+    output: { type: "content" as const, value: contentValue },
   }
 }

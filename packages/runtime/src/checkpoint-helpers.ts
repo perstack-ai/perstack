@@ -52,7 +52,7 @@ export function buildDelegationReturnState(
     throw new Error("delegatedBy is required for buildDelegationReturnState")
   }
   const delegateResultMessage = messages[messages.length - 1]
-  if (delegateResultMessage.type !== "expertMessage") {
+  if (!delegateResultMessage || delegateResultMessage.type !== "expertMessage") {
     throw new Error("Delegation error: delegation result message is incorrect")
   }
   const delegateText = delegateResultMessage.contents.find((content) => content.type === "textPart")
