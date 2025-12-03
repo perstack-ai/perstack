@@ -122,14 +122,15 @@ This example shows:
 
 ## Next Steps
 
-- Tutorials:
-  - [Empowering Experts with MCP Skills](https://docs.perstack.ai/making-experts/skills)
-  - [Integrating Experts to your apps](https://docs.perstack.ai/using-experts)
-  - [Sandboxed Execution](https://docs.perstack.ai/understanding-perstack/sandbox-integration)
+- [Working with Perstack](https://docs.perstack.ai/working-with-perstack) — practical guides for common use cases:
+  - [Rapid Prototyping](https://docs.perstack.ai/working-with-perstack/rapid-prototyping) — validate ideas without writing code
+  - [Taming Prompt Sprawl](https://docs.perstack.ai/working-with-perstack/taming-prompt-sprawl) — fix bloated prompts with modular Experts
+  - [Adding AI to Your App](https://docs.perstack.ai/working-with-perstack/adding-ai-to-your-app) — integrate Experts into existing applications
+  - [Going to Production](https://docs.perstack.ai/working-with-perstack/going-to-production) — deploy safely with Docker isolation
 - [Understanding Perstack](https://docs.perstack.ai/understanding-perstack/concept)
 - [Making Experts](https://docs.perstack.ai/making-experts)
 - [Using Experts](https://docs.perstack.ai/using-experts)
-- [Operating Experts](https://docs.perstack.ai/operating-experts/deployment)
+- [Operating Experts](https://docs.perstack.ai/operating-experts/isolation-by-design)
 - [References](https://docs.perstack.ai/references/cli)
 
 ## Motivation
