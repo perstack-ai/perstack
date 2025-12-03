@@ -1,4 +1,4 @@
-import type { Expert, RunEvent, RunSetting, RuntimeEvent, ToolDefinition } from "@perstack/core"
+import type { Expert, RunEvent, RunSetting, RuntimeEvent } from "@perstack/core"
 import { jsonSchema, type ToolSet, tool } from "ai"
 import type { BaseSkillManager } from "./base.js"
 import { DelegateSkillManager } from "./delegate.js"
@@ -118,4 +118,3 @@ export async function getToolSet(
   }
   return tools
 }
-
