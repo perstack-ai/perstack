@@ -1,5 +1,5 @@
 import type { Checkpoint, RunEvent, RunSetting, Step } from "@perstack/core"
-import { type ActorRefFrom, type SnapshotFrom, assign, setup } from "xstate"
+import { type ActorRefFrom, assign, type SnapshotFrom, setup } from "xstate"
 import { calculateContextWindowUsage } from "./model.js"
 import type { BaseSkillManager } from "./skill-manager/index.js"
 import { callingDelegateLogic } from "./states/calling-delegate.js"

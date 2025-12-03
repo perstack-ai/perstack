@@ -36,7 +36,7 @@ export async function callingDelegateLogic({
     },
     step: {
       ...step,
-      finishedAt: new Date().getTime(),
+      finishedAt: Date.now(),
     },
   })
 }

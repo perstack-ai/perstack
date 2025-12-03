@@ -99,7 +99,9 @@ export class McpSkillManager extends BaseSkillManager {
       throw new Error(`Skill ${name} has no packageName or args. Please provide one of them.`)
     }
     if (packageName && args && args.length > 0) {
-      throw new Error(`Skill ${name} has both packageName and args. Please provide only one of them.`)
+      throw new Error(
+        `Skill ${name} has both packageName and args. Please provide only one of them.`,
+      )
     }
     let newArgs = args && args.length > 0 ? args : [packageName!]
     if (command === "npx" && !newArgs.includes("-y")) {

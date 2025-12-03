@@ -2,7 +2,7 @@ import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent, Step } fro
 import { createActor } from "xstate"
 import type { RunEventEmitter } from "./events/event-emitter.js"
 import { runtimeStateMachine, StateMachineLogics } from "./runtime-state-machine.js"
-import { closeSkillManagers, type BaseSkillManager } from "./skill-manager/index.js"
+import { type BaseSkillManager, closeSkillManagers } from "./skill-manager/index.js"
 
 export type ExecuteStateMachineParams = {
   setting: RunSetting & { experts: Record<string, Expert> }

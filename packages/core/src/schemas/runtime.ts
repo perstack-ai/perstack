@@ -261,7 +261,7 @@ type ExpertEventPayloads = {
 }
 
 /** Base properties for all run events */
-interface BaseEvent {
+export interface BaseEvent {
   /** Unique event ID */
   id: string
   /** Expert key that emitted this event */
