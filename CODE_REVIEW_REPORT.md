@@ -525,6 +525,41 @@ Benefits:
 
 ---
 
+### 31. Improve Skill Lazy Initialization for Faster Startup
+
+**Category**: Performance  
+**Severity**: Suggestion
+
+**Issue**: Current implementation waits for all MCP skills to initialize before the first generation, causing slow startup times. The `@perstack/base` skill is fetched via `npx` every time, adding latency.
+
+**Proposed Solution**:
+
+1. **Add `lazy` option to MCP stdio skills in `perstack.toml`**:
+   ```toml
+   [experts."my-expert".skills."@example/slow-skill"]
+   type = "mcpStdioSkill"
+   command = "npx"
+   packageName = "@example/slow-skill"
+   lazy = true  # default: true
+   ```
+
+2. **First generation uses only ready skills**:
+   - Run 1st generation with `@perstack/base` + non-lazy skills only
+   - Lazy skills initialize in background during 1st generation
+   - From 2nd generation onwards, all skills are available
+
+3. **Bundle `@perstack/base` with CLI**:
+   - Ship `@perstack/base` as part of the `perstack` CLI package
+   - Use bundled version by default (no `npx` fetch)
+   - Allow version override via config for testing newer versions
+
+**Expected Impact**:
+- Significantly faster first response time
+- Reduced network overhead (no npx fetch for base)
+- Better UX for interactive use cases
+
+---
+
 ## Summary by Category
 
 | Category       | Critical | Major | Minor | Suggestions |
@@ -534,8 +569,9 @@ Benefits:
 | Test Quality   | 0        | 1     | 2     | 0           |
 | Potential Bugs | 1        | 0     | 3     | 0           |
 | Architecture   | 0        | 0     | 0     | 1           |
+| Performance    | 0        | 0     | 0     | 1           |
 
-**Total Findings**: 30
+**Total Findings**: 31
 
 ---
 
@@ -573,6 +609,7 @@ Benefits:
 | #28   | SkillManager refactoring               | ✅ Fixed        |
 | #29   | Provider settings discriminated union  | ✅ Fixed        |
 | #30   | Separate types and schemas in core     | ⏸️ Future       |
+| #31   | Skill lazy init for faster startup     | ⏸️ Future       |
 
 ---
 
@@ -586,7 +623,7 @@ Benefits:
 - **#9**: Duplicate schema definitions — significant refactoring required
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
-- **#24, #25, #30**: Suggestions — future enhancements (OTEL, structured logging, types/schemas separation)
+- **#24, #25, #30, #31**: Suggestions — future enhancements (OTEL, structured logging, types/schemas separation, skill lazy init)
 
 ---
 
