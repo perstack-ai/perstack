@@ -32,6 +32,11 @@ $ ANTHROPIC_API_KEY=<YOUR_API_KEY> npx perstack start tic-tac-toe "Game start!"
 $ ANTHROPIC_API_KEY=<YOUR_API_KEY> npx perstack run tic-tac-toe "Game start!"
 ```
 
+**What's next?**
+- [Rapid Prototyping](https://docs.perstack.ai/working-with-perstack/rapid-prototyping) — build your own Expert
+- [Taming Prompt Sprawl](https://docs.perstack.ai/working-with-perstack/taming-prompt-sprawl) — fix bloated prompts with modular Experts
+- [Extending with Tools](https://docs.perstack.ai/working-with-perstack/extending-with-tools) — add MCP skills to your Experts
+
 ## Key Features
 
 - **Agent-first development toolkit**
@@ -122,11 +127,7 @@ This example shows:
 
 ## Next Steps
 
-- [Working with Perstack](https://docs.perstack.ai/working-with-perstack) — practical guides for common use cases:
-  - [Rapid Prototyping](https://docs.perstack.ai/working-with-perstack/rapid-prototyping) — validate ideas without writing code
-  - [Taming Prompt Sprawl](https://docs.perstack.ai/working-with-perstack/taming-prompt-sprawl) — fix bloated prompts with modular Experts
-  - [Adding AI to Your App](https://docs.perstack.ai/working-with-perstack/adding-ai-to-your-app) — integrate Experts into existing applications
-  - [Going to Production](https://docs.perstack.ai/working-with-perstack/going-to-production) — deploy safely with Docker isolation
+- [Working with Perstack](https://docs.perstack.ai/working-with-perstack)
 - [Understanding Perstack](https://docs.perstack.ai/understanding-perstack/concept)
 - [Making Experts](https://docs.perstack.ai/making-experts)
 - [Using Experts](https://docs.perstack.ai/using-experts)
