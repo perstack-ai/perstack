@@ -22,7 +22,6 @@ export function createRunSetting(overrides: Partial<RunParamsInput["setting"]> =
     maxRetries: 3,
     maxSteps: 10,
     timeout: 1000,
-    workspace: "test-workspace",
     startedAt: Date.now(),
     updatedAt: Date.now(),
     input: { text: "Delegate to another expert" },

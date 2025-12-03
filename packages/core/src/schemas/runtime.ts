@@ -78,8 +78,6 @@ export interface RunSetting {
   maxRetries: number
   /** Timeout per generation in milliseconds */
   timeout: number
-  /** Workspace directory path */
-  workspace?: string
   /** Unix timestamp when run started */
   startedAt: number
   /** Unix timestamp of last update */
@@ -126,7 +124,6 @@ export type RunParamsInput = {
     maxSteps?: number
     maxRetries?: number
     timeout?: number
-    workspace?: string
     startedAt?: number
     updatedAt?: number
     perstackApiBaseUrl?: string
@@ -172,7 +169,6 @@ export const runParamsSchema = z.object({
     maxSteps: z.number().min(1).optional(),
     maxRetries: z.number().min(0).optional().default(defaultMaxRetries),
     timeout: z.number().min(0).optional().default(defaultTimeout),
-    workspace: z.string().optional(),
     startedAt: z.number().optional().default(Date.now()),
     updatedAt: z.number().optional().default(Date.now()),
     perstackApiBaseUrl: z.url().optional().default(defaultPerstackApiBaseUrl),

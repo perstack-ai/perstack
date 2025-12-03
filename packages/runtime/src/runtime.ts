@@ -1,4 +1,3 @@
-import path from "node:path"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type Checkpoint,
@@ -58,14 +57,6 @@ export async function run(
   eventEmitter.subscribe(eventListener)
   let { setting, checkpoint } = runParams
   const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
-
-  if (setting.workspace) {
-    if (!path.isAbsolute(setting.workspace)) {
-      throw new Error(`Workspace path must be absolute: ${setting.workspace}`)
-    }
-    process.chdir(setting.workspace)
-  }
-
   const getRunDir = options?.getRunDir ?? defaultGetRunDir
   await storeRunSetting(setting, options?.fileSystem, getRunDir)
   while (true) {
