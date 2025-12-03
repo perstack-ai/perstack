@@ -1,5 +1,17 @@
 # @perstack/runtime
 
+## 0.0.50
+
+### Patch Changes
+
+- Remove workspace parameter from runtime
+
+  The runtime now executes in the current working directory instead of accepting a workspace parameter. This fixes a sandbox design flaw where the application controlled its own execution boundary.
+
+- Updated dependencies
+  - @perstack/core@0.0.17
+  - @perstack/api-client@0.0.28
+
 ## 0.0.49
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @perstack/api-client
 
+## 0.0.28
+
+### Patch Changes
+
+- Updated dependencies
+  - @perstack/core@0.0.17
+
 ## 0.0.27
 
 ### Patch Changes
