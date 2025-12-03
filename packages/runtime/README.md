@@ -72,11 +72,11 @@ eventListener: (event) => {
 
 The runtime manages skills through specialized Skill Managers. Each skill type has its own manager class:
 
-| Type | Manager | Purpose |
-|------|---------|---------|
-| MCP (stdio/SSE) | `McpSkillManager` | External tools via MCP protocol |
-| Interactive | `InteractiveSkillManager` | User input tools (pause execution) |
-| Delegate | `DelegateSkillManager` | Expert-to-Expert calls |
+| Type            | Manager                   | Purpose                            |
+| --------------- | ------------------------- | ---------------------------------- |
+| MCP (stdio/SSE) | `McpSkillManager`         | External tools via MCP protocol    |
+| Interactive     | `InteractiveSkillManager` | User input tools (pause execution) |
+| Delegate        | `DelegateSkillManager`    | Expert-to-Expert calls             |
 
 All managers extend `BaseSkillManager` which provides:
 - `init()` — Initialize the skill (connect MCP servers, parse definitions)
