@@ -14,10 +14,10 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
-| ✅ Fixed      | 15    | Issues resolved with code changes          |
+| ✅ Fixed      | 16    | Issues resolved with code changes          |
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
-| ⏸️ Deferred   | 9     | Low priority / E2E scope / future work     |
+| ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
 
 ---
 
@@ -445,14 +445,17 @@ The `validatePath` function provides some isolation, but the exact guarantees an
 
 ### 28. Refactor SkillManager Code
 
+**Status**: ✅ **Fixed** — Commit `5490ebb`
+
 **Category**: Code Quality  
 **Severity**: Suggestion
 
-`packages/runtime/src/skill-manager.ts` has grown complex with multiple initialization paths (MCP stdio/SSE, interactive, delegate) and cleanup logic. Consider refactoring to:
-
-- Extract initialization logic per skill type into separate functions or classes
-- Simplify the `getSkillManagers` orchestration
-- Improve testability of individual components
+**Resolution**: Refactored `skill-manager.ts` into a modular structure:
+- `skill-manager/base.ts` - BaseSkillManager abstract class
+- `skill-manager/mcp.ts` - McpSkillManager (stdio/SSE)
+- `skill-manager/interactive.ts` - InteractiveSkillManager
+- `skill-manager/delegate.ts` - DelegateSkillManager
+- `skill-manager/helpers.ts` - getSkillManagers, closeSkillManagers, etc.
 
 ---
 
@@ -567,7 +570,7 @@ Benefits:
 | #25   | Structured logging                     | ⏸️ Future       |
 | #26   | Health check tool                      | ✅ Fixed        |
 | #27   | Workspace isolation docs               | ✅ Fixed        |
-| #28   | SkillManager refactoring               | ⏸️ Future       |
+| #28   | SkillManager refactoring               | ✅ Fixed        |
 | #29   | Provider settings discriminated union  | ✅ Fixed        |
 | #30   | Separate types and schemas in core     | ⏸️ Future       |
 
@@ -583,7 +586,7 @@ Benefits:
 - **#9**: Duplicate schema definitions — significant refactoring required
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
-- **#24, #25, #28, #30**: Suggestions — future enhancements (OTEL, structured logging, skill-manager refactoring, types/schemas separation)
+- **#24, #25, #30**: Suggestions — future enhancements (OTEL, structured logging, types/schemas separation)
 
 ---
 
@@ -603,3 +606,4 @@ Benefits:
 | `6f766e1` | Update: Rename healthCheck to Perstack Runtime health check        |
 | `ebf67bc` | Docs: Add JSDoc to all core schema types                           |
 | `f7edeb9` | Refactor: Use discriminatedUnion for provider settings             |
+| `5490ebb` | Refactor: Split SkillManager into separate classes                 |
