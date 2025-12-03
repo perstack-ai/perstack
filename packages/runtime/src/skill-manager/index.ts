@@ -2,7 +2,6 @@ export { BaseSkillManager } from "./base.js"
 export { DelegateSkillManager } from "./delegate.js"
 export {
   closeSkillManagers,
-  getAllToolDefinitions,
   getSkillManagerByToolName,
   getSkillManagers,
   getToolSet,

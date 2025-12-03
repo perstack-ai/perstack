@@ -119,13 +119,3 @@ export async function getToolSet(
   return tools
 }
 
-export async function getAllToolDefinitions(
-  skillManagers: Record<string, BaseSkillManager>,
-): Promise<ToolDefinition[]> {
-  const allTools: ToolDefinition[] = []
-  for (const skillManager of Object.values(skillManagers)) {
-    const tools = await skillManager.getToolDefinitions()
-    allTools.push(...tools)
-  }
-  return allTools
-}
