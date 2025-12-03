@@ -18,6 +18,13 @@ const meta: MetaRecord = {
       copyPage: false,
     },
   },
+  "working-with-perstack": {
+    title: "Working with Perstack",
+    theme: {
+      collapsed: true,
+      copyPage: false,
+    }
+  },
   "understanding-perstack": {
     title: "Understanding Perstack",
     theme: {
