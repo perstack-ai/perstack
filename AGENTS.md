@@ -312,6 +312,38 @@ Fix memory leak in skill manager cleanup when MCP connection fails
 - Select: ALL packages
 - Type: major (for all)
 
+### Changelog Message Format
+
+**Single change:**
+```
+Remove workspace parameter from runtime
+
+The runtime now executes in the current working directory instead of
+accepting a workspace parameter.
+```
+
+**Multiple changes (use categories):**
+```
+Add health check tool, Zod error formatting, and refactor SkillManager
+
+Features:
+
+- Add healthCheck tool to @perstack/base for runtime health monitoring
+- Add friendly Zod error formatting utility to @perstack/core
+
+Improvements:
+
+- Refactor SkillManager into separate classes
+- Use discriminatedUnion for provider settings
+```
+
+**Rules:**
+- First line: Brief summary (single sentence)
+- Blank line after summary if adding details
+- Use "Features:", "Improvements:", "Fixes:" categories for multiple changes
+- Each bullet point starts with verb (Add, Remove, Fix, Update, Refactor)
+- Keep concise — changelog is for users, not implementation details
+
 ## Documentation First (CRITICAL)
 
 **Every code change must be accompanied by documentation updates.**
