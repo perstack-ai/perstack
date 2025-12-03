@@ -1,5 +1,30 @@
 # perstack
 
+## 0.0.31
+
+### Patch Changes
+
+- Add health check tool, Zod error formatting, and refactor SkillManager
+
+  Features:
+
+  - Add healthCheck tool to @perstack/base for runtime health monitoring
+  - Add friendly Zod error formatting utility to @perstack/core
+  - Export BaseEvent interface from @perstack/core
+
+  Improvements:
+
+  - Refactor SkillManager into separate classes (McpSkillManager, InteractiveSkillManager, DelegateSkillManager)
+  - Use discriminatedUnion for provider settings in perstack.toml schema
+  - Add JSDoc documentation to all core schema types
+  - Add Skill Management documentation
+
+- Updated dependencies
+  - @perstack/api-client@0.0.27
+  - @perstack/core@0.0.16
+  - @perstack/runtime@0.0.49
+  - @perstack/tui@0.0.13
+
 ## 0.0.30
 
 ### Patch Changes
