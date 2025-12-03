@@ -11,6 +11,7 @@ import type { Checkpoint } from "./checkpoint.js"
 import { checkpointSchema } from "./checkpoint.js"
 import type { Expert } from "./expert.js"
 import { expertSchema } from "./expert.js"
+import type { PerstackConfigSkill } from "./perstack-toml.js"
 import type {
   ExpertMessage,
   InstructionMessage,
@@ -101,6 +102,17 @@ export interface RunParams {
   checkpoint?: Checkpoint
 }
 
+/** Expert input type before schema transformation (skills without name, optional fields) */
+type ExpertInput = {
+  name: string
+  version: string
+  description?: string
+  instruction: string
+  skills?: Record<string, PerstackConfigSkill>
+  delegates?: string[]
+  tags?: string[]
+}
+
 /** Input type for runParamsSchema (before defaults/transforms) */
 export type RunParamsInput = {
   setting: {
@@ -109,7 +121,7 @@ export type RunParamsInput = {
     runId?: string
     expertKey: string
     input: RunInput
-    experts?: Record<string, Omit<Expert, "key">>
+    experts?: Record<string, ExpertInput>
     temperature?: number
     maxSteps?: number
     maxRetries?: number

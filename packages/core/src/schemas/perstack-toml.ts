@@ -1,6 +1,5 @@
 import { z } from "zod"
-import type { ProviderName } from "./provider-config.js"
-import { headersSchema, providerNameSchema } from "./provider-config.js"
+import { headersSchema } from "./provider-config.js"
 
 const anthropicSettingSchema = z.object({
   baseUrl: z.string().optional(),
@@ -44,28 +43,84 @@ const googleVertexSettingSchema = z.object({
   headers: headersSchema,
 })
 
-const providerSettingSchema = z.union([
-  anthropicSettingSchema,
-  googleSettingSchema,
-  openAiSettingSchema,
-  ollamaSettingSchema,
-  azureOpenAiSettingSchema,
-  amazonBedrockSettingSchema,
-  googleVertexSettingSchema,
-])
+const deepseekSettingSchema = z.object({
+  baseUrl: z.string().optional(),
+  headers: headersSchema,
+})
 
 /** Provider configuration in perstack.toml */
-export interface ProviderTable {
-  /** Provider name */
-  providerName: ProviderName
-  /** Provider-specific settings */
-  setting?: Record<string, unknown>
-}
+export type ProviderTable =
+  | { providerName: "anthropic"; setting?: z.infer<typeof anthropicSettingSchema> }
+  | { providerName: "google"; setting?: z.infer<typeof googleSettingSchema> }
+  | { providerName: "openai"; setting?: z.infer<typeof openAiSettingSchema> }
+  | { providerName: "ollama"; setting?: z.infer<typeof ollamaSettingSchema> }
+  | { providerName: "azure-openai"; setting?: z.infer<typeof azureOpenAiSettingSchema> }
+  | { providerName: "amazon-bedrock"; setting?: z.infer<typeof amazonBedrockSettingSchema> }
+  | { providerName: "google-vertex"; setting?: z.infer<typeof googleVertexSettingSchema> }
+  | { providerName: "deepseek"; setting?: z.infer<typeof deepseekSettingSchema> }
 
-export const providerTableSchema = z.object({
-  providerName: providerNameSchema,
-  setting: providerSettingSchema.optional(),
-})
+export const providerTableSchema = z.discriminatedUnion("providerName", [
+  z.object({
+    providerName: z.literal("anthropic"),
+    setting: anthropicSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("google"),
+    setting: googleSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("openai"),
+    setting: openAiSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("ollama"),
+    setting: ollamaSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("azure-openai"),
+    setting: azureOpenAiSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("amazon-bedrock"),
+    setting: amazonBedrockSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("google-vertex"),
+    setting: googleVertexSettingSchema.optional(),
+  }),
+  z.object({
+    providerName: z.literal("deepseek"),
+    setting: deepseekSettingSchema.optional(),
+  }),
+])
+
+/** Skill configuration in perstack.toml */
+export type PerstackConfigSkill =
+  | {
+      type: "mcpStdioSkill"
+      description?: string
+      rule?: string
+      pick?: string[]
+      omit?: string[]
+      command: string
+      packageName?: string
+      args?: string[]
+      requiredEnv?: string[]
+    }
+  | {
+      type: "mcpSseSkill"
+      description?: string
+      rule?: string
+      pick?: string[]
+      omit?: string[]
+      endpoint: string
+    }
+  | {
+      type: "interactiveSkill"
+      description?: string
+      rule?: string
+      tools: Record<string, { description?: string; inputJsonSchema: string }>
+    }
 
 /** Expert definition in perstack.toml (simplified from full Expert) */
 export interface PerstackConfigExpert {
@@ -78,9 +133,11 @@ export interface PerstackConfigExpert {
   /** System instruction */
   instruction: string
   /** Skills configuration */
-  skills?: Record<string, unknown>
+  skills?: Record<string, PerstackConfigSkill>
   /** Delegates list */
   delegates?: string[]
+  /** Tags for categorization */
+  tags?: string[]
 }
 
 /**
@@ -164,6 +221,7 @@ export const perstackConfigSchema = z.object({
           )
           .optional(),
         delegates: z.array(z.string()).optional(),
+        tags: z.array(z.string()).optional(),
       }),
     )
     .optional(),
