@@ -1,0 +1,190 @@
+# Skill Management
+
+The Perstack runtime manages three types of skills through specialized Skill Managers. Each type has different initialization behavior and security implications.
+
+## Skill Types
+
+| Type | Manager Class | Purpose | Connection |
+|------|---------------|---------|------------|
+| **MCP** | `McpSkillManager` | External tools via MCP protocol | stdio or SSE |
+| **Interactive** | `InteractiveSkillManager` | User input tools | None (definitions only) |
+| **Delegate** | `DelegateSkillManager` | Expert-to-Expert calls | None (definitions only) |
+
+## Architecture
+
+```
+                    ┌─────────────────────┐
+                    │  BaseSkillManager   │  (abstract)
+                    │  ─────────────────  │
+                    │  - init()           │
+                    │  - close()          │
+                    │  - getToolDefs()    │
+                    │  - callTool()       │
+                    └─────────┬───────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ McpSkillManager │  │ Interactive     │  │ Delegate        │
+│                 │  │ SkillManager    │  │ SkillManager    │
+│ - MCP stdio/SSE │  │ - User input    │  │ - Expert calls  │
+│ - Tool execution│  │   definitions   │  │   definitions   │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+## Initialization Flow
+
+When an Expert starts, the runtime initializes skills in order:
+
+```
+1. MCP Skills
+   └─ Create McpSkillManager for each MCP skill
+   └─ Connect to MCP servers (stdio or SSE)
+   └─ Fetch tool definitions from servers
+
+2. Interactive Skills
+   └─ Create InteractiveSkillManager for each
+   └─ Parse tool definitions from config
+
+3. Delegate Skills
+   └─ Create DelegateSkillManager for each delegate
+   └─ Generate tool definition for Expert call
+```
+
+If any skill fails to initialize, all previously initialized skills are cleaned up before the error is thrown.
+
+## MCP Skill Manager
+
+The `McpSkillManager` handles communication with MCP servers.
+
+### Connection Types
+
+**stdio** (recommended for local tools):
+```toml
+[experts."my-expert".skills."file-ops"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+```
+
+**SSE** (for remote services):
+```toml
+[experts."my-expert".skills."remote-api"]
+type = "mcpSseSkill"
+endpoint = "https://api.example.com/mcp"
+```
+
+### Tool Filtering
+
+Control which tools are available to the Expert:
+
+```toml
+[experts."my-expert".skills."file-ops"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["readFile", "writeFile"]  # Only these tools
+omit = ["deleteFile"]             # Exclude these tools
+```
+
+### Environment Variables
+
+Only specified environment variables are passed to MCP servers:
+
+```toml
+[experts."my-expert".skills."db"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@example/db-mcp"
+requiredEnv = ["DATABASE_URL", "DB_PASSWORD"]
+```
+
+This prevents accidental exposure of sensitive environment variables.
+
+## Interactive Skill Manager
+
+Interactive skills define tools that pause execution and wait for user input.
+
+```toml
+[experts."my-expert".skills."user-input"]
+type = "interactiveSkill"
+description = "Tools for user interaction"
+
+[experts."my-expert".skills."user-input".tools.confirm]
+name = "confirm"
+description = "Ask user for confirmation"
+inputJsonSchema = '{"type":"object","properties":{"message":{"type":"string"}}}'
+```
+
+When an interactive tool is called:
+1. The runtime emits a `stopRunByInteractiveTool` event
+2. Execution pauses with a checkpoint
+3. Your application collects user input
+4. Resume execution with the user's response
+
+## Delegate Skill Manager
+
+Delegate skills enable Expert-to-Expert calls.
+
+```toml
+[experts."orchestrator"]
+delegates = ["researcher", "writer"]
+```
+
+Each delegate becomes a callable tool:
+- Tool name: Expert name (e.g., `researcher`)
+- Input: `{ query: string }`
+- Execution: Spawns a sub-run of the delegated Expert
+
+## Lifecycle
+
+```
+Expert Start
+    │
+    ▼
+┌─────────────────┐
+│ Initialize all  │ ← Connect MCP servers, parse definitions
+│ Skill Managers  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Agent Loop      │ ← Tools available for LLM to call
+│ (Steps 1..N)    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Close all       │ ← Disconnect MCP servers
+│ Skill Managers  │
+└─────────────────┘
+```
+
+## Security Considerations
+
+### Process Isolation
+
+Each MCP server runs as a separate process:
+- Crashed servers don't affect the runtime
+- Resource limits can be applied per-server
+- Clean shutdown on Expert completion
+
+### Minimal Privilege
+
+Skills receive only what they need:
+- Environment: Only `requiredEnv` variables
+- Tools: Filtered by `pick`/`omit`
+- Filesystem: Limited by MCP server implementation
+
+### Connection Security
+
+- **stdio**: Local process, no network exposure
+- **SSE**: Use HTTPS for remote connections
+
+For more on isolation, see [Isolation by Design](/operating-experts/isolation-by-design).
+
+## What's Next
+
+- [Isolation by Design](/operating-experts/isolation-by-design) — security boundaries
+- [Skills](/making-experts/skills) — defining skills in perstack.toml
+- [Base Skill](/making-experts/base-skill) — built-in tools

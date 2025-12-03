@@ -1,6 +1,13 @@
 import type { MetaRecord } from "nextra"
 
 const meta: MetaRecord = {
+  "skill-management": {
+    title: "Skill Management",
+    theme: {
+      timestamp: false,
+      copyPage: false,
+    },
+  },
   "isolation-by-design": {
     title: "Isolation by Design",
     theme: {

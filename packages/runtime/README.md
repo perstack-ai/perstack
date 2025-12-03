@@ -68,6 +68,41 @@ eventListener: (event) => {
 4. **Skill Provider**: Provides the client side of the **Model Context Protocol (MCP)** to securely execute tools.
 5. **Expert Delegation**: Implements the protocol for **Expert-to-Expert delegation**, allowing agents to call each other.
 
+## Skill Manager
+
+The runtime manages skills through specialized Skill Managers. Each skill type has its own manager class:
+
+| Type | Manager | Purpose |
+|------|---------|---------|
+| MCP (stdio/SSE) | `McpSkillManager` | External tools via MCP protocol |
+| Interactive | `InteractiveSkillManager` | User input tools (pause execution) |
+| Delegate | `DelegateSkillManager` | Expert-to-Expert calls |
+
+All managers extend `BaseSkillManager` which provides:
+- `init()` — Initialize the skill (connect MCP servers, parse definitions)
+- `close()` — Clean up resources (disconnect MCP servers)
+- `getToolDefinitions()` — Get available tools
+- `callTool()` — Execute a tool call
+
+### Initialization Flow
+
+```
+getSkillManagers(expert, experts, setting)
+    │
+    ├─► Initialize MCP skills (parallel)
+    │   └─► McpSkillManager × N
+    │
+    ├─► Initialize Interactive skills (parallel)
+    │   └─► InteractiveSkillManager × N
+    │
+    └─► Initialize Delegate skills (parallel)
+        └─► DelegateSkillManager × N
+
+Result: Record<skillName, BaseSkillManager>
+```
+
+If any skill fails to initialize, all previously initialized skills are cleaned up before throwing.
+
 ## Architecture
 
 The runtime orchestrates the interaction between the user's definition of an Expert and the actual execution environment.
