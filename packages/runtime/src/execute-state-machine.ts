@@ -2,13 +2,13 @@ import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent, Step } fro
 import { createActor } from "xstate"
 import type { RunEventEmitter } from "./events/event-emitter.js"
 import { runtimeStateMachine, StateMachineLogics } from "./runtime-state-machine.js"
-import { closeSkillManagers, type SkillManager } from "./skill-manager.js"
+import { closeSkillManagers, type BaseSkillManager } from "./skill-manager/index.js"
 
 export type ExecuteStateMachineParams = {
   setting: RunSetting & { experts: Record<string, Expert> }
   initialCheckpoint: Checkpoint
   eventListener: (event: RunEvent | RuntimeEvent) => Promise<void>
-  skillManagers: Record<string, SkillManager>
+  skillManagers: Record<string, BaseSkillManager>
   eventEmitter: RunEventEmitter
   storeCheckpoint: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>

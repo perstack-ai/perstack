@@ -1,6 +1,6 @@
 import { type RunEvent, stopRunByDelegate } from "@perstack/core"
 import type { RunSnapshot } from "../runtime-state-machine.js"
-import { getSkillManagerByToolName } from "../skill-manager.js"
+import { getSkillManagerByToolName } from "../skill-manager/index.js"
 
 export async function callingDelegateLogic({
   setting,

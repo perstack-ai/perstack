@@ -11,7 +11,6 @@ import type { Checkpoint } from "./checkpoint.js"
 import { checkpointSchema } from "./checkpoint.js"
 import type { Expert } from "./expert.js"
 import { expertSchema } from "./expert.js"
-import type { PerstackConfigSkill } from "./perstack-toml.js"
 import type {
   ExpertMessage,
   InstructionMessage,
@@ -19,6 +18,7 @@ import type {
   ToolMessage,
   UserMessage,
 } from "./message.js"
+import type { PerstackConfigSkill } from "./perstack-toml.js"
 import type { ProviderConfig } from "./provider-config.js"
 import { providerConfigSchema } from "./provider-config.js"
 import type { Step } from "./step.js"

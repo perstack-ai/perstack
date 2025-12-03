@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2"
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
-import type { SkillManager } from "../skill-manager.js"
+import type { BaseSkillManager } from "../skill-manager/index.js"
 import { callingToolLogic } from "./calling-tool.js"
 
 function createMockMcpSkillManager(
@@ -10,7 +10,7 @@ function createMockMcpSkillManager(
   callToolResult: Array<{ type: string; text?: string; id: string }> = [
     { type: "textPart", text: "Tool executed successfully", id: createId() },
   ],
-): SkillManager {
+): BaseSkillManager {
   return {
     name,
     type: "mcp" as const,
@@ -24,10 +24,10 @@ function createMockMcpSkillManager(
     ],
     callTool: async () => callToolResult,
     close: async () => {},
-  } as unknown as SkillManager
+  } as unknown as BaseSkillManager
 }
 
-function createMockDelegateSkillManager(name: string): SkillManager {
+function createMockDelegateSkillManager(name: string): BaseSkillManager {
   return {
     name,
     type: "delegate" as const,
@@ -42,7 +42,7 @@ function createMockDelegateSkillManager(name: string): SkillManager {
     ],
     callTool: async () => [],
     close: async () => {},
-  } as unknown as SkillManager
+  } as unknown as BaseSkillManager
 }
 
 describe("@perstack/runtime: callingToolLogic", () => {

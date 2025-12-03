@@ -2,7 +2,7 @@ import { MockLanguageModelV2 } from "ai/test"
 import { describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
-import type { SkillManager } from "../skill-manager.js"
+import type { BaseSkillManager } from "../skill-manager/index.js"
 
 const mockGetModel = vi.fn()
 vi.mock("../model.js", async (importOriginal) => ({
@@ -63,7 +63,7 @@ function createMockSkillManager(
   name: string,
   type: "mcp" | "interactive" | "delegate",
   toolName: string,
-): SkillManager {
+): BaseSkillManager {
   return {
     name,
     type,
@@ -77,7 +77,7 @@ function createMockSkillManager(
     ],
     callTool: async () => [],
     close: async () => {},
-  } as unknown as SkillManager
+  } as unknown as BaseSkillManager
 }
 
 describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {

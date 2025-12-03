@@ -17,7 +17,7 @@ import {
 } from "../messages/message.js"
 import { getModel } from "../model.js"
 import type { RunSnapshot } from "../runtime-state-machine.js"
-import { getSkillManagerByToolName, getToolSet } from "../skill-manager.js"
+import { getSkillManagerByToolName, getToolSet } from "../skill-manager/index.js"
 import { createEmptyUsage, usageFromGenerateTextResult } from "../usage.js"
 
 export async function generatingToolCallLogic({

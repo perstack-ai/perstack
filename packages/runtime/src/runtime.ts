@@ -32,7 +32,7 @@ import {
   storeRunSetting,
 } from "./run-setting-store.js"
 import { type ResolveExpertToRunFn, setupExperts } from "./setup-experts.js"
-import { getSkillManagers } from "./skill-manager.js"
+import { getSkillManagers } from "./skill-manager/index.js"
 
 export async function run(
   runInput: RunParamsInput,

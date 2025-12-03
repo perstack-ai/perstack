@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
-import type { SkillManager } from "../skill-manager.js"
+import type { BaseSkillManager } from "../skill-manager/index.js"
 
 describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
   it("processes delegate call correctly", async () => {
@@ -32,7 +32,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         ],
         callTool: async () => {},
         close: async () => {},
-      } as unknown as SkillManager,
+      } as unknown as BaseSkillManager,
     }
     await expect(
       StateMachineLogics.CallingDelegate({
@@ -111,7 +111,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         ],
         callTool: async () => {},
         close: async () => {},
-      } as unknown as SkillManager,
+      } as unknown as BaseSkillManager,
     }
     await expect(
       StateMachineLogics.CallingDelegate({
@@ -152,7 +152,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         ],
         callTool: async () => {},
         close: async () => {},
-      } as unknown as SkillManager,
+      } as unknown as BaseSkillManager,
     }
     await expect(
       StateMachineLogics.CallingDelegate({
