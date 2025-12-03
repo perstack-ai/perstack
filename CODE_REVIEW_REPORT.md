@@ -14,10 +14,10 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
-| ✅ Fixed      | 14    | Issues resolved with code changes          |
+| ✅ Fixed      | 15    | Issues resolved with code changes          |
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
-| ⏸️ Deferred   | 10    | Low priority / E2E scope / future work     |
+| ⏸️ Deferred   | 9     | Low priority / E2E scope / future work     |
 
 ---
 
@@ -458,12 +458,14 @@ The `validatePath` function provides some isolation, but the exact guarantees an
 
 ### 29. Provider Settings Schema Should Use Discriminated Union
 
+**Status**: ✅ **Fixed** — Commit `f7edeb9`
+
 **Category**: Code Quality  
 **Severity**: Suggestion
 
-**Location**: `packages/core/src/schemas/perstack-toml.ts:5-68`
+**Location**: `packages/core/src/schemas/perstack-toml.ts`
 
-**Issue**: `providerSettingSchema` uses `z.union([...])` which provides weak type inference. Each provider has different settings, but there's no discriminator field to distinguish them.
+**Resolution**: Refactored `providerTableSchema` to use `z.discriminatedUnion("providerName", [...])`. Each provider now has properly typed settings with full type inference.
 
 **Current**:
 ```typescript
@@ -566,7 +568,7 @@ Benefits:
 | #26   | Health check tool                      | ✅ Fixed        |
 | #27   | Workspace isolation docs               | ✅ Fixed        |
 | #28   | SkillManager refactoring               | ⏸️ Future       |
-| #29   | Provider settings discriminated union  | ⏸️ Future       |
+| #29   | Provider settings discriminated union  | ✅ Fixed        |
 | #30   | Separate types and schemas in core     | ⏸️ Future       |
 
 ---
@@ -581,7 +583,7 @@ Benefits:
 - **#9**: Duplicate schema definitions — significant refactoring required
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
-- **#24, #25, #28, #29, #30**: Suggestions — future enhancements (OTEL, structured logging, skill-manager refactoring, discriminated union for provider settings, types/schemas separation)
+- **#24, #25, #28, #30**: Suggestions — future enhancements (OTEL, structured logging, skill-manager refactoring, types/schemas separation)
 
 ---
 
@@ -600,3 +602,4 @@ Benefits:
 | `9f01f94` | Add: Friendly Zod error formatting utility                         |
 | `6f766e1` | Update: Rename healthCheck to Perstack Runtime health check        |
 | `ebf67bc` | Docs: Add JSDoc to all core schema types                           |
+| `f7edeb9` | Refactor: Use discriminatedUnion for provider settings             |
