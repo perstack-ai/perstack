@@ -14,10 +14,10 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
-| ✅ Fixed      | 13    | Issues resolved with code changes          |
+| ✅ Fixed      | 14    | Issues resolved with code changes          |
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
-| ⏸️ Deferred   | 11    | Low priority / E2E scope / future work     |
+| ⏸️ Deferred   | 10    | Low priority / E2E scope / future work     |
 
 ---
 
@@ -240,6 +240,8 @@ const isToolCallEvent = (event: PerstackEvent): event is RunEvent & { toolCall: 
 
 ### 13. Missing API Documentation for Some Schemas
 
+**Status**: ✅ **Fixed** — Commit `ebf67bc`
+
 **Location**: `packages/core/src/schemas/`
 
 **Issue**: Some schemas lack JSDoc descriptions:
@@ -247,7 +249,7 @@ const isToolCallEvent = (event: PerstackEvent): event is RunEvent & { toolCall: 
 - `stepSchema` - minimal documentation
 - `skill-manager.ts` - interface definitions lack docs
 
-**Recommendation**: Add JSDoc comments to all exported types and fields.
+**Resolution**: Added comprehensive JSDoc documentation to all 14 schema files with interface + `z.ZodType<T>` pattern for type safety.
 
 ---
 
