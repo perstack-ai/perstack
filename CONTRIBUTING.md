@@ -1,28 +1,35 @@
 # Contributing to Perstack
 
 Thank you for your interest in contributing to Perstack.
-This guide explains our development workflow, with a focus on our type management and versioning strategy.
 
-## TL;DR - Quick Reference
+## For Humans
 
-### I just want to fix a bug
+**We recommend agent-first development.** Use AI coding assistants (Cursor, GitHub Copilot, etc.) with `AGENTS.md` to handle the complexity of our versioning and type management system.
+
+### Quick Reference
+
+**Fix a bug:**
 ```bash
 pnpm changeset
 # Select: Only your package
 # Type: patch
 ```
 
-### I'm adding a new feature (no schema change)
+**Add a new feature (no schema change):**
 ```bash
 pnpm changeset
 # Select: @perstack/core + ALL packages (except docs)
 # Type: minor (for all)
 ```
 
-### I changed core schemas
-**Be careful.** Read the [full versioning guide](#versioning-strategy) first.
-Core changes ripple through everything. You need to understand the impact.
-If you're not sure, ask in the PR.
+**Change core schemas:**
+Read the [full versioning guide](#versioning-strategy) first. Core changes ripple through everything.
+
+---
+
+## For Agents
+
+The rest of this document provides detailed guidelines for AI agents. Agents should read and follow these rules when making changes to this repository.
 
 ## Table of Contents
 
@@ -201,11 +208,15 @@ git push origin fix/memory-leak
 ### 5. Create PR
 
 Open a pull request. CI will validate:
+- ✓ Lint & format check
 - ✓ Type checking across all packages
-- ✓ Schema diff detection
-- ✓ Changeset validation
+- ✓ Unused dependencies check
 - ✓ Version sync compliance
+- ✓ Changeset validation (PR only)
+- ✓ Schema diff detection (PR only)
 - ✓ All tests passing
+- ✓ Build succeeds
+- ✓ Changeset presence (PR only)
 
 ## Common Scenarios
 
@@ -384,24 +395,46 @@ This package defines tool input schemas inline rather than centralizing them in 
 
 ## CI/CD Pipeline
 
-### Pre-commit Hooks
-- Type checking
-- Linting
-- Version sync validation
+### CI Jobs
+
+| Job               | Description                                                                    | When                                      |
+| ----------------- | ------------------------------------------------------------------------------ | ----------------------------------------- |
+| `quality`         | Lint, format, typecheck, knip, version sync, changeset validation, schema diff | Always                                    |
+| `test`            | Unit tests with coverage                                                       | Always                                    |
+| `build`           | Build all packages with turbo cache                                            | Always                                    |
+| `changeset-check` | Verify changeset exists in PR                                                  | PR only (excludes Dependabot/release PRs) |
+| `ci-success`      | Final status check for branch protection                                       | Always                                    |
 
 ### PR Checks
-- ✓ All tests passing
-- ✓ Type checking across packages
-- ✓ Schema diff validation
-- ✓ Changeset presence and correctness
+- ✓ Lint & format check
+- ✓ Type checking across all packages
+- ✓ Unused dependencies check (knip)
 - ✓ Version sync compliance
+- ✓ Changeset validation
+- ✓ Schema diff detection
+- ✓ All tests passing
+- ✓ Build succeeds
+- ✓ Changeset presence
 
-### Release Process
+### Release Process (Two-Stage)
+
+Perstack uses a two-stage release workflow powered by [changesets/action](https://github.com/changesets/action):
+
+**Stage 1: Version PR Creation**
 1. Merge PR with changeset to `main`
-2. Changesets bot creates "Version Packages" PR
-3. Review CHANGELOG and version bumps
-4. Merge "Version Packages" PR
-5. CI publishes to npm automatically
+2. Release workflow automatically creates/updates "Version Packages" PR
+3. This PR contains:
+   - Version bumps in `package.json` files
+   - Updated `CHANGELOG.md` with PR links and author attribution
+
+**Stage 2: Publish**
+1. Review and merge "Version Packages" PR
+2. Release workflow automatically:
+   - Publishes packages to npm
+   - Creates git tags
+   - Creates GitHub Releases
+
+**No manual release commands needed.** Everything is automated after changesets are merged.
 
 ## Code Style
 

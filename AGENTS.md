@@ -312,6 +312,20 @@ Fix memory leak in skill manager cleanup when MCP connection fails
 - Select: ALL packages
 - Type: major (for all)
 
+### Two-Stage Release Flow
+
+Releases are automated via GitHub Actions:
+
+1. **PR merged to main** (with changeset)
+   - Release workflow creates "Version Packages" PR automatically
+   - This PR updates versions and CHANGELOGs
+
+2. **Version Packages PR merged**
+   - Release workflow publishes to npm
+   - Git tags and GitHub Releases are created automatically
+
+**No manual `pnpm release` needed.** The CI handles everything after changesets are merged.
+
 ### Changelog Message Format
 
 **Single change:**
@@ -483,9 +497,11 @@ describe("MyModule", () => {
 
 ## CI Pipeline
 
-- **quality**: Lint, format, typecheck, knip (unused deps)
+- **quality**: Lint, format, typecheck, knip, version sync, changeset validation, schema diff
 - **test**: Unit tests with coverage
 - **build**: Build all packages
+- **changeset-check**: Verifies changeset exists in PR (skipped for Dependabot/release PRs)
+- **release**: Creates Version PR or publishes to npm (runs on main branch only)
 
 All checks must pass before merge.
 
@@ -563,8 +579,11 @@ pick = ["attemptCompletion", "think"]
 
 ## Pre-push Checklist
 
+**IMPORTANT:** Before pushing, read `CONTRIBUTING.md` for detailed versioning and type management rules.
+
 - [ ] `pnpm format-and-lint` passes
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm check-deps` passes
 - [ ] `pnpm reset && pnpm test` passes
 - [ ] `pnpm build` passes
+- [ ] Versioning rules in `CONTRIBUTING.md` are followed
