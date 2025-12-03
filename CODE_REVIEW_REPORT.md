@@ -1,7 +1,7 @@
 # Comprehensive Code Review Report
 
 **Date**: 2025-12-02  
-**Last Updated**: 2025-12-02  
+**Last Updated**: 2025-12-03  
 **Scope**: Full codebase review of perstack monorepo
 
 ---
@@ -14,10 +14,12 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
-| ✅ Fixed      | 16    | Issues resolved with code changes          |
+| ✅ Fixed      | 17    | Issues resolved with code changes          |
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
+| 🔴 Open       | 7     | Runtime package issues (2025-12-03)        |
+| 🟡 Low Prio   | 4     | Runtime minor issues (2025-12-03)          |
 
 ---
 
@@ -560,18 +562,346 @@ Benefits:
 
 ---
 
+---
+
+## Runtime Package Review (2025-12-03)
+
+### 32. maxSteps Off-By-One Error (Potential Bug)
+
+**Status**: 🔴 **Open**
+
+**Category**: Potential Bug  
+**Severity**: Major
+
+**Location**: `packages/runtime/src/states/finishing-step.ts:10`
+
+**Issue**: The condition `checkpoint.stepNumber > setting.maxSteps` allows one extra step to execute.
+
+```typescript
+if (setting.maxSteps !== undefined && checkpoint.stepNumber > setting.maxSteps) {
+  return stopRunByExceededMaxSteps(...)
+}
+```
+
+**Expected behavior**: With `maxSteps=3`, steps 1, 2, 3 should execute, then stop.
+
+**Actual behavior**: With `maxSteps=3`, steps 1, 2, 3, 4 execute. The stop happens when `stepNumber=4 > 3`, meaning step 4 has already completed.
+
+**Impact**: Users setting `maxSteps` will get one more step than expected.
+
+**Recommendation**: Change to `>=` or check before incrementing stepNumber:
+```typescript
+if (setting.maxSteps !== undefined && checkpoint.stepNumber >= setting.maxSteps) {
+```
+
+---
+
+### 33. Sandbox Design Flaw: Application Controls Its Own Workspace
+
+**Status**: ✅ **Fixed**
+
+**Category**: Security / Architecture  
+**Severity**: Critical
+
+**Location**: `packages/runtime/src/runtime.ts`, `packages/core/src/schemas/runtime.ts`
+
+**Issue**: The runtime accepted a `workspace` parameter and called `process.chdir()` to set its own working directory. This violated the fundamental sandbox principle: **applications should not control their own execution boundaries**.
+
+**Why this was a security/architecture problem**:
+
+1. **Sandbox inversion**: The `@perstack/base` skill uses `validatePath()` to restrict file operations to the workspace. But if the application itself decides what the workspace is, it's not a real sandbox — it's self-imposed restriction that can be bypassed by the caller.
+
+2. **Violates isolation-by-design**: The docs state "Isolation by Design" as a core principle, but allowing `--workspace /arbitrary/path` means isolation is caller-controlled, not enforced.
+
+3. **Unix/POSIX principle violation**: Working directory should be set by the execution environment (shell, Docker, systemd), not by the application itself.
+
+4. **Parallel execution hazard**: `process.chdir()` modifies global Node.js state, causing race conditions when multiple runs execute in parallel.
+
+**Resolution**:
+- Removed `workspace` field from `RunSetting` interface and `runParamsSchema`
+- Removed `process.chdir()` call from runtime
+- Runtime now uses `process.cwd()` as workspace (set by execution environment)
+
+**Usage**:
+```bash
+# Run from project directory
+cd /project && perstack run expert "query"
+```
+
+---
+
+### 34. Delegate Expert Not Found Causes Runtime Error
+
+**Status**: 🔴 **Open**
+
+**Category**: Potential Bug  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/skill-manager/helpers.ts:69-74`
+
+**Issue**: When creating DelegateSkillManagers, if a delegate expert is not found in `experts`, `experts[delegateExpertName]` returns `undefined`, causing `new DelegateSkillManager(undefined, ...)` to fail.
+
+```typescript
+const delegateSkillManagers = expert.delegates.map((delegateExpertName) => {
+  const delegate = experts[delegateExpertName]  // May be undefined
+  const manager = new DelegateSkillManager(delegate, runId, eventListener)
+  // ...
+})
+```
+
+**Impact**: Unclear error message when delegate expert is missing.
+
+**Recommendation**: Add explicit check with descriptive error:
+```typescript
+const delegate = experts[delegateExpertName]
+if (!delegate) {
+  throw new Error(`Delegate expert "${delegateExpertName}" not found in experts`)
+}
+```
+
+---
+
+### 35. Skill Object Mutation in getSkillManagers
+
+**Status**: 🔴 **Open**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/skill-manager/helpers.ts:47-50`
+
+**Issue**: When `perstackBaseSkillCommand` is set, the original skill object is mutated:
+
+```typescript
+skill.command = overrideCommand
+skill.packageName = undefined
+skill.args = overrideArgs
+skill.lazyInit = false
+```
+
+**Impact**: The original skill definition in `expert.skills` is modified, which could cause issues if the same expert definition is reused.
+
+**Recommendation**: Create a copy before modifying:
+```typescript
+const modifiedSkill = { ...skill, command: overrideCommand, ... }
+```
+
+---
+
+### 36. experts Object Mutation in resolveExpertToRun
+
+**Status**: 🔴 **Open**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/resolve-expert-to-run.ts:20`
+
+**Issue**: The function modifies the passed `experts` object:
+
+```typescript
+experts[expertKey] = toRuntimeExpert(expert)  // Mutates argument
+```
+
+**Impact**: Side effect that could surprise callers; the original `experts` map passed to `run()` will be modified.
+
+**Recommendation**: Either document this behavior clearly or return a new map.
+
+---
+
+### 37. Missing Error Handling for File Operations in resolving-pdf-file and resolving-image-file
+
+**Status**: 🔴 **Open**
+
+**Category**: Potential Bug  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/states/resolving-pdf-file.ts:31`, `resolving-image-file.ts:31`
+
+**Issue**: `readFile(path)` can throw if file doesn't exist or is inaccessible, but errors are not caught:
+
+```typescript
+const file = await readFile(path).then((buffer) => ({
+  encodedData: buffer.toString("base64"),
+  // ...
+}))
+```
+
+**Impact**: File read errors will crash the runtime instead of being fed back to the LLM.
+
+**Recommendation**: Wrap in try-catch and return error message to LLM:
+```typescript
+try {
+  const buffer = await readFile(path)
+  // ...
+} catch (error) {
+  files.push({ type: "textPart", text: `Error reading file: ${error.message}` })
+}
+```
+
+---
+
+### 38. RunSetting Parsed Without Schema Validation
+
+**Status**: 🔴 **Open**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/run-setting-store.ts:39`
+
+**Issue**: RunSetting is parsed with `JSON.parse` and cast with `as`:
+
+```typescript
+const runSetting = JSON.parse(await fileSystem.readFile(runSettingPath, "utf-8")) as RunSetting
+```
+
+**Impact**: If the stored JSON is corrupted or schema-incompatible, errors will occur later with unclear messages.
+
+**Recommendation**: Use Zod schema validation:
+```typescript
+const runSetting = runSettingSchema.parse(JSON.parse(await fileSystem.readFile(...)))
+```
+
+---
+
+### 39. closeSkillManagers Does Not Handle Individual Close Failures
+
+**Status**: 🔴 **Open**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/skill-manager/helpers.ts:83-89`
+
+**Issue**: If one manager's `close()` throws, subsequent managers are not closed:
+
+```typescript
+export async function closeSkillManagers(skillManagers: Record<string, BaseSkillManager>): Promise<void> {
+  for (const skillManager of Object.values(skillManagers)) {
+    await skillManager.close()  // If this throws, loop breaks
+  }
+}
+```
+
+**Impact**: Orphaned MCP processes if one close fails.
+
+**Recommendation**: Use Promise.allSettled or try-catch:
+```typescript
+await Promise.all(Object.values(skillManagers).map(m => m.close().catch(() => {})))
+```
+
+---
+
+### 40. EventEmitter Listener Errors Block Other Listeners
+
+**Status**: 🟡 **Low Priority**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/events/event-emitter.ts:11-18`
+
+**Issue**: Listeners are called sequentially; if one throws, others are not called:
+
+```typescript
+async emit(event: RunEvent) {
+  for (const listener of this.listeners) {
+    await listener({...event})  // If throws, loop breaks
+  }
+}
+```
+
+**Impact**: One failing listener prevents event delivery to others.
+
+**Recommendation**: Catch errors per listener or use Promise.allSettled.
+
+---
+
+### 41. Nested Delegates Not Resolved
+
+**Status**: 🟡 **By Design?**
+
+**Category**: Architecture  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/setup-experts.ts:26-31`
+
+**Issue**: Only first-level delegates are resolved; nested delegates are not:
+
+```typescript
+for (const delegateName of expertToRun.delegates) {
+  const delegate = await resolveExpertToRun(delegateName, experts, clientOptions)
+  // delegate.delegates are NOT resolved
+}
+```
+
+**Impact**: If Expert A delegates to B, and B delegates to C, C is not pre-resolved.
+
+**Note**: This may be by design (resolve on demand), but should be documented.
+
+---
+
+### 42. model.ts Switch Statement Missing Default Case
+
+**Status**: 🟡 **Low Priority**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/model.ts:12-86`
+
+**Issue**: The `getModel` switch statement has no default case. TypeScript exhaustiveness check helps, but at runtime an unexpected provider could cause silent failure.
+
+**Impact**: If a new provider is added to the type but not implemented, no error is thrown.
+
+**Recommendation**: Add exhaustive default case:
+```typescript
+default:
+  const _exhaustive: never = providerConfig
+  throw new Error(`Unknown provider: ${providerConfig.providerName}`)
+```
+
+---
+
+### 43. Instruction Message Uses Runtime Values
+
+**Status**: 🟡 **Low Priority**
+
+**Category**: Code Quality  
+**Severity**: Minor
+
+**Location**: `packages/runtime/src/messages/instruction-message.ts:32-33`
+
+**Issue**: The instruction message embeds `new Date().toISOString()` and `process.cwd()` at message creation time:
+
+```typescript
+const metaInstruction = dedent`
+  ...
+  - Current time is ${new Date().toISOString()}
+  - Current working directory is ${process.cwd()}
+`
+```
+
+**Impact**: When replaying from a checkpoint, the instruction will have a different timestamp and potentially different cwd than the original run.
+
+**Recommendation**: Pass these values from setting/checkpoint for reproducibility.
+
+---
+
 ## Summary by Category
 
 | Category       | Critical | Major | Minor | Suggestions |
 | -------------- | -------- | ----- | ----- | ----------- |
-| Code Quality   | 1        | 4     | 5     | 5           |
+| Security       | 0 (1 ✅)  | 0     | 0     | 0           |
+| Code Quality   | 1        | 4     | 11    | 5           |
 | Documentation  | 0        | 0     | 3     | 1           |
 | Test Quality   | 0        | 1     | 2     | 0           |
-| Potential Bugs | 1        | 0     | 3     | 0           |
-| Architecture   | 0        | 0     | 0     | 1           |
+| Potential Bugs | 1        | 1     | 5     | 0           |
+| Architecture   | 0        | 0     | 1     | 1           |
 | Performance    | 0        | 0     | 0     | 1           |
 
-**Total Findings**: 31
+**Total Findings**: 43
 
 ---
 
@@ -610,6 +940,18 @@ Benefits:
 | #29   | Provider settings discriminated union  | ✅ Fixed        |
 | #30   | Separate types and schemas in core     | ⏸️ Future       |
 | #31   | Skill lazy init for faster startup     | ⏸️ Future       |
+| #32   | maxSteps off-by-one error              | 🔴 Open         |
+| #33   | Sandbox design flaw (workspace/chdir)  | ✅ Fixed        |
+| #34   | Delegate expert not found error        | 🔴 Open         |
+| #35   | Skill object mutation                  | 🔴 Open         |
+| #36   | experts object mutation                | 🔴 Open         |
+| #37   | File operation error handling          | 🔴 Open         |
+| #38   | RunSetting schema validation           | 🔴 Open         |
+| #39   | closeSkillManagers failure handling    | 🔴 Open         |
+| #40   | EventEmitter listener errors           | 🟡 Low priority |
+| #41   | Nested delegates not resolved          | 🟡 By design?   |
+| #42   | model.ts missing default case          | 🟡 Low priority |
+| #43   | Instruction uses runtime values        | 🟡 Low priority |
 
 ---
 
@@ -624,6 +966,22 @@ Benefits:
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
 - **#24, #25, #30, #31**: Suggestions — future enhancements (OTEL, structured logging, types/schemas separation, skill lazy init)
+- **#40, #42, #43**: Minor code quality issues — low priority
+
+### Runtime Package Open Issues (2025-12-03)
+
+**Major (Should Fix)**:
+- **#32**: maxSteps off-by-one — users get one extra step than configured
+
+**Minor (Should Fix)**:
+- **#34**: Delegate expert not found — improve error message
+- **#35, #36**: Object mutation side effects — defensive copying recommended
+- **#37**: File read errors unhandled — should feed back to LLM
+- **#38**: RunSetting not validated — use Zod schema
+- **#39**: closeSkillManagers partial failure — use Promise.allSettled
+
+**By Design / Needs Clarification**:
+- **#41**: Nested delegates not pre-resolved — document if intentional
 
 ---
 
