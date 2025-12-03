@@ -579,7 +579,6 @@ Benefits:
 ### Low Priority / Future Work
 - **#7**: Error message formatting — broad scope, not urgent
 - **#9**: Duplicate schema definitions — significant refactoring required
-- **#13**: Missing API documentation — enhancement, not blocking
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
 - **#24, #25, #28, #29, #30**: Suggestions — future enhancements (OTEL, structured logging, skill-manager refactoring, discriminated union for provider settings, types/schemas separation)
@@ -600,3 +599,4 @@ Benefits:
 | `6014a76` | Add: Health check tool to @perstack/base                           |
 | `9f01f94` | Add: Friendly Zod error formatting utility                         |
 | `6f766e1` | Update: Rename healthCheck to Perstack Runtime health check        |
+| `ebf67bc` | Docs: Add JSDoc to all core schema types                           |
