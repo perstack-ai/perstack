@@ -1,4 +1,5 @@
 import { z } from "zod"
+import type { ProviderName } from "./provider-config.js"
 import { headersSchema, providerNameSchema } from "./provider-config.js"
 
 const anthropicSettingSchema = z.object({
@@ -53,15 +54,62 @@ const providerSettingSchema = z.union([
   googleVertexSettingSchema,
 ])
 
+/** Provider configuration in perstack.toml */
+export interface ProviderTable {
+  /** Provider name */
+  providerName: ProviderName
+  /** Provider-specific settings */
+  setting?: Record<string, unknown>
+}
+
 export const providerTableSchema = z.object({
   providerName: providerNameSchema,
   setting: providerSettingSchema.optional(),
 })
-export type ProviderTable = z.infer<typeof providerTableSchema>
+
+/** Expert definition in perstack.toml (simplified from full Expert) */
+export interface PerstackConfigExpert {
+  /** Semantic version */
+  version?: string
+  /** Minimum runtime version required */
+  minRuntimeVersion?: string
+  /** Description of the Expert */
+  description?: string
+  /** System instruction */
+  instruction: string
+  /** Skills configuration */
+  skills?: Record<string, unknown>
+  /** Delegates list */
+  delegates?: string[]
+}
 
 /**
- * perstack.toml config schema
+ * Configuration loaded from perstack.toml.
+ * This is the primary configuration file for Perstack projects.
  */
+export interface PerstackConfig {
+  /** Default provider configuration */
+  provider?: ProviderTable
+  /** Default model name */
+  model?: string
+  /** Default temperature (0-1) */
+  temperature?: number
+  /** Maximum steps per run */
+  maxSteps?: number
+  /** Maximum retries on generation failure */
+  maxRetries?: number
+  /** Timeout per generation in milliseconds */
+  timeout?: number
+  /** Expert definitions */
+  experts?: Record<string, PerstackConfigExpert>
+  /** Custom Perstack API base URL */
+  perstackApiBaseUrl?: string
+  /** Custom command for @perstack/base skill */
+  perstackBaseSkillCommand?: string[]
+  /** Paths to .env files */
+  envPath?: string[]
+}
+
 export const perstackConfigSchema = z.object({
   provider: providerTableSchema.optional(),
   model: z.string().optional(),
@@ -123,4 +171,3 @@ export const perstackConfigSchema = z.object({
   perstackBaseSkillCommand: z.array(z.string()).optional(),
   envPath: z.array(z.string()).optional(),
 })
-export type PerstackConfig = z.infer<typeof perstackConfigSchema>

@@ -1,6 +1,20 @@
 import { z } from "zod"
 
+/** HTTP headers for API requests */
+export type Headers = Record<string, string> | undefined
+
 export const headersSchema = z.record(z.string(), z.string()).optional()
+
+/** Supported LLM provider names */
+export type ProviderName =
+  | "anthropic"
+  | "google"
+  | "openai"
+  | "ollama"
+  | "azure-openai"
+  | "amazon-bedrock"
+  | "google-vertex"
+  | "deepseek"
 
 export const providerNameSchema = z.enum([
   "anthropic",
@@ -12,7 +26,17 @@ export const providerNameSchema = z.enum([
   "google-vertex",
   "deepseek",
 ])
-export type ProviderName = z.infer<typeof providerNameSchema>
+
+/** Anthropic provider configuration */
+export interface AnthropicProviderConfig {
+  providerName: "anthropic"
+  /** API key for Anthropic */
+  apiKey: string
+  /** Custom base URL */
+  baseUrl?: string
+  /** Custom headers */
+  headers?: Headers
+}
 
 export const anthropicProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum.anthropic),
@@ -20,7 +44,18 @@ export const anthropicProviderConfigSchema = z.object({
   baseUrl: z.string().optional(),
   headers: headersSchema,
 })
-export type AnthropicProviderConfig = z.infer<typeof anthropicProviderConfigSchema>
+anthropicProviderConfigSchema satisfies z.ZodType<AnthropicProviderConfig>
+
+/** Google Generative AI provider configuration */
+export interface GoogleGenerativeAiProviderConfig {
+  providerName: "google"
+  /** API key for Google */
+  apiKey: string
+  /** Custom base URL */
+  baseUrl?: string
+  /** Custom headers */
+  headers?: Headers
+}
 
 export const googleGenerativeAiProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum.google),
@@ -28,9 +63,24 @@ export const googleGenerativeAiProviderConfigSchema = z.object({
   baseUrl: z.string().optional(),
   headers: headersSchema,
 })
-export type GoogleGenerativeAiProviderConfig = z.infer<
-  typeof googleGenerativeAiProviderConfigSchema
->
+googleGenerativeAiProviderConfigSchema satisfies z.ZodType<GoogleGenerativeAiProviderConfig>
+
+/** OpenAI provider configuration */
+export interface OpenAiProviderConfig {
+  providerName: "openai"
+  /** API key for OpenAI */
+  apiKey: string
+  /** Custom base URL */
+  baseUrl?: string
+  /** Organization ID */
+  organization?: string
+  /** Project ID */
+  project?: string
+  /** Custom name for the provider instance */
+  name?: string
+  /** Custom headers */
+  headers?: Headers
+}
 
 export const openAiProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum.openai),
@@ -41,14 +91,40 @@ export const openAiProviderConfigSchema = z.object({
   name: z.string().optional(),
   headers: headersSchema,
 })
-export type OpenAiProviderConfig = z.infer<typeof openAiProviderConfigSchema>
+openAiProviderConfigSchema satisfies z.ZodType<OpenAiProviderConfig>
+
+/** Ollama provider configuration */
+export interface OllamaProviderConfig {
+  providerName: "ollama"
+  /** Custom base URL (defaults to localhost) */
+  baseUrl?: string
+  /** Custom headers */
+  headers?: Headers
+}
 
 export const ollamaProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum.ollama),
   baseUrl: z.string().optional(),
   headers: headersSchema,
 })
-export type OllamaProviderConfig = z.infer<typeof ollamaProviderConfigSchema>
+ollamaProviderConfigSchema satisfies z.ZodType<OllamaProviderConfig>
+
+/** Azure OpenAI provider configuration */
+export interface AzureOpenAiProviderConfig {
+  providerName: "azure-openai"
+  /** API key for Azure */
+  apiKey: string
+  /** Azure resource name */
+  resourceName?: string
+  /** API version */
+  apiVersion?: string
+  /** Custom base URL */
+  baseUrl?: string
+  /** Custom headers */
+  headers?: Headers
+  /** Use deployment-based URLs */
+  useDeploymentBasedUrls?: boolean
+}
 
 export const azureOpenAiProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum["azure-openai"]),
@@ -59,7 +135,20 @@ export const azureOpenAiProviderConfigSchema = z.object({
   headers: headersSchema,
   useDeploymentBasedUrls: z.boolean().optional(),
 })
-export type AzureOpenAiProviderConfig = z.infer<typeof azureOpenAiProviderConfigSchema>
+azureOpenAiProviderConfigSchema satisfies z.ZodType<AzureOpenAiProviderConfig>
+
+/** Amazon Bedrock provider configuration */
+export interface AmazonBedrockProviderConfig {
+  providerName: "amazon-bedrock"
+  /** AWS access key ID */
+  accessKeyId: string
+  /** AWS secret access key */
+  secretAccessKey: string
+  /** AWS region */
+  region: string
+  /** AWS session token (for temporary credentials) */
+  sessionToken?: string
+}
 
 export const amazonBedrockProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum["amazon-bedrock"]),
@@ -68,7 +157,20 @@ export const amazonBedrockProviderConfigSchema = z.object({
   region: z.string(),
   sessionToken: z.string().optional(),
 })
-export type AmazonBedrockProviderConfig = z.infer<typeof amazonBedrockProviderConfigSchema>
+amazonBedrockProviderConfigSchema satisfies z.ZodType<AmazonBedrockProviderConfig>
+
+/** Google Vertex AI provider configuration */
+export interface GoogleVertexProviderConfig {
+  providerName: "google-vertex"
+  /** GCP project ID */
+  project?: string
+  /** GCP location */
+  location?: string
+  /** Custom base URL */
+  baseUrl?: string
+  /** Custom headers */
+  headers?: Headers
+}
 
 export const googleVertexProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum["google-vertex"]),
@@ -77,14 +179,38 @@ export const googleVertexProviderConfigSchema = z.object({
   baseUrl: z.string().optional(),
   headers: headersSchema,
 })
-export type GoogleVertexProviderConfig = z.infer<typeof googleVertexProviderConfigSchema>
+googleVertexProviderConfigSchema satisfies z.ZodType<GoogleVertexProviderConfig>
+
+/** DeepSeek provider configuration */
+export interface DeepseekProviderConfig {
+  providerName: "deepseek"
+  /** API key for DeepSeek */
+  apiKey: string
+  /** Custom base URL */
+  baseUrl?: string
+  /** Custom headers */
+  headers?: Headers
+}
+
 export const deepseekProviderConfigSchema = z.object({
   providerName: z.literal(providerNameSchema.enum.deepseek),
   apiKey: z.string(),
   baseUrl: z.string().optional(),
   headers: headersSchema,
 })
-export type DeepseekProviderConfig = z.infer<typeof deepseekProviderConfigSchema>
+deepseekProviderConfigSchema satisfies z.ZodType<DeepseekProviderConfig>
+
+/** Union of all provider configurations */
+export type ProviderConfig =
+  | AnthropicProviderConfig
+  | GoogleGenerativeAiProviderConfig
+  | OpenAiProviderConfig
+  | OllamaProviderConfig
+  | AzureOpenAiProviderConfig
+  | AmazonBedrockProviderConfig
+  | GoogleVertexProviderConfig
+  | DeepseekProviderConfig
+
 export const providerConfigSchema = z.discriminatedUnion("providerName", [
   anthropicProviderConfigSchema,
   googleGenerativeAiProviderConfigSchema,
@@ -95,4 +221,3 @@ export const providerConfigSchema = z.discriminatedUnion("providerName", [
   googleVertexProviderConfigSchema,
   deepseekProviderConfigSchema,
 ])
-export type ProviderConfig = z.infer<typeof providerConfigSchema>

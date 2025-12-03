@@ -1,12 +1,39 @@
 import { z } from "zod"
+import type { ProviderName } from "./provider-config.js"
 import { providerNameSchema } from "./provider-config.js"
 
-/**
- * @schema RunCommandInputSchema
- * @since 0.0.1
- * @stability stable
- * @description CLI run command input parameters. Used by CLI to parse user input.
- */
+/** Parsed command options after transformation */
+export interface CommandOptions {
+  /** Path to perstack.toml config file */
+  config?: string
+  /** LLM provider to use */
+  provider?: ProviderName
+  /** Model name */
+  model?: string
+  /** Temperature (0-1) */
+  temperature?: number
+  /** Maximum steps */
+  maxSteps?: number
+  /** Maximum retries */
+  maxRetries?: number
+  /** Timeout in milliseconds */
+  timeout?: number
+  /** Custom run ID */
+  runId?: string
+  /** Paths to .env files */
+  envPath?: string[]
+  /** Enable verbose logging */
+  verbose?: boolean
+  /** Continue most recent run */
+  continue?: boolean
+  /** Continue specific run by ID */
+  continueRun?: string
+  /** Resume from specific checkpoint */
+  resumeFrom?: string
+  /** Query is interactive tool call result */
+  interactiveToolCallResult?: boolean
+}
+
 const commandOptionsSchema = z.object({
   config: z.string().optional(),
   provider: providerNameSchema.optional(),
@@ -55,15 +82,35 @@ const commandOptionsSchema = z.object({
   resumeFrom: z.string().optional(),
   interactiveToolCallResult: z.boolean().optional(),
 })
+
+/** Input for the `perstack run` command */
+export interface RunCommandInput {
+  /** Expert key to run */
+  expertKey: string
+  /** Query or prompt */
+  query: string
+  /** Command options */
+  options: CommandOptions
+}
+
 export const runCommandInputSchema = z.object({
   expertKey: z.string(),
   query: z.string(),
   options: commandOptionsSchema,
 })
-export type RunCommandInput = z.infer<typeof runCommandInputSchema>
+
+/** Input for the `perstack start` command */
+export interface StartCommandInput {
+  /** Expert key to run (optional, prompts if not provided) */
+  expertKey?: string
+  /** Query or prompt (optional, prompts if not provided) */
+  query?: string
+  /** Command options */
+  options: CommandOptions
+}
+
 export const startCommandInputSchema = z.object({
   expertKey: z.string().optional(),
   query: z.string().optional(),
   options: commandOptionsSchema,
 })
-export type StartCommandInput = z.infer<typeof startCommandInputSchema>

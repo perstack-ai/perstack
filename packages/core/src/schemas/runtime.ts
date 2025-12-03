@@ -7,7 +7,9 @@ import {
   defaultTimeout,
   expertKeyRegex,
 } from "../constants/constants.js"
-import { type Checkpoint, checkpointSchema } from "./checkpoint.js"
+import type { Checkpoint } from "./checkpoint.js"
+import { checkpointSchema } from "./checkpoint.js"
+import type { Expert } from "./expert.js"
 import { expertSchema } from "./expert.js"
 import type {
   ExpertMessage,
@@ -16,12 +18,14 @@ import type {
   ToolMessage,
   UserMessage,
 } from "./message.js"
+import type { ProviderConfig } from "./provider-config.js"
 import { providerConfigSchema } from "./provider-config.js"
 import type { Step } from "./step.js"
 import type { ToolCall } from "./tool-call.js"
 import type { ToolResult } from "./tool-result.js"
 import type { Usage } from "./usage.js"
 
+/** Parse an expert key into its components */
 export function parseExpertKey(expertKey: string): {
   key: string
   name: string
@@ -37,6 +41,88 @@ export function parseExpertKey(expertKey: string): {
     throw new Error(`Invalid expert key format: ${expertKey}`)
   }
   return { key, name, version, tag }
+}
+
+/** Input for a run (text or interactive tool call result) */
+export interface RunInput {
+  /** Text query */
+  text?: string
+  /** Interactive tool call result (when continuing from interactive tool) */
+  interactiveToolCallResult?: {
+    toolCallId: string
+    toolName: string
+    text: string
+  }
+}
+
+/** Runtime settings for an Expert run */
+export interface RunSetting {
+  /** Model name to use */
+  model: string
+  /** Provider configuration */
+  providerConfig: ProviderConfig
+  /** Unique run identifier */
+  runId: string
+  /** Expert key to run */
+  expertKey: string
+  /** Input for the run */
+  input: RunInput
+  /** Map of expert keys to Expert definitions */
+  experts: Record<string, Expert>
+  /** Temperature for generation (0-1) */
+  temperature: number
+  /** Maximum steps before stopping */
+  maxSteps?: number
+  /** Maximum retries on generation failure */
+  maxRetries: number
+  /** Timeout per generation in milliseconds */
+  timeout: number
+  /** Workspace directory path */
+  workspace?: string
+  /** Unix timestamp when run started */
+  startedAt: number
+  /** Unix timestamp of last update */
+  updatedAt: number
+  /** Perstack API base URL */
+  perstackApiBaseUrl: string
+  /** Perstack API key */
+  perstackApiKey?: string
+  /** Custom command for @perstack/base */
+  perstackBaseSkillCommand?: string[]
+  /** Environment variables to pass to skills */
+  env: Record<string, string>
+}
+
+/** Parameters for starting a run */
+export interface RunParams {
+  /** Run settings */
+  setting: RunSetting
+  /** Optional checkpoint to resume from */
+  checkpoint?: Checkpoint
+}
+
+/** Input type for runParamsSchema (before defaults/transforms) */
+export type RunParamsInput = {
+  setting: {
+    model: string
+    providerConfig: ProviderConfig
+    runId?: string
+    expertKey: string
+    input: RunInput
+    experts?: Record<string, Omit<Expert, "key">>
+    temperature?: number
+    maxSteps?: number
+    maxRetries?: number
+    timeout?: number
+    workspace?: string
+    startedAt?: number
+    updatedAt?: number
+    perstackApiBaseUrl?: string
+    perstackApiKey?: string
+    perstackBaseSkillCommand?: string[]
+    env?: Record<string, string>
+  }
+  checkpoint?: Checkpoint
 }
 
 export const runParamsSchema = z.object({
@@ -84,16 +170,10 @@ export const runParamsSchema = z.object({
   }),
   checkpoint: checkpointSchema.optional(),
 })
-export type RunParamsInput = z.input<typeof runParamsSchema>
-export type RunParams = z.output<typeof runParamsSchema>
-export type RunSetting = z.infer<typeof runParamsSchema.shape.setting>
-export type RunInput = z.infer<typeof runParamsSchema.shape.setting.shape.input>
 
 /**
- * ExpertEvents can only contain deeply serializable properties.
- * This is important because these events are serialized using JSON.stringify() and stored in Cassandra,
- * and later used to restore state when resuming execution. Non-serializable properties would cause
- * issues during serialization/deserialization process.
+ * Expert run events - emitted during execution for observability.
+ * All events contain deeply serializable properties for checkpoint storage.
  */
 type ExpertEventPayloads = {
   startRun: {
@@ -168,19 +248,32 @@ type ExpertEventPayloads = {
   }
 }
 
-type BaseEvent = {
+/** Base properties for all run events */
+interface BaseEvent {
+  /** Unique event ID */
   id: string
+  /** Expert key that emitted this event */
   expertKey: string
+  /** Unix timestamp when event was emitted */
   timestamp: number
+  /** Run ID this event belongs to */
   runId: string
+  /** Step number when event was emitted */
   stepNumber: number
 }
+
+/** All possible event types */
 export type EventType = keyof ExpertEventPayloads
+
+/** Union type of all run events */
 export type RunEvent = {
   [K in EventType]: BaseEvent & { type: K } & ExpertEventPayloads[K]
 }[EventType]
+
+/** Extract a specific event type */
 export type EventForType<T extends EventType> = Extract<RunEvent, { type: T }>
 
+/** Factory function to create typed events */
 export function createEvent<T extends EventType>(type: T) {
   return (
     setting: RunSetting,
@@ -217,11 +310,17 @@ export const stopRunByDelegate = createEvent("stopRunByDelegate")
 export const stopRunByExceededMaxSteps = createEvent("stopRunByExceededMaxSteps")
 export const continueToNextStep = createEvent("continueToNextStep")
 
-type BaseRuntimeEvent = {
+/** Base properties for runtime events */
+interface BaseRuntimeEvent {
+  /** Unique event ID */
   id: string
+  /** Unix timestamp */
   timestamp: number
+  /** Run ID */
   runId: string
 }
+
+/** Runtime event payloads (infrastructure-level events) */
 type RuntimeEventPayloads = {
   initializeRuntime: {
     runtimeVersion: string
@@ -250,11 +349,19 @@ type RuntimeEventPayloads = {
     skillName: string
   }
 }
+
+/** All runtime event types */
 export type RuntimeEventType = keyof RuntimeEventPayloads
+
+/** Union type of all runtime events */
 export type RuntimeEvent = {
   [K in RuntimeEventType]: BaseRuntimeEvent & { type: K } & RuntimeEventPayloads[K]
 }[RuntimeEventType]
+
+/** Extract a specific runtime event type */
 export type RuntimeEventForType<T extends RuntimeEventType> = Extract<RuntimeEvent, { type: T }>
+
+/** Factory function to create runtime events */
 export function createRuntimeEvent<T extends RuntimeEventType>(
   type: T,
   runId: string,
