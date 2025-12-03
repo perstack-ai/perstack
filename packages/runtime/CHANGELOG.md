@@ -1,5 +1,11 @@
 # @perstack/runtime
 
+## 0.0.51
+
+### Patch Changes
+
+- [#1](https://github.com/perstack-ai/perstack/pull/1) [`0719f70`](https://github.com/perstack-ai/perstack/commit/0719f702a751dc4cc8cc7de4a9287ba81e8db4d2) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add related documentation links to README
+
 ## 0.0.50
 
 ### Patch Changes
