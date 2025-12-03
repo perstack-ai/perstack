@@ -233,4 +233,8 @@ The `status` field in a Checkpoint indicates the current state of the execution.
 - **stoppedByExceededMaxSteps**: The run stopped because it reached the maximum allowed steps.
 - **stoppedByError**: The run stopped due to an unrecoverable error.
 
+## Related Documentation
+
+- [Running Experts](https://perstack.ai/docs/using-experts/running-experts) - How to run Experts
+- [State Management](https://perstack.ai/docs/using-experts/state-management) - Understanding checkpoints and state
 
