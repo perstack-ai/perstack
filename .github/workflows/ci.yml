@@ -48,6 +48,17 @@ jobs:
       - name: Check unused dependencies
         run: pnpm run check-deps
 
+      - name: Validate version sync
+        run: pnpm run validate:versions
+
+      - name: Validate changesets
+        run: pnpm run validate:changeset
+        if: github.event_name == 'pull_request'
+
+      - name: Check schema diff
+        run: pnpm run check:schema-diff
+        if: github.event_name == 'pull_request'
+
   test:
     name: Test
     runs-on: ubuntu-24.04
