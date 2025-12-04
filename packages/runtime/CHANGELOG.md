@@ -1,5 +1,11 @@
 # @perstack/runtime
 
+## 0.0.56
+
+### Patch Changes
+
+- [#12](https://github.com/perstack-ai/perstack/pull/12) [`50c1640`](https://github.com/perstack-ai/perstack/commit/50c16404b3e34b7fb40a03a3edeb9b9da2d09844) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Avoid object mutation in getSkillManagers and resolveExpertToRun
+
 ## 0.0.55
 
 ### Patch Changes
