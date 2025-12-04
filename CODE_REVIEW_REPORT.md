@@ -18,7 +18,7 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
-| 🔴 Open       | 7     | Runtime package issues (2025-12-03)        |
+| 🔴 Open       | 6     | Runtime package issues (2025-12-03)        |
 | 🟡 Low Prio   | 4     | Runtime minor issues (2025-12-03)          |
 
 ---
@@ -568,7 +568,7 @@ Benefits:
 
 ### 32. maxSteps Off-By-One Error (Potential Bug)
 
-**Status**: 🔴 **Open**
+**Status**: ✅ **Fixed** — Commit `ced1aa6`
 
 **Category**: Potential Bug  
 **Severity**: Major
@@ -577,22 +577,7 @@ Benefits:
 
 **Issue**: The condition `checkpoint.stepNumber > setting.maxSteps` allows one extra step to execute.
 
-```typescript
-if (setting.maxSteps !== undefined && checkpoint.stepNumber > setting.maxSteps) {
-  return stopRunByExceededMaxSteps(...)
-}
-```
-
-**Expected behavior**: With `maxSteps=3`, steps 1, 2, 3 should execute, then stop.
-
-**Actual behavior**: With `maxSteps=3`, steps 1, 2, 3, 4 execute. The stop happens when `stepNumber=4 > 3`, meaning step 4 has already completed.
-
-**Impact**: Users setting `maxSteps` will get one more step than expected.
-
-**Recommendation**: Change to `>=` or check before incrementing stepNumber:
-```typescript
-if (setting.maxSteps !== undefined && checkpoint.stepNumber >= setting.maxSteps) {
-```
+**Resolution**: Changed `>` to `>=` in the comparison. Now `maxSteps=3` correctly stops after step 3.
 
 ---
 
@@ -940,7 +925,7 @@ const metaInstruction = dedent`
 | #29   | Provider settings discriminated union  | ✅ Fixed        |
 | #30   | Separate types and schemas in core     | ⏸️ Future       |
 | #31   | Skill lazy init for faster startup     | ⏸️ Future       |
-| #32   | maxSteps off-by-one error              | 🔴 Open         |
+| #32   | maxSteps off-by-one error              | ✅ Fixed        |
 | #33   | Sandbox design flaw (workspace/chdir)  | ✅ Fixed        |
 | #34   | Delegate expert not found error        | 🔴 Open         |
 | #35   | Skill object mutation                  | 🔴 Open         |
@@ -969,9 +954,6 @@ const metaInstruction = dedent`
 - **#40, #42, #43**: Minor code quality issues — low priority
 
 ### Runtime Package Open Issues (2025-12-03)
-
-**Major (Should Fix)**:
-- **#32**: maxSteps off-by-one — users get one extra step than configured
 
 **Minor (Should Fix)**:
 - **#34**: Delegate expert not found — improve error message
@@ -1002,3 +984,4 @@ const metaInstruction = dedent`
 | `ebf67bc` | Docs: Add JSDoc to all core schema types                           |
 | `f7edeb9` | Refactor: Use discriminatedUnion for provider settings             |
 | `5490ebb` | Refactor: Split SkillManager into separate classes                 |
+| `ced1aa6` | Fix: maxSteps off-by-one error in finishing step                   |

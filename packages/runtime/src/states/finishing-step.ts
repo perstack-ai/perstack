@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2"
-import { type RunEvent, continueToNextStep, stopRunByExceededMaxSteps } from "@perstack/core"
+import { continueToNextStep, type RunEvent, stopRunByExceededMaxSteps } from "@perstack/core"
 import type { RunSnapshot } from "../runtime-state-machine.js"
 
 export async function finishingStepLogic({
@@ -7,7 +7,7 @@ export async function finishingStepLogic({
   checkpoint,
   step,
 }: RunSnapshot["context"]): Promise<RunEvent> {
-  if (setting.maxSteps !== undefined && checkpoint.stepNumber > setting.maxSteps) {
+  if (setting.maxSteps !== undefined && checkpoint.stepNumber >= setting.maxSteps) {
     return stopRunByExceededMaxSteps(setting, checkpoint, {
       checkpoint: {
         ...checkpoint,
@@ -15,7 +15,7 @@ export async function finishingStepLogic({
       },
       step: {
         ...step,
-        finishedAt: new Date().getTime(),
+        finishedAt: Date.now(),
       },
     })
   }
@@ -25,7 +25,7 @@ export async function finishingStepLogic({
     },
     step: {
       ...step,
-      finishedAt: new Date().getTime(),
+      finishedAt: Date.now(),
     },
     nextCheckpoint: {
       ...checkpoint,
