@@ -1,6 +1,7 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
 import { ErrorStep } from "../../src/components/error-step.js"
+import { getStatusColor } from "../../src/utils/index.js"
 
 type ExpertChoice = {
   name: string
@@ -99,18 +100,6 @@ function VersionSelector({
       exit()
     }
   })
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "green"
-      case "deprecated":
-        return "yellow"
-      case "disabled":
-        return "red"
-      default:
-        return undefined
-    }
-  }
   return (
     <Box flexDirection="column">
       <Text bold>Select a version of {expertName} to unpublish:</Text>

@@ -1,6 +1,7 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
 import { ErrorStep } from "../../src/components/error-step.js"
+import { getStatusColor } from "../../src/utils/index.js"
 
 type ExpertChoice = {
   name: string
@@ -120,18 +121,6 @@ function VersionSelector({
       exit()
     }
   })
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "green"
-      case "deprecated":
-        return "yellow"
-      case "disabled":
-        return "red"
-      default:
-        return undefined
-    }
-  }
   return (
     <Box flexDirection="column">
       <Text bold>Select a version of {expertName}:</Text>
@@ -184,18 +173,6 @@ function StatusSelector({
       exit()
     }
   })
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "green"
-      case "deprecated":
-        return "yellow"
-      case "disabled":
-        return "red"
-      default:
-        return undefined
-    }
-  }
   return (
     <Box flexDirection="column">
       <Text bold>Select status for {expertKey}:</Text>
@@ -255,18 +232,6 @@ function ConfirmStep({
     }
   })
   const statusChanged = status !== currentStatus
-  const getStatusColor = (s: string) => {
-    switch (s) {
-      case "available":
-        return "green"
-      case "deprecated":
-        return "yellow"
-      case "disabled":
-        return "red"
-      default:
-        return undefined
-    }
-  }
   return (
     <Box flexDirection="column">
       <Text bold>Confirm status change for {expertKey}:</Text>
