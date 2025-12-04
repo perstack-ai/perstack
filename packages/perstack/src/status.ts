@@ -1,5 +1,5 @@
 import { ApiV1Client } from "@perstack/api-client/v1"
-import { renderStatus, type StatusVersionInfo } from "@perstack/tui"
+import { renderStatus, type WizardVersionInfo } from "@perstack/tui"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 
@@ -33,12 +33,12 @@ export const statusCommand = new Command()
               name,
               description: experts[name].description,
             })),
-            onFetchVersions: async (expertName: string): Promise<StatusVersionInfo[]> => {
+            onFetchVersions: async (expertName: string): Promise<WizardVersionInfo[]> => {
               try {
                 const { versions } = await client.registry.experts.getVersions({
                   expertKey: expertName,
                 })
-                const versionInfos: StatusVersionInfo[] = []
+                const versionInfos: WizardVersionInfo[] = []
                 for (const v of versions) {
                   try {
                     const { expert: fullExpert } = await client.registry.experts.get({

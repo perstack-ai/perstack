@@ -1,30 +1,21 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
 import { ErrorStep } from "../../src/components/error-step.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
 import { getStatusColor } from "../../src/utils/index.js"
 
-type ExpertChoice = {
-  name: string
-  description?: string
-}
-type VersionInfo = {
-  key: string
-  version: string
-  tags: string[]
-  status: "available" | "deprecated" | "disabled"
-}
 type WizardStep =
   | { type: "selectExpert" }
   | { type: "loadingVersions"; expertName: string }
-  | { type: "selectVersion"; expertName: string; versions: VersionInfo[] }
+  | { type: "selectVersion"; expertName: string; versions: WizardVersionInfo[] }
   | { type: "confirm"; expertKey: string; version: string }
   | { type: "error"; message: string }
 type UnpublishWizardResult = {
   expertKey: string
 }
 type UnpublishAppProps = {
-  experts: ExpertChoice[]
-  onFetchVersions: (expertName: string) => Promise<VersionInfo[]>
+  experts: WizardExpertChoice[]
+  onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
   onComplete: (result: UnpublishWizardResult) => void
   onCancel: () => void
 }
@@ -32,7 +23,7 @@ function ExpertSelector({
   experts,
   onSelect,
 }: {
-  experts: ExpertChoice[]
+  experts: WizardExpertChoice[]
   onSelect: (name: string) => void
 }) {
   const { exit } = useApp()
@@ -78,8 +69,8 @@ function VersionSelector({
   onBack,
 }: {
   expertName: string
-  versions: VersionInfo[]
-  onSelect: (version: VersionInfo) => void
+  versions: WizardVersionInfo[]
+  onSelect: (version: WizardVersionInfo) => void
   onBack: () => void
 }) {
   const { exit } = useApp()
@@ -200,7 +191,7 @@ export function UnpublishApp({
       })
     }
   }
-  const handleVersionSelect = (version: VersionInfo) => {
+  const handleVersionSelect = (version: WizardVersionInfo) => {
     setStep({
       type: "confirm",
       expertKey: version.key,
@@ -262,4 +253,5 @@ export function UnpublishApp({
       return null
   }
 }
-export type { ExpertChoice, VersionInfo, UnpublishWizardResult }
+export type { UnpublishWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"

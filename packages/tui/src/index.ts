@@ -1,26 +1,13 @@
 export { renderPublish } from "../apps/publish/render.js"
 export { renderStart } from "../apps/start/render.js"
-export {
-  type ExpertChoice as StatusExpertChoice,
-  renderStatus,
-  type StatusWizardResult,
-  type VersionInfo as StatusVersionInfo,
-} from "../apps/status/render.js"
-export {
-  type ExpertChoice as TagExpertChoice,
-  renderTag,
-  type TagWizardResult,
-  type VersionInfo,
-} from "../apps/tag/render.js"
-export {
-  type ExpertChoice as UnpublishExpertChoice,
-  renderUnpublish,
-  type UnpublishWizardResult,
-  type VersionInfo as UnpublishVersionInfo,
-} from "../apps/unpublish/render.js"
+export { renderStatus, type StatusWizardResult } from "../apps/status/render.js"
+export { renderTag, type TagWizardResult } from "../apps/tag/render.js"
+export { renderUnpublish, type UnpublishWizardResult } from "../apps/unpublish/render.js"
 export type {
   CheckpointHistoryItem,
   EventHistoryItem,
   PerstackEvent,
   RunHistoryItem,
+  WizardExpertChoice,
+  WizardVersionInfo,
 } from "./types/index.js"

@@ -1,13 +1,9 @@
 import { render } from "ink"
+import type { WizardExpertChoice } from "../../src/types/wizard.js"
 import { PublishApp } from "./app.js"
 
-type ExpertChoice = {
-  name: string
-  description?: string
-}
-
 type RenderPublishSelectOptions = {
-  experts: ExpertChoice[]
+  experts: WizardExpertChoice[]
 }
 
 export async function renderPublish(options: RenderPublishSelectOptions): Promise<string | null> {

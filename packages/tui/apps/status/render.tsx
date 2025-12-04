@@ -1,9 +1,10 @@
 import { render } from "ink"
-import { type ExpertChoice, StatusApp, type StatusWizardResult, type VersionInfo } from "./app.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+import { StatusApp, type StatusWizardResult } from "./app.js"
 
 type RenderStatusWizardOptions = {
-  experts: ExpertChoice[]
-  onFetchVersions: (expertName: string) => Promise<VersionInfo[]>
+  experts: WizardExpertChoice[]
+  onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
 }
 
 export async function renderStatus(
@@ -29,4 +30,5 @@ export async function renderStatus(
   })
 }
 
-export type { ExpertChoice, VersionInfo, StatusWizardResult }
+export type { StatusWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
