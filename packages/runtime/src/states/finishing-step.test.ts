@@ -37,10 +37,40 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
     })
   })
 
-  it("stops when max steps exceeded", async () => {
+  it("stops when step number reaches max steps", async () => {
     const setting = createRunSetting({ maxSteps: 3 })
-    const checkpoint = createCheckpoint({ stepNumber: 4 })
-    const step = createStep({ stepNumber: 4 })
+    const checkpoint = createCheckpoint({ stepNumber: 3 })
+    const step = createStep({ stepNumber: 3 })
+    await expect(
+      StateMachineLogics.FinishingStep({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).resolves.toStrictEqual({
+      type: "stopRunByExceededMaxSteps",
+      id: expect.any(String),
+      expertKey: setting.expertKey,
+      timestamp: expect.any(Number),
+      runId: setting.runId,
+      stepNumber: checkpoint.stepNumber,
+      checkpoint: {
+        ...checkpoint,
+        status: "stoppedByExceededMaxSteps",
+      },
+      step: {
+        ...step,
+        finishedAt: expect.any(Number),
+      },
+    })
+  })
+
+  it("stops when step number exceeds max steps", async () => {
+    const setting = createRunSetting({ maxSteps: 3 })
+    const checkpoint = createCheckpoint({ stepNumber: 5 })
+    const step = createStep({ stepNumber: 5 })
     await expect(
       StateMachineLogics.FinishingStep({
         setting,
