@@ -19,6 +19,9 @@ import {
   getEventsWithDetails,
   getRecentExperts,
 } from "./lib/run-manager.js"
+
+const CONTINUE_TIMEOUT_MS = 60_000
+
 export const startCommand = new Command()
   .command("start")
   .description("Start Perstack with interactive TUI")
@@ -180,7 +183,7 @@ export const startCommand = new Command()
                 resolveContinueQuery = null
                 resolve(null)
               }
-            }, 60000)
+            }, CONTINUE_TIMEOUT_MS)
           })
           if (nextQuery) {
             finalQuery = nextQuery
