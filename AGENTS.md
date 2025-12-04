@@ -519,6 +519,17 @@ pnpm build              # Build all packages
 
 **All commands must pass.** If any fails, fix before pushing.
 
+### E2E Testing (MANDATORY)
+
+After build passes, run E2E tests by following `E2E.md`:
+
+```bash
+pnpm build  # Must build first
+# Then run E2E tests as documented in E2E.md
+```
+
+**E2E tests must pass before pushing.** This catches runtime issues that unit tests miss.
+
 ## Expert Definition Format
 
 Experts are defined in `perstack.toml`:
@@ -586,4 +597,5 @@ pick = ["attemptCompletion", "think"]
 - [ ] `pnpm check-deps` passes
 - [ ] `pnpm reset && pnpm test` passes
 - [ ] `pnpm build` passes
+- [ ] E2E tests pass (follow `E2E.md`)
 - [ ] Versioning rules in `CONTRIBUTING.md` are followed

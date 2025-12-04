@@ -18,7 +18,7 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
-| 🔴 Open       | 6     | Runtime package issues (2025-12-03)        |
+| 🔴 Open       | 5     | Runtime package issues (2025-12-03)        |
 | 🟡 Low Prio   | 4     | Runtime minor issues (2025-12-03)          |
 
 ---
@@ -752,29 +752,16 @@ const runSetting = runSettingSchema.parse(JSON.parse(await fileSystem.readFile(.
 
 ### 39. closeSkillManagers Does Not Handle Individual Close Failures
 
-**Status**: 🔴 **Open**
+**Status**: ✅ **Fixed** — Commit `dac71b5`
 
 **Category**: Code Quality  
 **Severity**: Minor
 
 **Location**: `packages/runtime/src/skill-manager/helpers.ts:83-89`
 
-**Issue**: If one manager's `close()` throws, subsequent managers are not closed:
+**Issue**: If one manager's `close()` throws, subsequent managers are not closed.
 
-```typescript
-export async function closeSkillManagers(skillManagers: Record<string, BaseSkillManager>): Promise<void> {
-  for (const skillManager of Object.values(skillManagers)) {
-    await skillManager.close()  // If this throws, loop breaks
-  }
-}
-```
-
-**Impact**: Orphaned MCP processes if one close fails.
-
-**Recommendation**: Use Promise.allSettled or try-catch:
-```typescript
-await Promise.all(Object.values(skillManagers).map(m => m.close().catch(() => {})))
-```
+**Resolution**: Changed to use `Promise.all` with `.catch()` to ensure all managers are closed even if some fail.
 
 ---
 
@@ -932,7 +919,7 @@ const metaInstruction = dedent`
 | #36   | experts object mutation                | 🔴 Open         |
 | #37   | File operation error handling          | 🔴 Open         |
 | #38   | RunSetting schema validation           | 🔴 Open         |
-| #39   | closeSkillManagers failure handling    | 🔴 Open         |
+| #39   | closeSkillManagers failure handling    | ✅ Fixed        |
 | #40   | EventEmitter listener errors           | 🟡 Low priority |
 | #41   | Nested delegates not resolved          | 🟡 By design?   |
 | #42   | model.ts missing default case          | 🟡 Low priority |
@@ -960,7 +947,6 @@ const metaInstruction = dedent`
 - **#35, #36**: Object mutation side effects — defensive copying recommended
 - **#37**: File read errors unhandled — should feed back to LLM
 - **#38**: RunSetting not validated — use Zod schema
-- **#39**: closeSkillManagers partial failure — use Promise.allSettled
 
 **By Design / Needs Clarification**:
 - **#41**: Nested delegates not pre-resolved — document if intentional
@@ -985,3 +971,4 @@ const metaInstruction = dedent`
 | `f7edeb9` | Refactor: Use discriminatedUnion for provider settings             |
 | `5490ebb` | Refactor: Split SkillManager into separate classes                 |
 | `ced1aa6` | Fix: maxSteps off-by-one error in finishing step                   |
+| `dac71b5` | Fix: Handle individual close failures in closeSkillManagers        |
