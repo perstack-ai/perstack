@@ -1,5 +1,11 @@
 # @perstack/runtime
 
+## 0.0.54
+
+### Patch Changes
+
+- [#7](https://github.com/perstack-ai/perstack/pull/7) [`84a5692`](https://github.com/perstack-ai/perstack/commit/84a5692c7ba906962ff24c28074822e9eedda60a) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Handle file read errors gracefully in resolving PDF and image file states
+
 ## 0.0.53
 
 ### Patch Changes
