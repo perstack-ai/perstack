@@ -14,12 +14,12 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
-| ✅ Fixed      | 20    | Issues resolved with code changes          |
+| ✅ Fixed      | 26    | Issues resolved with code changes          |
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
 | 🔴 Open       | 0     | All runtime issues resolved                |
-| 🟡 Low Prio   | 4     | Runtime minor issues                       |
+| 🟡 Low Prio   | 1     | By design / needs clarification            |
 
 ---
 
@@ -756,7 +756,7 @@ for (const delegateName of expertToRun.delegates) {
 
 ### 42. model.ts Switch Statement Missing Default Case
 
-**Status**: 🟡 **Low Priority**
+**Status**: ✅ **Fixed** — PR #17
 
 **Category**: Code Quality  
 **Severity**: Minor
@@ -767,18 +767,13 @@ for (const delegateName of expertToRun.delegates) {
 
 **Impact**: If a new provider is added to the type but not implemented, no error is thrown.
 
-**Recommendation**: Add exhaustive default case:
-```typescript
-default:
-  const _exhaustive: never = providerConfig
-  throw new Error(`Unknown provider: ${providerConfig.providerName}`)
-```
+**Resolution**: Added exhaustive default case that throws an error for unknown providers.
 
 ---
 
 ### 43. Instruction Message Uses Runtime Values
 
-**Status**: 🟡 **Low Priority**
+**Status**: ✅ **Fixed** — PR #19
 
 **Category**: Code Quality  
 **Severity**: Minor
@@ -797,7 +792,7 @@ const metaInstruction = dedent`
 
 **Impact**: When replaying from a checkpoint, the instruction will have a different timestamp and potentially different cwd than the original run.
 
-**Recommendation**: Pass these values from setting/checkpoint for reproducibility.
+**Resolution**: Refactored to use `setting.startedAt` for timestamp, ensuring reproducibility when replaying from checkpoints.
 
 ---
 
@@ -855,15 +850,15 @@ const metaInstruction = dedent`
 | #32   | maxSteps off-by-one error              | ✅ Fixed        |
 | #33   | Sandbox design flaw (workspace/chdir)  | ✅ Fixed        |
 | #34   | Delegate expert not found error        | ✅ Fixed        |
-| #35   | Skill object mutation                  | 🔴 Open         |
-| #36   | experts object mutation                | 🔴 Open         |
+| #35   | Skill object mutation                  | ✅ Fixed        |
+| #36   | experts object mutation                | ✅ Fixed        |
 | #37   | File operation error handling          | ✅ Fixed        |
-| #38   | RunSetting schema validation           | 🔴 Open         |
+| #38   | RunSetting schema validation           | ✅ Fixed        |
 | #39   | closeSkillManagers failure handling    | ✅ Fixed        |
-| #40   | EventEmitter listener errors           | 🟡 Low priority |
+| #40   | EventEmitter listener errors           | ✅ Fixed        |
 | #41   | Nested delegates not resolved          | 🟡 By design?   |
-| #42   | model.ts missing default case          | 🟡 Low priority |
-| #43   | Instruction uses runtime values        | 🟡 Low priority |
+| #42   | model.ts missing default case          | ✅ Fixed        |
+| #43   | Instruction uses runtime values        | ✅ Fixed        |
 
 ---
 
@@ -878,15 +873,8 @@ const metaInstruction = dedent`
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
 - **#24, #25, #30, #31**: Suggestions — future enhancements (OTEL, structured logging, types/schemas separation, skill lazy init)
-- **#40, #42, #43**: Minor code quality issues — low priority
 
-### Runtime Package Open Issues (2025-12-03)
-
-**Minor (Should Fix)**:
-- **#35, #36**: Object mutation side effects — defensive copying recommended
-- **#38**: RunSetting not validated — use Zod schema
-
-**By Design / Needs Clarification**:
+### By Design / Needs Clarification
 - **#41**: Nested delegates not pre-resolved — document if intentional
 
 ---
@@ -912,3 +900,8 @@ const metaInstruction = dedent`
 | `dac71b5` | Fix: Handle individual close failures in closeSkillManagers        |
 | `796f981` | Fix: Handle file read errors gracefully in resolving file states   |
 | `cc23849` | Fix: Add explicit error when delegate expert not found             |
+| `50c1640` | Fix: Avoid object mutation in skill manager and expert resolution  |
+| `eb2f4cc` | Add: RunSetting schema validation                                  |
+| `06bceed` | Fix: Continue emitting events when listener throws                 |
+| `4948a7b` | Fix: Add exhaustive default case to getModel switch                |
+| `c7ae375` | Fix: Use startedAt for instruction message timestamp               |
