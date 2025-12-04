@@ -1,6 +1,6 @@
 {
   "name": "@perstack/api-client",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "description": "Perstack API Client",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",

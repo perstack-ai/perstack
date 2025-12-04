@@ -1,5 +1,15 @@
 # @perstack/runtime
 
+## 0.0.57
+
+### Patch Changes
+
+- [#14](https://github.com/perstack-ai/perstack/pull/14) [`eb2f4cc`](https://github.com/perstack-ai/perstack/commit/eb2f4cc1900bb7ae02bf21c375bdade891d9823e) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add runSettingSchema for validating stored run settings
+
+- Updated dependencies [[`eb2f4cc`](https://github.com/perstack-ai/perstack/commit/eb2f4cc1900bb7ae02bf21c375bdade891d9823e)]:
+  - @perstack/core@0.0.18
+  - @perstack/api-client@0.0.29
+
 ## 0.0.56
 
 ### Patch Changes
