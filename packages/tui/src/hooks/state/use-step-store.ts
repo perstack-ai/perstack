@@ -1,5 +1,5 @@
 import type { RunEvent, ToolCall, ToolResult } from "@perstack/core"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { UI_CONSTANTS } from "../../constants.js"
 import type { DisplayStep, PerstackEvent, ToolExecution } from "../../types/index.js"
 
@@ -34,79 +34,87 @@ const extractQuery = (event: Extract<RunEvent, { type: "startRun" }>): string | 
   if (userMessage?.type !== "userMessage") return undefined
   return userMessage.contents.find((c) => c.type === "textPart")?.text
 }
-const buildSteps = (events: PerstackEvent[]): DisplayStep[] => {
-  const stepMap = new Map<number, StepBuilder>()
-  const getOrCreateStep = (stepNumber: number): StepBuilder => {
-    const existing = stepMap.get(stepNumber)
-    if (existing) return existing
-    const builder: StepBuilder = { tools: new Map() }
-    stepMap.set(stepNumber, builder)
-    return builder
-  }
-  for (const event of events) {
-    if (!("stepNumber" in event)) continue
-    const stepNum = event.stepNumber
-    const builder = getOrCreateStep(stepNum)
-    if (event.type === "startRun") {
-      builder.query = extractQuery(event)
-    } else if (event.type === "completeRun") {
-      builder.completion = event.text
-    } else if (isToolCallEvent(event)) {
-      const { toolCall } = event
-      builder.tools.set(toolCall.id, {
-        id: toolCall.id,
-        toolName: toolCall.toolName,
-        args: toolCall.args as Record<string, unknown>,
-      })
-    } else if (isToolResultEvent(event)) {
-      const { toolResult } = event
-      const existing = builder.tools.get(toolResult.id)
-      if (existing && Array.isArray(toolResult.result)) {
-        existing.result = toolResult.result
-        existing.isSuccess = checkIsSuccess(toolResult.result)
-      }
+const getOrCreateStep = (stepMap: Map<number, StepBuilder>, stepNumber: number): StepBuilder => {
+  const existing = stepMap.get(stepNumber)
+  if (existing) return existing
+  const builder: StepBuilder = { tools: new Map() }
+  stepMap.set(stepNumber, builder)
+  return builder
+}
+const processEvent = (stepMap: Map<number, StepBuilder>, event: PerstackEvent): void => {
+  if (!("stepNumber" in event)) return
+  const builder = getOrCreateStep(stepMap, event.stepNumber)
+  if (event.type === "startRun") {
+    builder.query = extractQuery(event)
+  } else if (event.type === "completeRun") {
+    builder.completion = event.text
+  } else if (isToolCallEvent(event)) {
+    const { toolCall } = event
+    builder.tools.set(toolCall.id, {
+      id: toolCall.id,
+      toolName: toolCall.toolName,
+      args: toolCall.args as Record<string, unknown>,
+    })
+  } else if (isToolResultEvent(event)) {
+    const { toolResult } = event
+    const existing = builder.tools.get(toolResult.id)
+    if (existing && Array.isArray(toolResult.result)) {
+      existing.result = toolResult.result
+      existing.isSuccess = checkIsSuccess(toolResult.result)
     }
   }
-  return Array.from(stepMap.entries())
+}
+const buildStepsFromMap = (stepMap: Map<number, StepBuilder>): DisplayStep[] =>
+  Array.from(stepMap.entries())
     .sort(([a], [b]) => a - b)
     .map(([stepNumber, builder]) => ({
       id: `step-${stepNumber}`,
       stepNumber,
       query: builder.query,
-      tools: Array.from(builder.tools.values()),
+      tools: Array.from(builder.tools.values()).map((tool) => ({ ...tool })),
       completion: builder.completion,
     }))
-}
 export const useStepStore = () => {
   const [events, setEvents] = useState<PerstackEvent[]>([])
+  const [steps, setSteps] = useState<DisplayStep[]>([])
+  const stepMapRef = useRef<Map<number, StepBuilder>>(new Map())
+  const processedCountRef = useRef(0)
+  const needsRebuildRef = useRef(false)
   const addEvent = useCallback((event: PerstackEvent) => {
     setEvents((prev) => {
       const newEvents = [...prev, event]
-      return newEvents.length > UI_CONSTANTS.MAX_EVENTS
-        ? newEvents.slice(-UI_CONSTANTS.MAX_EVENTS)
-        : newEvents
+      if (newEvents.length > UI_CONSTANTS.MAX_EVENTS) {
+        needsRebuildRef.current = true
+        return newEvents.slice(-UI_CONSTANTS.MAX_EVENTS)
+      }
+      return newEvents
     })
   }, [])
   const setHistoricalEvents = useCallback((historicalEvents: PerstackEvent[]) => {
+    needsRebuildRef.current = true
     setEvents(
       historicalEvents.length > UI_CONSTANTS.MAX_EVENTS
         ? historicalEvents.slice(-UI_CONSTANTS.MAX_EVENTS)
         : historicalEvents,
     )
   }, [])
-  const steps = useMemo(() => buildSteps(events), [events])
-  const completedSteps = useMemo(() => {
-    if (steps.length === 0) return []
-    const lastStep = steps.at(-1)
-    if (lastStep?.completion) return steps
-    return steps.slice(0, -1)
-  }, [steps])
-  const currentStep = useMemo(() => {
-    if (steps.length === 0) return null
-    const lastStep = steps.at(-1)
-    if (lastStep?.completion) return null
-    return lastStep ?? null
-  }, [steps])
+  useEffect(() => {
+    if (needsRebuildRef.current) {
+      stepMapRef.current = new Map()
+      processedCountRef.current = 0
+      needsRebuildRef.current = false
+    }
+    const newEvents = events.slice(processedCountRef.current)
+    for (const event of newEvents) {
+      processEvent(stepMapRef.current, event)
+    }
+    processedCountRef.current = events.length
+    setSteps(buildStepsFromMap(stepMapRef.current))
+  }, [events])
+  const lastStep = steps.at(-1)
+  const isComplete = lastStep?.completion !== undefined
+  const completedSteps = isComplete ? steps : steps.slice(0, -1)
+  const currentStep = isComplete ? null : (lastStep ?? null)
   return {
     steps,
     completedSteps,
