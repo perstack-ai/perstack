@@ -18,7 +18,7 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
-| 🔴 Open       | 5     | Runtime package issues (2025-12-03)        |
+| 🔴 Open       | 4     | Runtime package issues (2025-12-03)        |
 | 🟡 Low Prio   | 4     | Runtime minor issues (2025-12-03)          |
 
 ---
@@ -698,31 +698,16 @@ experts[expertKey] = toRuntimeExpert(expert)  // Mutates argument
 
 **Status**: 🔴 **Open**
 
+**Status**: ✅ **Fixed** — Commit `796f981`
+
 **Category**: Potential Bug  
 **Severity**: Minor
 
-**Location**: `packages/runtime/src/states/resolving-pdf-file.ts:31`, `resolving-image-file.ts:31`
+**Location**: `packages/runtime/src/states/resolving-pdf-file.ts`, `resolving-image-file.ts`
 
-**Issue**: `readFile(path)` can throw if file doesn't exist or is inaccessible, but errors are not caught:
+**Issue**: `readFile(path)` can throw if file doesn't exist or is inaccessible.
 
-```typescript
-const file = await readFile(path).then((buffer) => ({
-  encodedData: buffer.toString("base64"),
-  // ...
-}))
-```
-
-**Impact**: File read errors will crash the runtime instead of being fed back to the LLM.
-
-**Recommendation**: Wrap in try-catch and return error message to LLM:
-```typescript
-try {
-  const buffer = await readFile(path)
-  // ...
-} catch (error) {
-  files.push({ type: "textPart", text: `Error reading file: ${error.message}` })
-}
-```
+**Resolution**: Added try-catch blocks to handle file read errors gracefully. Errors are now returned as text parts to the LLM instead of crashing.
 
 ---
 
@@ -917,7 +902,7 @@ const metaInstruction = dedent`
 | #34   | Delegate expert not found error        | 🔴 Open         |
 | #35   | Skill object mutation                  | 🔴 Open         |
 | #36   | experts object mutation                | 🔴 Open         |
-| #37   | File operation error handling          | 🔴 Open         |
+| #37   | File operation error handling          | ✅ Fixed        |
 | #38   | RunSetting schema validation           | 🔴 Open         |
 | #39   | closeSkillManagers failure handling    | ✅ Fixed        |
 | #40   | EventEmitter listener errors           | 🟡 Low priority |
@@ -945,7 +930,6 @@ const metaInstruction = dedent`
 **Minor (Should Fix)**:
 - **#34**: Delegate expert not found — improve error message
 - **#35, #36**: Object mutation side effects — defensive copying recommended
-- **#37**: File read errors unhandled — should feed back to LLM
 - **#38**: RunSetting not validated — use Zod schema
 
 **By Design / Needs Clarification**:
@@ -972,3 +956,4 @@ const metaInstruction = dedent`
 | `5490ebb` | Refactor: Split SkillManager into separate classes                 |
 | `ced1aa6` | Fix: maxSteps off-by-one error in finishing step                   |
 | `dac71b5` | Fix: Handle individual close failures in closeSkillManagers        |
+| `796f981` | Fix: Handle file read errors gracefully in resolving file states   |
