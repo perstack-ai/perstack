@@ -1,5 +1,11 @@
 # @perstack/tui
 
+## 0.0.16
+
+### Patch Changes
+
+- [#36](https://github.com/perstack-ai/perstack/pull/36) [`17dfee7`](https://github.com/perstack-ai/perstack/commit/17dfee73fa8cb4e17c6deaec17d0d6653736e0af) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Share VersionSelector component across wizard apps
+
 ## 0.0.15
 
 ### Patch Changes
