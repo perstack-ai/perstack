@@ -43,6 +43,8 @@ export const KEY_BINDINGS = {
   CHECKPOINTS: "c",
   EVENTS: "e",
   RESUME: "Enter",
+  QUIT: "q",
+  CTRL_QUIT: "Ctrl+q",
 } as const
 
 export const KEY_HINTS = {
@@ -56,4 +58,8 @@ export const KEY_HINTS = {
   NEW: `${KEY_BINDINGS.NEW}:New Run`,
   CHECKPOINTS: `${KEY_BINDINGS.CHECKPOINTS}:Checkpoints`,
   EVENTS: `${KEY_BINDINGS.EVENTS}:Events`,
+  ESC_BACK: `${KEY_BINDINGS.ESCAPE}:Back`,
+  QUIT: `${KEY_BINDINGS.QUIT}:Quit`,
+  CTRL_QUIT: `${KEY_BINDINGS.CTRL_QUIT}:Quit`,
+  CONFIRM: `${KEY_BINDINGS.SELECT}:Confirm`,
 } as const
