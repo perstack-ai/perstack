@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react"
 import type {
+  BrowsingEventDetailState,
+  BrowsingEventsState,
   CheckpointHistoryItem,
   EventHistoryItem,
   ExpertOption,
@@ -146,9 +148,33 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
       dispatch({ type: "GO_BACK_FROM_CHECKPOINTS", historyRuns })
     }
   }, [historyRuns, dispatch])
+  const handleEventSelect = useCallback(
+    (state: BrowsingEventsState, event: EventHistoryItem) => {
+      dispatch({
+        type: "SELECT_EVENT",
+        checkpoint: state.checkpoint,
+        events: state.events,
+        selectedEvent: event,
+      })
+    },
+    [dispatch],
+  )
+  const handleBackFromEventDetail = useCallback(
+    (state: BrowsingEventDetailState) => {
+      dispatch({
+        type: "GO_BACK_FROM_EVENT_DETAIL",
+        checkpoint: state.checkpoint,
+        events: state.events,
+      })
+    },
+    [dispatch],
+  )
   const handleBack = useCallback(
-    (currentStateType: InputState["type"]) => {
-      switch (currentStateType) {
+    (currentState: InputState) => {
+      switch (currentState.type) {
+        case "browsingEventDetail":
+          handleBackFromEventDetail(currentState)
+          break
         case "browsingEvents":
           handleBackFromEvents()
           break
@@ -157,7 +183,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
           break
       }
     },
-    [handleBackFromEvents, handleBackFromCheckpoints],
+    [handleBackFromEventDetail, handleBackFromEvents, handleBackFromCheckpoints],
   )
   const handleSwitchToExperts = useCallback(() => {
     dispatch({ type: "BROWSE_EXPERTS", experts: allExperts })
@@ -173,6 +199,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     handleRunResume,
     handleCheckpointSelect,
     handleCheckpointResume,
+    handleEventSelect,
     handleBack,
     handleSwitchToExperts,
     handleSwitchToHistory,

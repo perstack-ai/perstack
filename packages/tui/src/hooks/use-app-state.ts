@@ -110,8 +110,8 @@ export const useAppState = (props: UseAppStateProps) => {
     setExpertName,
   })
   const handleBack = useCallback(() => {
-    history.handleBack(inputState.type)
-  }, [history.handleBack, inputState.type])
+    history.handleBack(inputState)
+  }, [history.handleBack, inputState])
   const inputAreaContextValue = useMemo<InputAreaContextValue>(
     () => ({
       onExpertSelect: handleExpertSelect,
@@ -120,6 +120,7 @@ export const useAppState = (props: UseAppStateProps) => {
       onRunResume: history.handleRunResume,
       onCheckpointSelect: history.handleCheckpointSelect,
       onCheckpointResume: history.handleCheckpointResume,
+      onEventSelect: history.handleEventSelect,
       onBack: handleBack,
       onSwitchToExperts: history.handleSwitchToExperts,
       onSwitchToHistory: history.handleSwitchToHistory,
@@ -131,6 +132,7 @@ export const useAppState = (props: UseAppStateProps) => {
       history.handleRunResume,
       history.handleCheckpointSelect,
       history.handleCheckpointResume,
+      history.handleEventSelect,
       handleBack,
       history.handleSwitchToExperts,
       history.handleSwitchToHistory,

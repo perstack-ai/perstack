@@ -12,6 +12,7 @@ export type {
 } from "./base.js"
 export type {
   BrowsingCheckpointsState,
+  BrowsingEventDetailState,
   BrowsingEventsState,
   BrowsingExpertsState,
   BrowsingHistoryState,
