@@ -1,6 +1,6 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
-import { ErrorStep } from "../../src/components/error-step.js"
+import { ErrorStep, WizardExpertSelector } from "../../src/components/index.js"
 import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
 import { getStatusColor } from "../../src/utils/index.js"
 
@@ -18,49 +18,6 @@ type UnpublishAppProps = {
   onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
   onComplete: (result: UnpublishWizardResult) => void
   onCancel: () => void
-}
-function ExpertSelector({
-  experts,
-  onSelect,
-}: {
-  experts: WizardExpertChoice[]
-  onSelect: (name: string) => void
-}) {
-  const { exit } = useApp()
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  useInput((input, key) => {
-    if (key.upArrow) {
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : experts.length - 1))
-    } else if (key.downArrow) {
-      setSelectedIndex((prev) => (prev < experts.length - 1 ? prev + 1 : 0))
-    } else if (key.return) {
-      const expert = experts[selectedIndex]
-      if (expert) {
-        onSelect(expert.name)
-      }
-    } else if (input === "q" || key.escape) {
-      exit()
-    }
-  })
-  return (
-    <Box flexDirection="column">
-      <Text bold>Select an Expert to unpublish:</Text>
-      <Box flexDirection="column" marginTop={1}>
-        {experts.map((expert, index) => (
-          <Box key={expert.name}>
-            <Text color={index === selectedIndex ? "cyan" : undefined}>
-              {index === selectedIndex ? "❯ " : "  "}
-              {expert.name}
-              {expert.description && <Text dimColor> - {expert.description}</Text>}
-            </Text>
-          </Box>
-        ))}
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>↑↓ navigate · enter select · q quit</Text>
-      </Box>
-    </Box>
-  )
 }
 function VersionSelector({
   expertName,
@@ -222,7 +179,13 @@ export function UnpublishApp({
   }
   switch (step.type) {
     case "selectExpert":
-      return <ExpertSelector experts={experts} onSelect={handleExpertSelect} />
+      return (
+        <WizardExpertSelector
+          title="Select an Expert to unpublish:"
+          experts={experts}
+          onSelect={handleExpertSelect}
+        />
+      )
     case "loadingVersions":
       return (
         <Box>
