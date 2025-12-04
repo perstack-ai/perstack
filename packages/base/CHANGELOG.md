@@ -1,5 +1,13 @@
 # @perstack/base
 
+## 0.0.31
+
+### Patch Changes
+
+- [#45](https://github.com/perstack-ai/perstack/pull/45) [`af20acb`](https://github.com/perstack-ai/perstack/commit/af20acb717b74df1d59164858e3848d6da48a21a) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add event detail view in history browser
+
+  Users can now select an event in the events list to view its details including type, step number, timestamp, and IDs.
+
 ## 0.0.30
 
 ### Patch Changes
