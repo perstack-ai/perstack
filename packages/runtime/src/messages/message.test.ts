@@ -436,6 +436,8 @@ describe("@perstack/messages: message", () => {
 })
 
 describe("@perstack/messages: instruction-message", () => {
+  const startedAt = 1700000000000
+
   describe("createInstructionMessage", () => {
     it("creates instruction message with basic expert", () => {
       const expert = {
@@ -447,7 +449,7 @@ describe("@perstack/messages: instruction-message", () => {
         delegates: [],
         tags: [],
       }
-      const result = createInstructionMessage(expert, {})
+      const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.type).toBe("instructionMessage")
       expect(result.cache).toBe(true)
       expect(result.contents[0].type).toBe("textPart")
@@ -476,7 +478,7 @@ describe("@perstack/messages: instruction-message", () => {
         delegates: [],
         tags: [],
       }
-      const result = createInstructionMessage(expert, {})
+      const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).toContain("Always use this skill carefully.")
       expect(result.contents[0].text).toContain('"test-skill" skill rules:')
     })
@@ -502,7 +504,7 @@ describe("@perstack/messages: instruction-message", () => {
         delegates: [],
         tags: [],
       }
-      const result = createInstructionMessage(expert, {})
+      const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).not.toContain('"test-skill" skill rules:')
     })
 
@@ -529,7 +531,7 @@ describe("@perstack/messages: instruction-message", () => {
           tags: [],
         },
       }
-      const result = createInstructionMessage(expert, experts)
+      const result = createInstructionMessage(expert, experts, startedAt)
       expect(result.contents[0].text).toContain('About "Delegate Expert":')
       expect(result.contents[0].text).toContain("A delegate expert for testing")
     })
@@ -544,8 +546,22 @@ describe("@perstack/messages: instruction-message", () => {
         delegates: ["nonexistent-delegate"],
         tags: [],
       }
-      const result = createInstructionMessage(expert, {})
+      const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).not.toContain('About "')
+    })
+
+    it("uses startedAt for timestamp in instruction", () => {
+      const expert = {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        instruction: "Test instruction",
+        skills: {},
+        delegates: [],
+        tags: [],
+      }
+      const result = createInstructionMessage(expert, {}, startedAt)
+      expect(result.contents[0].text).toContain("2023-11-14T22:13:20.000Z")
     })
   })
 })
