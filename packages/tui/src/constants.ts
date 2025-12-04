@@ -56,4 +56,7 @@ export const KEY_HINTS = {
   NEW: `${KEY_BINDINGS.NEW}:New Run`,
   CHECKPOINTS: `${KEY_BINDINGS.CHECKPOINTS}:Checkpoints`,
   EVENTS: `${KEY_BINDINGS.EVENTS}:Events`,
+  QUIT: "q:Quit",
+  ESC_BACK: `${KEY_BINDINGS.ESCAPE}:Back`,
+  CONFIRM: `${KEY_BINDINGS.SELECT}:Confirm`,
 } as const

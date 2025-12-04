@@ -1,6 +1,7 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
 import { ErrorStep, VersionSelector, WizardExpertSelector } from "../../src/components/index.js"
+import { KEY_HINTS } from "../../src/constants.js"
 import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
 
 type WizardStep =
@@ -68,7 +69,7 @@ function ConfirmStep({
         ))}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>↑↓ navigate · enter select · esc back · q quit</Text>
+        <Text dimColor>{`${KEY_HINTS.NAVIGATE} ${KEY_HINTS.SELECT} ${KEY_HINTS.ESC_BACK} ${KEY_HINTS.QUIT}`}</Text>
       </Box>
     </Box>
   )
