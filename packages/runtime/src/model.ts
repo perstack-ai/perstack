@@ -82,6 +82,10 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
       })
       return deepseek(modelId)
     }
+    default: {
+      const _exhaustive: never = providerConfig
+      throw new Error(`Unknown provider: ${(_exhaustive as ProviderConfig).providerName}`)
+    }
   }
 }
 
