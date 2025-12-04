@@ -1,5 +1,11 @@
 # @perstack/runtime
 
+## 0.0.52
+
+### Patch Changes
+
+- [#3](https://github.com/perstack-ai/perstack/pull/3) [`b5c7cf3`](https://github.com/perstack-ai/perstack/commit/b5c7cf3f0314cc7a181606a9497fe077b4e7aecc) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Fix maxSteps off-by-one error that caused one extra step to execute
+
 ## 0.0.51
 
 ### Patch Changes
