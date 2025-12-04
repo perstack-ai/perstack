@@ -1,5 +1,6 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
+import { ErrorStep } from "../../src/components/error-step.js"
 
 type ExpertChoice = {
   name: string
@@ -404,14 +405,7 @@ export function StatusApp({ experts, onFetchVersions, onComplete, onCancel }: St
         />
       )
     case "error":
-      return (
-        <Box flexDirection="column">
-          <Text color="red">Error: {step.message}</Text>
-          <Box marginTop={1}>
-            <Text dimColor>Press any key to go back</Text>
-          </Box>
-        </Box>
-      )
+      return <ErrorStep message={step.message} onBack={handleBack} />
     default:
       return null
   }
