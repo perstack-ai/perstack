@@ -83,9 +83,7 @@ export async function getSkillManagers(
 export async function closeSkillManagers(
   skillManagers: Record<string, BaseSkillManager>,
 ): Promise<void> {
-  for (const skillManager of Object.values(skillManagers)) {
-    await skillManager.close()
-  }
+  await Promise.all(Object.values(skillManagers).map((m) => m.close().catch(() => {})))
 }
 
 export async function getSkillManagerByToolName(

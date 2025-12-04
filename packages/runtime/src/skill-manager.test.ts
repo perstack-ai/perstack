@@ -319,8 +319,20 @@ describe("@perstack/runtime: DelegateSkillManager", () => {
 
 describe("@perstack/runtime: closeSkillManagers", () => {
   it("closes all skill managers", async () => {
-    const closeFn1 = vi.fn()
-    const closeFn2 = vi.fn()
+    const closeFn1 = vi.fn().mockResolvedValue(undefined)
+    const closeFn2 = vi.fn().mockResolvedValue(undefined)
+    const skillManagers = {
+      skill1: { close: closeFn1 } as unknown as BaseSkillManager,
+      skill2: { close: closeFn2 } as unknown as BaseSkillManager,
+    }
+    await closeSkillManagers(skillManagers)
+    expect(closeFn1).toHaveBeenCalledTimes(1)
+    expect(closeFn2).toHaveBeenCalledTimes(1)
+  })
+
+  it("continues closing other managers when one fails", async () => {
+    const closeFn1 = vi.fn().mockRejectedValue(new Error("close failed"))
+    const closeFn2 = vi.fn().mockResolvedValue(undefined)
     const skillManagers = {
       skill1: { close: closeFn1 } as unknown as BaseSkillManager,
       skill2: { close: closeFn2 } as unknown as BaseSkillManager,
