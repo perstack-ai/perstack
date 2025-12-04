@@ -17,7 +17,7 @@ export async function initLogic({
       return startRun(setting, checkpoint, {
         initialCheckpoint: checkpoint,
         inputMessages: [
-          createInstructionMessage(expert, experts),
+          createInstructionMessage(expert, experts, setting.startedAt),
           createUserMessage([{ type: "textPart", text: setting.input.text }]),
         ],
       })
