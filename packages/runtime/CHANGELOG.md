@@ -1,5 +1,13 @@
 # @perstack/runtime
 
+## 0.0.58
+
+### Patch Changes
+
+- [#18](https://github.com/perstack-ai/perstack/pull/18) [`06bceed`](https://github.com/perstack-ai/perstack/commit/06bceedcedf9f69222d5a64fb5b9299c02ae389b) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Continue emitting events when listener throws
+
+- [#19](https://github.com/perstack-ai/perstack/pull/19) [`c7ae375`](https://github.com/perstack-ai/perstack/commit/c7ae3755db0d53a365a17aadfdce132ad64a15e9) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Use startedAt for instruction message timestamp
+
 ## 0.0.57
 
 ### Patch Changes
