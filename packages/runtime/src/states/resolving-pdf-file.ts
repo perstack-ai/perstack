@@ -28,16 +28,19 @@ export async function resolvingPdfFileLogic({
       continue
     }
     const { path, mimeType, size } = pdfInfo
-    const file = await readFile(path).then((buffer) => ({
-      encodedData: buffer.toString("base64"),
-      mimeType,
-      size,
-    }))
-    files.push({
-      type: "fileInlinePart",
-      encodedData: file.encodedData,
-      mimeType: file.mimeType,
-    })
+    try {
+      const buffer = await readFile(path)
+      files.push({
+        type: "fileInlinePart",
+        encodedData: buffer.toString("base64"),
+        mimeType,
+      })
+    } catch (error) {
+      files.push({
+        type: "textPart",
+        text: `Failed to read PDF file "${path}": ${error instanceof Error ? error.message : String(error)}`,
+      })
+    }
   }
   return finishToolCall(setting, checkpoint, {
     newMessages: [
