@@ -1,5 +1,11 @@
 # @perstack/core
 
+## 0.0.18
+
+### Patch Changes
+
+- [#14](https://github.com/perstack-ai/perstack/pull/14) [`eb2f4cc`](https://github.com/perstack-ai/perstack/commit/eb2f4cc1900bb7ae02bf21c375bdade891d9823e) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add runSettingSchema for validating stored run settings
+
 ## 0.0.17
 
 ### Patch Changes
