@@ -1,5 +1,6 @@
 export { App } from "./app.js"
 export { BrowserRouter } from "./browser-router.js"
+export { ErrorStep, type ErrorStepProps } from "./error-step.js"
 export { ExpertList, type ExpertListProps } from "./expert-list.js"
 export { ExpertSelectorBase, type ExpertSelectorBaseProps } from "./expert-selector-base.js"
 export { ListBrowser, type ListBrowserProps } from "./list-browser.js"
