@@ -240,8 +240,7 @@ function ConfirmStep({
   })
   const customCurrentTags = currentTags.filter((t) => t !== "latest")
   const tagsChanged =
-    tags.length !== customCurrentTags.length ||
-    [...tags].sort().join(",") !== [...customCurrentTags].sort().join(",")
+    tags.length !== customCurrentTags.length || tags.some((t, i) => t !== customCurrentTags[i])
   return (
     <Box flexDirection="column">
       <Text bold>Confirm update for {expertKey}:</Text>
