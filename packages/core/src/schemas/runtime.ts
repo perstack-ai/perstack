@@ -134,6 +134,34 @@ export type RunParamsInput = {
   checkpoint?: Checkpoint
 }
 
+export const runSettingSchema = z.object({
+  model: z.string(),
+  providerConfig: providerConfigSchema,
+  runId: z.string(),
+  expertKey: z.string().min(1).regex(expertKeyRegex),
+  input: z.object({
+    text: z.string().optional(),
+    interactiveToolCallResult: z
+      .object({
+        toolCallId: z.string(),
+        toolName: z.string(),
+        text: z.string(),
+      })
+      .optional(),
+  }),
+  experts: z.record(z.string(), expertSchema),
+  temperature: z.number().min(0).max(1),
+  maxSteps: z.number().min(1).optional(),
+  maxRetries: z.number().min(0),
+  timeout: z.number().min(0),
+  startedAt: z.number(),
+  updatedAt: z.number(),
+  perstackApiBaseUrl: z.string().url(),
+  perstackApiKey: z.string().optional(),
+  perstackBaseSkillCommand: z.array(z.string()).optional(),
+  env: z.record(z.string(), z.string()),
+})
+
 export const runParamsSchema = z.object({
   setting: z.object({
     model: z.string(),

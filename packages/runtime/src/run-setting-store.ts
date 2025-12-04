@@ -1,5 +1,5 @@
 import path from "node:path"
-import type { RunSetting } from "@perstack/core"
+import { type RunSetting, runSettingSchema } from "@perstack/core"
 
 export type FileSystem = {
   existsSync: (path: string) => boolean
@@ -36,7 +36,7 @@ export async function storeRunSetting(
   const runDir = getRunDir(setting.runId)
   if (fileSystem.existsSync(runDir)) {
     const runSettingPath = path.resolve(runDir, "run-setting.json")
-    const runSetting = JSON.parse(await fileSystem.readFile(runSettingPath, "utf-8")) as RunSetting
+    const runSetting = runSettingSchema.parse(JSON.parse(await fileSystem.readFile(runSettingPath, "utf-8")))
     runSetting.updatedAt = Date.now()
     await fileSystem.writeFile(runSettingPath, JSON.stringify(runSetting), "utf-8")
   } else {
