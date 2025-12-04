@@ -63,7 +63,7 @@ const renderTodo = (args: Record<string, unknown>, result: ToolResult | undefine
       <ActionRow indicatorColor="white" label={label}>
         <Box flexDirection="column">
           {preview.map((todo, idx) => (
-            <Text key={`todo-${idx}-${todo}`} dimColor>
+            <Text key={`todo-${idx}`} dimColor>
               ○ {todo}
             </Text>
           ))}
@@ -86,7 +86,7 @@ const renderTodo = (args: Record<string, unknown>, result: ToolResult | undefine
     <ActionRow indicatorColor="white" label={label}>
       <Box flexDirection="column">
         {preview.map((title, idx) => (
-          <Text key={`completed-${idx}-${title}`} dimColor>
+          <Text key={`completed-${idx}`} dimColor>
             ✓ {title}
           </Text>
         ))}
@@ -117,7 +117,7 @@ const renderExec = (
     <ActionRow indicatorColor={color} label={`Bash ${cmdLine}`}>
       <Box flexDirection="column">
         {visible.map((line, idx) => (
-          <Text key={`out-${idx}-${line}`} dimColor>
+          <Text key={`out-${idx}`} dimColor>
             {truncateText(line, UI_CONSTANTS.TRUNCATE_TEXT_DEFAULT)}
           </Text>
         ))}
@@ -154,7 +154,7 @@ const renderReadTextFile = (
     >
       <Box flexDirection="column">
         {lines.map((line: string, idx: number) => (
-          <Box flexDirection="row" key={`read-${idx}-${line}`} gap={1}>
+          <Box flexDirection="row" key={`read-${idx}`} gap={1}>
             <Text color="white" dimColor>
               {line}
             </Text>
@@ -172,7 +172,7 @@ const renderWriteTextFile = (args: Record<string, unknown>, color: StatusColor) 
     <ActionRow indicatorColor={color} label="Write Text File" summary={shortenPath(path)}>
       <Box flexDirection="column">
         {lines.map((line, idx) => (
-          <Box flexDirection="row" key={`write-${idx}-${line}`} gap={1}>
+          <Box flexDirection="row" key={`write-${idx}`} gap={1}>
             <Text color="green" dimColor>
               +
             </Text>
@@ -195,7 +195,7 @@ const renderEditTextFile = (args: Record<string, unknown>, color: StatusColor) =
     <ActionRow indicatorColor={color} label="Edit Text File" summary={shortenPath(path)}>
       <Box flexDirection="column">
         {oldLines.map((line, idx) => (
-          <Box flexDirection="row" key={`old-${idx}-${line}`} gap={1}>
+          <Box flexDirection="row" key={`old-${idx}`} gap={1}>
             <Text color="red" dimColor>
               -
             </Text>
@@ -205,7 +205,7 @@ const renderEditTextFile = (args: Record<string, unknown>, color: StatusColor) =
           </Box>
         ))}
         {newLines.map((line, idx) => (
-          <Box flexDirection="row" key={`new-${idx}-${line}`} gap={1}>
+          <Box flexDirection="row" key={`new-${idx}`} gap={1}>
             <Text color="green" dimColor>
               +
             </Text>
@@ -224,7 +224,7 @@ const renderAppendTextFile = (args: Record<string, unknown>, color: StatusColor)
     <ActionRow indicatorColor={color} label="Append Text File" summary={shortenPath(path)}>
       <Box flexDirection="column">
         {lines.map((line, idx) => (
-          <Box flexDirection="row" key={`append-${idx}-${line}`} gap={1}>
+          <Box flexDirection="row" key={`append-${idx}`} gap={1}>
             <Text color="green" dimColor>
               +
             </Text>
@@ -252,7 +252,7 @@ const renderListDirectory = (
     <ActionRow indicatorColor={color} label="List" summary={shortenPath(path)}>
       <Box flexDirection="column">
         {visible.map((line, idx) => (
-          <Text key={`dir-${idx}-${line}`} dimColor>
+          <Text key={`dir-${idx}`} dimColor>
             {truncateText(line, UI_CONSTANTS.TRUNCATE_TEXT_DEFAULT)}
           </Text>
         ))}
