@@ -15,11 +15,10 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
 | ✅ Fixed      | 26    | Issues resolved with code changes          |
-| ✅ Verified   | 5     | Confirmed not an issue / working correctly |
+| ✅ Verified   | 6     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
-| 🔴 Open       | 0     | All runtime issues resolved                |
-| 🟡 Low Prio   | 1     | By design / needs clarification            |
+| 🔴 Open       | 0     | All issues resolved                        |
 
 ---
 
@@ -732,7 +731,7 @@ async emit(event: RunEvent) {
 
 ### 41. Nested Delegates Not Resolved
 
-**Status**: 🟡 **By Design?**
+**Status**: ✅ **Verified** — Working correctly
 
 **Category**: Architecture  
 **Severity**: Minor
@@ -748,9 +747,7 @@ for (const delegateName of expertToRun.delegates) {
 }
 ```
 
-**Impact**: If Expert A delegates to B, and B delegates to C, C is not pre-resolved.
-
-**Note**: This may be by design (resolve on demand), but should be documented.
+**Resolution**: This is working correctly. When a delegate expert starts execution, the `run()` function loops back to `setupExperts()`, which resolves that expert's delegates at that time. Nested delegates are resolved on-demand when each expert begins execution.
 
 ---
 
@@ -856,7 +853,7 @@ const metaInstruction = dedent`
 | #38   | RunSetting schema validation           | ✅ Fixed        |
 | #39   | closeSkillManagers failure handling    | ✅ Fixed        |
 | #40   | EventEmitter listener errors           | ✅ Fixed        |
-| #41   | Nested delegates not resolved          | 🟡 By design?   |
+| #41   | Nested delegates not resolved          | ✅ Verified     |
 | #42   | model.ts missing default case          | ✅ Fixed        |
 | #43   | Instruction uses runtime values        | ✅ Fixed        |
 
@@ -873,9 +870,6 @@ const metaInstruction = dedent`
 - **#18**: Long functions without decomposition — refactoring
 - **#21**: validatePath symlink race condition — theoretical TOCTOU issue
 - **#24, #25, #30, #31**: Suggestions — future enhancements (OTEL, structured logging, types/schemas separation, skill lazy init)
-
-### By Design / Needs Clarification
-- **#41**: Nested delegates not pre-resolved — document if intentional
 
 ---
 
