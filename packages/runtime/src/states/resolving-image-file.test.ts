@@ -121,7 +121,10 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
       skillManagers: {},
     })
     expect(result.type).toBe("finishToolCall")
-    expect(result.newMessages[0].contents[0].contents[0]).toMatchObject({
+    if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
+    const toolResultPart = result.newMessages[0].contents[0]
+    if (toolResultPart.type !== "toolResultPart") throw new Error("Unexpected part type")
+    expect(toolResultPart.contents[0]).toMatchObject({
       type: "textPart",
       text: expect.stringContaining('Failed to read image file "/nonexistent.png"'),
     })

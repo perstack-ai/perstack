@@ -132,6 +132,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
       skillManagers: {},
     })
     expect(result.type).toBe("finishToolCall")
+    if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
     const userMessage = result.newMessages[1]
     expect(userMessage.contents[0]).toMatchObject({
       type: "textPart",
