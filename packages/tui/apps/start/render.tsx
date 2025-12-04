@@ -1,5 +1,5 @@
 import { render } from "ink"
-import { App } from "../../src/components/app.js"
+import { App } from "./app.js"
 import type {
   CheckpointHistoryItem,
   EventHistoryItem,

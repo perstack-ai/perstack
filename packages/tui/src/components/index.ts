@@ -1,4 +1,3 @@
-export { App } from "./app.js"
 export { BrowserRouter } from "./browser-router.js"
 export { ErrorStep, type ErrorStepProps } from "./error-step.js"
 export { ExpertList, type ExpertListProps } from "./expert-list.js"

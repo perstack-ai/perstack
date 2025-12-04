@@ -1,6 +1,7 @@
 import { Box, Static } from "ink"
-import { InputAreaProvider } from "../context/index.js"
-import { useAppState } from "../hooks/index.js"
+import { BrowserRouter, RunSetting, Step } from "../../src/components/index.js"
+import { InputAreaProvider } from "../../src/context/index.js"
+import { useAppState } from "../../src/hooks/index.js"
 import type {
   CheckpointHistoryItem,
   EventHistoryItem,
@@ -8,10 +9,7 @@ import type {
   InitialRuntimeConfig,
   PerstackEvent,
   RunHistoryItem,
-} from "../types/index.js"
-import { BrowserRouter } from "./browser-router.js"
-import { RunSetting } from "./run-setting.js"
-import { Step } from "./step.js"
+} from "../../src/types/index.js"
 
 type AppProps = {
   needsQueryInput?: boolean
