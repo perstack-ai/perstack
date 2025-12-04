@@ -10,3 +10,4 @@ export {
   WizardExpertSelector,
   type WizardExpertSelectorProps,
 } from "./wizard-expert-selector.js"
+export { VersionSelector, type VersionSelectorProps } from "./version-selector.js"
