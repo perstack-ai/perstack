@@ -1,5 +1,11 @@
 # @perstack/runtime
 
+## 0.0.59
+
+### Patch Changes
+
+- [#17](https://github.com/perstack-ai/perstack/pull/17) [`4948a7b`](https://github.com/perstack-ai/perstack/commit/4948a7ba2d44bbc6d40df1a3b83bbf73f3834285) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add exhaustive default case to getModel switch statement
+
 ## 0.0.58
 
 ### Patch Changes
