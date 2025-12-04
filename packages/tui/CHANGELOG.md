@@ -1,5 +1,23 @@
 # @perstack/tui
 
+## 0.0.17
+
+### Patch Changes
+
+- [#45](https://github.com/perstack-ai/perstack/pull/45) [`af20acb`](https://github.com/perstack-ai/perstack/commit/af20acb717b74df1d59164858e3848d6da48a21a) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add event detail view in history browser
+
+  Users can now select an event in the events list to view its details including type, step number, timestamp, and IDs.
+
+- [#48](https://github.com/perstack-ai/perstack/pull/48) [`5141845`](https://github.com/perstack-ai/perstack/commit/514184512b1ccbe1ec0f7def033cca7f0dac6e86) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Optimize buildSteps for large event counts using incremental updates
+
+  Instead of rebuilding the entire step map on every event addition, the step
+  store now caches the map and only processes new events. Full rebuild only
+  occurs when events are truncated (MAX_EVENTS exceeded) or historical events
+  are loaded.
+
+- Updated dependencies [[`af20acb`](https://github.com/perstack-ai/perstack/commit/af20acb717b74df1d59164858e3848d6da48a21a)]:
+  - @perstack/core@0.0.19
+
 ## 0.0.16
 
 ### Patch Changes

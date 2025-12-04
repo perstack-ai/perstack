@@ -1,5 +1,19 @@
 # @perstack/runtime
 
+## 0.0.60
+
+### Patch Changes
+
+- [#45](https://github.com/perstack-ai/perstack/pull/45) [`af20acb`](https://github.com/perstack-ai/perstack/commit/af20acb717b74df1d59164858e3848d6da48a21a) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add event detail view in history browser
+
+  Users can now select an event in the events list to view its details including type, step number, timestamp, and IDs.
+
+- [#50](https://github.com/perstack-ai/perstack/pull/50) [`b19e6f1`](https://github.com/perstack-ai/perstack/commit/b19e6f1b943226f2da8c0bb6121375498697672b) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add debug logging for MCP skill startup time
+
+- Updated dependencies [[`af20acb`](https://github.com/perstack-ai/perstack/commit/af20acb717b74df1d59164858e3848d6da48a21a)]:
+  - @perstack/core@0.0.19
+  - @perstack/api-client@0.0.30
+
 ## 0.0.59
 
 ### Patch Changes
