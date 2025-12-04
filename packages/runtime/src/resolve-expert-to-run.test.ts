@@ -78,7 +78,6 @@ describe("@perstack/runtime: resolveExpertToRun", () => {
     })
     expect(result.key).toBe("remote-expert")
     expect(result.name).toBe("Remote Expert")
-    expect(experts["remote-expert"]).toBeDefined()
   })
 
   it("adds name to skills when converting from API", async () => {
@@ -89,13 +88,12 @@ describe("@perstack/runtime: resolveExpertToRun", () => {
     expect(result.skills["@perstack/base"].name).toBe("@perstack/base")
   })
 
-  it("caches fetched expert in experts record", async () => {
+  it("does not mutate experts record", async () => {
     const experts: Record<string, Expert> = {}
     await resolveExpertToRun("remote-expert", experts, {
       perstackApiBaseUrl: "https://api.test.com",
     })
-    expect(experts["remote-expert"]).toBeDefined()
-    expect(experts["remote-expert"].key).toBe("remote-expert")
+    expect(experts["remote-expert"]).toBeUndefined()
   })
 })
 

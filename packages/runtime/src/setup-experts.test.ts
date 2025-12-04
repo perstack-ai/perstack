@@ -33,10 +33,10 @@ describe("@perstack/runtime: setupExperts", () => {
     const mockResolve = vi.fn().mockResolvedValue(baseExpert)
     const result = await setupExperts(baseSetting, mockResolve)
     expect(result.expertToRun).toEqual(baseExpert)
-    expect(result.experts).toEqual({})
+    expect(result.experts).toEqual({ "test-expert": baseExpert })
     expect(mockResolve).toHaveBeenCalledWith(
       "test-expert",
-      {},
+      expect.any(Object),
       {
         perstackApiBaseUrl: "https://api.perstack.dev",
         perstackApiKey: undefined,
@@ -44,7 +44,7 @@ describe("@perstack/runtime: setupExperts", () => {
     )
   })
 
-  it("copies experts from setting", async () => {
+  it("copies experts from setting and does not mutate original", async () => {
     const existingExpert: Expert = { ...baseExpert, key: "existing", name: "existing" }
     const settingWithExperts = {
       ...baseSetting,
@@ -52,25 +52,27 @@ describe("@perstack/runtime: setupExperts", () => {
     }
     const mockResolve = vi.fn().mockResolvedValue(baseExpert)
     const result = await setupExperts(settingWithExperts, mockResolve)
-    expect(result.experts).toEqual({ existing: existingExpert })
+    expect(result.experts).toEqual({ existing: existingExpert, "test-expert": baseExpert })
     expect(result.experts).not.toBe(settingWithExperts.experts)
+    expect(settingWithExperts.experts).toEqual({ existing: existingExpert })
   })
 
-  it("resolves all delegates", async () => {
+  it("resolves all delegates and adds them to experts map", async () => {
     const expertWithDelegates: Expert = {
       ...baseExpert,
       delegates: ["delegate-1", "delegate-2"],
     }
-    const delegateExpert: Expert = { ...baseExpert, key: "delegate", name: "delegate" }
+    const delegateExpert1: Expert = { ...baseExpert, key: "delegate-1", name: "delegate-1" }
+    const delegateExpert2: Expert = { ...baseExpert, key: "delegate-2", name: "delegate-2" }
     const mockResolve = vi
       .fn()
       .mockResolvedValueOnce(expertWithDelegates)
-      .mockResolvedValueOnce(delegateExpert)
-      .mockResolvedValueOnce(delegateExpert)
-    await setupExperts(baseSetting, mockResolve)
+      .mockResolvedValueOnce(delegateExpert1)
+      .mockResolvedValueOnce(delegateExpert2)
+    const result = await setupExperts(baseSetting, mockResolve)
     expect(mockResolve).toHaveBeenCalledTimes(3)
-    expect(mockResolve).toHaveBeenNthCalledWith(2, "delegate-1", {}, expect.any(Object))
-    expect(mockResolve).toHaveBeenNthCalledWith(3, "delegate-2", {}, expect.any(Object))
+    expect(result.experts["delegate-1"]).toEqual(delegateExpert1)
+    expect(result.experts["delegate-2"]).toEqual(delegateExpert2)
   })
 
   it("throws when delegate resolution returns falsy", async () => {
@@ -96,7 +98,7 @@ describe("@perstack/runtime: setupExperts", () => {
     await setupExperts(settingWithKey, mockResolve)
     expect(mockResolve).toHaveBeenCalledWith(
       "test-expert",
-      {},
+      expect.any(Object),
       {
         perstackApiBaseUrl: "https://api.perstack.dev",
         perstackApiKey: "my-api-key",

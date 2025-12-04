@@ -23,11 +23,13 @@ export async function setupExperts(
     perstackApiKey: setting.perstackApiKey,
   }
   const expertToRun = await resolveExpertToRun(expertKey, experts, clientOptions)
+  experts[expertKey] = expertToRun
   for (const delegateName of expertToRun.delegates) {
     const delegate = await resolveExpertToRun(delegateName, experts, clientOptions)
     if (!delegate) {
       throw new Error(`Delegate ${delegateName} not found`)
     }
+    experts[delegateName] = delegate
   }
   return { expertToRun, experts }
 }

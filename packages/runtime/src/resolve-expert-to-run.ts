@@ -17,8 +17,7 @@ export async function resolveExpertToRun(
     apiKey: clientOptions.perstackApiKey,
   })
   const { expert } = await client.registry.experts.get({ expertKey })
-  experts[expertKey] = toRuntimeExpert(expert)
-  return experts[expertKey]
+  return toRuntimeExpert(expert)
 }
 
 function toRuntimeExpert(expert: ApiRegistryExpert): Expert {

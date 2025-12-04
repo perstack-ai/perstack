@@ -29,28 +29,32 @@ export async function getSkillManagers(
     throw new Error("Base skill is not defined")
   }
   const allManagers: BaseSkillManager[] = []
-  const mcpSkills = Object.values(skills).filter(
-    (skill) => skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill",
-  )
-  for (const skill of mcpSkills) {
-    if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
-      const matchesBaseByPackage = skill.command === "npx" && skill.packageName === "@perstack/base"
-      const matchesBaseByArgs =
-        skill.command === "npx" &&
-        Array.isArray(skill.args) &&
-        skill.args.includes("@perstack/base")
-      if (matchesBaseByPackage || matchesBaseByArgs) {
-        const [overrideCommand, ...overrideArgs] = perstackBaseSkillCommand
-        if (!overrideCommand) {
-          throw new Error("perstackBaseSkillCommand must have at least one element")
+  const mcpSkills = Object.values(skills)
+    .filter((skill) => skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill")
+    .map((skill) => {
+      if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
+        const matchesBaseByPackage =
+          skill.command === "npx" && skill.packageName === "@perstack/base"
+        const matchesBaseByArgs =
+          skill.command === "npx" &&
+          Array.isArray(skill.args) &&
+          skill.args.includes("@perstack/base")
+        if (matchesBaseByPackage || matchesBaseByArgs) {
+          const [overrideCommand, ...overrideArgs] = perstackBaseSkillCommand
+          if (!overrideCommand) {
+            throw new Error("perstackBaseSkillCommand must have at least one element")
+          }
+          return {
+            ...skill,
+            command: overrideCommand,
+            packageName: undefined,
+            args: overrideArgs,
+            lazyInit: false,
+          }
         }
-        skill.command = overrideCommand
-        skill.packageName = undefined
-        skill.args = overrideArgs
-        skill.lazyInit = false
       }
-    }
-  }
+      return skill
+    })
   const mcpSkillManagers = mcpSkills.map((skill) => {
     const manager = new McpSkillManager(skill, env, runId, eventListener)
     allManagers.push(manager)
