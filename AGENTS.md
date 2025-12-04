@@ -411,6 +411,15 @@ When making changes, update ALL relevant documentation:
 4. Add tests (`*.test.ts`)
 5. Update `docs/content/making-experts/base-skill.mdx` and `packages/base/README.md`
 
+### Creating Issues
+
+When creating GitHub issues, follow the guidelines in `CONTRIBUTING.md` section "Writing Good Issues".
+
+Key points:
+- **One issue = one PR** — each issue should be completable in a single PR
+- **Title describes the goal**, not implementation details (no file names in titles)
+- **Use prefixes**: `Fix:`, `Refactor:`, `Add:`, `Update:`
+
 ## Testing
 
 - **Unit tests:** Vitest (`*.test.ts` files), run with `pnpm test`

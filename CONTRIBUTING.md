@@ -488,6 +488,76 @@ export const expertSchema = z.object({
 })
 ```
 
+## Writing Good Issues
+
+### Issue Granularity
+
+Each issue should represent **one actionable unit of work** that can be completed in a single PR.
+
+**Good issue scope:**
+- Fix a specific bug in one component
+- Extract one shared utility or component
+- Add one new feature with clear boundaries
+
+**Bad issue scope:**
+- "Refactor TUI package" (too broad)
+- "Fix all bugs" (not actionable)
+- "Improve code quality" (vague)
+
+### Issue Title Guidelines
+
+Titles should describe **what to solve**, not implementation details.
+
+| Bad (implementation details)         | Good (problem/goal focused)                        |
+| ------------------------------------ | -------------------------------------------------- |
+| Fix `apps/tag/app.tsx` line 242      | Fix: Tag comparison fails when tags are reordered  |
+| Refactor `ExpertSelector` in 4 files | Refactor: Share ExpertSelector across wizards      |
+| Add `useInput` to error state        | Fix: Wizard ignores keyboard input on error screen |
+
+**Why:** File names and line numbers change. The problem statement remains stable.
+
+### Issue Structure
+
+```markdown
+## Title
+[Type]: [Problem or goal statement]
+
+## Labels
+bug | refactor | enhancement | chore, [package-name], [priority]
+
+## Description
+Brief explanation of the problem or goal.
+
+### Current Behavior (for bugs)
+What happens now.
+
+### Expected Behavior
+What should happen.
+
+### Affected Areas
+- List of components/features affected
+- File locations can go here (in description, not title)
+
+### Suggested Approach (optional)
+High-level solution direction.
+
+### Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+```
+
+### Breaking Down Large Changes
+
+When a change touches multiple areas, split into dependent issues:
+
+```
+Issue #1: Extract shared types for wizards
+Issue #2: Extract shared utility functions (depends on #1)
+Issue #3: Extract shared components (depends on #1, #2)
+```
+
+Link issues with "depends on #X" or "blocked by #X" in the description.
+
 ## Getting Help
 
 - **Questions:** [Open a discussion](https://github.com/perstack-ai/perstack/discussions)
