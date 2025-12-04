@@ -9,12 +9,20 @@ export class RunEventEmitter {
   }
 
   async emit(event: RunEvent) {
+    const errors: Error[] = []
     for (const listener of this.listeners) {
-      await listener({
-        ...event,
-        id: createId(),
-        timestamp: Date.now(),
-      })
+      try {
+        await listener({
+          ...event,
+          id: createId(),
+          timestamp: Date.now(),
+        })
+      } catch (error) {
+        errors.push(error instanceof Error ? error : new Error(String(error)))
+      }
+    }
+    if (errors.length > 0) {
+      throw new AggregateError(errors, "One or more event listeners failed")
     }
   }
 }

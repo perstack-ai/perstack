@@ -74,5 +74,19 @@ describe("@perstack/runtime: RunEventEmitter", () => {
     await emitter.emit(createMockEvent())
     expect(callOrder).toEqual([1, 2])
   })
+
+  it("continues calling listeners when one throws and aggregates errors", async () => {
+    const emitter = new RunEventEmitter()
+    const listener1 = vi.fn()
+    const listener2 = vi.fn().mockRejectedValue(new Error("test error"))
+    const listener3 = vi.fn()
+    emitter.subscribe(listener1)
+    emitter.subscribe(listener2)
+    emitter.subscribe(listener3)
+    await expect(emitter.emit(createMockEvent())).rejects.toThrow(AggregateError)
+    expect(listener1).toHaveBeenCalledTimes(1)
+    expect(listener2).toHaveBeenCalledTimes(1)
+    expect(listener3).toHaveBeenCalledTimes(1)
+  })
 })
 
