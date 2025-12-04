@@ -1,5 +1,13 @@
 # @perstack/runtime
 
+## 0.0.55
+
+### Patch Changes
+
+- [#11](https://github.com/perstack-ai/perstack/pull/11) [`a6ab2b8`](https://github.com/perstack-ai/perstack/commit/a6ab2b8b246d60e2b366901d7b441febec2e258f) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Clean up initialized skill managers when delegate expert is not found
+
+- [#9](https://github.com/perstack-ai/perstack/pull/9) [`cd5dbb1`](https://github.com/perstack-ai/perstack/commit/cd5dbb1a46372a6772ec78ff24292a541fc0d081) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add explicit error message when delegate expert is not found
+
 ## 0.0.54
 
 ### Patch Changes
