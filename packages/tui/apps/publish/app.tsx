@@ -1,13 +1,9 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
-
-type ExpertChoice = {
-  name: string
-  description?: string
-}
+import type { WizardExpertChoice } from "../../src/types/wizard.js"
 
 type PublishAppProps = {
-  experts: ExpertChoice[]
+  experts: WizardExpertChoice[]
   onSelect: (expertName: string) => void
 }
 

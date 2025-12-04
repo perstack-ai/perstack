@@ -1,14 +1,10 @@
 import { render } from "ink"
-import {
-  type ExpertChoice,
-  UnpublishApp,
-  type UnpublishWizardResult,
-  type VersionInfo,
-} from "./app.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+import { UnpublishApp, type UnpublishWizardResult } from "./app.js"
 
 type RenderUnpublishOptions = {
-  experts: ExpertChoice[]
-  onFetchVersions: (expertName: string) => Promise<VersionInfo[]>
+  experts: WizardExpertChoice[]
+  onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
 }
 export async function renderUnpublish(
   options: RenderUnpublishOptions,
@@ -32,4 +28,5 @@ export async function renderUnpublish(
     })
   })
 }
-export type { ExpertChoice, VersionInfo, UnpublishWizardResult }
+export type { UnpublishWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"

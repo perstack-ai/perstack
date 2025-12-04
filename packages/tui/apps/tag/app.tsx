@@ -1,24 +1,13 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
 import { ErrorStep } from "../../src/components/error-step.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
 import { getStatusColor } from "../../src/utils/index.js"
-
-type ExpertChoice = {
-  name: string
-  description?: string
-}
-
-type VersionInfo = {
-  key: string
-  version: string
-  tags: string[]
-  status: "available" | "deprecated" | "disabled"
-}
 
 type WizardStep =
   | { type: "selectExpert" }
   | { type: "loadingVersions"; expertName: string }
-  | { type: "selectVersion"; expertName: string; versions: VersionInfo[] }
+  | { type: "selectVersion"; expertName: string; versions: WizardVersionInfo[] }
   | { type: "inputTags"; expertKey: string; currentTags: string[] }
   | { type: "confirm"; expertKey: string; tags: string[]; currentTags: string[] }
   | { type: "error"; message: string }
@@ -29,8 +18,8 @@ type TagWizardResult = {
 }
 
 type TagAppProps = {
-  experts: ExpertChoice[]
-  onFetchVersions: (expertName: string) => Promise<VersionInfo[]>
+  experts: WizardExpertChoice[]
+  onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
   onComplete: (result: TagWizardResult) => void
   onCancel: () => void
 }
@@ -39,7 +28,7 @@ function ExpertSelector({
   experts,
   onSelect,
 }: {
-  experts: ExpertChoice[]
+  experts: WizardExpertChoice[]
   onSelect: (name: string) => void
 }) {
   const { exit } = useApp()
@@ -86,8 +75,8 @@ function VersionSelector({
   onBack,
 }: {
   expertName: string
-  versions: VersionInfo[]
-  onSelect: (version: VersionInfo) => void
+  versions: WizardVersionInfo[]
+  onSelect: (version: WizardVersionInfo) => void
   onBack: () => void
 }) {
   const { exit } = useApp()
@@ -283,7 +272,7 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
       })
     }
   }
-  const handleVersionSelect = (version: VersionInfo) => {
+  const handleVersionSelect = (version: WizardVersionInfo) => {
     setStep({
       type: "inputTags",
       expertKey: version.key,
@@ -376,4 +365,5 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
   }
 }
 
-export type { ExpertChoice, VersionInfo, TagWizardResult }
+export type { TagWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"

@@ -1,9 +1,10 @@
 import { render } from "ink"
-import { type ExpertChoice, TagApp, type TagWizardResult, type VersionInfo } from "./app.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+import { TagApp, type TagWizardResult } from "./app.js"
 
 type RenderTagWizardOptions = {
-  experts: ExpertChoice[]
-  onFetchVersions: (expertName: string) => Promise<VersionInfo[]>
+  experts: WizardExpertChoice[]
+  onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
 }
 
 export async function renderTag(options: RenderTagWizardOptions): Promise<TagWizardResult | null> {
@@ -27,4 +28,5 @@ export async function renderTag(options: RenderTagWizardOptions): Promise<TagWiz
   })
 }
 
-export type { ExpertChoice, VersionInfo, TagWizardResult }
+export type { TagWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"

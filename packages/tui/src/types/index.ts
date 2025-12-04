@@ -19,3 +19,4 @@ export type {
   InputState,
   RunningState,
 } from "./input-state.js"
+export type { WizardExpertChoice, WizardVersionInfo } from "./wizard.js"

@@ -1,5 +1,5 @@
 import { ApiV1Client } from "@perstack/api-client/v1"
-import { renderUnpublish, type UnpublishVersionInfo } from "@perstack/tui"
+import { renderUnpublish, type WizardVersionInfo } from "@perstack/tui"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 export const unpublishCommand = new Command()
@@ -27,12 +27,12 @@ export const unpublishCommand = new Command()
             name,
             description: experts[name].description,
           })),
-          onFetchVersions: async (expertName: string): Promise<UnpublishVersionInfo[]> => {
+          onFetchVersions: async (expertName: string): Promise<WizardVersionInfo[]> => {
             try {
               const { versions } = await client.registry.experts.getVersions({
                 expertKey: expertName,
               })
-              const versionInfos: UnpublishVersionInfo[] = []
+              const versionInfos: WizardVersionInfo[] = []
               for (const v of versions) {
                 try {
                   const { expert: fullExpert } = await client.registry.experts.get({
