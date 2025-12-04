@@ -374,12 +374,23 @@ type RuntimeEventPayloads = {
       text: string
     }
   }
+  skillStarting: {
+    skillName: string
+    command: string
+    args: string[]
+  }
   skillConnected: {
     skillName: string
     serverInfo?: {
       name: string
       version: string
     }
+    connectDurationMs?: number
+    totalDurationMs?: number
+  }
+  skillStderr: {
+    skillName: string
+    message: string
   }
   skillDisconnected: {
     skillName: string
