@@ -99,7 +99,7 @@ pnpm build            # Build all packages
 pnpm typecheck        # Type check all packages
 pnpm test             # Run unit tests
 pnpm format-and-lint  # Run Biome linter/formatter
-pnpm changeset        # Create changeset for versioning (user runs this)
+pnpm changeset        # Create changeset for versioning
 ```
 
 ## Code Style
@@ -282,34 +282,27 @@ major.minor.patch
 
 ### Changeset Workflow
 
-**IMPORTANT:** The user must run `pnpm changeset` themselves. Do NOT run it automatically.
+When changes require a changeset, create a changeset file directly in `.changeset/` directory.
 
-When changes require a changeset, provide the user with a draft including:
-1. Which packages to select
-2. Version bump type for each package
-3. Changelog message content
+**Changeset file format:**
+```markdown
+---
+"@perstack/runtime": patch
+---
 
-**Example draft for user:**
-```
-Please run: pnpm changeset
-
-Select packages:
-- @perstack/runtime (patch)
-
-Changelog message:
 Fix memory leak in skill manager cleanup when MCP connection fails
 ```
 
 **Bug fix:**
-- Select: Only affected package
+- Packages: Only affected package
 - Type: patch
 
 **New feature:**
-- Select: @perstack/core + ALL packages (except docs)
+- Packages: ALL packages (@perstack/core, @perstack/runtime, @perstack/api-client, @perstack/base, @perstack/tui, perstack)
 - Type: minor (for all)
 
 **Breaking change:**
-- Select: ALL packages
+- Packages: ALL packages
 - Type: major (for all)
 
 ### Two-Stage Release Flow
@@ -385,14 +378,14 @@ When making changes, update ALL relevant documentation:
 1. Edit code in appropriate package(s)
 2. Run `pnpm typecheck && pnpm test`
 3. Update related documentation
-4. Provide changeset draft to user (ALL packages, minor)
+4. Create changeset (ALL packages, minor)
 5. Commit with `Add: <subject>` format
 
 ### Fixing a Bug
 
 1. Edit code and add test
 2. Run `pnpm typecheck && pnpm test`
-3. Provide changeset draft to user (affected package only, patch)
+3. Create changeset (affected package only, patch)
 4. Commit with `Fix: <subject>` format
 
 ### Modifying Core Schemas
@@ -401,7 +394,7 @@ When making changes, update ALL relevant documentation:
 2. Update all dependent packages if needed
 3. Run `pnpm typecheck && pnpm test`
 4. Update `docs/references/` and `packages/core/README.md`
-5. Provide changeset draft to user (ALL packages, minor for optional, major for breaking)
+5. Create changeset (ALL packages, minor for optional, major for breaking)
 
 ### Adding a New Tool to @perstack/base
 
@@ -595,7 +588,7 @@ pick = ["attemptCompletion", "think"]
 - [ ] Review commit history (`git log --oneline -10`) and match style
 - [ ] Commits are split into meaningful units (not monolithic)
 - [ ] Related documentation updated (`docs/`, `README.md`, `packages/**/README.md`)
-- [ ] Notify user to run `pnpm changeset` with draft provided
+- [ ] Changeset created if needed
 
 ## Pre-push Checklist
 
