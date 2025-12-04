@@ -1,16 +1,22 @@
 import { createId } from "@paralleldrive/cuid2"
-import { describe, expect, it, vi } from "vitest"
+import { readFile } from "node:fs/promises"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
 
 vi.mock("node:fs/promises", () => ({
-  readFile: vi.fn().mockImplementation(() => {
-    return Promise.resolve(Buffer.from("encoded_pdf_content"))
-  }),
+  readFile: vi.fn(),
 }))
 
+const mockReadFile = vi.mocked(readFile)
+
 describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it("processes PDF file tool result correctly", async () => {
+    mockReadFile.mockResolvedValue(Buffer.from("encoded_pdf_content"))
     const pdfInfo = {
       path: "/test.pdf",
       mimeType: "application/pdf",
@@ -86,6 +92,51 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
           ],
         },
       ],
+    })
+  })
+
+  it("handles file read error gracefully", async () => {
+    mockReadFile.mockRejectedValue(new Error("ENOENT: no such file or directory"))
+    const pdfInfo = {
+      path: "/nonexistent.pdf",
+      mimeType: "application/pdf",
+      size: 2048,
+    }
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCall: {
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readPdfFile",
+        args: { path: "/nonexistent.pdf" },
+      },
+      toolResult: {
+        id: "tr_123",
+        skillName: "@perstack/base",
+        toolName: "readPdfFile",
+        result: [
+          {
+            type: "textPart" as const,
+            text: JSON.stringify(pdfInfo),
+            id: createId(),
+          },
+        ],
+      },
+    })
+    const result = await StateMachineLogics.ResolvingPdfFile({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(result.type).toBe("finishToolCall")
+    if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
+    const userMessage = result.newMessages[1]
+    expect(userMessage.contents[0]).toMatchObject({
+      type: "textPart",
+      text: expect.stringContaining('Failed to read PDF file "/nonexistent.pdf"'),
     })
   })
 })

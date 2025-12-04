@@ -1,16 +1,22 @@
 import { createId } from "@paralleldrive/cuid2"
-import { describe, expect, it, vi } from "vitest"
+import { readFile } from "node:fs/promises"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
 
 vi.mock("node:fs/promises", () => ({
-  readFile: vi.fn().mockImplementation(() => {
-    return Promise.resolve(Buffer.from("encoded_image"))
-  }),
+  readFile: vi.fn(),
 }))
 
+const mockReadFile = vi.mocked(readFile)
+
 describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it("processes image file tool result correctly", async () => {
+    mockReadFile.mockResolvedValue(Buffer.from("encoded_image"))
     const imageInfo = {
       path: "/test/image.png",
       mimeType: "image/png",
@@ -75,6 +81,52 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
           ],
         },
       ],
+    })
+  })
+
+  it("handles file read error gracefully", async () => {
+    mockReadFile.mockRejectedValue(new Error("ENOENT: no such file or directory"))
+    const imageInfo = {
+      path: "/nonexistent.png",
+      mimeType: "image/png",
+      size: 1024,
+    }
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCall: {
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        args: { path: "/nonexistent.png" },
+      },
+      toolResult: {
+        id: "tr_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        result: [
+          {
+            type: "textPart" as const,
+            text: JSON.stringify(imageInfo),
+            id: createId(),
+          },
+        ],
+      },
+    })
+    const result = await StateMachineLogics.ResolvingImageFile({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(result.type).toBe("finishToolCall")
+    if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
+    const toolResultPart = result.newMessages[0].contents[0]
+    if (toolResultPart.type !== "toolResultPart") throw new Error("Unexpected part type")
+    expect(toolResultPart.contents[0]).toMatchObject({
+      type: "textPart",
+      text: expect.stringContaining('Failed to read image file "/nonexistent.png"'),
     })
   })
 })
