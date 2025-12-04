@@ -1,7 +1,7 @@
 # Comprehensive Code Review Report
 
 **Date**: 2025-12-02  
-**Last Updated**: 2025-12-03  
+**Last Updated**: 2025-12-04  
 **Scope**: Full codebase review of perstack monorepo
 
 ---
@@ -14,12 +14,12 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 
 | Status       | Count | Description                                |
 | ------------ | ----- | ------------------------------------------ |
-| ✅ Fixed      | 17    | Issues resolved with code changes          |
+| ✅ Fixed      | 20    | Issues resolved with code changes          |
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
-| 🔴 Open       | 3     | Runtime package issues (2025-12-03)        |
-| 🟡 Low Prio   | 4     | Runtime minor issues (2025-12-03)          |
+| 🔴 Open       | 0     | All runtime issues resolved                |
+| 🟡 Low Prio   | 4     | Runtime minor issues                       |
 
 ---
 
@@ -632,55 +632,35 @@ cd /project && perstack run expert "query"
 
 ### 35. Skill Object Mutation in getSkillManagers
 
-**Status**: 🔴 **Open**
+**Status**: ✅ **Fixed** — PR #12
 
 **Category**: Code Quality  
 **Severity**: Minor
 
 **Location**: `packages/runtime/src/skill-manager/helpers.ts:47-50`
 
-**Issue**: When `perstackBaseSkillCommand` is set, the original skill object is mutated:
+**Issue**: When `perstackBaseSkillCommand` is set, the original skill object is mutated.
 
-```typescript
-skill.command = overrideCommand
-skill.packageName = undefined
-skill.args = overrideArgs
-skill.lazyInit = false
-```
-
-**Impact**: The original skill definition in `expert.skills` is modified, which could cause issues if the same expert definition is reused.
-
-**Recommendation**: Create a copy before modifying:
-```typescript
-const modifiedSkill = { ...skill, command: overrideCommand, ... }
-```
+**Resolution**: Refactored to use `.map()` with spread operator to create a copy before modifying.
 
 ---
 
 ### 36. experts Object Mutation in resolveExpertToRun
 
-**Status**: 🔴 **Open**
+**Status**: ✅ **Fixed** — PR #12
 
 **Category**: Code Quality  
 **Severity**: Minor
 
 **Location**: `packages/runtime/src/resolve-expert-to-run.ts:20`
 
-**Issue**: The function modifies the passed `experts` object:
+**Issue**: The function modified the passed `experts` object as a side effect.
 
-```typescript
-experts[expertKey] = toRuntimeExpert(expert)  // Mutates argument
-```
-
-**Impact**: Side effect that could surprise callers; the original `experts` map passed to `run()` will be modified.
-
-**Recommendation**: Either document this behavior clearly or return a new map.
+**Resolution**: Removed mutation from `resolveExpertToRun`. Caching is now explicitly handled in `setupExperts`.
 
 ---
 
 ### 37. Missing Error Handling for File Operations in resolving-pdf-file and resolving-image-file
-
-**Status**: 🔴 **Open**
 
 **Status**: ✅ **Fixed** — Commit `796f981`
 
@@ -697,25 +677,16 @@ experts[expertKey] = toRuntimeExpert(expert)  // Mutates argument
 
 ### 38. RunSetting Parsed Without Schema Validation
 
-**Status**: 🔴 **Open**
+**Status**: ✅ **Fixed** — PR #14
 
 **Category**: Code Quality  
 **Severity**: Minor
 
 **Location**: `packages/runtime/src/run-setting-store.ts:39`
 
-**Issue**: RunSetting is parsed with `JSON.parse` and cast with `as`:
+**Issue**: RunSetting was parsed with `JSON.parse` and cast with `as` without validation.
 
-```typescript
-const runSetting = JSON.parse(await fileSystem.readFile(runSettingPath, "utf-8")) as RunSetting
-```
-
-**Impact**: If the stored JSON is corrupted or schema-incompatible, errors will occur later with unclear messages.
-
-**Recommendation**: Use Zod schema validation:
-```typescript
-const runSetting = runSettingSchema.parse(JSON.parse(await fileSystem.readFile(...)))
-```
+**Resolution**: Added `runSettingSchema` to `@perstack/core` and used it to validate stored run settings.
 
 ---
 
