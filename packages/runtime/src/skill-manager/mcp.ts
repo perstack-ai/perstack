@@ -72,9 +72,21 @@ export class McpSkillManager extends BaseSkillManager {
       }
       env[envName] = this._env[envName]
     }
+    const startTime = Date.now()
+    console.log(`[MCP] Starting skill ${skill.name}...`)
     const { command, args } = this._getCommandArgs(skill)
-    const transport = new StdioClientTransport({ command, args, env, stderr: "ignore" })
+    const transport = new StdioClientTransport({ command, args, env, stderr: "pipe" })
+    if (transport.stderr) {
+      transport.stderr.on("data", (chunk: Buffer) => {
+        console.log(`[MCP:${skill.name}:stderr] ${chunk.toString().trim()}`)
+      })
+    }
+    const connectStartTime = Date.now()
     await this._mcpClient!.connect(transport)
+    const connectTime = Date.now()
+    console.log(
+      `[MCP] Skill ${skill.name} connected in ${connectTime - connectStartTime}ms (total: ${connectTime - startTime}ms)`,
+    )
     if (this._eventListener) {
       const serverInfo = this._mcpClient!.getServerVersion()
       const event = createRuntimeEvent("skillConnected", this._runId, {
