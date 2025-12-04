@@ -25,6 +25,17 @@ type InputAction =
   | { type: "GO_BACK_FROM_EVENTS"; run: RunHistoryItem; checkpoints: CheckpointHistoryItem[] }
   | { type: "GO_BACK_FROM_CHECKPOINTS"; historyRuns: RunHistoryItem[] }
   | { type: "INITIALIZE_RUNTIME" }
+  | {
+      type: "SELECT_EVENT"
+      checkpoint: CheckpointHistoryItem
+      events: EventHistoryItem[]
+      selectedEvent: EventHistoryItem
+    }
+  | {
+      type: "GO_BACK_FROM_EVENT_DETAIL"
+      checkpoint: CheckpointHistoryItem
+      events: EventHistoryItem[]
+    }
 const inputReducer = (_state: InputState, action: InputAction): InputState => {
   switch (action.type) {
     case "SELECT_EXPERT":
@@ -55,6 +66,19 @@ const inputReducer = (_state: InputState, action: InputAction): InputState => {
       return { type: "browsingCheckpoints", run: action.run, checkpoints: action.checkpoints }
     case "GO_BACK_FROM_CHECKPOINTS":
       return { type: "browsingHistory", runs: action.historyRuns }
+    case "SELECT_EVENT":
+      return {
+        type: "browsingEventDetail",
+        checkpoint: action.checkpoint,
+        events: action.events,
+        selectedEvent: action.selectedEvent,
+      }
+    case "GO_BACK_FROM_EVENT_DETAIL":
+      return {
+        type: "browsingEvents",
+        checkpoint: action.checkpoint,
+        events: action.events,
+      }
     default:
       return assertNever(action)
   }

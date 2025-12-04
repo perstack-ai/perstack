@@ -30,6 +30,12 @@ export type BrowsingEventsState = {
   checkpoint: CheckpointHistoryItem
   events: EventHistoryItem[]
 }
+export type BrowsingEventDetailState = {
+  type: "browsingEventDetail"
+  checkpoint: CheckpointHistoryItem
+  events: EventHistoryItem[]
+  selectedEvent: EventHistoryItem
+}
 export type InputState =
   | EnteringQueryState
   | RunningState
@@ -37,3 +43,4 @@ export type InputState =
   | BrowsingExpertsState
   | BrowsingCheckpointsState
   | BrowsingEventsState
+  | BrowsingEventDetailState

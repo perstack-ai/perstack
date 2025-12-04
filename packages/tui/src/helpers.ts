@@ -5,7 +5,6 @@ export const truncateText = (text: string, maxLength: number): string => {
 export const assertNever = (x: never): never => {
   throw new Error(`Unexpected value: ${x}`)
 }
-export const noop = (): void => {}
 export const formatTimestamp = (timestamp: number): string => new Date(timestamp).toLocaleString()
 export const shortenPath = (fullPath: string, maxLength = 60): string => {
   if (fullPath.length <= maxLength) return fullPath

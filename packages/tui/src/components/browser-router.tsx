@@ -1,8 +1,10 @@
+import { useCallback } from "react"
 import { useInputAreaContext } from "../context/index.js"
 import { assertNever } from "../helpers.js"
-import type { InputState } from "../types/index.js"
+import type { EventHistoryItem, InputState } from "../types/index.js"
 import {
   BrowsingCheckpointsInput,
+  BrowsingEventDetailInput,
   BrowsingEventsInput,
   BrowsingExpertsInput,
   BrowsingHistoryInput,
@@ -14,6 +16,14 @@ type BrowserRouterProps = {
 }
 export const BrowserRouter = ({ inputState }: BrowserRouterProps) => {
   const ctx = useInputAreaContext()
+  const handleEventSelect = useCallback(
+    (event: EventHistoryItem) => {
+      if (inputState.type === "browsingEvents") {
+        ctx.onEventSelect(inputState, event)
+      }
+    },
+    [ctx.onEventSelect, inputState],
+  )
   switch (inputState.type) {
     case "browsingHistory":
       return (
@@ -47,9 +57,12 @@ export const BrowserRouter = ({ inputState }: BrowserRouterProps) => {
         <BrowsingEventsInput
           checkpoint={inputState.checkpoint}
           events={inputState.events}
+          onEventSelect={handleEventSelect}
           onBack={ctx.onBack}
         />
       )
+    case "browsingEventDetail":
+      return <BrowsingEventDetailInput event={inputState.selectedEvent} onBack={ctx.onBack} />
     default:
       return assertNever(inputState)
   }

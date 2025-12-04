@@ -1,5 +1,10 @@
 import { createContext, useContext } from "react"
-import type { CheckpointHistoryItem, RunHistoryItem } from "../types/index.js"
+import type {
+  BrowsingEventsState,
+  CheckpointHistoryItem,
+  EventHistoryItem,
+  RunHistoryItem,
+} from "../types/index.js"
 export type InputAreaContextValue = {
   onExpertSelect: (expertKey: string) => void
   onQuerySubmit: (query: string) => void
@@ -7,6 +12,7 @@ export type InputAreaContextValue = {
   onRunResume: (run: RunHistoryItem) => void
   onCheckpointSelect: (checkpoint: CheckpointHistoryItem) => void
   onCheckpointResume: (checkpoint: CheckpointHistoryItem) => void
+  onEventSelect: (state: BrowsingEventsState, event: EventHistoryItem) => void
   onBack: () => void
   onSwitchToExperts: () => void
   onSwitchToHistory: () => void
