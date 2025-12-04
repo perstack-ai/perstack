@@ -1,5 +1,11 @@
 # @perstack/runtime
 
+## 0.0.53
+
+### Patch Changes
+
+- [#5](https://github.com/perstack-ai/perstack/pull/5) [`d683ae0`](https://github.com/perstack-ai/perstack/commit/d683ae09284e95a1a5b12701bd2ae466e3b620bd) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Fix closeSkillManagers to continue closing other managers when one fails
+
 ## 0.0.52
 
 ### Patch Changes
