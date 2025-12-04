@@ -9,12 +9,15 @@ export class RunEventEmitter {
   }
 
   async emit(event: RunEvent) {
+    const enrichedEvent = {
+      ...event,
+      id: createId(),
+      timestamp: Date.now(),
+    }
     for (const listener of this.listeners) {
-      await listener({
-        ...event,
-        id: createId(),
-        timestamp: Date.now(),
-      })
+      try {
+        await listener(enrichedEvent)
+      } catch {}
     }
   }
 }
