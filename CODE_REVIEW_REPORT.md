@@ -18,7 +18,7 @@ Overall, the codebase is well-structured with strong architectural decisions. Th
 | ✅ Verified   | 5     | Confirmed not an issue / working correctly |
 | 📝 Documented | 1     | Behavior documented, no code change needed |
 | ⏸️ Deferred   | 8     | Low priority / E2E scope / future work     |
-| 🔴 Open       | 4     | Runtime package issues (2025-12-03)        |
+| 🔴 Open       | 3     | Runtime package issues (2025-12-03)        |
 | 🟡 Low Prio   | 4     | Runtime minor issues (2025-12-03)          |
 
 ---
@@ -617,32 +617,16 @@ cd /project && perstack run expert "query"
 
 ### 34. Delegate Expert Not Found Causes Runtime Error
 
-**Status**: 🔴 **Open**
+**Status**: ✅ **Fixed** — Commit `cc23849`
 
 **Category**: Potential Bug  
 **Severity**: Minor
 
 **Location**: `packages/runtime/src/skill-manager/helpers.ts:69-74`
 
-**Issue**: When creating DelegateSkillManagers, if a delegate expert is not found in `experts`, `experts[delegateExpertName]` returns `undefined`, causing `new DelegateSkillManager(undefined, ...)` to fail.
+**Issue**: When creating DelegateSkillManagers, if a delegate expert is not found, error message was unclear.
 
-```typescript
-const delegateSkillManagers = expert.delegates.map((delegateExpertName) => {
-  const delegate = experts[delegateExpertName]  // May be undefined
-  const manager = new DelegateSkillManager(delegate, runId, eventListener)
-  // ...
-})
-```
-
-**Impact**: Unclear error message when delegate expert is missing.
-
-**Recommendation**: Add explicit check with descriptive error:
-```typescript
-const delegate = experts[delegateExpertName]
-if (!delegate) {
-  throw new Error(`Delegate expert "${delegateExpertName}" not found in experts`)
-}
-```
+**Resolution**: Added explicit check with descriptive error message.
 
 ---
 
@@ -899,7 +883,7 @@ const metaInstruction = dedent`
 | #31   | Skill lazy init for faster startup     | ⏸️ Future       |
 | #32   | maxSteps off-by-one error              | ✅ Fixed        |
 | #33   | Sandbox design flaw (workspace/chdir)  | ✅ Fixed        |
-| #34   | Delegate expert not found error        | 🔴 Open         |
+| #34   | Delegate expert not found error        | ✅ Fixed        |
 | #35   | Skill object mutation                  | 🔴 Open         |
 | #36   | experts object mutation                | 🔴 Open         |
 | #37   | File operation error handling          | ✅ Fixed        |
@@ -928,7 +912,6 @@ const metaInstruction = dedent`
 ### Runtime Package Open Issues (2025-12-03)
 
 **Minor (Should Fix)**:
-- **#34**: Delegate expert not found — improve error message
 - **#35, #36**: Object mutation side effects — defensive copying recommended
 - **#38**: RunSetting not validated — use Zod schema
 
@@ -957,3 +940,4 @@ const metaInstruction = dedent`
 | `ced1aa6` | Fix: maxSteps off-by-one error in finishing step                   |
 | `dac71b5` | Fix: Handle individual close failures in closeSkillManagers        |
 | `796f981` | Fix: Handle file read errors gracefully in resolving file states   |
+| `cc23849` | Fix: Add explicit error when delegate expert not found             |
