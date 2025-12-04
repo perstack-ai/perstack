@@ -36,7 +36,9 @@ export async function storeRunSetting(
   const runDir = getRunDir(setting.runId)
   if (fileSystem.existsSync(runDir)) {
     const runSettingPath = path.resolve(runDir, "run-setting.json")
-    const runSetting = runSettingSchema.parse(JSON.parse(await fileSystem.readFile(runSettingPath, "utf-8")))
+    const runSetting = runSettingSchema.parse(
+      JSON.parse(await fileSystem.readFile(runSettingPath, "utf-8")),
+    )
     runSetting.updatedAt = Date.now()
     await fileSystem.writeFile(runSettingPath, JSON.stringify(runSetting), "utf-8")
   } else {
