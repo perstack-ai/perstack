@@ -1,5 +1,14 @@
 # perstack
 
+## 0.0.42
+
+### Patch Changes
+
+- [#37](https://github.com/perstack-ai/perstack/pull/37) [`18e3f45`](https://github.com/perstack-ai/perstack/commit/18e3f45b4b128773d11ef53c666016391793f915) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Extract continue timeout as named constant in start command
+
+- Updated dependencies [[`17dfee7`](https://github.com/perstack-ai/perstack/commit/17dfee73fa8cb4e17c6deaec17d0d6653736e0af)]:
+  - @perstack/tui@0.0.16
+
 ## 0.0.41
 
 ### Patch Changes
