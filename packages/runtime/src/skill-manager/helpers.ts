@@ -66,15 +66,17 @@ export async function getSkillManagers(
     return manager
   })
   await initSkillManagersWithCleanup(interactiveSkillManagers, allManagers)
-  const delegateSkillManagers = expert.delegates.map((delegateExpertName) => {
+  const delegateSkillManagers: DelegateSkillManager[] = []
+  for (const delegateExpertName of expert.delegates) {
     const delegate = experts[delegateExpertName]
     if (!delegate) {
+      await Promise.all(allManagers.map((m) => m.close().catch(() => {})))
       throw new Error(`Delegate expert "${delegateExpertName}" not found in experts`)
     }
     const manager = new DelegateSkillManager(delegate, runId, eventListener)
     allManagers.push(manager)
-    return manager
-  })
+    delegateSkillManagers.push(manager)
+  }
   await initSkillManagersWithCleanup(delegateSkillManagers, allManagers)
   const skillManagers: Record<string, BaseSkillManager> = {}
   for (const manager of allManagers) {
