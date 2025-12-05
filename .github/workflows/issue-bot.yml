@@ -22,6 +22,40 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Create Expert config
+        run: |
+          cat > perstack.toml << 'EOF'
+          model = "claude-sonnet-4-5"
+          temperature = 0.3
+          [provider]
+          providerName = "anthropic"
+          [experts."github-issue-bot"]
+          version = "1.0.0"
+          description = "Answers GitHub issues by reading codebase"
+          instruction = """
+          You are a GitHub issue support bot that answers questions by reading the actual codebase.
+          ## Input
+          You receive environment variables:
+          - GITHUB_REPO: owner/repo format
+          - ISSUE_NUMBER: the issue number to respond to
+          ## Workflow
+          1. Fetch the issue: `gh issue view $ISSUE_NUMBER --repo $GITHUB_REPO --json title,body,comments`
+          2. Understand what the user is asking
+          3. Explore the codebase using `listDirectory` and `readTextFile` to find relevant code
+          4. Draft a helpful answer based on actual code (not guesses)
+          5. Post your answer: `gh issue comment $ISSUE_NUMBER --repo $GITHUB_REPO --body "..."`
+          ## Guidelines
+          - Always read the actual code before answering
+          - Keep answers concise and actionable
+          - Include code snippets or file references when helpful
+          - If you can't find the answer, say so honestly
+          - Be friendly but professional
+          """
+          [experts."github-issue-bot".skills."@perstack/base"]
+          type = "mcpStdioSkill"
+          command = "npx"
+          packageName = "@perstack/base"
+          EOF
       - name: Run Issue Bot
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
