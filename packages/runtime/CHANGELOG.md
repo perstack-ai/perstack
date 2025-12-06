@@ -1,5 +1,19 @@
 # @perstack/runtime
 
+## 0.0.61
+
+### Patch Changes
+
+- [#51](https://github.com/perstack-ai/perstack/pull/51) [`5497b47`](https://github.com/perstack-ai/perstack/commit/5497b478476ef95688a9cb28cfaf20473e6ae3ce) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add skill lifecycle events for MCP startup debugging
+
+  - Add `skillStarting` event with command and args
+  - Add `skillStderr` event for child process stderr output
+  - Add `connectDurationMs` and `totalDurationMs` to `skillConnected` event
+
+- Updated dependencies [[`5497b47`](https://github.com/perstack-ai/perstack/commit/5497b478476ef95688a9cb28cfaf20473e6ae3ce)]:
+  - @perstack/core@0.0.20
+  - @perstack/api-client@0.0.31
+
 ## 0.0.60
 
 ### Patch Changes
