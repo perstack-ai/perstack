@@ -20,6 +20,7 @@ dist/
 node_modules/
 npm-debug.log*
 perstack.toml
+!examples/**/perstack.toml
 perstack/
 !packages/perstack
 Thumbs.db

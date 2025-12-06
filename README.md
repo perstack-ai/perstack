@@ -37,6 +37,12 @@ $ ANTHROPIC_API_KEY=<YOUR_API_KEY> npx perstack run tic-tac-toe "Game start!"
 - [Taming Prompt Sprawl](https://docs.perstack.ai/working-with-perstack/taming-prompt-sprawl) — fix bloated prompts with modular Experts
 - [Extending with Tools](https://docs.perstack.ai/working-with-perstack/extending-with-tools) — add MCP skills to your Experts
 
+## Examples
+
+| Example                                          | Description                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| [github-issue-bot](./examples/github-issue-bot/) | Automated GitHub issue responder with real-time activity logging |
+
 ## Key Features
 
 - **Agent-first development toolkit**

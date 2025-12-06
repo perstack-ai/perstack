@@ -1,0 +1,50 @@
+name: Issue Bot
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+jobs:
+  respond:
+    if: |
+      (github.event_name == 'issues') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@perstack-issue-bot'))
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Add reaction to indicate processing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions -f content=eyes
+          else
+            gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/reactions -f content=eyes
+          fi
+      - name: Post processing status
+        id: status_comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT_URL=$(gh issue comment ${{ github.event.issue.number }} --body "🤖 Starting...")
+          COMMENT_ID=$(echo "$COMMENT_URL" | grep -oE '[0-9]+$')
+          echo "comment_id=$COMMENT_ID" >> $GITHUB_OUTPUT
+      - name: Run Issue Bot
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_ID: ${{ steps.status_comment.outputs.comment_id }}
+        run: |
+          echo 'model = "claude-sonnet-4-5"' > perstack.toml
+          echo '[provider]' >> perstack.toml
+          echo 'providerName = "anthropic"' >> perstack.toml
+          npm install -g tsx
+          npx perstack run @perstack/github-issue-bot "Answer issue #$ISSUE_NUMBER" 2>&1 | tsx scripts/checkpoint-filter.ts
