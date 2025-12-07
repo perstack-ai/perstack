@@ -2,8 +2,8 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": ["@tsconfig/node22", "vitest", "ts-dedent"],
   "ignoreExportsUsedInFile": true,
-  "ignoreBinaries": [],
-  "ignore": ["dist/**/*", "**/*.test.ts", "**/*.test.tsx", "docs/content/**/*", "scripts/**/*"],
+  "ignoreBinaries": ["perstack"],
+  "ignore": ["dist/**/*", "**/*.test.ts", "**/*.test.tsx", "docs/content/**/*", "scripts/**/*", "examples/**/*"],
   "workspaces": {
     "packages/perstack": {
       "entry": ["bin/cli.ts", "src/**/*.ts"]
