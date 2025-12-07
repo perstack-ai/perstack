@@ -61,22 +61,12 @@ export function registerEditTextFile(server: McpServer) {
         
         Rules:
         - YOU MUST PROVIDE A VALID UTF-8 STRING FOR THE TEXT
-        - THERE IS A LIMIT ON THE NUMBER OF TOKENS THAT CAN BE GENERATED, SO DO NOT WRITE ALL THE CONTENT AT ONCE (IT WILL CAUSE AN ERROR)
-        - IF YOU WANT TO EDIT MORE THAN 2000 CHARACTERS, USE THIS TOOL MULTIPLE TIMES
         - DO NOT USE THIS TOOL FOR APPENDING TEXT TO FILES - USE appendTextFile TOOL INSTEAD
       `,
       inputSchema: {
         path: z.string().describe("Target file path to edit."),
-        newText: z
-          .string()
-          .min(1)
-          .max(2_000)
-          .describe("Text to append to the file. Max 2000 characters."),
-        oldText: z
-          .string()
-          .min(1)
-          .max(2_000)
-          .describe("Exact text to find and replace. Max 2000 characters."),
+        newText: z.string().describe("Text to replace with."),
+        oldText: z.string().describe("Exact text to find and replace."),
       },
     },
     async (input: { path: string; newText: string; oldText: string }) => {

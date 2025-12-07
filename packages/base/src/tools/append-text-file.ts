@@ -43,16 +43,10 @@ export function registerAppendTextFile(server: McpServer) {
       Rules:
       - FILE MUST EXIST BEFORE APPENDING
       - YOU MUST PROVIDE A VALID UTF-8 STRING FOR THE TEXT
-      - THERE IS A LIMIT ON THE NUMBER OF TOKENS THAT CAN BE GENERATED, SO DO NOT APPEND ALL THE CONTENT AT ONCE
-      - IF YOU WANT TO APPEND MORE THAN 2000 CHARACTERS, USE THIS TOOL MULTIPLE TIMES
     `,
       inputSchema: {
         path: z.string().describe("Target file path to append to."),
-        text: z
-          .string()
-          .min(1)
-          .max(2_000)
-          .describe("Text to append to the file. Max 2000 characters."),
+        text: z.string().describe("Text to append to the file."),
       },
     },
     async ({ path, text }: { path: string; text: string }) => {

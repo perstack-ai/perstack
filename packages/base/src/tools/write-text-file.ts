@@ -45,12 +45,10 @@ export function registerWriteTextFile(server: McpServer) {
         Rules:
         - IF THE FILE ALREADY EXISTS, IT WILL BE OVERWRITTEN
         - YOU MUST PROVIDE A VALID UTF-8 STRING FOR THE TEXT
-        - THERE IS A LIMIT ON THE NUMBER OF TOKENS THAT CAN BE GENERATED, SO DO NOT WRITE ALL THE CONTENT AT ONCE (IT WILL CAUSE AN ERROR)
-        - IF YOU WANT TO WRITE MORE THAN 10,000 CHARACTERS, USE "appendTextFile" TOOL AFTER THIS ONE
       `,
       inputSchema: {
         path: z.string().describe("Target file path (relative or absolute)."),
-        text: z.string().max(10_000).describe("Text to write to the file. Max 10000 characters."),
+        text: z.string().describe("Text to write to the file."),
       },
     },
     async (input: { path: string; text: string }) => {
