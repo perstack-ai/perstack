@@ -1,5 +1,12 @@
 # @perstack/tui
 
+## 0.0.18
+
+### Patch Changes
+
+- Updated dependencies [[`5497b47`](https://github.com/perstack-ai/perstack/commit/5497b478476ef95688a9cb28cfaf20473e6ae3ce)]:
+  - @perstack/core@0.0.20
+
 ## 0.0.17
 
 ### Patch Changes
