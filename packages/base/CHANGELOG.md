@@ -1,5 +1,17 @@
 # @perstack/base
 
+## 0.0.32
+
+### Patch Changes
+
+- [#57](https://github.com/perstack-ai/perstack/pull/57) [`f5fc0ec`](https://github.com/perstack-ai/perstack/commit/f5fc0ec4eaf66fe80ad99e4d23e2757bf4471f07) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Remove character limits from file operation tools
+
+  The following tools no longer have character limits:
+
+  - writeTextFile: removed 10,000 character limit
+  - appendTextFile: removed 2,000 character limit
+  - editTextFile: removed 2,000 character limit for both newText and oldText
+
 ## 0.0.31
 
 ### Patch Changes
