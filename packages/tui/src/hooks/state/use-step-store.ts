@@ -9,18 +9,22 @@ type StepBuilder = {
   completion?: string
 }
 const TOOL_RESULT_EVENT_TYPES = new Set([
-  "resolveToolResult",
+  "resolveToolResults",
   "resolveThought",
   "resolvePdfFile",
   "resolveImageFile",
   "attemptCompletion",
 ])
+const isToolCallsEvent = (event: PerstackEvent): event is RunEvent & { toolCalls: ToolCall[] } =>
+  "type" in event && event.type === "callTools" && "toolCalls" in event
 const isToolCallEvent = (event: PerstackEvent): event is RunEvent & { toolCall: ToolCall } =>
   "type" in event &&
-  (event.type === "callTool" ||
-    event.type === "callInteractiveTool" ||
-    event.type === "callDelegate") &&
+  (event.type === "callInteractiveTool" || event.type === "callDelegate") &&
   "toolCall" in event
+const isToolResultsEvent = (
+  event: PerstackEvent,
+): event is RunEvent & { toolResults: ToolResult[] } =>
+  "type" in event && event.type === "resolveToolResults" && "toolResults" in event
 const isToolResultEvent = (event: PerstackEvent): event is RunEvent & { toolResult: ToolResult } =>
   "type" in event && TOOL_RESULT_EVENT_TYPES.has(event.type) && "toolResult" in event
 const checkIsSuccess = (result: Array<{ type: string; text?: string }>): boolean => {
@@ -48,6 +52,14 @@ const processEvent = (stepMap: Map<number, StepBuilder>, event: PerstackEvent): 
     builder.query = extractQuery(event)
   } else if (event.type === "completeRun") {
     builder.completion = event.text
+  } else if (isToolCallsEvent(event)) {
+    for (const toolCall of event.toolCalls) {
+      builder.tools.set(toolCall.id, {
+        id: toolCall.id,
+        toolName: toolCall.toolName,
+        args: toolCall.args as Record<string, unknown>,
+      })
+    }
   } else if (isToolCallEvent(event)) {
     const { toolCall } = event
     builder.tools.set(toolCall.id, {
@@ -55,6 +67,14 @@ const processEvent = (stepMap: Map<number, StepBuilder>, event: PerstackEvent): 
       toolName: toolCall.toolName,
       args: toolCall.args as Record<string, unknown>,
     })
+  } else if (isToolResultsEvent(event)) {
+    for (const toolResult of event.toolResults) {
+      const existing = builder.tools.get(toolResult.id)
+      if (existing && Array.isArray(toolResult.result)) {
+        existing.result = toolResult.result
+        existing.isSuccess = checkIsSuccess(toolResult.result)
+      }
+    }
   } else if (isToolResultEvent(event)) {
     const { toolResult } = event
     const existing = builder.tools.get(toolResult.id)
