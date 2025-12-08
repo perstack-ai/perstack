@@ -1,25 +1,20 @@
-name: Release
+name: E2E Tests
 
 on:
   push:
-    branches: [main]
+    branches: [changeset-release/main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
+  cancel-in-progress: true
 
 env:
   PNPM_VERSION: '10.10.0'
   NODE_VERSION: '22'
 
 jobs:
-  release:
-    name: Release
+  e2e:
+    name: E2E Tests
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -35,7 +30,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -43,16 +37,8 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Create Release PR or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: pnpm run version
-          publish: pnpm run release
-          title: 'chore: version packages'
-          commit: 'chore: version packages'
+      - name: Run E2E tests
+        run: pnpm test:e2e
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
