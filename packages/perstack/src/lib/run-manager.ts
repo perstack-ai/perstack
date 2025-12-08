@@ -9,42 +9,56 @@ export async function getAllRuns(): Promise<RunSetting[]> {
   if (!existsSync(dataDir)) {
     return []
   }
-  const runsDir = path.resolve(dataDir, "runs")
-  if (!existsSync(runsDir)) {
+  const jobsDir = path.resolve(dataDir, "jobs")
+  if (!existsSync(jobsDir)) {
     return []
   }
-  const runDirs = await readdir(runsDir, { withFileTypes: true }).then((dirs) =>
+  const jobDirs = await readdir(jobsDir, { withFileTypes: true }).then((dirs) =>
     dirs.filter((dir) => dir.isDirectory()).map((dir) => dir.name),
   )
-  if (runDirs.length === 0) {
+  if (jobDirs.length === 0) {
     return []
   }
-
   const runs: RunSetting[] = []
-  for (const runDir of runDirs) {
-    const runSettingPath = path.resolve(runsDir, runDir, "run-setting.json")
-    try {
-      const runSetting = await readFile(runSettingPath, "utf-8")
-      runs.push(JSON.parse(runSetting) as RunSetting)
-    } catch {
-      // Ignore invalid runs
+  for (const jobDir of jobDirs) {
+    const runsDir = path.resolve(jobsDir, jobDir, "runs")
+    if (!existsSync(runsDir)) {
+      continue
+    }
+    const runDirs = await readdir(runsDir, { withFileTypes: true }).then((dirs) =>
+      dirs.filter((dir) => dir.isDirectory()).map((dir) => dir.name),
+    )
+    for (const runDir of runDirs) {
+      const runSettingPath = path.resolve(runsDir, runDir, "run-setting.json")
+      try {
+        const runSetting = await readFile(runSettingPath, "utf-8")
+        runs.push(JSON.parse(runSetting) as RunSetting)
+      } catch {
+        // Ignore invalid runs
+      }
     }
   }
   return runs.sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
-export async function getMostRecentRunId(): Promise<string> {
+export async function getMostRecentRun(): Promise<RunSetting> {
   const runs = await getAllRuns()
   if (runs.length === 0) {
     throw new Error("No runs found")
   }
-  return runs[0].runId
+  return runs[0]
+}
+
+export async function getMostRecentRunId(): Promise<string> {
+  const run = await getMostRecentRun()
+  return run.runId
 }
 
 export async function getCheckpoints(
+  jobId: string,
   runId: string,
 ): Promise<{ timestamp: string; stepNumber: string; id: string }[]> {
-  const runDir = getRunDir(runId)
+  const runDir = getRunDir(jobId, runId)
   if (!existsSync(runDir)) {
     return []
   }
@@ -64,16 +78,25 @@ export async function getCheckpoints(
 }
 
 export async function getCheckpoint(checkpointId: string): Promise<Checkpoint> {
-  const runId = await getMostRecentRunId()
-  const runDir = getRunDir(runId)
+  const run = await getMostRecentRun()
+  const runDir = getRunDir(run.jobId, run.runId)
   const checkpointPath = path.resolve(runDir, `checkpoint-${checkpointId}.json`)
   const checkpoint = await readFile(checkpointPath, "utf-8")
   return checkpointSchema.parse(JSON.parse(checkpoint))
 }
 
-export async function getMostRecentCheckpoint(runId?: string): Promise<Checkpoint> {
-  const runIdForCheckpoint = runId ?? (await getMostRecentRunId())
-  const runDir = getRunDir(runIdForCheckpoint)
+export async function getMostRecentCheckpoint(jobId?: string, runId?: string): Promise<Checkpoint> {
+  let runJobId: string
+  let runIdForCheckpoint: string
+  if (jobId && runId) {
+    runJobId = jobId
+    runIdForCheckpoint = runId
+  } else {
+    const run = await getMostRecentRun()
+    runJobId = run.jobId
+    runIdForCheckpoint = run.runId
+  }
+  const runDir = getRunDir(runJobId, runIdForCheckpoint)
   const checkpointFiles = await readdir(runDir, { withFileTypes: true }).then((files) =>
     files.filter((file) => file.isFile() && file.name.startsWith("checkpoint-")),
   )
@@ -111,9 +134,10 @@ export async function getRecentExperts(
 }
 
 export async function getEvents(
+  jobId: string,
   runId: string,
 ): Promise<{ timestamp: string; stepNumber: string; type: string }[]> {
-  const runDir = getRunDir(runId)
+  const runDir = getRunDir(jobId, runId)
   if (!existsSync(runDir)) {
     return []
   }
@@ -131,8 +155,8 @@ export async function getEvents(
       .sort((a, b) => Number(a.stepNumber) - Number(b.stepNumber)),
   )
 }
-export async function getCheckpointById(runId: string, checkpointId: string): Promise<Checkpoint> {
-  const runDir = getRunDir(runId)
+export async function getCheckpointById(jobId: string, runId: string, checkpointId: string): Promise<Checkpoint> {
+  const runDir = getRunDir(jobId, runId)
   const files = await readdir(runDir)
   const checkpointFile = files.find(
     (file) => file.startsWith("checkpoint-") && file.includes(`-${checkpointId}.`),
@@ -145,11 +169,12 @@ export async function getCheckpointById(runId: string, checkpointId: string): Pr
   return checkpointSchema.parse(JSON.parse(checkpoint))
 }
 export async function getCheckpointsWithDetails(
+  jobId: string,
   runId: string,
 ): Promise<
   { id: string; runId: string; stepNumber: number; timestamp: number; contextWindowUsage: number }[]
 > {
-  const runDir = getRunDir(runId)
+  const runDir = getRunDir(jobId, runId)
   if (!existsSync(runDir)) {
     return []
   }
@@ -173,10 +198,11 @@ export async function getCheckpointsWithDetails(
   return checkpoints.sort((a, b) => b.stepNumber - a.stepNumber)
 }
 export async function getEventsWithDetails(
+  jobId: string,
   runId: string,
   stepNumber?: number,
 ): Promise<{ id: string; runId: string; stepNumber: number; type: string; timestamp: number }[]> {
-  const runDir = getRunDir(runId)
+  const runDir = getRunDir(jobId, runId)
   if (!existsSync(runDir)) {
     return []
   }
@@ -197,8 +223,8 @@ export async function getEventsWithDetails(
       .sort((a, b) => a.timestamp - b.timestamp),
   )
 }
-export async function getEventContents(runId: string, maxStepNumber?: number): Promise<RunEvent[]> {
-  const runDir = getRunDir(runId)
+export async function getEventContents(jobId: string, runId: string, maxStepNumber?: number): Promise<RunEvent[]> {
+  const runDir = getRunDir(jobId, runId)
   if (!existsSync(runDir)) {
     return []
   }

@@ -41,7 +41,7 @@ export async function run(
       checkpoint: Checkpoint,
       step: Step,
     ) => Promise<boolean>
-    retrieveCheckpoint?: (runId: string, checkpointId: string) => Promise<Checkpoint>
+    retrieveCheckpoint?: (jobId: string, runId: string, checkpointId: string) => Promise<Checkpoint>
     storeCheckpoint?: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
     eventListener?: (event: RunEvent | RuntimeEvent) => void
     resolveExpertToRun?: ResolveExpertToRunFn
@@ -104,6 +104,7 @@ export async function run(
       case "completed": {
         if (runResultCheckpoint.delegatedBy) {
           const parentCheckpoint = await retrieveCheckpoint(
+            setting.jobId,
             setting.runId,
             runResultCheckpoint.delegatedBy.checkpointId,
           )
