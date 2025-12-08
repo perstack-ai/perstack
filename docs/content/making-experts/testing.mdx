@@ -70,8 +70,8 @@ import { run } from "@perstack/runtime"
 const result = await run(params, {
   // Mock eventListener for assertions
   eventListener: (event) => {
-    if (event.type === "callTool") {
-      expect(event.toolCall.name).toBe("expectedTool")
+    if (event.type === "callTools") {
+      expect(event.toolCalls[0].toolName).toBe("expectedTool")
     }
   }
 })
