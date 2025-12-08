@@ -60,6 +60,23 @@ function createMockDelegateSkillManager(name: string): BaseSkillManager {
   } as unknown as BaseSkillManager
 }
 
+function createMockInteractiveSkillManager(name: string, toolName: string): BaseSkillManager {
+  return {
+    name,
+    type: "interactive" as const,
+    lazyInit: false,
+    _toolDefinitions: [{ name: toolName, skillName: name, inputSchema: {}, interactive: true }],
+    _initialized: true,
+    init: async () => {},
+    isInitialized: () => true,
+    getToolDefinitions: async () => [
+      { name: toolName, skillName: name, inputSchema: {}, interactive: true },
+    ],
+    callTool: async () => [],
+    close: async () => {},
+  } as unknown as BaseSkillManager
+}
+
 describe("@perstack/runtime: callingToolLogic", () => {
   describe("parallel tool execution", () => {
     it("executes multiple tools in parallel and returns all results", async () => {
@@ -227,6 +244,27 @@ describe("@perstack/runtime: callingToolLogic", () => {
         skillManagers,
       })
       expect(event.type).toBe("callDelegate")
+    })
+
+    it("returns callInteractiveTool event for interactive skill", async () => {
+      const setting = createRunSetting()
+      const checkpoint = createCheckpoint()
+      const step = createStep({
+        toolCalls: [
+          { id: "tc_123", skillName: "interactive-skill", toolName: "humanApproval", args: {} },
+        ],
+      })
+      const skillManagers = {
+        "interactive-skill": createMockInteractiveSkillManager("interactive-skill", "humanApproval"),
+      }
+      const event = await callingToolLogic({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers,
+      })
+      expect(event.type).toBe("callInteractiveTool")
     })
 
     it("throws error when tool not found in skill managers", async () => {
@@ -499,5 +537,81 @@ describe("@perstack/runtime: callingToolLogic", () => {
     if (event.type === "resolveToolResults") {
       expect(event.toolResults).toHaveLength(2)
     }
+  })
+
+  describe("mixed tool types", () => {
+    it("executes MCP tools first then calls delegate", async () => {
+      const setting = createRunSetting()
+      const checkpoint = createCheckpoint()
+      const step = createStep({
+        toolCalls: [
+          { id: "tc_mcp", skillName: "mcp-skill", toolName: "mcpTool", args: {} },
+          { id: "tc_delegate", skillName: "delegate-skill", toolName: "delegate-skill", args: {} },
+        ],
+      })
+      const skillManagers = {
+        "mcp-skill": createMockMcpSkillManager("mcp-skill", "mcpTool"),
+        "delegate-skill": createMockDelegateSkillManager("delegate-skill"),
+      }
+      const event = await callingToolLogic({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers,
+      })
+      expect(event.type).toBe("callDelegate")
+      expect(step.partialToolResults).toHaveLength(1)
+      expect(step.partialToolResults?.[0]?.toolName).toBe("mcpTool")
+    })
+
+    it("executes MCP tools first then calls interactive", async () => {
+      const setting = createRunSetting()
+      const checkpoint = createCheckpoint()
+      const step = createStep({
+        toolCalls: [
+          { id: "tc_mcp", skillName: "mcp-skill", toolName: "mcpTool", args: {} },
+          { id: "tc_interactive", skillName: "interactive-skill", toolName: "humanApproval", args: {} },
+        ],
+      })
+      const skillManagers = {
+        "mcp-skill": createMockMcpSkillManager("mcp-skill", "mcpTool"),
+        "interactive-skill": createMockInteractiveSkillManager("interactive-skill", "humanApproval"),
+      }
+      const event = await callingToolLogic({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers,
+      })
+      expect(event.type).toBe("callInteractiveTool")
+      expect(step.partialToolResults).toHaveLength(1)
+      expect(step.partialToolResults?.[0]?.toolName).toBe("mcpTool")
+    })
+
+    it("delegates before interactive when both exist", async () => {
+      const setting = createRunSetting()
+      const checkpoint = createCheckpoint()
+      const step = createStep({
+        toolCalls: [
+          { id: "tc_delegate", skillName: "delegate-skill", toolName: "delegate-skill", args: {} },
+          { id: "tc_interactive", skillName: "interactive-skill", toolName: "humanApproval", args: {} },
+        ],
+      })
+      const skillManagers = {
+        "delegate-skill": createMockDelegateSkillManager("delegate-skill"),
+        "interactive-skill": createMockInteractiveSkillManager("interactive-skill", "humanApproval"),
+      }
+      const event = await callingToolLogic({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers,
+      })
+      expect(event.type).toBe("callDelegate")
+      expect(step.pendingToolCalls).toHaveLength(2)
+    })
   })
 })

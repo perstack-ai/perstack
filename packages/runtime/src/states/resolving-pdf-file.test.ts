@@ -139,4 +139,72 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
       text: expect.stringContaining('Failed to read PDF file "/nonexistent.pdf"'),
     })
   })
+
+  it("throws error when tool calls are missing", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({ toolCalls: undefined, toolResults: [] })
+    await expect(
+      StateMachineLogics.ResolvingPdfFile({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).rejects.toThrow("No tool calls or tool results found")
+  })
+
+  it("throws error when tool results are empty", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [{ id: "tc_123", skillName: "@perstack/base", toolName: "readPdfFile", args: {} }],
+      toolResults: [],
+    })
+    await expect(
+      StateMachineLogics.ResolvingPdfFile({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).rejects.toThrow("No tool calls or tool results found")
+  })
+
+  it("handles invalid JSON in text part gracefully", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [
+        { id: "tc_123", skillName: "@perstack/base", toolName: "readPdfFile", args: {} },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readPdfFile",
+          result: [{ type: "textPart" as const, text: "not valid json", id: createId() }],
+        },
+      ],
+    })
+    const result = await StateMachineLogics.ResolvingPdfFile({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(result.type).toBe("finishToolCall")
+    if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
+    const toolMessage = result.newMessages[0]
+    if (toolMessage.type !== "toolMessage") throw new Error("Expected toolMessage")
+    const toolResultPart = toolMessage.contents[0]
+    if (toolResultPart.type !== "toolResultPart") throw new Error("Expected toolResultPart")
+    expect(toolResultPart.contents[0]).toMatchObject({
+      type: "textPart",
+      text: "not valid json",
+    })
+  })
 })
