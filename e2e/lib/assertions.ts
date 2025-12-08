@@ -1,31 +1,16 @@
 import {
   type CheckpointState,
+  type ParsedEvent,
   extractCheckpointState,
   extractToolCalls,
   filterEventsByType,
   getEventSequence,
-  type ParsedEvent,
 } from "./event-parser.js"
 
 export type AssertionResult = {
   passed: boolean
   message: string
   details?: unknown
-}
-
-export function assertEventSequence(
-  events: ParsedEvent[],
-  expectedSequence: string[],
-): AssertionResult {
-  const actual = getEventSequence(events)
-  const passed = JSON.stringify(actual) === JSON.stringify(expectedSequence)
-  return {
-    passed,
-    message: passed
-      ? `Event sequence matches: ${expectedSequence.join(" → ")}`
-      : `Event sequence mismatch`,
-    details: passed ? undefined : { expected: expectedSequence, actual },
-  }
 }
 
 export function assertEventSequenceContains(
@@ -61,38 +46,13 @@ export function assertToolCallCount(
   }
   const matchingEvent = callToolsEvents.find((e) => extractToolCalls(e).length === expectedCount)
   if (matchingEvent) {
-    return {
-      passed: true,
-      message: `Tool call count matches: ${expectedCount}`,
-    }
+    return { passed: true, message: `Tool call count matches: ${expectedCount}` }
   }
   const allCounts = callToolsEvents.map((e) => extractToolCalls(e).length)
   return {
     passed: false,
     message: `No ${eventType} event with ${expectedCount} tool calls found`,
     details: { foundCounts: allCounts },
-  }
-}
-
-export function assertToolCallTypes(
-  events: ParsedEvent[],
-  expectedTypes: { skillName: string; toolName: string }[],
-): AssertionResult {
-  const callToolsEvents = filterEventsByType(events, "callTools")
-  if (callToolsEvents.length === 0) {
-    return { passed: false, message: "No callTools events found" }
-  }
-  const firstEvent = callToolsEvents[0]
-  const toolCalls = extractToolCalls(firstEvent)
-  const actualTypes = toolCalls.map((tc) => ({
-    skillName: tc.skillName,
-    toolName: tc.toolName,
-  }))
-  const passed = JSON.stringify(actualTypes) === JSON.stringify(expectedTypes)
-  return {
-    passed,
-    message: passed ? `Tool call types match` : `Tool call types mismatch`,
-    details: passed ? undefined : { expected: expectedTypes, actual: actualTypes },
   }
 }
 
@@ -109,7 +69,8 @@ export function assertCheckpointState(
   if (!state) {
     return { passed: false, message: `No checkpoint in ${eventType} event` }
   }
-  const checks: { key: string; passed: boolean; expected: unknown; actual: unknown }[] = []
+  type Check = { key: string; passed: boolean; expected: unknown; actual: unknown }
+  const checks: Check[] = []
   if (expectedState.status !== undefined) {
     checks.push({
       key: "status",
@@ -119,33 +80,28 @@ export function assertCheckpointState(
     })
   }
   if (expectedState.pendingToolCalls !== undefined) {
-    const expectedCount = expectedState.pendingToolCalls.length
-    const actualCount = state.pendingToolCalls.length
     checks.push({
       key: "pendingToolCalls.length",
-      passed: actualCount === expectedCount,
-      expected: expectedCount,
-      actual: actualCount,
+      passed: state.pendingToolCalls.length === expectedState.pendingToolCalls.length,
+      expected: expectedState.pendingToolCalls.length,
+      actual: state.pendingToolCalls.length,
     })
   }
   if (expectedState.partialToolResults !== undefined) {
-    const expectedCount = expectedState.partialToolResults.length
-    const actualCount = state.partialToolResults.length
     checks.push({
       key: "partialToolResults.length",
-      passed: actualCount === expectedCount,
-      expected: expectedCount,
-      actual: actualCount,
+      passed: state.partialToolResults.length === expectedState.partialToolResults.length,
+      expected: expectedState.partialToolResults.length,
+      actual: state.partialToolResults.length,
     })
   }
   const allPassed = checks.every((c) => c.passed)
-  const failedChecks = checks.filter((c) => !c.passed)
   return {
     passed: allPassed,
     message: allPassed
       ? `Checkpoint state matches for ${eventType}`
       : `Checkpoint state mismatch for ${eventType}`,
-    details: allPassed ? undefined : { failedChecks, actualState: state },
+    details: allPassed ? undefined : { failedChecks: checks.filter((c) => !c.passed), actualState: state },
   }
 }
 

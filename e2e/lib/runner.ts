@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { parseEvents, type ParsedEvent } from "./event-parser.js"
+import { type ParsedEvent, parseEvents } from "./event-parser.js"
 
 export type RunResult = {
   events: ParsedEvent[]
@@ -51,7 +51,7 @@ export async function runExpert(
       clearTimeout(timer)
       const events = parseEvents(output)
       const startRunEvent = events.find((e) => e.type === "startRun")
-      const runId = startRunEvent ? (startRunEvent as { runId?: string }).runId ?? null : null
+      const runId = startRunEvent ? ((startRunEvent as { runId?: string }).runId ?? null) : null
       resolve({
         events,
         exitCode: code ?? 0,

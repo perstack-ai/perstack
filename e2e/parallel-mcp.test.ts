@@ -1,31 +1,23 @@
-import { describe, expect, it, beforeAll } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 import { assertEventSequenceContains, assertToolCallCount } from "./lib/assertions.js"
 import { filterEventsByType } from "./lib/event-parser.js"
-import type { RunResult } from "./lib/runner.js"
-import { runExpert } from "./lib/runner.js"
-
-const EXPERT_KEY = "e2e-parallel-mcp"
-const QUERY = "Test parallel MCP: search TypeScript and JavaScript"
+import { type RunResult, runExpert } from "./lib/runner.js"
 
 describe("Parallel MCP Tool Calls", () => {
   let result: RunResult
 
   beforeAll(async () => {
-    result = await runExpert(EXPERT_KEY, QUERY, {
+    result = await runExpert("e2e-parallel-mcp", "Test parallel MCP: search TypeScript and JavaScript", {
       configPath: "./e2e/experts/parallel-mcp.toml",
       timeout: 180000,
     })
   }, 200000)
 
   it("should execute multiple MCP tools in parallel", () => {
-    const countResult = assertToolCallCount(result.events, "callTools", 2)
-    expect(countResult.passed).toBe(true)
-    const sequenceResult = assertEventSequenceContains(result.events, [
-      "startRun",
-      "callTools",
-      "resolveToolResults",
-    ])
-    expect(sequenceResult.passed).toBe(true)
+    expect(assertToolCallCount(result.events, "callTools", 2).passed).toBe(true)
+    expect(
+      assertEventSequenceContains(result.events, ["startRun", "callTools", "resolveToolResults"]).passed,
+    ).toBe(true)
   })
 
   it("should resolve all MCP results before next step", () => {
@@ -38,9 +30,7 @@ describe("Parallel MCP Tool Calls", () => {
   })
 
   it("should complete run successfully", () => {
-    const sequenceResult = assertEventSequenceContains(result.events, ["completeRun"])
-    expect(sequenceResult.passed).toBe(true)
+    expect(assertEventSequenceContains(result.events, ["completeRun"]).passed).toBe(true)
     expect(result.exitCode).toBe(0)
   })
 })
-
