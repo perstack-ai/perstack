@@ -10,8 +10,6 @@ import { generatingRunResultLogic } from "./states/generating-run-result.js"
 import { generatingToolCallLogic } from "./states/generating-tool-call.js"
 import { initLogic } from "./states/init.js"
 import { preparingForStepLogic } from "./states/preparing-for-step.js"
-import { resolvingImageFileLogic } from "./states/resolving-image-file.js"
-import { resolvingPdfFileLogic } from "./states/resolving-pdf-file.js"
 import { resolvingThoughtLogic } from "./states/resolving-thought.js"
 import { resolvingToolResultLogic } from "./states/resolving-tool-result.js"
 import { createEmptyUsage, sumUsage } from "./usage.js"
@@ -237,26 +235,6 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
-        resolvePdfFile: {
-          target: "ResolvingPdfFile",
-          actions: assign({
-            step: ({ context, event }) =>
-              ({
-                ...context.step,
-                toolResults: [event.toolResult],
-              }) satisfies Step,
-          }),
-        },
-        resolveImageFile: {
-          target: "ResolvingImageFile",
-          actions: assign({
-            step: ({ context, event }) =>
-              ({
-                ...context.step,
-                toolResults: [event.toolResult],
-              }) satisfies Step,
-          }),
-        },
         attemptCompletion: {
           target: "GeneratingRunResult",
           actions: assign({
@@ -317,46 +295,6 @@ export const runtimeStateMachine = setup({
     },
 
     ResolvingThought: {
-      on: {
-        finishToolCall: {
-          target: "FinishingStep",
-          actions: assign({
-            checkpoint: ({ context, event }) =>
-              ({
-                ...context.checkpoint,
-                messages: [...context.checkpoint.messages, ...event.newMessages],
-              }) satisfies Checkpoint,
-            step: ({ context, event }) =>
-              ({
-                ...context.step,
-                newMessages: [...context.step.newMessages, ...event.newMessages],
-              }) satisfies Step,
-          }),
-        },
-      },
-    },
-
-    ResolvingPdfFile: {
-      on: {
-        finishToolCall: {
-          target: "FinishingStep",
-          actions: assign({
-            checkpoint: ({ context, event }) =>
-              ({
-                ...context.checkpoint,
-                messages: [...context.checkpoint.messages, ...event.newMessages],
-              }) satisfies Checkpoint,
-            step: ({ context, event }) =>
-              ({
-                ...context.step,
-                newMessages: [...context.step.newMessages, ...event.newMessages],
-              }) satisfies Step,
-          }),
-        },
-      },
-    },
-
-    ResolvingImageFile: {
       on: {
         finishToolCall: {
           target: "FinishingStep",
@@ -482,8 +420,6 @@ export const StateMachineLogics: Record<
   CallingTool: callingToolLogic,
   ResolvingToolResult: resolvingToolResultLogic,
   ResolvingThought: resolvingThoughtLogic,
-  ResolvingPdfFile: resolvingPdfFileLogic,
-  ResolvingImageFile: resolvingImageFileLogic,
   GeneratingRunResult: generatingRunResultLogic,
   CallingInteractiveTool: callingInteractiveToolLogic,
   CallingDelegate: callingDelegateLogic,

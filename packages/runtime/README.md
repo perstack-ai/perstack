@@ -193,16 +193,12 @@ stateDiagram-v2
 
     CallingTools --> ResolvingToolResults: resolveToolResults
     CallingTools --> ResolvingThought: resolveThought
-    CallingTools --> ResolvingPdfFile: resolvePdfFile
-    CallingTools --> ResolvingImageFile: resolveImageFile
     CallingTools --> GeneratingRunResult: attemptCompletion
     CallingTools --> CallingDelegate: callDelegate
     CallingTools --> CallingInteractiveTool: callInteractiveTool
 
     ResolvingToolResults --> FinishingStep: finishToolCall
     ResolvingThought --> FinishingStep: finishToolCall
-    ResolvingPdfFile --> FinishingStep: finishToolCall
-    ResolvingImageFile --> FinishingStep: finishToolCall
 
     GeneratingRunResult --> Stopped: completeRun
     GeneratingRunResult --> FinishingStep: retry
@@ -219,7 +215,7 @@ Events trigger state transitions. They are emitted by the runtime logic or exter
 
 - **Lifecycle**: `startRun`, `startGeneration`, `continueToNextStep`, `completeRun`
 - **Tool Execution**: `callTools`, `resolveToolResults`, `finishToolCall`, `resumeToolCalls`, `finishAllToolCalls`
-- **Special Types**: `resolveThought`, `resolvePdfFile`, `resolveImageFile`
+- **Special Types**: `resolveThought`
 - **Mixed Tool Calls**: `callDelegate`, `callInteractiveTool` (from CallingTools state)
 - **Interruption**: `stopRunByInteractiveTool`, `stopRunByDelegate`, `stopRunByExceededMaxSteps`
 - **Error Handling**: `retry`

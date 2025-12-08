@@ -106,14 +106,6 @@ export function defaultEventListener(e: RunEvent): void {
       log(`${header(e)} Resolved Thought:`, e.toolResult)
       break
     }
-    case "resolvePdfFile": {
-      log(`${header(e)} Resolved PDF:`, e.toolResult)
-      break
-    }
-    case "resolveImageFile": {
-      log(`${header(e)} Resolved Image:`, e.toolResult)
-      break
-    }
     case "attemptCompletion": {
       log(`${header(e)} Attempting completion`)
       break
