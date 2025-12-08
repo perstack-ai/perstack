@@ -4,6 +4,12 @@
   <img src="demo/demo.gif" alt="Perstack Demo" width="600">
 </p>
 
+<p align="center">
+  <a href="https://docs.perstack.ai"><strong>📚 Documentation</strong></a> •
+  <a href="https://docs.perstack.ai/getting-started"><strong>🚀 Getting Started</strong></a> •
+  <a href="https://twitter.com/perstack_ai"><strong>𝕏 Twitter</strong></a>
+</p>
+
 ## Overview
 
 Perstack is a package manager and runtime for agent-first development.
@@ -42,6 +48,7 @@ $ ANTHROPIC_API_KEY=<YOUR_API_KEY> npx perstack run tic-tac-toe "Game start!"
 | Example                                          | Description                                                      |
 | ------------------------------------------------ | ---------------------------------------------------------------- |
 | [github-issue-bot](./examples/github-issue-bot/) | Automated GitHub issue responder with real-time activity logging |
+| [gmail-assistant](./examples/gmail-assistant/)   | AI-powered email assistant with Gmail integration                |
 
 ## Key Features
 
@@ -193,7 +200,7 @@ Perstack provides **Expert Stack**:
 > [!NOTE]
 > The name "Perstack" is a combination of the Latin word "perītus" and the English word "stack". "perītus" means "expert", so Perstack means "expert stack".
 
-Learn more about Perstack: https://docs.perstack.ai/
+**[📚 Read the full documentation →](https://docs.perstack.ai/)**
 
 ## FAQ
 
