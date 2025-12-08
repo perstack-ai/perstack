@@ -46,9 +46,7 @@ async function classifyToolCalls(
   )
 }
 
-function buildToolCallParts(
-  toolCalls: ClassifiedToolCall[],
-): Array<Omit<ToolCallPart, "id">> {
+function buildToolCallParts(toolCalls: ClassifiedToolCall[]): Array<Omit<ToolCallPart, "id">> {
   return toolCalls.map((tc) => ({
     type: "toolCallPart" as const,
     toolCallId: tc.toolCallId,
