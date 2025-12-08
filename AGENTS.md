@@ -416,7 +416,7 @@ Key points:
 ## Testing
 
 - **Unit tests:** Vitest (`*.test.ts` files), run with `pnpm test`
-- **E2E tests:** Manual testing by following `E2E.md` — agent should read and execute the procedures
+- **E2E tests:** Vitest (`e2e/*.test.ts` files), run with `pnpm test:e2e`
 - **Coverage:** V8 provider, lcov output
 
 ### Unit Test Scope
@@ -523,11 +523,11 @@ pnpm build              # Build all packages
 
 ### E2E Testing (MANDATORY)
 
-After build passes, run E2E tests by following `E2E.md`:
+After build passes, run E2E tests:
 
 ```bash
-pnpm build  # Must build first
-# Then run E2E tests as documented in E2E.md
+pnpm build     # Must build first
+pnpm test:e2e  # Run E2E tests
 ```
 
 **E2E tests must pass before pushing.** This catches runtime issues that unit tests miss.
@@ -599,5 +599,5 @@ pick = ["attemptCompletion", "think"]
 - [ ] `pnpm check-deps` passes
 - [ ] `pnpm reset && pnpm test` passes
 - [ ] `pnpm build` passes
-- [ ] E2E tests pass (follow `E2E.md`)
+- [ ] `pnpm test:e2e` passes
 - [ ] Versioning rules in `CONTRIBUTING.md` are followed

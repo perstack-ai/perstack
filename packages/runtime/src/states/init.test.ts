@@ -70,40 +70,23 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
     })
     const checkpoint = createCheckpoint({
       status: "stoppedByDelegate",
+      pendingToolCalls: [{ id: "123", skillName: "test-skill", toolName: "test", args: {} }],
     })
     const step = createStep()
-    await expect(
-      StateMachineLogics.Init({
+    const event = await StateMachineLogics.Init({
         setting,
         checkpoint,
         step,
         eventListener: async () => {},
         skillManagers: {},
-      }),
-    ).resolves.toStrictEqual({
-      type: "startRun",
-      id: expect.any(String),
-      expertKey: setting.expertKey,
-      timestamp: expect.any(Number),
-      runId: setting.runId,
-      stepNumber: checkpoint.stepNumber,
-      initialCheckpoint: checkpoint,
-      inputMessages: [
-        {
-          type: "toolMessage",
-          id: expect.any(String),
-          contents: [
-            {
-              type: "toolResultPart",
-              id: expect.any(String),
-              toolCallId: "123",
-              toolName: "test",
-              contents: [{ type: "textPart", id: expect.any(String), text: "test-delegate" }],
-            },
-          ],
-        },
-      ],
     })
+    expect(event.type).toBe("startRun")
+    if (event.type === "startRun") {
+      expect(event.inputMessages).toEqual([])
+      expect(event.initialCheckpoint.partialToolResults).toHaveLength(1)
+      expect(event.initialCheckpoint.partialToolResults?.[0].id).toBe("123")
+      expect(event.initialCheckpoint.pendingToolCalls).toBeUndefined()
+    }
   })
 
   it("throws error when delegate call result is undefined", async () => {
@@ -137,42 +120,23 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
     })
     const checkpoint = createCheckpoint({
       status: "stoppedByInteractiveTool",
+      pendingToolCalls: [{ id: "123", skillName: "test-skill", toolName: "test", args: {} }],
     })
     const step = createStep()
-    await expect(
-      StateMachineLogics.Init({
+    const event = await StateMachineLogics.Init({
         setting,
         checkpoint,
         step,
         eventListener: async () => {},
         skillManagers: {},
-      }),
-    ).resolves.toStrictEqual({
-      type: "startRun",
-      id: expect.any(String),
-      expertKey: setting.expertKey,
-      timestamp: expect.any(Number),
-      runId: setting.runId,
-      stepNumber: checkpoint.stepNumber,
-      initialCheckpoint: checkpoint,
-      inputMessages: [
-        {
-          type: "toolMessage",
-          id: expect.any(String),
-          contents: [
-            {
-              type: "toolResultPart",
-              id: expect.any(String),
-              toolCallId: "123",
-              toolName: "test",
-              contents: [
-                { type: "textPart", id: expect.any(String), text: "test-interactive-tool" },
-              ],
-            },
-          ],
-        },
-      ],
     })
+    expect(event.type).toBe("startRun")
+    if (event.type === "startRun") {
+      expect(event.inputMessages).toEqual([])
+      expect(event.initialCheckpoint.partialToolResults).toHaveLength(1)
+      expect(event.initialCheckpoint.partialToolResults?.[0].id).toBe("123")
+      expect(event.initialCheckpoint.pendingToolCalls).toBeUndefined()
+    }
   })
 
   it("throws error when interactive tool call result is undefined", async () => {

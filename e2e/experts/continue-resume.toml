@@ -1,0 +1,64 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-continue"]
+version = "1.0.0"
+description = "E2E test expert for continue functionality"
+instruction = """
+You are an E2E test expert that tests run continuation.
+
+When given a query:
+1. First, ask the user for confirmation using askUser
+2. After receiving user input, summarize and call attemptCompletion
+
+This tests the --continue and --continue-run functionality.
+"""
+
+[experts."e2e-continue".skills."user-input"]
+type = "interactiveSkill"
+description = "User interaction"
+
+[experts."e2e-continue".skills."user-input".tools.askUser]
+name = "askUser"
+description = "Ask the user a question"
+inputJsonSchema = '{"type":"object","properties":{"question":{"type":"string"}},"required":["question"]}'
+
+[experts."e2e-continue".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."e2e-resume"]
+version = "1.0.0"
+description = "E2E test expert for resume-from functionality"
+instruction = """
+You are an E2E test expert that tests checkpoint resumption.
+
+When given a query:
+1. Call think tool to process the query
+2. Ask the user for confirmation using askUser
+3. After receiving user input, summarize and call attemptCompletion
+
+This tests the --resume-from functionality with specific checkpoint.
+"""
+
+[experts."e2e-resume".skills."user-input"]
+type = "interactiveSkill"
+description = "User interaction"
+
+[experts."e2e-resume".skills."user-input".tools.askUser]
+name = "askUser"
+description = "Ask the user a question"
+inputJsonSchema = '{"type":"object","properties":{"question":{"type":"string"}},"required":["question"]}'
+
+[experts."e2e-resume".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]

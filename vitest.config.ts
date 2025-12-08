@@ -9,7 +9,17 @@ export default defineConfig({
           globals: true,
           environment: "node",
           include: ["**/*.test.ts"],
-          exclude: ["**/node_modules/**", "**/dist/**"],
+          exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
+        },
+      },
+      {
+        test: {
+          name: "e2e",
+          globals: true,
+          environment: "node",
+          include: ["e2e/**/*.test.ts"],
+          testTimeout: 300000,
+          hookTimeout: 300000,
         },
       },
     ],

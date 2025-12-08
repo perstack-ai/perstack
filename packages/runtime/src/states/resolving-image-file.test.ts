@@ -25,14 +25,17 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      toolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "readImageFile",
         args: { path: "/test/image.png" },
       },
-      toolResult: {
-        id: "tr_123",
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
         skillName: "@perstack/base",
         toolName: "readImageFile",
         result: [
@@ -43,6 +46,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
           },
         ],
       },
+      ],
     })
     await expect(
       StateMachineLogics.ResolvingImageFile({
@@ -94,14 +98,17 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      toolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "readImageFile",
         args: { path: "/nonexistent.png" },
       },
-      toolResult: {
-        id: "tr_123",
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
         skillName: "@perstack/base",
         toolName: "readImageFile",
         result: [
@@ -112,6 +119,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
           },
         ],
       },
+      ],
     })
     const result = await StateMachineLogics.ResolvingImageFile({
       setting,
@@ -127,6 +135,72 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     expect(toolResultPart.contents[0]).toMatchObject({
       type: "textPart",
       text: expect.stringContaining('Failed to read image file "/nonexistent.png"'),
+    })
+  })
+
+  it("throws error when tool calls are missing", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({ toolCalls: undefined, toolResults: [] })
+    await expect(
+      StateMachineLogics.ResolvingImageFile({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).rejects.toThrow("No tool calls or tool results found")
+  })
+
+  it("throws error when tool results are empty", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [{ id: "tc_123", skillName: "@perstack/base", toolName: "readImageFile", args: {} }],
+      toolResults: [],
+    })
+    await expect(
+      StateMachineLogics.ResolvingImageFile({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
+    ).rejects.toThrow("No tool calls or tool results found")
+  })
+
+  it("handles invalid JSON in text part gracefully", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [
+        { id: "tc_123", skillName: "@perstack/base", toolName: "readImageFile", args: {} },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          result: [{ type: "textPart" as const, text: "not json", id: createId() }],
+        },
+      ],
+    })
+    const result = await StateMachineLogics.ResolvingImageFile({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(result.type).toBe("finishToolCall")
+    if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
+    const toolResultPart = result.newMessages[0].contents[0]
+    if (toolResultPart.type !== "toolResultPart") throw new Error("Unexpected part type")
+    expect(toolResultPart.contents[0]).toMatchObject({
+      type: "textPart",
+      text: "not json",
     })
   })
 })

@@ -15,7 +15,7 @@ import { usageSchema } from "./usage.js"
 
 /**
  * A single execution step in an Expert run.
- * Each step represents one LLM generation cycle, optionally followed by a tool call.
+ * Each step represents one LLM generation cycle, optionally followed by tool calls.
  */
 export interface Step {
   /** Sequential step number (1-indexed) */
@@ -24,10 +24,14 @@ export interface Step {
   inputMessages?: (InstructionMessage | UserMessage | ToolMessage)[]
   /** Messages generated during this step */
   newMessages: Message[]
-  /** Tool call made during this step, if any */
-  toolCall?: ToolCall
-  /** Result of the tool call, if any */
-  toolResult?: ToolResult
+  /** Tool calls made during this step, if any */
+  toolCalls?: ToolCall[]
+  /** Results of the tool calls, if any */
+  toolResults?: ToolResult[]
+  /** Tool calls waiting to be processed (sorted: MCP → Delegate → Interactive) */
+  pendingToolCalls?: ToolCall[]
+  /** Partial tool results collected so far (used during mixed tool call processing) */
+  partialToolResults?: ToolResult[]
   /** Token usage for this step */
   usage: Usage
   /** Unix timestamp (ms) when step started */
@@ -42,8 +46,10 @@ export const stepSchema = z.object({
     .array(z.union([instructionMessageSchema, userMessageSchema, toolMessageSchema]))
     .optional(),
   newMessages: z.array(messageSchema),
-  toolCall: toolCallSchema.optional(),
-  toolResult: toolResultSchema.optional(),
+  toolCalls: z.array(toolCallSchema).optional(),
+  toolResults: z.array(toolResultSchema).optional(),
+  pendingToolCalls: z.array(toolCallSchema).optional(),
+  partialToolResults: z.array(toolResultSchema).optional(),
   usage: usageSchema,
   startedAt: z.number(),
   finishedAt: z.number().optional(),

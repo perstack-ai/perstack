@@ -1,11 +1,10 @@
 import { createId } from "@paralleldrive/cuid2"
 import {
-  callDelegate,
-  callInteractiveTool,
-  callTool,
+  callTools,
   type RunEvent,
   retry,
   type TextPart,
+  type ToolCall,
   type ToolCallPart,
 } from "@perstack/core"
 import { type GenerateTextResult, generateText, type ToolSet } from "ai"
@@ -17,8 +16,58 @@ import {
 } from "../messages/message.js"
 import { getModel } from "../model.js"
 import type { RunSnapshot } from "../runtime-state-machine.js"
+import type { BaseSkillManager } from "../skill-manager/index.js"
 import { getSkillManagerByToolName, getToolSet } from "../skill-manager/index.js"
 import { createEmptyUsage, usageFromGenerateTextResult } from "../usage.js"
+
+type ClassifiedToolCall = {
+  toolCallId: string
+  toolName: string
+  input: Record<string, unknown>
+  skillManager: BaseSkillManager
+}
+
+async function classifyToolCalls(
+  toolCalls: Array<{ toolCallId: string; toolName: string; input: unknown }>,
+  skillManagers: Record<string, BaseSkillManager>,
+): Promise<ClassifiedToolCall[]> {
+  return Promise.all(
+    toolCalls.map(async (tc) => {
+      const skillManager = await getSkillManagerByToolName(skillManagers, tc.toolName)
+      return {
+        toolCallId: tc.toolCallId,
+        toolName: tc.toolName,
+        input: tc.input as Record<string, unknown>,
+        skillManager,
+      }
+    }),
+  )
+}
+
+function sortToolCallsByPriority(toolCalls: ClassifiedToolCall[]): ClassifiedToolCall[] {
+  const priority = { mcp: 0, delegate: 1, interactive: 2 }
+  return [...toolCalls].sort(
+    (a, b) => (priority[a.skillManager.type] ?? 99) - (priority[b.skillManager.type] ?? 99),
+  )
+}
+
+function buildToolCallParts(toolCalls: ClassifiedToolCall[]): Array<Omit<ToolCallPart, "id">> {
+  return toolCalls.map((tc) => ({
+    type: "toolCallPart" as const,
+    toolCallId: tc.toolCallId,
+    toolName: tc.toolName,
+    args: tc.input,
+  }))
+}
+
+function buildToolCalls(toolCalls: ClassifiedToolCall[]): ToolCall[] {
+  return toolCalls.map((tc) => ({
+    id: tc.toolCallId,
+    skillName: tc.skillManager.name,
+    toolName: tc.toolName,
+    args: tc.input,
+  }))
+}
 
 export async function generatingToolCallLogic({
   setting,
@@ -51,8 +100,7 @@ export async function generatingToolCallLogic({
   }
   const usage = usageFromGenerateTextResult(result)
   const { text, toolCalls, finishReason } = result
-  const toolCall = toolCalls[0]
-  if (!toolCall) {
+  if (toolCalls.length === 0) {
     const reason = JSON.stringify({
       error: "Error: No tool call generated",
       message: "You must generate a tool call. Try again.",
@@ -63,42 +111,26 @@ export async function generatingToolCallLogic({
       usage,
     })
   }
-  const contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">> = [
-    {
-      type: "toolCallPart",
-      toolCallId: toolCall.toolCallId,
-      toolName: toolCall.toolName,
-      args: toolCall.input,
-    },
-  ]
-  if (text) {
-    contents.push({
-      type: "textPart",
-      text,
+  const classified = await classifyToolCalls(toolCalls, skillManagers)
+  const sorted = sortToolCallsByPriority(classified)
+  if (finishReason === "tool-calls" || finishReason === "stop") {
+    const toolCallParts = buildToolCallParts(sorted)
+    const contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">> = [...toolCallParts]
+    if (text) {
+      contents.push({ type: "textPart", text })
+    }
+    const allToolCalls = buildToolCalls(sorted)
+    return callTools(setting, checkpoint, {
+      newMessage: createExpertMessage(contents),
+      toolCalls: allToolCalls,
+      usage,
     })
   }
-  const skillManager = await getSkillManagerByToolName(skillManagers, toolCall.toolName)
-  const eventPayload = {
-    newMessage: createExpertMessage(contents),
-    toolCall: {
-      id: toolCall.toolCallId,
-      skillName: skillManager.name,
-      toolName: toolCall.toolName,
-      args: toolCall.input,
-    },
-    usage,
-  }
-  if (finishReason === "tool-calls" || finishReason === "stop") {
-    switch (skillManager.type) {
-      case "mcp":
-        return callTool(setting, checkpoint, eventPayload)
-      case "interactive":
-        return callInteractiveTool(setting, checkpoint, eventPayload)
-      case "delegate":
-        return callDelegate(setting, checkpoint, eventPayload)
-    }
-  }
   if (finishReason === "length") {
+    const firstToolCall = sorted[0]
+    if (!firstToolCall) {
+      throw new Error("No tool call found")
+    }
     const reason = JSON.stringify({
       error: "Error: Tool call generation failed",
       message: "Generation length exceeded. Try again.",
@@ -109,27 +141,36 @@ export async function generatingToolCallLogic({
         createExpertMessage([
           {
             type: "toolCallPart",
-            toolCallId: toolCall.toolCallId,
-            toolName: toolCall.toolName,
-            args: toolCall.input,
+            toolCallId: firstToolCall.toolCallId,
+            toolName: firstToolCall.toolName,
+            args: firstToolCall.input,
           },
         ]),
         createToolMessage([
           {
             type: "toolResultPart",
-            toolCallId: toolCall.toolCallId,
-            toolName: toolCall.toolName,
+            toolCallId: firstToolCall.toolCallId,
+            toolName: firstToolCall.toolName,
             contents: [{ type: "textPart", text: reason }],
           },
         ]),
       ],
-      toolCall: eventPayload.toolCall,
-      toolResult: {
-        id: toolCall.toolCallId,
-        skillName: skillManager.name,
-        toolName: toolCall.toolName,
-        result: [{ type: "textPart", id: createId(), text: reason }],
-      },
+      toolCalls: [
+        {
+          id: firstToolCall.toolCallId,
+          skillName: firstToolCall.skillManager.name,
+          toolName: firstToolCall.toolName,
+          args: firstToolCall.input,
+        },
+      ],
+      toolResults: [
+        {
+          id: firstToolCall.toolCallId,
+          skillName: firstToolCall.skillManager.name,
+          toolName: firstToolCall.toolName,
+          result: [{ type: "textPart", id: createId(), text: reason }],
+        },
+      ],
       usage,
     })
   }

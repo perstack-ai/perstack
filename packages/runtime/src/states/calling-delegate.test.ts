@@ -8,12 +8,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      pendingToolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/math-expert",
         toolName: "@perstack/math-expert",
         args: { query: "Calculate 2 + 2" },
       },
+      ],
     })
     const skillManagers = {
       "@perstack/math-expert": {
@@ -62,6 +64,15 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
           toolName: "@perstack/math-expert",
           query: "Calculate 2 + 2",
         },
+        pendingToolCalls: [
+          {
+            id: "tc_123",
+            skillName: "@perstack/math-expert",
+            toolName: "@perstack/math-expert",
+            args: { query: "Calculate 2 + 2" },
+          },
+        ],
+        partialToolResults: undefined,
       },
       step: {
         ...step,
@@ -74,7 +85,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: undefined,
+      pendingToolCalls: undefined,
     })
     await expect(
       StateMachineLogics.CallingDelegate({
@@ -84,19 +95,21 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         eventListener: async () => {},
         skillManagers: {},
       }),
-    ).rejects.toThrow("No tool call found")
+    ).rejects.toThrow("No pending tool calls found")
   })
 
   it("throws error when skill manager missing", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      pendingToolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/math-expert",
         toolName: "@perstack/math-expert",
         args: { query: "Calculate 2 + 2" },
       },
+      ],
     })
     const skillManagers = {
       "@perstack/math-expert": {
@@ -128,12 +141,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      pendingToolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/math-expert",
         toolName: "@perstack/math-expert",
         args: { query: undefined },
       },
+      ],
     })
     const skillManagers = {
       "@perstack/math-expert": {

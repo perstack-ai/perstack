@@ -208,8 +208,8 @@ export const runtimeStep: z.input<typeof stepSchema> = {
   stepNumber: 1,
   inputMessages: [],
   newMessages: [],
-  toolCall: undefined,
-  toolResult: undefined,
+  toolCalls: undefined,
+  toolResults: undefined,
   usage: {
     inputTokens: 100,
     outputTokens: 100,

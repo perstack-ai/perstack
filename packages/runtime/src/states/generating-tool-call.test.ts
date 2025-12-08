@@ -186,10 +186,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
     })
-    expect(event.type).toBe("callTool")
+    expect(event.type).toBe("callTools")
   })
 
-  it("returns callInteractiveTool event for interactive skill", async () => {
+  it("returns callTools event for interactive skill (processed later in CallingTool)", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
@@ -214,10 +214,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       eventListener: async () => {},
       skillManagers: { "interactive-skill": skillManager },
     })
-    expect(event.type).toBe("callInteractiveTool")
+    expect(event.type).toBe("callTools")
   })
 
-  it("returns callDelegate event for delegate skill", async () => {
+  it("returns callTools event for delegate skill (processed later in CallingTool)", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
@@ -242,7 +242,47 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       eventListener: async () => {},
       skillManagers: { "delegate-skill": skillManager },
     })
-    expect(event.type).toBe("callDelegate")
+    expect(event.type).toBe("callTools")
+  })
+
+  it("sorts tool calls by priority: MCP → Delegate → Interactive", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep()
+    const mcpSkillManager = createMockSkillManager("mcp-skill", "mcp", "mcpTool")
+    const delegateSkillManager = createMockSkillManager("delegate-skill", "delegate", "delegateTool")
+    const interactiveSkillManager = createMockSkillManager(
+      "interactive-skill",
+      "interactive",
+      "interactiveTool",
+    )
+    mockGetModel.mockReturnValue(
+      createMockLanguageModel({
+        finishReason: "tool-calls",
+        toolCalls: [
+          { type: "tool-call", toolCallId: "tc_int", toolName: "interactiveTool", input: "{}" },
+          { type: "tool-call", toolCallId: "tc_del", toolName: "delegateTool", input: "{}" },
+          { type: "tool-call", toolCallId: "tc_mcp", toolName: "mcpTool", input: "{}" },
+        ],
+      }),
+    )
+    const event = await StateMachineLogics.GeneratingToolCall({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {
+        "mcp-skill": mcpSkillManager,
+        "delegate-skill": delegateSkillManager,
+        "interactive-skill": interactiveSkillManager,
+      },
+    })
+    expect(event.type).toBe("callTools")
+    if (event.type === "callTools") {
+      expect(event.toolCalls[0].toolName).toBe("mcpTool")
+      expect(event.toolCalls[1].toolName).toBe("delegateTool")
+      expect(event.toolCalls[2].toolName).toBe("interactiveTool")
+    }
   })
 
   it("returns retry event when finish reason is length", async () => {
@@ -307,6 +347,6 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
     })
-    expect(event.type).toBe("callTool")
+    expect(event.type).toBe("callTools")
   })
 })

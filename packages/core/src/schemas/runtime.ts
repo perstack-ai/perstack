@@ -222,13 +222,13 @@ type ExpertEventPayloads = {
   retry: {
     reason: string
     newMessages: (UserMessage | ExpertMessage | ToolMessage)[]
-    toolCall?: ToolCall
-    toolResult?: ToolResult
+    toolCalls?: ToolCall[]
+    toolResults?: ToolResult[]
     usage: Usage
   }
-  callTool: {
+  callTools: {
     newMessage: ExpertMessage
-    toolCall: ToolCall
+    toolCalls: ToolCall[]
     usage: Usage
   }
   callInteractiveTool: {
@@ -241,8 +241,8 @@ type ExpertEventPayloads = {
     toolCall: ToolCall
     usage: Usage
   }
-  resolveToolResult: {
-    toolResult: ToolResult
+  resolveToolResults: {
+    toolResults: ToolResult[]
   }
   resolveThought: {
     toolResult: ToolResult
@@ -257,6 +257,13 @@ type ExpertEventPayloads = {
     toolResult: ToolResult
   }
   finishToolCall: {
+    newMessages: (UserMessage | ToolMessage)[]
+  }
+  resumeToolCalls: {
+    pendingToolCalls: ToolCall[]
+    partialToolResults: ToolResult[]
+  }
+  finishAllToolCalls: {
     newMessages: (UserMessage | ToolMessage)[]
   }
   continueToNextStep: {
@@ -331,15 +338,17 @@ export function createEvent<T extends EventType>(type: T) {
 export const startRun = createEvent("startRun")
 export const startGeneration = createEvent("startGeneration")
 export const retry = createEvent("retry")
-export const callTool = createEvent("callTool")
+export const callTools = createEvent("callTools")
 export const callInteractiveTool = createEvent("callInteractiveTool")
 export const callDelegate = createEvent("callDelegate")
-export const resolveToolResult = createEvent("resolveToolResult")
+export const resolveToolResults = createEvent("resolveToolResults")
 export const resolveThought = createEvent("resolveThought")
 export const resolvePdfFile = createEvent("resolvePdfFile")
 export const resolveImageFile = createEvent("resolveImageFile")
 export const attemptCompletion = createEvent("attemptCompletion")
 export const finishToolCall = createEvent("finishToolCall")
+export const resumeToolCalls = createEvent("resumeToolCalls")
+export const finishAllToolCalls = createEvent("finishAllToolCalls")
 export const completeRun = createEvent("completeRun")
 export const stopRunByInteractiveTool = createEvent("stopRunByInteractiveTool")
 export const stopRunByDelegate = createEvent("stopRunByDelegate")

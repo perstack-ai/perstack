@@ -1,6 +1,7 @@
-import { type RunEvent, startRun } from "@perstack/core"
+import { createId } from "@paralleldrive/cuid2"
+import { type RunEvent, startRun, type ToolResult } from "@perstack/core"
 import { createInstructionMessage } from "../messages/instruction-message.js"
-import { createToolMessage, createUserMessage } from "../messages/message.js"
+import { createUserMessage } from "../messages/message.js"
 import type { RunSnapshot } from "../runtime-state-machine.js"
 
 export async function initLogic({
@@ -27,18 +28,29 @@ export async function initLogic({
       if (!setting.input.interactiveToolCallResult) {
         throw new Error("Interactive tool call result is undefined")
       }
-      return startRun(setting, checkpoint, {
-        initialCheckpoint: checkpoint,
-        inputMessages: [
-          createToolMessage([
-            {
-              type: "toolResultPart",
-              toolCallId: setting.input.interactiveToolCallResult.toolCallId,
-              toolName: setting.input.interactiveToolCallResult.toolName,
-              contents: [{ type: "textPart", text: setting.input.interactiveToolCallResult.text }],
-            },
-          ]),
-        ],
+      const { toolCallId, toolName, text } = setting.input.interactiveToolCallResult
+      const pendingToolCalls = checkpoint.pendingToolCalls ?? []
+      const completedToolCall = pendingToolCalls.find((tc) => tc.id === toolCallId)
+      const skillName =
+        completedToolCall?.skillName ??
+        (checkpoint.status === "stoppedByDelegate" ? checkpoint.delegateTo?.expert.key : "") ??
+        ""
+      const newToolResult: ToolResult = {
+        id: toolCallId,
+        skillName,
+        toolName,
+        result: [{ type: "textPart", id: createId(), text }],
+      }
+      const updatedPartialResults = [...(checkpoint.partialToolResults ?? []), newToolResult]
+      const updatedPendingToolCalls = pendingToolCalls.filter((tc) => tc.id !== toolCallId)
+      const updatedCheckpoint = {
+        ...checkpoint,
+        partialToolResults: updatedPartialResults,
+        pendingToolCalls: updatedPendingToolCalls.length > 0 ? updatedPendingToolCalls : undefined,
+      }
+      return startRun(setting, updatedCheckpoint, {
+        initialCheckpoint: updatedCheckpoint,
+        inputMessages: [],
       })
     }
     default:

@@ -1,0 +1,55 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-delegate-chain"]
+version = "1.0.0"
+description = "E2E test expert for delegate chain"
+instruction = """
+You are an E2E test expert that tests delegate chain execution.
+
+When given a test query, delegate to "e2e-delegate-level1" to process the request.
+Wait for the delegation result and summarize it, then call attemptCompletion.
+"""
+delegates = ["e2e-delegate-level1"]
+
+[experts."e2e-delegate-chain".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."e2e-delegate-level1"]
+version = "1.0.0"
+description = "First level delegate expert"
+instruction = """
+You are a level 1 delegate expert.
+When given a query, delegate to "e2e-delegate-level2" for further processing.
+Return the combined result.
+"""
+delegates = ["e2e-delegate-level2"]
+
+[experts."e2e-delegate-level1".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-delegate-level2"]
+version = "1.0.0"
+description = "Second level delegate expert"
+instruction = """
+You are a level 2 delegate expert.
+When given a query, respond with "Level 2 processing complete: [query summary]".
+Call attemptCompletion with your response.
+"""
+
+[experts."e2e-delegate-level2".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]

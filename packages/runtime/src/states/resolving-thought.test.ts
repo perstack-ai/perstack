@@ -8,14 +8,17 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingThought']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      toolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "think",
         args: { thought: "Let me analyze this problem step by step" },
       },
-      toolResult: {
-        id: "tr_123",
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
         skillName: "@perstack/base",
         toolName: "think",
         result: [
@@ -26,6 +29,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingThought']", () => {
           },
         ],
       },
+      ],
     })
     await expect(
       StateMachineLogics.ResolvingThought({

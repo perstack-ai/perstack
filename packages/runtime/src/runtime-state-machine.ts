@@ -61,6 +61,8 @@ export const runtimeStateMachine = setup({
                 ...context.checkpoint,
                 status: "proceeding",
                 messages: [...context.checkpoint.messages, ...event.inputMessages],
+                pendingToolCalls: event.initialCheckpoint.pendingToolCalls,
+                partialToolResults: event.initialCheckpoint.partialToolResults,
               }) satisfies Checkpoint,
             step: ({ context, event }) =>
               ({
@@ -87,6 +89,41 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
+        resumeToolCalls: {
+          target: "CallingTool",
+          actions: assign({
+            step: ({ context, event }) =>
+              ({
+                stepNumber: context.checkpoint.stepNumber,
+                inputMessages: context.step.inputMessages ?? [],
+                newMessages: context.step.newMessages,
+                toolCalls: context.step.toolCalls,
+                toolResults: event.partialToolResults,
+                pendingToolCalls: event.pendingToolCalls,
+                usage: context.step.usage,
+                startedAt: context.step.startedAt,
+              }) satisfies Step,
+          }),
+        },
+        finishAllToolCalls: {
+          target: "FinishingStep",
+          actions: assign({
+            checkpoint: ({ context, event }) =>
+              ({
+                ...context.checkpoint,
+                messages: [...context.checkpoint.messages, ...event.newMessages],
+                pendingToolCalls: undefined,
+                partialToolResults: undefined,
+              }) satisfies Checkpoint,
+            step: ({ context, event }) =>
+              ({
+                ...context.step,
+                newMessages: [...context.step.newMessages, ...event.newMessages],
+                toolResults: context.checkpoint.partialToolResults,
+                pendingToolCalls: undefined,
+              }) satisfies Step,
+          }),
+        },
       },
     },
 
@@ -105,13 +142,13 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: event.newMessages,
-                toolCall: event.toolCall,
-                toolResult: event.toolResult,
+                toolCalls: event.toolCalls,
+                toolResults: event.toolResults,
                 usage: sumUsage(context.step.usage, event.usage),
               }) satisfies Step,
           }),
         },
-        callTool: {
+        callTools: {
           target: "CallingTool",
           actions: assign({
             checkpoint: ({ context, event }) =>
@@ -127,7 +164,7 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: [event.newMessage],
-                toolCall: event.toolCall,
+                toolCalls: event.toolCalls,
                 usage: sumUsage(context.step.usage, event.usage),
               }) satisfies Step,
           }),
@@ -148,7 +185,7 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: [event.newMessage],
-                toolCall: event.toolCall,
+                toolCalls: [event.toolCall],
                 usage: sumUsage(context.step.usage, event.usage),
               }) satisfies Step,
           }),
@@ -169,7 +206,7 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: [event.newMessage],
-                toolCall: event.toolCall,
+                toolCalls: [event.toolCall],
                 usage: sumUsage(context.step.usage, event.usage),
               }) satisfies Step,
           }),
@@ -179,13 +216,14 @@ export const runtimeStateMachine = setup({
 
     CallingTool: {
       on: {
-        resolveToolResult: {
+        resolveToolResults: {
           target: "ResolvingToolResult",
           actions: assign({
             step: ({ context, event }) =>
               ({
                 ...context.step,
-                toolResult: event.toolResult,
+                toolResults: event.toolResults,
+                pendingToolCalls: undefined,
               }) satisfies Step,
           }),
         },
@@ -195,7 +233,7 @@ export const runtimeStateMachine = setup({
             step: ({ context, event }) =>
               ({
                 ...context.step,
-                toolResult: event.toolResult,
+                toolResults: [event.toolResult],
               }) satisfies Step,
           }),
         },
@@ -205,7 +243,7 @@ export const runtimeStateMachine = setup({
             step: ({ context, event }) =>
               ({
                 ...context.step,
-                toolResult: event.toolResult,
+                toolResults: [event.toolResult],
               }) satisfies Step,
           }),
         },
@@ -215,7 +253,7 @@ export const runtimeStateMachine = setup({
             step: ({ context, event }) =>
               ({
                 ...context.step,
-                toolResult: event.toolResult,
+                toolResults: [event.toolResult],
               }) satisfies Step,
           }),
         },
@@ -225,7 +263,33 @@ export const runtimeStateMachine = setup({
             step: ({ context, event }) =>
               ({
                 ...context.step,
-                toolResult: event.toolResult,
+                toolResults: [event.toolResult],
+              }) satisfies Step,
+          }),
+        },
+        callDelegate: {
+          target: "CallingDelegate",
+          actions: assign({
+            step: ({ context }) =>
+              ({
+                ...context.step,
+                toolCalls: context.step.toolCalls,
+                toolResults: context.step.toolResults,
+                pendingToolCalls: context.step.pendingToolCalls,
+                partialToolResults: context.step.partialToolResults,
+              }) satisfies Step,
+          }),
+        },
+        callInteractiveTool: {
+          target: "CallingInteractiveTool",
+          actions: assign({
+            step: ({ context }) =>
+              ({
+                ...context.step,
+                toolCalls: context.step.toolCalls,
+                toolResults: context.step.toolResults,
+                pendingToolCalls: context.step.pendingToolCalls,
+                partialToolResults: context.step.partialToolResults,
               }) satisfies Step,
           }),
         },
@@ -327,8 +391,8 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: event.newMessages,
-                toolCall: event.toolCall,
-                toolResult: event.toolResult,
+                toolCalls: event.toolCalls,
+                toolResults: event.toolResults,
                 usage: sumUsage(context.step.usage, event.usage),
               }) satisfies Step,
           }),

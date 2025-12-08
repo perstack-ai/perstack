@@ -78,7 +78,8 @@ pnpm build
 git checkout -b feature/your-feature
 # ... edit code ...
 pnpm changeset
-pnpm typecheck && pnpm test
+pnpm typecheck && pnpm test && pnpm build
+pnpm test:e2e  # Run E2E tests
 git commit -m "feat: your changes"
 ```
 
@@ -195,6 +196,7 @@ pnpm changeset
 pnpm typecheck  # Must pass
 pnpm test       # Must pass
 pnpm build      # Must succeed
+pnpm test:e2e   # Run E2E tests
 ```
 
 ### 4. Commit and Push
@@ -428,8 +430,13 @@ Perstack uses a two-stage release workflow powered by [changesets/action](https:
    - Updated `CHANGELOG.md` with PR links and author attribution
 
 **Stage 2: Publish**
-1. Review and merge "Version Packages" PR
-2. Release workflow automatically:
+1. Review "Version Packages" PR
+2. **Run E2E tests locally before merging:**
+   ```bash
+   pnpm build && pnpm test:e2e
+   ```
+3. Merge "Version Packages" PR
+4. Release workflow automatically:
    - Publishes packages to npm
    - Creates git tags
    - Creates GitHub Releases
@@ -571,6 +578,7 @@ Before requesting review, ensure:
 - [ ] Changeset created with appropriate version bump
 - [ ] All tests pass (`pnpm test`)
 - [ ] Types check across all packages (`pnpm typecheck`)
+- [ ] E2E tests pass (`pnpm test:e2e`)
 - [ ] Documentation updated (README, JSDoc, CHANGELOG via changeset)
 - [ ] Migration guide included (for breaking changes)
 - [ ] No unintended version sync issues

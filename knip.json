@@ -3,7 +3,7 @@
   "ignoreDependencies": ["@tsconfig/node22", "vitest", "ts-dedent"],
   "ignoreExportsUsedInFile": true,
   "ignoreBinaries": ["perstack"],
-  "ignore": ["dist/**/*", "**/*.test.ts", "**/*.test.tsx", "docs/content/**/*", "scripts/**/*", "examples/**/*"],
+  "ignore": ["dist/**/*", "**/*.test.ts", "**/*.test.tsx", "docs/content/**/*", "scripts/**/*", "examples/**/*", "e2e/**/*"],
   "workspaces": {
     "packages/perstack": {
       "entry": ["bin/cli.ts", "src/**/*.ts"]

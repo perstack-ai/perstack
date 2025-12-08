@@ -33,18 +33,22 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      toolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
         args: {},
       },
-      toolResult: {
+      ],
+      toolResults: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
         result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
       },
+      ],
     })
     mockGetModel.mockReturnValue(createMockLanguageModel("Task completed successfully"))
     const event = await StateMachineLogics.GeneratingRunResult({
@@ -65,18 +69,22 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      toolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
         args: {},
       },
-      toolResult: {
+      ],
+      toolResults: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
         result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
       },
+      ],
     })
     const errorModel = new MockLanguageModelV2({
       doGenerate: async () => {
@@ -94,10 +102,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     expect(event.type).toBe("retry")
   })
 
-  it("throws error when tool call or result missing", async () => {
+  it("throws error when tool calls or results missing", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
-    const step = createStep({ toolCall: undefined, toolResult: undefined })
+    const step = createStep({ toolCalls: undefined, toolResults: undefined })
     await expect(
       StateMachineLogics.GeneratingRunResult({
         setting,
@@ -106,25 +114,29 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
         eventListener: async () => {},
         skillManagers: {},
       }),
-    ).rejects.toThrow("No tool call or tool result found")
+    ).rejects.toThrow("No tool calls or tool results found")
   })
 
   it("includes proper event metadata", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
+      toolCalls: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
         args: {},
       },
-      toolResult: {
+      ],
+      toolResults: [
+        {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
         result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
       },
+      ],
     })
     mockGetModel.mockReturnValue(createMockLanguageModel("Final result"))
     const event = await StateMachineLogics.GeneratingRunResult({

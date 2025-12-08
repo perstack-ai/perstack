@@ -40,7 +40,7 @@ The `eventListener` callback receives a `RunEvent` object, which provides granul
 
 ```typescript
 type RunEvent = {
-  type: EventType       // e.g., "startRun", "callTool"
+  type: EventType       // e.g., "startRun", "callTools"
   id: string            // Unique event ID
   timestamp: number     // Unix timestamp
   runId: string         // ID of the current run
@@ -53,9 +53,9 @@ You can narrow down the event type to access specific properties:
 
 ```typescript
 eventListener: (event) => {
-  if (event.type === "callTool") {
-    // event is now narrowed to the callTool event type
-    console.log(`Executing tool: ${event.toolCall.name}`)
+  if (event.type === "callTools") {
+    // event is now narrowed to the callTools event type
+    console.log(`Executing ${event.toolCalls.length} tools`)
   }
 }
 ```
@@ -185,19 +185,21 @@ stateDiagram-v2
     [*] --> Init
     Init --> PreparingForStep: startRun
     PreparingForStep --> GeneratingToolCall: startGeneration
+    PreparingForStep --> CallingTools: resumeToolCalls
+    PreparingForStep --> FinishingStep: finishAllToolCalls
     
-    GeneratingToolCall --> CallingTool: callTool
-    GeneratingToolCall --> CallingInteractiveTool: callInteractiveTool
-    GeneratingToolCall --> CallingDelegate: callDelegate
+    GeneratingToolCall --> CallingTools: callTools
     GeneratingToolCall --> FinishingStep: retry
 
-    CallingTool --> ResolvingToolResult: resolveToolResult
-    CallingTool --> ResolvingThought: resolveThought
-    CallingTool --> ResolvingPdfFile: resolvePdfFile
-    CallingTool --> ResolvingImageFile: resolveImageFile
-    CallingTool --> GeneratingRunResult: attemptCompletion
+    CallingTools --> ResolvingToolResults: resolveToolResults
+    CallingTools --> ResolvingThought: resolveThought
+    CallingTools --> ResolvingPdfFile: resolvePdfFile
+    CallingTools --> ResolvingImageFile: resolveImageFile
+    CallingTools --> GeneratingRunResult: attemptCompletion
+    CallingTools --> CallingDelegate: callDelegate
+    CallingTools --> CallingInteractiveTool: callInteractiveTool
 
-    ResolvingToolResult --> FinishingStep: finishToolCall
+    ResolvingToolResults --> FinishingStep: finishToolCall
     ResolvingThought --> FinishingStep: finishToolCall
     ResolvingPdfFile --> FinishingStep: finishToolCall
     ResolvingImageFile --> FinishingStep: finishToolCall
@@ -216,8 +218,9 @@ stateDiagram-v2
 Events trigger state transitions. They are emitted by the runtime logic or external inputs.
 
 - **Lifecycle**: `startRun`, `startGeneration`, `continueToNextStep`, `completeRun`
-- **Tool Execution**: `callTool`, `resolveToolResult`, `finishToolCall`
+- **Tool Execution**: `callTools`, `resolveToolResults`, `finishToolCall`, `resumeToolCalls`, `finishAllToolCalls`
 - **Special Types**: `resolveThought`, `resolvePdfFile`, `resolveImageFile`
+- **Mixed Tool Calls**: `callDelegate`, `callInteractiveTool` (from CallingTools state)
 - **Interruption**: `stopRunByInteractiveTool`, `stopRunByDelegate`, `stopRunByExceededMaxSteps`
 - **Error Handling**: `retry`
 

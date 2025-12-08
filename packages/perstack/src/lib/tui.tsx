@@ -23,35 +23,37 @@ export function defaultEventListener(e: RunEvent): void {
       debug(e.reason)
       break
     }
-    case "callTool": {
-      log(`${header(e)} Calling tool`)
-      if (e.toolCall.skillName === "@perstack/base") {
-        switch (e.toolCall.toolName) {
+    case "callTools": {
+      log(`${header(e)} Calling ${e.toolCalls.length} tool(s)`)
+      for (const toolCall of e.toolCalls) {
+        if (toolCall.skillName === "@perstack/base") {
+          switch (toolCall.toolName) {
           case "think": {
-            const thought = e.toolCall.args.thought
+              const thought = toolCall.args.thought
             log(`${header(e)} Thought Updated:`)
             debug(thought)
             break
           }
           case "readPdfFile": {
-            const path = e.toolCall.args.path
+              const path = toolCall.args.path
             log(`${header(e)} Reading PDF: ${path}`)
             break
           }
           case "readImageFile": {
-            const path = e.toolCall.args.path
+              const path = toolCall.args.path
             log(`${header(e)} Reading Image: ${path}`)
             break
           }
           default: {
-            log(`${header(e)} Tool: ${e.toolCall.skillName}/${e.toolCall.toolName}`)
-            debug(`${header(e)} Args: ${JSON.stringify(e.toolCall.args, null, 2)}`)
+              log(`${header(e)} Tool: ${toolCall.skillName}/${toolCall.toolName}`)
+              debug(`${header(e)} Args: ${JSON.stringify(toolCall.args, null, 2)}`)
             break
           }
         }
       } else {
-        log(`${header(e)} Tool: ${e.toolCall.skillName}/${e.toolCall.toolName}`)
-        debug(`${header(e)} Args: ${JSON.stringify(e.toolCall.args, null, 2)}`)
+          log(`${header(e)} Tool: ${toolCall.skillName}/${toolCall.toolName}`)
+          debug(`${header(e)} Args: ${JSON.stringify(toolCall.args, null, 2)}`)
+        }
       }
       break
     }
@@ -67,12 +69,13 @@ export function defaultEventListener(e: RunEvent): void {
       debug(`${header(e)} Args: ${JSON.stringify(e.toolCall.args, null, 2)}`)
       break
     }
-    case "resolveToolResult": {
-      log(`${header(e)} Resolved Tool Result`)
-      if (e.toolResult.skillName === "@perstack/base") {
-        switch (e.toolResult.toolName) {
+    case "resolveToolResults": {
+      log(`${header(e)} Resolved ${e.toolResults.length} Tool Result(s)`)
+      for (const toolResult of e.toolResults) {
+        if (toolResult.skillName === "@perstack/base") {
+          switch (toolResult.toolName) {
           case "todo": {
-            const text = e.toolResult.result.find((r) => r.type === "textPart")?.text
+              const text = toolResult.result.find((r) => r.type === "textPart")?.text
             const { todos } = JSON.parse(text ?? "{}") as {
               todos: {
                 id: number
@@ -87,14 +90,15 @@ export function defaultEventListener(e: RunEvent): void {
             break
           }
           default: {
-            log(`${header(e)} Tool: ${e.toolResult.skillName}/${e.toolResult.toolName}`)
-            debug(`${header(e)} Result: ${JSON.stringify(e.toolResult.result, null, 2)}`)
+              log(`${header(e)} Tool: ${toolResult.skillName}/${toolResult.toolName}`)
+              debug(`${header(e)} Result: ${JSON.stringify(toolResult.result, null, 2)}`)
             break
           }
         }
       } else {
-        log(`${header(e)} Tool: ${e.toolResult.skillName}/${e.toolResult.toolName}`)
-        debug(`${header(e)} Result: ${JSON.stringify(e.toolResult.result, null, 2)}`)
+          log(`${header(e)} Tool: ${toolResult.skillName}/${toolResult.toolName}`)
+          debug(`${header(e)} Result: ${JSON.stringify(toolResult.result, null, 2)}`)
+        }
       }
       break
     }
