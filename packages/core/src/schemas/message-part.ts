@@ -147,7 +147,7 @@ export interface ToolResultPart extends BasePart {
   /** Name of the tool that was called */
   toolName: string
   /** Content of the tool result */
-  contents: (TextPart | ImageInlinePart)[]
+  contents: (TextPart | ImageInlinePart | FileInlinePart)[]
   /** Whether the tool call resulted in an error */
   isError?: boolean
 }
@@ -156,7 +156,7 @@ export const toolResultPartSchema = basePartSchema.extend({
   type: z.literal("toolResultPart"),
   toolCallId: z.string(),
   toolName: z.string(),
-  contents: z.array(z.union([textPartSchema, imageInlinePartSchema])),
+  contents: z.array(z.union([textPartSchema, imageInlinePartSchema, fileInlinePartSchema])),
   isError: z.boolean().optional(),
 })
 toolResultPartSchema satisfies z.ZodType<ToolResultPart>
