@@ -279,8 +279,8 @@ type ExpertEventPayloads = {
   completeRun: {
     checkpoint: Checkpoint
     step: Step
-    text?: string
-    usage?: Usage
+    text: string
+    usage: Usage
   }
 }
 
