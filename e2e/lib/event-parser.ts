@@ -71,7 +71,15 @@ export function extractCheckpointState(event: ParsedEvent): CheckpointState | nu
   const partial = (checkpoint.partialToolResults ?? []) as ToolCallInfo[]
   return {
     status: checkpoint.status as string,
-    pendingToolCalls: pending.map((tc) => ({ id: tc.id, skillName: tc.skillName, toolName: tc.toolName })),
-    partialToolResults: partial.map((tr) => ({ id: tr.id, skillName: tr.skillName, toolName: tr.toolName })),
+    pendingToolCalls: pending.map((tc) => ({
+      id: tc.id,
+      skillName: tc.skillName,
+      toolName: tc.toolName,
+    })),
+    partialToolResults: partial.map((tr) => ({
+      id: tr.id,
+      skillName: tr.skillName,
+      toolName: tr.toolName,
+    })),
   }
 }

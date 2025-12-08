@@ -1,10 +1,10 @@
 import {
   type CheckpointState,
-  type ParsedEvent,
   extractCheckpointState,
   extractToolCalls,
   filterEventsByType,
   getEventSequence,
+  type ParsedEvent,
 } from "./event-parser.js"
 
 export type AssertionResult = {
@@ -101,7 +101,9 @@ export function assertCheckpointState(
     message: allPassed
       ? `Checkpoint state matches for ${eventType}`
       : `Checkpoint state mismatch for ${eventType}`,
-    details: allPassed ? undefined : { failedChecks: checks.filter((c) => !c.passed), actualState: state },
+    details: allPassed
+      ? undefined
+      : { failedChecks: checks.filter((c) => !c.passed), actualState: state },
   }
 }
 
