@@ -7,6 +7,11 @@ describe("CLI status", () => {
     expect(result.exitCode).toBe(1)
   })
 
+  it("should fail without status value", async () => {
+    const result = await runCli(["status", "expert@1.0.0"])
+    expect(result.exitCode).toBe(1)
+  })
+
   it("should fail with invalid status value", async () => {
     const result = await runCli(["status", "expert@1.0.0", "invalid-status"])
     expect(result.exitCode).toBe(1)

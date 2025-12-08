@@ -16,5 +16,10 @@ describe("CLI run", () => {
     const result = await runCli(["run", "nonexistent-expert", "test query"])
     expect(result.exitCode).toBe(1)
   })
+
+  it("should fail with nonexistent config file", async () => {
+    const result = await runCli(["run", "expert", "query", "--config", "nonexistent.toml"])
+    expect(result.exitCode).toBe(1)
+  })
 })
 
