@@ -17,7 +17,10 @@ export async function resolvingToolResultLogic({
       toolCallId: toolResult.id,
       toolName: toolCall?.toolName ?? toolResult.toolName,
       contents: toolResult.result.filter(
-        (part) => part.type === "textPart" || part.type === "imageInlinePart",
+        (part) =>
+          part.type === "textPart" ||
+          part.type === "imageInlinePart" ||
+          part.type === "fileInlinePart",
       ),
     }
   })

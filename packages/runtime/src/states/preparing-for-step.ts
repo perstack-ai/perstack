@@ -23,7 +23,10 @@ export async function preparingForStepLogic({
       toolCallId: tr.id,
       toolName: tr.toolName,
       contents: tr.result.filter(
-        (part) => part.type === "textPart" || part.type === "imageInlinePart",
+        (part) =>
+          part.type === "textPart" ||
+          part.type === "imageInlinePart" ||
+          part.type === "fileInlinePart",
       ),
     }))
     return finishAllToolCalls(setting, checkpoint, {

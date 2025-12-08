@@ -119,6 +119,7 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: [...context.step.newMessages, ...event.newMessages],
+                toolResults: context.checkpoint.partialToolResults,
                 pendingToolCalls: undefined,
               }) satisfies Step,
           }),
