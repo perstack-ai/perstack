@@ -1,5 +1,36 @@
 # @perstack/runtime
 
+## 0.0.62
+
+### Patch Changes
+
+- [#62](https://github.com/perstack-ai/perstack/pull/62) [`3b64f88`](https://github.com/perstack-ai/perstack/commit/3b64f886b2e6f030d0e75d0baf4b51fb4d3747b8) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add parallel tool call support and mixed tool call handling
+
+  Features:
+
+  - Process all tool calls from a single LLM response instead of only the first one
+  - MCP tools execute in parallel using `Promise.all`
+  - Support mixed tool calls (MCP + Delegate + Interactive in same response)
+  - Process tools in priority order: MCP → Delegate → Interactive
+  - Preserve partial results across checkpoint boundaries
+
+  Schema Changes:
+
+  - `Step.toolCall` → `Step.toolCalls` (array)
+  - `Step.toolResult` → `Step.toolResults` (array)
+  - Add `Step.pendingToolCalls` for tracking unprocessed tool calls
+  - Add `Checkpoint.pendingToolCalls` and `Checkpoint.partialToolResults` for resume
+
+  Event Changes:
+
+  - `callTool` → `callTools`
+  - `resolveToolResult` → `resolveToolResults`
+  - Add `resumeToolCalls` and `finishAllToolCalls` events
+
+- Updated dependencies [[`3b64f88`](https://github.com/perstack-ai/perstack/commit/3b64f886b2e6f030d0e75d0baf4b51fb4d3747b8)]:
+  - @perstack/core@0.0.21
+  - @perstack/api-client@0.0.32
+
 ## 0.0.61
 
 ### Patch Changes
