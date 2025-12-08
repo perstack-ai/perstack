@@ -1,0 +1,34 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-special-tools"]
+version = "1.0.0"
+description = "E2E test expert for special tool parallel execution"
+instruction = """
+You are an E2E test expert that tests parallel execution of special tools with regular MCP tools.
+
+When given a test query, you MUST call MULTIPLE tools in a SINGLE response:
+1. think - Think about the approach first
+2. web_search_exa - Search for information
+
+CRITICAL: Make BOTH tool calls in ONE response to test that think tool executes in parallel with other MCP tools.
+After getting results, summarize briefly and call attemptCompletion.
+"""
+
+[experts."e2e-special-tools".skills."exa"]
+type = "mcpStdioSkill"
+description = "Web search"
+command = "npx"
+args = ["-y", "exa-mcp-server"]
+requiredEnv = ["EXA_API_KEY"]
+
+[experts."e2e-special-tools".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
