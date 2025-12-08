@@ -62,4 +62,3 @@ type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
 pick = ["attemptCompletion", "think"]
-

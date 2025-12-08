@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process"
 import { parseEvents, type ParsedEvent } from "./event-parser.js"
-import type { AssertionResult } from "./assertions.js"
 
 export type RunResult = {
   events: ParsedEvent[]
@@ -66,65 +65,3 @@ export async function runExpert(
     })
   })
 }
-
-export type TestCase = {
-  name: string
-  run: () => Promise<AssertionResult[]>
-}
-
-export type TestSuite = {
-  name: string
-  tests: TestCase[]
-}
-
-export async function runTestSuite(suite: TestSuite): Promise<{
-  passed: number
-  failed: number
-  results: { name: string; passed: boolean; results: AssertionResult[] }[]
-}> {
-  console.log(`\n${"=".repeat(60)}`)
-  console.log(`Running: ${suite.name}`)
-  console.log(`${"=".repeat(60)}\n`)
-  const results: { name: string; passed: boolean; results: AssertionResult[] }[] = []
-  let passed = 0
-  let failed = 0
-  for (const test of suite.tests) {
-    console.log(`  📋 ${test.name}`)
-    try {
-      const assertions = await test.run()
-      const allPassed = assertions.every((a) => a.passed)
-      if (allPassed) {
-        passed++
-        console.log(`     ✅ PASSED`)
-        for (const assertion of assertions) {
-          console.log(`        ${assertion.message}`)
-        }
-      } else {
-        failed++
-        console.log(`     ❌ FAILED`)
-        for (const assertion of assertions) {
-          const icon = assertion.passed ? "✓" : "✗"
-          console.log(`        ${icon} ${assertion.message}`)
-          if (assertion.details) {
-            console.log(`          ${JSON.stringify(assertion.details, null, 2).split("\n").join("\n          ")}`)
-          }
-        }
-      }
-      results.push({ name: test.name, passed: allPassed, results: assertions })
-    } catch (err) {
-      failed++
-      console.log(`     ❌ ERROR: ${err}`)
-      results.push({
-        name: test.name,
-        passed: false,
-        results: [{ passed: false, message: `Error: ${err}` }],
-      })
-    }
-    console.log()
-  }
-  console.log(`${"─".repeat(60)}`)
-  console.log(`Results: ${passed} passed, ${failed} failed`)
-  console.log(`${"=".repeat(60)}\n`)
-  return { passed, failed, results }
-}
-
