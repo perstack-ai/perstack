@@ -10,6 +10,19 @@ import {
 import type { RunSnapshot } from "../runtime-state-machine.js"
 import { getSkillManagerByToolName } from "../skill-manager/index.js"
 
+function hasRemainingTodos(toolResult: ToolResult): boolean {
+  const firstPart = toolResult.result[0]
+  if (!firstPart || firstPart.type !== "textPart") {
+    return false
+  }
+  try {
+    const parsed = JSON.parse(firstPart.text)
+    return Array.isArray(parsed.remainingTodos) && parsed.remainingTodos.length > 0
+  } catch {
+    return false
+  }
+}
+
 export async function callingToolLogic({
   setting,
   checkpoint,
@@ -31,6 +44,9 @@ export async function callingToolLogic({
       return resolveThought(setting, checkpoint, { toolResult })
     }
     if (toolName === "attemptCompletion") {
+      if (hasRemainingTodos(toolResult)) {
+        return resolveToolResult(setting, checkpoint, { toolResult })
+      }
       return attemptCompletion(setting, checkpoint, { toolResult })
     }
     if (toolName === "readPdfFile") {
