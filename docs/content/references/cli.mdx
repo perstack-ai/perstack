@@ -64,12 +64,28 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 
 | Option | Description |
 |--------|-------------|
-| `--job-id <id>` | Custom Job ID (default: auto-generated) |
+| `--job-id <id>` | Custom Job ID for new Job (default: auto-generated) |
 | `--continue` | Continue latest Job with new Run |
 | `--continue-job <id>` | Continue specific Job with new Run |
-| `--resume-from <id>` | Resume from specific checkpoint (Coordinator only) |
+| `--resume-from <id>` | Resume from specific checkpoint (requires `--continue` or `--continue-job`) |
 
-**Note:** `--continue` and `--resume-from` only work with the Coordinator Expert's checkpoints. You cannot resume from a Delegated Expert's checkpoint.
+**Combining options:**
+
+```bash
+# Continue latest Job from its latest checkpoint
+--continue
+
+# Continue latest Job from a specific checkpoint
+--continue --resume-from <checkpointId>
+
+# Continue specific Job from its latest checkpoint
+--continue-job <jobId>
+
+# Continue specific Job from a specific checkpoint
+--continue-job <jobId> --resume-from <checkpointId>
+```
+
+**Note:** `--resume-from` must be combined with `--continue` or `--continue-job`. You can only resume from the Coordinator Expert's checkpoints.
 
 ### Interactive
 
@@ -102,14 +118,16 @@ npx perstack run my-expert "query" \
 npx perstack run my-expert "initial query"
 npx perstack run my-expert "follow-up" --continue
 
-# Continue specific Job
+# Continue specific Job from latest checkpoint
 npx perstack run my-expert "continue" --continue-job job_abc123
 
-# Custom Job ID
-npx perstack run my-expert "query" --job-id my-custom-job
+# Continue specific Job from specific checkpoint
+npx perstack run my-expert "retry with different approach" \
+  --continue-job job_abc123 \
+  --resume-from checkpoint_xyz
 
-# Resume from checkpoint
-npx perstack run my-expert "query" --resume-from checkpoint_xyz
+# Custom Job ID for new Job
+npx perstack run my-expert "query" --job-id my-custom-job
 
 # Respond to interactive tool call
 npx perstack run my-expert "user response" --continue -i

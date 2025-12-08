@@ -82,15 +82,19 @@ The Coordinator Expert receives the follow-up as a new user message in a fresh R
 **Continue a specific job:**
 
 ```bash
-npx perstack run my-expert "Follow-up" --continue --job-id <jobId>
+npx perstack run my-expert "Follow-up" --continue-job <jobId>
 ```
 
 ## Resuming from a checkpoint
 
-Resume from a specific checkpoint to branch execution:
+Resume from a specific checkpoint to branch execution. Use `--resume-from` with `--continue` or `--continue-job`:
 
 ```bash
-npx perstack run my-expert "query" --resume-from <checkpointId>
+# Resume from checkpoint in latest Job
+npx perstack run my-expert "try again" --continue --resume-from <checkpointId>
+
+# Resume from checkpoint in specific Job
+npx perstack run my-expert "try again" --continue-job <jobId> --resume-from <checkpointId>
 ```
 
 Useful for:
@@ -98,7 +102,9 @@ Useful for:
 - Trying different approaches
 - Debugging
 
-**Important:** You can only resume from the Coordinator Expert's checkpoints. Resuming from a delegated Expert's checkpoint is not supported.
+**Important:**
+- `--resume-from` requires `--continue` or `--continue-job`
+- You can only resume from the Coordinator Expert's checkpoints
 
 ## Interactive tool calls
 
