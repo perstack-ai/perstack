@@ -9,7 +9,7 @@ describe("Special Tools Parallel Execution", () => {
   beforeAll(async () => {
     result = await runExpert(
       "e2e-special-tools",
-      "Test special tools: think about TypeScript benefits and search for it",
+      "Test all special tools: think, read the PDF, read the GIF image, and search",
       {
         configPath: "./e2e/experts/special-tools.toml",
         timeout: 180000,
@@ -17,21 +17,21 @@ describe("Special Tools Parallel Execution", () => {
     )
   }, 200000)
 
-  it("should execute think and MCP tools in parallel", () => {
-    expect(assertToolCallCount(result.events, "callTools", 2).passed).toBe(true)
+  it("should execute all 4 tools in parallel", () => {
+    expect(assertToolCallCount(result.events, "callTools", 4).passed).toBe(true)
     expect(
       assertEventSequenceContains(result.events, ["startRun", "callTools", "resolveToolResults"])
         .passed,
     ).toBe(true)
   })
 
-  it("should resolve both think and MCP results together", () => {
+  it("should resolve all tool results together", () => {
     const resolveEvents = filterEventsByType(result.events, "resolveToolResults")
-    const hasMultipleResults = resolveEvents.some((e) => {
+    const hasAllResults = resolveEvents.some((e) => {
       const toolResults = (e as { toolResults?: { toolName: string }[] }).toolResults ?? []
-      return toolResults.length >= 2
+      return toolResults.length >= 4
     })
-    expect(hasMultipleResults).toBe(true)
+    expect(hasAllResults).toBe(true)
   })
 
   it("should include think tool in resolved results", () => {
@@ -41,6 +41,24 @@ describe("Special Tools Parallel Execution", () => {
       return toolResults.some((tr) => tr.toolName === "think")
     })
     expect(hasThinkResult).toBe(true)
+  })
+
+  it("should include readPdfFile in resolved results", () => {
+    const resolveEvents = filterEventsByType(result.events, "resolveToolResults")
+    const hasPdfResult = resolveEvents.some((e) => {
+      const toolResults = (e as { toolResults?: { toolName: string }[] }).toolResults ?? []
+      return toolResults.some((tr) => tr.toolName === "readPdfFile")
+    })
+    expect(hasPdfResult).toBe(true)
+  })
+
+  it("should include readImageFile in resolved results", () => {
+    const resolveEvents = filterEventsByType(result.events, "resolveToolResults")
+    const hasImageResult = resolveEvents.some((e) => {
+      const toolResults = (e as { toolResults?: { toolName: string }[] }).toolResults ?? []
+      return toolResults.some((tr) => tr.toolName === "readImageFile")
+    })
+    expect(hasImageResult).toBe(true)
   })
 
   it("should complete run successfully", () => {

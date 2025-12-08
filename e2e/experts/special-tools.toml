@@ -12,12 +12,14 @@ description = "E2E test expert for special tool parallel execution"
 instruction = """
 You are an E2E test expert that tests parallel execution of special tools with regular MCP tools.
 
-When given a test query, you MUST call MULTIPLE tools in a SINGLE response:
-1. think - Think about the approach first
-2. web_search_exa - Search for information
+When given a test query, you MUST call ALL of these tools in a SINGLE response:
+1. think - Think about the approach
+2. readPdfFile - Read the PDF at e2e/fixtures/test.pdf
+3. readImageFile - Read the image at e2e/fixtures/test.gif
+4. web_search_exa - Search for related information
 
-CRITICAL: Make BOTH tool calls in ONE response to test that think tool executes in parallel with other MCP tools.
-After getting results, summarize briefly and call attemptCompletion.
+CRITICAL: Make ALL 4 tool calls in ONE response to test that special tools (think, readPdfFile, readImageFile) execute in parallel with regular MCP tools.
+After getting results, summarize briefly what you found and call attemptCompletion.
 """
 
 [experts."e2e-special-tools".skills."exa"]
@@ -31,4 +33,4 @@ requiredEnv = ["EXA_API_KEY"]
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
-pick = ["attemptCompletion", "think"]
+pick = ["attemptCompletion", "think", "readPdfFile", "readImageFile"]
