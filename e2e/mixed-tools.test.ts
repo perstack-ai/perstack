@@ -31,13 +31,12 @@ describe("Mixed Tool Calls (MCP + Delegate + Interactive)", () => {
   })
 
   it("should collect MCP result before delegate", () => {
-    expect(
-      assertCheckpointState(result.events, "stopRunByDelegate", {
-        status: "stoppedByDelegate",
-        partialToolResults: [{}] as ToolCallInfo[],
-        pendingToolCalls: [{}] as ToolCallInfo[],
-      }).passed,
-    ).toBe(true)
+    const checkResult = assertCheckpointState(result.events, "stopRunByDelegate", {
+      status: "stoppedByDelegate",
+      partialToolResults: [{}] as ToolCallInfo[],
+      pendingToolCalls: [{}, {}] as ToolCallInfo[],
+    })
+    expect(checkResult.passed).toBe(true)
     expect(assertPartialResultsContain(result.events, "stopRunByDelegate", ["web_search_exa"]).passed).toBe(
       true,
     )
@@ -58,12 +57,11 @@ describe("Mixed Tool Calls (MCP + Delegate + Interactive)", () => {
   })
 
   it("should have all partial results after interactive stop", () => {
-    expect(
-      assertCheckpointState(result.events, "stopRunByInteractiveTool", {
-        status: "stoppedByInteractiveTool",
-        partialToolResults: [{}, {}] as ToolCallInfo[],
-        pendingToolCalls: [],
-      }).passed,
-    ).toBe(true)
+    const checkResult = assertCheckpointState(result.events, "stopRunByInteractiveTool", {
+      status: "stoppedByInteractiveTool",
+      partialToolResults: [{}, {}] as ToolCallInfo[],
+      pendingToolCalls: [{}] as ToolCallInfo[],
+    })
+    expect(checkResult.passed).toBe(true)
   })
 })

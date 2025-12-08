@@ -75,23 +75,12 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
               toolName: "readPdfFile",
               contents: [
                 {
-                  type: "textPart",
+                  type: "fileInlinePart",
                   id: expect.any(String),
-                  text: "User uploads PDF file as follows.",
+                  encodedData: Buffer.from("encoded_pdf_content").toString("base64"),
+                  mimeType: "application/pdf",
                 },
               ],
-            },
-          ],
-        },
-        {
-          type: "userMessage",
-          id: expect.any(String),
-          contents: [
-            {
-              type: "fileInlinePart",
-              id: expect.any(String),
-              encodedData: Buffer.from("encoded_pdf_content").toString("base64"),
-              mimeType: "application/pdf",
             },
           ],
         },
@@ -141,8 +130,11 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
     })
     expect(result.type).toBe("finishToolCall")
     if (result.type !== "finishToolCall") throw new Error("Unexpected event type")
-    const userMessage = result.newMessages[1]
-    expect(userMessage.contents[0]).toMatchObject({
+    const toolMessage = result.newMessages[0]
+    if (toolMessage.type !== "toolMessage") throw new Error("Expected toolMessage")
+    const toolResultPart = toolMessage.contents[0]
+    if (toolResultPart.type !== "toolResultPart") throw new Error("Expected toolResultPart")
+    expect(toolResultPart.contents[0]).toMatchObject({
       type: "textPart",
       text: expect.stringContaining('Failed to read PDF file "/nonexistent.pdf"'),
     })

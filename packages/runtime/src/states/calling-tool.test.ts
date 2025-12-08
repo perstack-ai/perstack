@@ -247,7 +247,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
     })
   })
 
-  it("routes think tool to resolveThought handler", async () => {
+  it("routes think tool to resolveToolResults handler", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
@@ -270,7 +270,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       eventListener: async () => {},
       skillManagers,
     })
-    expect(event.type).toBe("resolveThought")
+    expect(event.type).toBe("resolveToolResults")
   })
 
   it("routes attemptCompletion to attemptCompletion handler when no remaining todos", async () => {
@@ -341,7 +341,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
     expect(event.type).toBe("resolveToolResults")
   })
 
-  it("routes readPdfFile tool to resolvePdfFile handler", async () => {
+  it("routes readPdfFile tool to resolveToolResults handler", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
@@ -365,10 +365,10 @@ describe("@perstack/runtime: callingToolLogic", () => {
       eventListener: async () => {},
       skillManagers,
     })
-    expect(event.type).toBe("resolvePdfFile")
+    expect(event.type).toBe("resolveToolResults")
   })
 
-  it("routes readImageFile tool to resolveImageFile handler", async () => {
+  it("routes readImageFile tool to resolveToolResults handler", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
@@ -394,7 +394,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       eventListener: async () => {},
       skillManagers,
     })
-    expect(event.type).toBe("resolveImageFile")
+    expect(event.type).toBe("resolveToolResults")
   })
 
   it("routes non-special @perstack/base tools to resolveToolResults", async () => {
