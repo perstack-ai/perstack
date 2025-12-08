@@ -1,0 +1,60 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-mixed-tools"]
+version = "1.0.0"
+description = "E2E test expert for mixed tool calls (MCP + Delegate + Interactive)"
+instruction = """
+You are an E2E test expert that tests parallel tool execution with mixed tool types.
+
+When given a test query, you MUST call ALL THREE tools in a SINGLE response:
+1. web_search_exa - Search for information (MCP tool)
+2. e2e-helper - Delegate to helper expert (Delegate tool)  
+3. askUser - Ask user for input (Interactive tool)
+
+CRITICAL: Make ALL THREE tool calls in ONE response.
+The runtime will process them in order: MCP first, then Delegate, then Interactive.
+"""
+delegates = ["e2e-helper"]
+
+[experts."e2e-mixed-tools".skills."exa"]
+type = "mcpStdioSkill"
+description = "Web search"
+command = "npx"
+args = ["-y", "exa-mcp-server"]
+requiredEnv = ["EXA_API_KEY"]
+
+[experts."e2e-mixed-tools".skills."user-input"]
+type = "interactiveSkill"
+description = "User interaction"
+
+[experts."e2e-mixed-tools".skills."user-input".tools.askUser]
+name = "askUser"
+description = "Ask the user a question"
+inputJsonSchema = '{"type":"object","properties":{"question":{"type":"string"}},"required":["question"]}'
+
+[experts."e2e-mixed-tools".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."e2e-helper"]
+version = "1.0.0"
+description = "E2E test helper expert"
+instruction = """
+You are a helper expert for E2E testing.
+When given a query, respond briefly with "Helper analysis complete."
+"""
+
+[experts."e2e-helper".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
