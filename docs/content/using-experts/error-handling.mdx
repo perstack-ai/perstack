@@ -18,7 +18,7 @@ A run ends with one of these checkpoint statuses:
 
 | Status | Meaning |
 |--------|---------|
-| `completed` | LLM called `attemptCompletion` — task done |
+| `completed` | LLM called `attemptCompletion` with no remaining todos — task done |
 | `stoppedByExceededMaxSteps` | `maxSteps` limit reached |
 | `stoppedByInteractiveTool` | Waiting for user input |
 | `stoppedByDelegate` | Waiting for delegate Expert |

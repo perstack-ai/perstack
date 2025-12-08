@@ -38,6 +38,9 @@ export async function todo(input: { newTodos?: string[]; completedTodos?: number
 export async function clearTodo() {
   return todoSingleton.clearTodo()
 }
+export function getRemainingTodos() {
+  return todoSingleton.todos.filter((t) => !t.completed)
+}
 
 export function registerTodo(server: McpServer) {
   server.registerTool(

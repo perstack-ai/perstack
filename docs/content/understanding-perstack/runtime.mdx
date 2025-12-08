@@ -18,11 +18,13 @@ The runtime executes Experts through an agent loop:
 ```
 
 The loop ends when:
-- LLM calls `attemptCompletion` (task done)
+- LLM calls `attemptCompletion` with all todos complete (or no todos)
 - `maxSteps` limit reached
 - External signal (SIGTERM/SIGINT)
 
-This design lets the LLM autonomously decide when a task is complete — no hardcoded exit conditions.
+When `attemptCompletion` is called, the runtime checks the todo list. If incomplete todos remain, they are returned to the LLM to continue work. This prevents premature completion and ensures all planned tasks are addressed.
+
+When todo validation passes, the LLM generates a run result — a summary of the work done. This ensures every completed run has a clear, observable outcome.
 
 ### Stopping and resuming
 
@@ -32,7 +34,8 @@ npx perstack run my-expert "query" --max-steps 50
 
 | Stop condition | Behavior | Resume from |
 |----------------|----------|-------------|
-| `attemptCompletion` | Task complete | N/A |
+| `attemptCompletion` (no remaining todos) | Task complete | N/A |
+| `attemptCompletion` (remaining todos) | Continue loop | N/A (loop continues) |
 | `maxSteps` reached | Graceful stop at step boundary | Last checkpoint |
 | SIGTERM/SIGINT | Immediate stop | Previous checkpoint |
 
@@ -45,7 +48,7 @@ LLMs are probabilistic — same input can produce different outputs. Perstack dr
 | Probabilistic (LLM) | Deterministic (Runtime) |
 |---------------------|-------------------------|
 | Which tool to call | Tool execution |
-| Final report content | State recording |
+| Todo management decisions | State recording |
 | Reasoning | Checkpoint creation |
 
 The "thinking" is probabilistic; the "doing" and "recording" are deterministic. This boundary enables:

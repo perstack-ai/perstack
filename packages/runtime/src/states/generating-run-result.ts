@@ -1,5 +1,5 @@
-import { type RunEvent, completeRun, retry } from "@perstack/core"
-import { type GenerateTextResult, type ToolSet, generateText } from "ai"
+import { completeRun, type RunEvent, retry } from "@perstack/core"
+import { type GenerateTextResult, generateText, type ToolSet } from "ai"
 import {
   createExpertMessage,
   createToolMessage,
@@ -68,7 +68,7 @@ export async function generatingRunResultLogic({
     step: {
       ...step,
       newMessages: [...step.newMessages, ...newMessages],
-      finishedAt: new Date().getTime(),
+      finishedAt: Date.now(),
       usage: sumUsage(step.usage, usage),
     },
     text,

@@ -136,7 +136,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
     expect(event.type).toBe("resolveThought")
   })
 
-  it("routes attemptCompletion tool to attemptCompletion handler", async () => {
+  it("routes attemptCompletion to attemptCompletion handler when no remaining todos", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
@@ -144,11 +144,16 @@ describe("@perstack/runtime: callingToolLogic", () => {
         id: "tc_123",
         skillName: "@perstack/base",
         toolName: "attemptCompletion",
-        args: { result: "completed" },
+        args: {},
       },
     })
+    const emptyResult = [{ type: "textPart", text: JSON.stringify({}), id: createId() }]
     const skillManagers = {
-      "@perstack/base": createMockMcpSkillManager("@perstack/base", "attemptCompletion"),
+      "@perstack/base": createMockMcpSkillManager(
+        "@perstack/base",
+        "attemptCompletion",
+        emptyResult,
+      ),
     }
     const event = await callingToolLogic({
       setting,
@@ -158,6 +163,41 @@ describe("@perstack/runtime: callingToolLogic", () => {
       skillManagers,
     })
     expect(event.type).toBe("attemptCompletion")
+  })
+
+  it("routes attemptCompletion to resolveToolResult when remaining todos exist", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCall: {
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        args: {},
+      },
+    })
+    const remainingTodosResult = [
+      {
+        type: "textPart",
+        text: JSON.stringify({ remainingTodos: [{ id: 0, title: "Task 1", completed: false }] }),
+        id: createId(),
+      },
+    ]
+    const skillManagers = {
+      "@perstack/base": createMockMcpSkillManager(
+        "@perstack/base",
+        "attemptCompletion",
+        remainingTodosResult,
+      ),
+    }
+    const event = await callingToolLogic({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers,
+    })
+    expect(event.type).toBe("resolveToolResult")
   })
 
   it("routes readPdfFile tool to resolvePdfFile handler", async () => {
