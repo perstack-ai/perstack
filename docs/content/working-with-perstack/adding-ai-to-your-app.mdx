@@ -43,16 +43,16 @@ See [Going to Production](/working-with-perstack/going-to-production) for the fu
 
 ### Event types
 
+Common events you'll handle:
+
 | Event | Meaning |
 |-------|---------|
-| `initializeRuntime` | Runtime initialized, Expert loaded |
-| `generationStart` | LLM is generating a response |
-| `generationComplete` | LLM finished generating |
-| `toolCallStart` | Expert is calling a tool |
-| `toolCallComplete` | Tool returned a result |
-| `delegationStart` | Expert delegated to another Expert |
-| `delegationComplete` | Delegate finished |
-| `complete` | Execution finished successfully |
+| `startRun` / `finishRun` | Run lifecycle |
+| `startGeneration` / `finishGeneration` | LLM call lifecycle |
+| `callTools` | Expert calling tools |
+| `completeRun` | Execution finished |
+
+For the full event schema, see [Runtime](/understanding-perstack/runtime#event-notification).
 
 ### Run status
 
@@ -80,7 +80,7 @@ The `--continue` flag resumes from the most recent checkpoint in the workspace.
 
 ### Handling checkpoints
 
-Checkpoints are saved to `workspace/perstack/runs/`. Each checkpoint contains the full execution state — you can resume from any checkpoint.
+Checkpoints are saved to the workspace (see [Runtime](/understanding-perstack/runtime#the-perstack-directory)). Each checkpoint contains the full execution state — you can resume from any checkpoint.
 
 ```bash
 # Resume from a specific checkpoint

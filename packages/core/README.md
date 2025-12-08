@@ -47,13 +47,26 @@ export const apiExpertSchema = expertSchema.omit({
     - `Message`, `ToolCall`, `ToolResult` - Runtime execution types
 
 2. **Domain Common Types**: Types that represent core domain concepts used throughout the system, for example:
+    - `Job` - Top-level execution unit containing Runs
+    - `Run` - Single Expert execution within a Job
     - `Checkpoint` - Execution state snapshots
     - `Usage` - Resource usage tracking
     - `ProviderConfig` - LLM provider configurations
 
 3. **Configuration Schemas**: System-wide configuration structures, for example:
     - `PerstackToml` - Project configuration file schema
-    - `RunCommand` - Runtime execution parameters
+    - `JobSetting` - Job execution parameters
+    - `RunSetting` - Run execution parameters
+
+### Execution Hierarchy
+
+| Schema       | Description                                         |
+| ------------ | --------------------------------------------------- |
+| `Job`        | Top-level execution unit. Contains all Runs.        |
+| `Run`        | Single Expert execution within a Job.               |
+| `Checkpoint` | Snapshot at step end within a Run.                  |
+
+For the full hierarchy and execution model, see [State Management](https://docs.perstack.ai/using-experts/state-management).
 
 ### What Core Should NOT Contain
 

@@ -31,6 +31,8 @@ npx perstack run my-expert "query"
 
 Outputs JSON events to stdout. Each line is a JSON object representing an execution event.
 
+Each invocation creates a new **Job** containing one or more **Runs**. See [State Management](/using-experts/state-management) for details on the execution hierarchy.
+
 Use `perstack run` for:
 - Production deployments
 - CI/CD pipelines
@@ -58,5 +60,5 @@ For the complete list of options, see [CLI Reference](/references/cli).
 
 ## What's next
 
-- [State Management](/using-experts/state-management) — pausing, resuming, and checkpoints
+- [State Management](/using-experts/state-management) — Jobs, Runs, and checkpoints
 - [CLI Reference](/references/cli) — all commands and options

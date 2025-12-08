@@ -32,13 +32,7 @@ Each event shows:
 
 ## Checkpoint-based testing
 
-Checkpoints enable deterministic replay of the runtime portion:
-
-```
-/workspace/perstack/runs/{runId}/
-├── checkpoint-{timestamp}-{step}-{id}.json
-└── event-{timestamp}-{step}-{type}.json
-```
+Checkpoints enable deterministic replay of the runtime portion. Checkpoints are stored in `perstack/jobs/{jobId}/runs/{runId}/` — see [Runtime](/understanding-perstack/runtime#the-perstack-directory) for the full directory structure.
 
 ### Resume from checkpoint
 
