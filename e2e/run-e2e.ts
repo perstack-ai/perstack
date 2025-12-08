@@ -1,11 +1,14 @@
 #!/usr/bin/env npx tsx
 import { runTestSuite } from "./lib/runner.js"
+import { continueResumeSuite } from "./scenarios/continue-resume.js"
+import { delegateChainSuite } from "./scenarios/delegate-chain.js"
 import { mixedToolsSuite } from "./scenarios/mixed-tools.js"
+import { parallelMcpSuite } from "./scenarios/parallel-mcp.js"
 
 async function main() {
   const args = process.argv.slice(2)
   const suiteFilter = args[0]
-  const suites = [mixedToolsSuite]
+  const suites = [mixedToolsSuite, parallelMcpSuite, delegateChainSuite, continueResumeSuite]
   const filteredSuites = suiteFilter
     ? suites.filter((s) => s.name.toLowerCase().includes(suiteFilter.toLowerCase()))
     : suites

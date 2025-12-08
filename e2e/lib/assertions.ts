@@ -5,7 +5,6 @@ import {
   filterEventsByType,
   getEventSequence,
   type ParsedEvent,
-  type ToolCallInfo,
 } from "./event-parser.js"
 
 export type AssertionResult = {
@@ -92,9 +91,7 @@ export function assertToolCallTypes(
   const passed = JSON.stringify(actualTypes) === JSON.stringify(expectedTypes)
   return {
     passed,
-    message: passed
-      ? `Tool call types match`
-      : `Tool call types mismatch`,
+    message: passed ? `Tool call types match` : `Tool call types mismatch`,
     details: passed ? undefined : { expected: expectedTypes, actual: actualTypes },
   }
 }
@@ -175,4 +172,3 @@ export function assertPartialResultsContain(
     details: allFound ? undefined : { expected: expectedToolNames, actual: actualToolNames },
   }
 }
-

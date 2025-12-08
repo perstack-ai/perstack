@@ -1,14 +1,25 @@
 import {
+  type AssertionResult,
   assertCheckpointState,
   assertEventSequenceContains,
   assertPartialResultsContain,
   assertToolCallCount,
-  type AssertionResult,
 } from "../lib/assertions.js"
-import { runExpert, type TestSuite } from "../lib/runner.js"
+import { type RunResult, runExpert, type TestSuite } from "../lib/runner.js"
 
 const EXPERT_KEY = "e2e-mixed-tools"
 const QUERY = "Test mixed tool calls: search, delegate, and ask user"
+
+let cachedResult: RunResult | null = null
+
+async function getRunResult(): Promise<RunResult> {
+  if (!cachedResult) {
+    cachedResult = await runExpert(EXPERT_KEY, QUERY, {
+      configPath: "./e2e/experts/mixed-tools.toml",
+    })
+  }
+  return cachedResult
+}
 
 export const mixedToolsSuite: TestSuite = {
   name: "Mixed Tool Calls (MCP + Delegate + Interactive)",
@@ -16,9 +27,7 @@ export const mixedToolsSuite: TestSuite = {
     {
       name: "Should generate 3 tool calls in priority order",
       run: async (): Promise<AssertionResult[]> => {
-        const result = await runExpert(EXPERT_KEY, QUERY, {
-          configPath: "./e2e/experts/mixed-tools.toml",
-        })
+        const result = await getRunResult()
         return [
           assertToolCallCount(result.events, "callTools", 3),
           assertEventSequenceContains(result.events, [
@@ -33,9 +42,7 @@ export const mixedToolsSuite: TestSuite = {
     {
       name: "Should collect MCP result before delegate",
       run: async (): Promise<AssertionResult[]> => {
-        const result = await runExpert(EXPERT_KEY, QUERY, {
-          configPath: "./e2e/experts/mixed-tools.toml",
-        })
+        const result = await getRunResult()
         return [
           assertCheckpointState(result.events, "stopRunByDelegate", {
             status: "stoppedByDelegate",
@@ -49,9 +56,7 @@ export const mixedToolsSuite: TestSuite = {
     {
       name: "Should resume with delegate result and process interactive",
       run: async (): Promise<AssertionResult[]> => {
-        const result = await runExpert(EXPERT_KEY, QUERY, {
-          configPath: "./e2e/experts/mixed-tools.toml",
-        })
+        const result = await getRunResult()
         return [
           assertEventSequenceContains(result.events, [
             "stopRunByDelegate",
@@ -68,9 +73,7 @@ export const mixedToolsSuite: TestSuite = {
     {
       name: "Should have all partial results after interactive stop",
       run: async (): Promise<AssertionResult[]> => {
-        const result = await runExpert(EXPERT_KEY, QUERY, {
-          configPath: "./e2e/experts/mixed-tools.toml",
-        })
+        const result = await getRunResult()
         return [
           assertCheckpointState(result.events, "stopRunByInteractiveTool", {
             status: "stoppedByInteractiveTool",
@@ -83,8 +86,6 @@ export const mixedToolsSuite: TestSuite = {
   ],
 }
 
-export async function runMixedToolsTests(): Promise<void> {
-  const { runTestSuite } = await import("../lib/runner.js")
-  await runTestSuite(mixedToolsSuite)
+export function resetMixedToolsCache(): void {
+  cachedResult = null
 }
-
