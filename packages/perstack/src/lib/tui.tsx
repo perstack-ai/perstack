@@ -28,29 +28,29 @@ export function defaultEventListener(e: RunEvent): void {
       for (const toolCall of e.toolCalls) {
         if (toolCall.skillName === "@perstack/base") {
           switch (toolCall.toolName) {
-            case "think": {
+          case "think": {
               const thought = toolCall.args.thought
-              log(`${header(e)} Thought Updated:`)
-              debug(thought)
-              break
-            }
-            case "readPdfFile": {
+            log(`${header(e)} Thought Updated:`)
+            debug(thought)
+            break
+          }
+          case "readPdfFile": {
               const path = toolCall.args.path
-              log(`${header(e)} Reading PDF: ${path}`)
-              break
-            }
-            case "readImageFile": {
+            log(`${header(e)} Reading PDF: ${path}`)
+            break
+          }
+          case "readImageFile": {
               const path = toolCall.args.path
-              log(`${header(e)} Reading Image: ${path}`)
-              break
-            }
-            default: {
+            log(`${header(e)} Reading Image: ${path}`)
+            break
+          }
+          default: {
               log(`${header(e)} Tool: ${toolCall.skillName}/${toolCall.toolName}`)
               debug(`${header(e)} Args: ${JSON.stringify(toolCall.args, null, 2)}`)
-              break
-            }
+            break
           }
-        } else {
+        }
+      } else {
           log(`${header(e)} Tool: ${toolCall.skillName}/${toolCall.toolName}`)
           debug(`${header(e)} Args: ${JSON.stringify(toolCall.args, null, 2)}`)
         }
@@ -74,28 +74,28 @@ export function defaultEventListener(e: RunEvent): void {
       for (const toolResult of e.toolResults) {
         if (toolResult.skillName === "@perstack/base") {
           switch (toolResult.toolName) {
-            case "todo": {
+          case "todo": {
               const text = toolResult.result.find((r) => r.type === "textPart")?.text
-              const { todos } = JSON.parse(text ?? "{}") as {
-                todos: {
-                  id: number
-                  title: string
-                  completed: boolean
-                }[]
-              }
-              log(`${header(e)} Todo:`)
-              for (const todo of todos) {
-                debug(`${todo.completed ? "[x]" : "[ ]"} ${todo.id}: ${todo.title}`)
-              }
-              break
+            const { todos } = JSON.parse(text ?? "{}") as {
+              todos: {
+                id: number
+                title: string
+                completed: boolean
+              }[]
             }
-            default: {
+            log(`${header(e)} Todo:`)
+            for (const todo of todos) {
+              debug(`${todo.completed ? "[x]" : "[ ]"} ${todo.id}: ${todo.title}`)
+            }
+            break
+          }
+          default: {
               log(`${header(e)} Tool: ${toolResult.skillName}/${toolResult.toolName}`)
               debug(`${header(e)} Result: ${JSON.stringify(toolResult.result, null, 2)}`)
-              break
-            }
+            break
           }
-        } else {
+        }
+      } else {
           log(`${header(e)} Tool: ${toolResult.skillName}/${toolResult.toolName}`)
           debug(`${header(e)} Result: ${JSON.stringify(toolResult.result, null, 2)}`)
         }
