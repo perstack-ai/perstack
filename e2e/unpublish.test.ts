@@ -5,6 +5,7 @@ describe("CLI unpublish", () => {
   it("should fail without version", async () => {
     const result = await runCli(["unpublish", "no-version", "--force"])
     expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain("version")
   })
 
   it("should fail without --force when version provided", async () => {

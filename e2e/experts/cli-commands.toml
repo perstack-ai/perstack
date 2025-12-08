@@ -1,0 +1,21 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-publish-test"]
+version = "1.0.0"
+description = "E2E test expert for CLI publish command validation"
+instruction = """
+You are a minimal expert for testing the publish CLI command.
+Simply respond with "Ready" and call attemptCompletion.
+"""
+
+[experts."e2e-publish-test".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
