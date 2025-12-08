@@ -87,6 +87,40 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
+        resumeToolCalls: {
+          target: "CallingTool",
+          actions: assign({
+            step: ({ context, event }) =>
+              ({
+                stepNumber: context.checkpoint.stepNumber,
+                inputMessages: context.step.inputMessages ?? [],
+                newMessages: context.step.newMessages,
+                toolCalls: context.step.toolCalls,
+                toolResults: event.partialToolResults,
+                pendingToolCalls: event.pendingToolCalls,
+                usage: context.step.usage,
+                startedAt: context.step.startedAt,
+              }) satisfies Step,
+          }),
+        },
+        finishAllToolCalls: {
+          target: "FinishingStep",
+          actions: assign({
+            checkpoint: ({ context, event }) =>
+              ({
+                ...context.checkpoint,
+                messages: [...context.checkpoint.messages, ...event.newMessages],
+                pendingToolCalls: undefined,
+                partialToolResults: undefined,
+              }) satisfies Checkpoint,
+            step: ({ context, event }) =>
+              ({
+                ...context.step,
+                newMessages: [...context.step.newMessages, ...event.newMessages],
+                pendingToolCalls: undefined,
+              }) satisfies Step,
+          }),
+        },
       },
     },
 
@@ -186,6 +220,7 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 toolResults: event.toolResults,
+                pendingToolCalls: undefined,
               }) satisfies Step,
           }),
         },
@@ -226,6 +261,30 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 toolResults: [event.toolResult],
+              }) satisfies Step,
+          }),
+        },
+        callDelegate: {
+          target: "CallingDelegate",
+          actions: assign({
+            step: ({ context, event }) =>
+              ({
+                ...context.step,
+                toolCalls: context.step.toolCalls,
+                toolResults: context.step.toolResults,
+                pendingToolCalls: context.step.pendingToolCalls,
+              }) satisfies Step,
+          }),
+        },
+        callInteractiveTool: {
+          target: "CallingInteractiveTool",
+          actions: assign({
+            step: ({ context, event }) =>
+              ({
+                ...context.step,
+                toolCalls: context.step.toolCalls,
+                toolResults: context.step.toolResults,
+                pendingToolCalls: context.step.pendingToolCalls,
               }) satisfies Step,
           }),
         },
@@ -351,7 +410,11 @@ export const runtimeStateMachine = setup({
         stopRunByInteractiveTool: {
           target: "Stopped",
           actions: assign({
-            checkpoint: ({ event }) => event.checkpoint,
+            checkpoint: ({ context, event }) => ({
+              ...event.checkpoint,
+              pendingToolCalls: context.step.pendingToolCalls,
+              partialToolResults: context.step.toolResults,
+            }),
             step: ({ event }) => ({
               ...event.step,
               inputMessages: undefined,
@@ -366,7 +429,11 @@ export const runtimeStateMachine = setup({
         stopRunByDelegate: {
           target: "Stopped",
           actions: assign({
-            checkpoint: ({ event }) => event.checkpoint,
+            checkpoint: ({ context, event }) => ({
+              ...event.checkpoint,
+              pendingToolCalls: context.step.pendingToolCalls,
+              partialToolResults: context.step.toolResults,
+            }),
             step: ({ event }) => ({
               ...event.step,
               inputMessages: undefined,

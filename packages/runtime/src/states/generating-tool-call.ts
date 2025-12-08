@@ -1,7 +1,5 @@
 import { createId } from "@paralleldrive/cuid2"
 import {
-  callDelegate,
-  callInteractiveTool,
   callTools,
   type RunEvent,
   retry,
@@ -43,6 +41,13 @@ async function classifyToolCalls(
         skillManager,
       }
     }),
+  )
+}
+
+function sortToolCallsByPriority(toolCalls: ClassifiedToolCall[]): ClassifiedToolCall[] {
+  const priority = { mcp: 0, delegate: 1, interactive: 2 }
+  return [...toolCalls].sort(
+    (a, b) => (priority[a.skillManager.type] ?? 99) - (priority[b.skillManager.type] ?? 99),
   )
 }
 
@@ -107,71 +112,24 @@ export async function generatingToolCallLogic({
     })
   }
   const classified = await classifyToolCalls(toolCalls, skillManagers)
-  const interactiveTool = classified.find((tc) => tc.skillManager.type === "interactive")
-  const delegateTool = classified.find((tc) => tc.skillManager.type === "delegate")
-  if (interactiveTool) {
-    const contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">> = [
-      {
-        type: "toolCallPart",
-        toolCallId: interactiveTool.toolCallId,
-        toolName: interactiveTool.toolName,
-        args: interactiveTool.input,
-      },
-    ]
-    if (text) {
-      contents.push({ type: "textPart", text })
-    }
-    return callInteractiveTool(setting, checkpoint, {
-      newMessage: createExpertMessage(contents),
-      toolCall: {
-        id: interactiveTool.toolCallId,
-        skillName: interactiveTool.skillManager.name,
-        toolName: interactiveTool.toolName,
-        args: interactiveTool.input,
-      },
-      usage,
-    })
-  }
-  if (delegateTool) {
-    const contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">> = [
-      {
-        type: "toolCallPart",
-        toolCallId: delegateTool.toolCallId,
-        toolName: delegateTool.toolName,
-        args: delegateTool.input,
-      },
-    ]
-    if (text) {
-      contents.push({ type: "textPart", text })
-    }
-    return callDelegate(setting, checkpoint, {
-      newMessage: createExpertMessage(contents),
-      toolCall: {
-        id: delegateTool.toolCallId,
-        skillName: delegateTool.skillManager.name,
-        toolName: delegateTool.toolName,
-        args: delegateTool.input,
-      },
-      usage,
-    })
-  }
-  const mcpToolCalls = classified.filter((tc) => tc.skillManager.type === "mcp")
+  const sorted = sortToolCallsByPriority(classified)
   if (finishReason === "tool-calls" || finishReason === "stop") {
-    const toolCallParts = buildToolCallParts(mcpToolCalls)
+    const toolCallParts = buildToolCallParts(sorted)
     const contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">> = [...toolCallParts]
     if (text) {
       contents.push({ type: "textPart", text })
     }
+    const allToolCalls = buildToolCalls(sorted)
     return callTools(setting, checkpoint, {
       newMessage: createExpertMessage(contents),
-      toolCalls: buildToolCalls(mcpToolCalls),
+      toolCalls: allToolCalls,
       usage,
     })
   }
   if (finishReason === "length") {
-    const firstToolCall = mcpToolCalls[0]
+    const firstToolCall = sorted[0]
     if (!firstToolCall) {
-      throw new Error("No MCP tool call found")
+      throw new Error("No tool call found")
     }
     const reason = JSON.stringify({
       error: "Error: Tool call generation failed",

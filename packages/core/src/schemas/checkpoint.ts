@@ -1,6 +1,10 @@
 import { z } from "zod"
 import type { Message } from "./message.js"
 import { messageSchema } from "./message.js"
+import type { ToolCall } from "./tool-call.js"
+import { toolCallSchema } from "./tool-call.js"
+import type { ToolResult } from "./tool-result.js"
+import { toolResultSchema } from "./tool-result.js"
 import type { Usage } from "./usage.js"
 import { usageSchema } from "./usage.js"
 
@@ -84,6 +88,10 @@ export interface Checkpoint {
   contextWindow?: number
   /** Context window usage ratio (0-1) */
   contextWindowUsage?: number
+  /** Tool calls waiting to be processed (for resume after delegate/interactive) */
+  pendingToolCalls?: ToolCall[]
+  /** Partial tool results collected before stopping (for resume) */
+  partialToolResults?: ToolResult[]
 }
 
 export const checkpointSchema = z.object({
@@ -124,5 +132,7 @@ export const checkpointSchema = z.object({
   usage: usageSchema,
   contextWindow: z.number().optional(),
   contextWindowUsage: z.number().optional(),
+  pendingToolCalls: z.array(toolCallSchema).optional(),
+  partialToolResults: z.array(toolResultSchema).optional(),
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>

@@ -259,6 +259,13 @@ type ExpertEventPayloads = {
   finishToolCall: {
     newMessages: (UserMessage | ToolMessage)[]
   }
+  resumeToolCalls: {
+    pendingToolCalls: ToolCall[]
+    partialToolResults: ToolResult[]
+  }
+  finishAllToolCalls: {
+    newMessages: (UserMessage | ToolMessage)[]
+  }
   continueToNextStep: {
     checkpoint: Checkpoint
     step: Step
@@ -340,6 +347,8 @@ export const resolvePdfFile = createEvent("resolvePdfFile")
 export const resolveImageFile = createEvent("resolveImageFile")
 export const attemptCompletion = createEvent("attemptCompletion")
 export const finishToolCall = createEvent("finishToolCall")
+export const resumeToolCalls = createEvent("resumeToolCalls")
+export const finishAllToolCalls = createEvent("finishAllToolCalls")
 export const completeRun = createEvent("completeRun")
 export const stopRunByInteractiveTool = createEvent("stopRunByInteractiveTool")
 export const stopRunByDelegate = createEvent("stopRunByDelegate")

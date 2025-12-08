@@ -28,6 +28,8 @@ export interface Step {
   toolCalls?: ToolCall[]
   /** Results of the tool calls, if any */
   toolResults?: ToolResult[]
+  /** Tool calls waiting to be processed (sorted: MCP → Delegate → Interactive) */
+  pendingToolCalls?: ToolCall[]
   /** Token usage for this step */
   usage: Usage
   /** Unix timestamp (ms) when step started */
@@ -44,6 +46,7 @@ export const stepSchema = z.object({
   newMessages: z.array(messageSchema),
   toolCalls: z.array(toolCallSchema).optional(),
   toolResults: z.array(toolResultSchema).optional(),
+  pendingToolCalls: z.array(toolCallSchema).optional(),
   usage: usageSchema,
   startedAt: z.number(),
   finishedAt: z.number().optional(),
