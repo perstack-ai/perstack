@@ -247,12 +247,6 @@ type ExpertEventPayloads = {
   resolveThought: {
     toolResult: ToolResult
   }
-  resolvePdfFile: {
-    toolResult: ToolResult
-  }
-  resolveImageFile: {
-    toolResult: ToolResult
-  }
   attemptCompletion: {
     toolResult: ToolResult
   }
@@ -343,8 +337,6 @@ export const callInteractiveTool = createEvent("callInteractiveTool")
 export const callDelegate = createEvent("callDelegate")
 export const resolveToolResults = createEvent("resolveToolResults")
 export const resolveThought = createEvent("resolveThought")
-export const resolvePdfFile = createEvent("resolvePdfFile")
-export const resolveImageFile = createEvent("resolveImageFile")
 export const attemptCompletion = createEvent("attemptCompletion")
 export const finishToolCall = createEvent("finishToolCall")
 export const resumeToolCalls = createEvent("resumeToolCalls")

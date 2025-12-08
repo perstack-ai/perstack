@@ -11,8 +11,6 @@ type StepBuilder = {
 const TOOL_RESULT_EVENT_TYPES = new Set([
   "resolveToolResults",
   "resolveThought",
-  "resolvePdfFile",
-  "resolveImageFile",
   "attemptCompletion",
 ])
 const isToolCallsEvent = (event: PerstackEvent): event is RunEvent & { toolCalls: ToolCall[] } =>
