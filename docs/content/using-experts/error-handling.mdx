@@ -14,17 +14,34 @@ This design lets the LLM handle transient failures (network issues, rate limits,
 
 ## Stop reasons
 
-A run ends with one of these checkpoint statuses:
+A Run ends with one of these checkpoint statuses:
 
 | Status | Meaning |
 |--------|---------|
 | `completed` | LLM called `attemptCompletion` with no remaining todos — task done |
-| `stoppedByExceededMaxSteps` | `maxSteps` limit reached |
-| `stoppedByInteractiveTool` | Waiting for user input |
+| `stoppedByExceededMaxSteps` | Job's `maxSteps` limit reached |
+| `stoppedByInteractiveTool` | Waiting for user input (Coordinator only) |
 | `stoppedByDelegate` | Waiting for delegate Expert |
 | `stoppedByError` | Unrecoverable error |
 
-When a run stops with `stoppedByExceededMaxSteps`, you can resume from the last checkpoint. See [State Management](/using-experts/state-management).
+When a Run stops with `stoppedByExceededMaxSteps`, you can resume from the last checkpoint. See [State Management](/using-experts/state-management).
+
+## Delegation errors
+
+When a Delegated Expert fails, the Job continues running. The error is returned to the Coordinator as the delegation result:
+
+| Delegate outcome | Job behavior | Coordinator receives |
+|------------------|--------------|---------------------|
+| Success | Continues | Run result (natural language) |
+| Failure | Continues | Error message |
+
+The Coordinator can then decide to:
+- Retry the delegation
+- Try a different delegate
+- Handle the error gracefully
+- Give up and report to the user
+
+This design ensures a single delegate failure doesn't crash the entire Job.
 
 ## Events for monitoring
 

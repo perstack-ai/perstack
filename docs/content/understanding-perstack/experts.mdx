@@ -159,6 +159,34 @@ Delegated Experts run without interactive tool access. If a delegate needs clari
 
 This keeps the user interface at the Coordinator level and prevents deep call chains from blocking on user input.
 
+### Delegation failure handling
+
+When a Delegated Expert fails (unrecoverable error), the Job continues:
+
+1. The failed Run is marked as `stoppedByError`
+2. The error is returned to the Coordinator as the delegation result
+3. The Coordinator decides how to handle it (retry, try different Expert, give up)
+
+```
+Job (continues running)
+ │
+ ├── Run 1: Coordinator
+ │       │
+ │       ├─ delegates to Expert B ───────────┐
+ │       │                                   │
+ │       │                           Run 2: Expert B
+ │       │                                   │
+ │       │                              ❌ FAILS
+ │       │                                   │
+ │       ├─ receives error ◄─────────────────┘
+ │       │  "Delegation failed: [error message]"
+ │       │
+ │       ├─ decides: retry? different Expert? give up?
+ │       ▼
+```
+
+This design provides resilience — a single delegate failure doesn't crash the entire Job. The Coordinator has full control over error handling.
+
 ### Workspace
 
 The workspace is a shared filesystem where Experts read and write files. Unlike message history, the workspace persists across Expert boundaries — this is how Experts exchange complex data.
