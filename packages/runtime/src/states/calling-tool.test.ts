@@ -133,9 +133,9 @@ describe("@perstack/runtime: callingToolLogic", () => {
     })
 
     it("executes tools concurrently (not sequentially)", async () => {
-      const setting = createRunSetting()
-      const checkpoint = createCheckpoint()
-      const step = createStep({
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
         toolCalls: [
           { id: "tc_1", skillName: "test-skill", toolName: "tool1", args: {} },
           { id: "tc_2", skillName: "test-skill", toolName: "tool2", args: {} },
@@ -175,50 +175,50 @@ describe("@perstack/runtime: callingToolLogic", () => {
         toolCalls: [
           { id: "tc_123", skillName: "test-skill", toolName: "testTool", args: { param: "value" } },
         ],
-      })
-      const skillManagers = {
-        "test-skill": createMockMcpSkillManager("test-skill", "testTool"),
-      }
-      const event = await callingToolLogic({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers,
-      })
+    })
+    const skillManagers = {
+      "test-skill": createMockMcpSkillManager("test-skill", "testTool"),
+    }
+    const event = await callingToolLogic({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers,
+    })
       expect(event.type).toBe("resolveToolResults")
-      expect(event.expertKey).toBe(setting.expertKey)
-      expect(event.runId).toBe(setting.runId)
+    expect(event.expertKey).toBe(setting.expertKey)
+    expect(event.runId).toBe(setting.runId)
     })
   })
 
   describe("error handling", () => {
     it("throws error when tool calls are missing", async () => {
-      const setting = createRunSetting()
-      const checkpoint = createCheckpoint()
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
       const step = createStep({ toolCalls: undefined })
-      await expect(
-        callingToolLogic({
-          setting,
-          checkpoint,
-          step,
-          eventListener: async () => {},
-          skillManagers: {},
-        }),
+    await expect(
+      callingToolLogic({
+        setting,
+        checkpoint,
+        step,
+        eventListener: async () => {},
+        skillManagers: {},
+      }),
       ).rejects.toThrow("No tool calls found")
-    })
+  })
 
     it("returns callDelegate event for delegate skill", async () => {
-      const setting = createRunSetting()
-      const checkpoint = createCheckpoint()
-      const step = createStep({
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
         toolCalls: [
           { id: "tc_123", skillName: "delegate-skill", toolName: "delegate-skill", args: {} },
         ],
-      })
-      const skillManagers = {
-        "delegate-skill": createMockDelegateSkillManager("delegate-skill"),
-      }
+    })
+    const skillManagers = {
+      "delegate-skill": createMockDelegateSkillManager("delegate-skill"),
+    }
       const event = await callingToolLogic({
         setting,
         checkpoint,
@@ -253,11 +253,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "think",
-          args: { thought: "thinking..." },
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "think",
+        args: { thought: "thinking..." },
+      },
       ],
     })
     const skillManagers = {
@@ -279,11 +279,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          args: {},
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        args: {},
+      },
       ],
     })
     const emptyResult = [{ type: "textPart", text: JSON.stringify({}), id: createId() }]
@@ -310,11 +310,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          args: {},
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        args: {},
+      },
       ],
     })
     const remainingTodosResult = [
@@ -347,11 +347,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readPdfFile",
-          args: { path: "/test.pdf" },
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readPdfFile",
+        args: { path: "/test.pdf" },
+      },
       ],
     })
     const pdfResult = [{ type: "textPart", text: "PDF content", id: createId() }]
@@ -374,11 +374,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readImageFile",
-          args: { path: "/test.png" },
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        args: { path: "/test.png" },
+      },
       ],
     })
     const imageResult = [
@@ -403,11 +403,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readTextFile",
-          args: { path: "/test.txt" },
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readTextFile",
+        args: { path: "/test.txt" },
+      },
       ],
     })
     const skillManagers = {
@@ -429,11 +429,11 @@ describe("@perstack/runtime: callingToolLogic", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "unknown-skill",
-          toolName: "unknownTool",
-          args: {},
-        },
+        id: "tc_123",
+        skillName: "unknown-skill",
+        toolName: "unknownTool",
+        args: {},
+      },
       ],
     })
     await expect(

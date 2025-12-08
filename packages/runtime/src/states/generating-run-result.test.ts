@@ -35,19 +35,19 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          args: {},
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        args: {},
+      },
       ],
       toolResults: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
+      },
       ],
     })
     mockGetModel.mockReturnValue(createMockLanguageModel("Task completed successfully"))
@@ -71,19 +71,19 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          args: {},
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        args: {},
+      },
       ],
       toolResults: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
+      },
       ],
     })
     const errorModel = new MockLanguageModelV2({
@@ -123,19 +123,19 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          args: {},
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        args: {},
+      },
       ],
       toolResults: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "attemptCompletion",
-          result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "attemptCompletion",
+        result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
+      },
       ],
     })
     mockGetModel.mockReturnValue(createMockLanguageModel("Final result"))

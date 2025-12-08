@@ -27,25 +27,25 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readImageFile",
-          args: { path: "/test/image.png" },
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        args: { path: "/test/image.png" },
+      },
       ],
       toolResults: [
         {
           id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readImageFile",
-          result: [
-            {
-              type: "textPart" as const,
-              text: JSON.stringify(imageInfo),
-              id: createId(),
-            },
-          ],
-        },
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        result: [
+          {
+            type: "textPart" as const,
+            text: JSON.stringify(imageInfo),
+            id: createId(),
+          },
+        ],
+      },
       ],
     })
     await expect(
@@ -100,25 +100,25 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     const step = createStep({
       toolCalls: [
         {
-          id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readImageFile",
-          args: { path: "/nonexistent.png" },
-        },
+        id: "tc_123",
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        args: { path: "/nonexistent.png" },
+      },
       ],
       toolResults: [
         {
           id: "tc_123",
-          skillName: "@perstack/base",
-          toolName: "readImageFile",
-          result: [
-            {
-              type: "textPart" as const,
-              text: JSON.stringify(imageInfo),
-              id: createId(),
-            },
-          ],
-        },
+        skillName: "@perstack/base",
+        toolName: "readImageFile",
+        result: [
+          {
+            type: "textPart" as const,
+            text: JSON.stringify(imageInfo),
+            id: createId(),
+          },
+        ],
+      },
       ],
     })
     const result = await StateMachineLogics.ResolvingImageFile({
