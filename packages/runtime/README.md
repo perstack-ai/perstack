@@ -158,41 +158,20 @@ graph TD
 ```
 Job (jobId)
  ├── Run 1 (Coordinator Expert)
- │    ├── Checkpoint 1
- │    ├── Checkpoint 2
- │    └── ...
+ │    └── Checkpoints...
  ├── Run 2 (Delegated Expert A)
  │    └── Checkpoints...
  └── Run 3 (Delegated Expert B)
       └── Checkpoints...
 ```
 
-| Concept        | Description                                                              |
-| -------------- | ------------------------------------------------------------------------ |
-| **Job**        | Top-level execution unit. Created per `perstack run`. Contains all Runs. |
-| **Run**        | Single Expert execution. Each delegation creates a new Run.              |
-| **Checkpoint** | Snapshot at step end. Enables pause/resume.                              |
+| Concept        | Description                                         |
+| -------------- | --------------------------------------------------- |
+| **Job**        | Top-level execution unit. Contains all Runs.        |
+| **Run**        | Single Expert execution.                            |
+| **Checkpoint** | Snapshot at step end. Enables pause/resume.         |
 
-### Coordinator vs. Delegated Expert
-
-| Aspect                | Coordinator | Delegated             |
-| --------------------- | ----------- | --------------------- |
-| **Interactive tools** | ✅ Available | ❌ Not available       |
-| **Resume support**    | ✅ Supported | ❌ Not supported       |
-| **Context**           | Full        | Only delegation query |
-
-### Step Counting
-
-Each Run maintains its own `stepNumber`, starting from 1. The Job tracks total steps:
-
-```
-Job (totalSteps = 8)
- ├── Run 1: stepNumber 1 → 2 → 3    (3 steps)
- ├── Run 2: stepNumber 1 → 2        (2 steps)
- └── Run 3: stepNumber 1 → 2 → 3    (3 steps)
-```
-
-The `maxSteps` limit applies to Job's `totalSteps`.
+For details on step counting, Coordinator vs. Delegated Expert differences, and the full execution model, see [Runtime](https://docs.perstack.ai/understanding-perstack/runtime).
 
 ### Events, Steps, Checkpoints
 
@@ -273,17 +252,17 @@ Events trigger state transitions. They are emitted by the runtime logic or exter
 
 ## Checkpoint Status
 
-The `status` field in a Checkpoint indicates the current state of the execution.
+The `status` field in a Checkpoint indicates the current state:
 
-- **init**: The run has been created but not yet started.
-- **proceeding**: The run is currently active and executing steps.
-- **completed**: The run has finished successfully.
-- **stoppedByInteractiveTool**: The run is paused, waiting for user input (Coordinator only).
-- **stoppedByDelegate**: The run is paused, waiting for delegated Runs to complete.
-- **stoppedByExceededMaxSteps**: The Job stopped because it reached the maximum allowed steps.
-- **stoppedByError**: The run stopped due to an unrecoverable error.
+- `init`, `proceeding` — Run lifecycle
+- `completed` — Task finished successfully
+- `stoppedByInteractiveTool`, `stoppedByDelegate` — Waiting for external input
+- `stoppedByExceededMaxSteps`, `stoppedByError` — Run stopped
+
+For stop reasons and error handling, see [Error Handling](https://docs.perstack.ai/using-experts/error-handling).
 
 ## Related Documentation
 
-- [Running Experts](https://perstack.ai/docs/using-experts/running-experts) - How to run Experts
-- [State Management](https://perstack.ai/docs/using-experts/state-management) - Understanding Jobs, Runs, and Checkpoints
+- [Runtime](https://docs.perstack.ai/understanding-perstack/runtime) — Full execution model
+- [State Management](https://docs.perstack.ai/using-experts/state-management) — Jobs, Runs, and Checkpoints
+- [Running Experts](https://docs.perstack.ai/using-experts/running-experts) — CLI usage

@@ -22,14 +22,15 @@ Each line is a JSON object:
 
 ## Event types
 
-| Event | When | Key fields |
-|-------|------|------------|
-| `startRun` | Run begins | `runId`, `expertKey`, `query` |
-| `startGeneration` | LLM call starts | `step` |
-| `finishGeneration` | LLM call ends | `step`, `usage`, `toolCalls` |
-| `finishStep` | Step completes | `step`, `checkpoint` |
-| `finishRun` | Run ends | `stopReason`, `totalUsage` |
-| `errorRun` | Error occurs | `error`, `message` |
+| Event | When |
+|-------|------|
+| `startRun` | Run begins |
+| `startGeneration` / `finishGeneration` | LLM call lifecycle |
+| `finishStep` | Step completes |
+| `finishRun` | Run ends |
+| `errorRun` | Error occurs |
+
+For the full event schema and state machine, see [Runtime](/understanding-perstack/runtime#internal-state-machine).
 
 ## Filtering events
 
@@ -48,17 +49,9 @@ npx perstack run my-expert "query" | jq 'select(.type == "finishRun")'
 
 ## Checkpoints
 
-Checkpoints are saved to `perstack/runs/{runId}/` in the workspace:
+Checkpoints are saved to `perstack/jobs/{jobId}/runs/{runId}/` in the workspace. Each checkpoint contains complete state — message history, usage, Expert info — enabling replay and forensic analysis.
 
-```
-perstack/runs/abc123/
-├── run-setting.json
-├── checkpoint-1234567893-1-xyz.json
-├── checkpoint-1234567895-2-xyz.json
-└── event-1234567890-0-startRun.json
-```
-
-Each checkpoint contains complete state — message history, usage, Expert info — enabling replay and forensic analysis.
+See [Runtime](/understanding-perstack/runtime#the-perstack-directory) for the full directory structure.
 
 ## Integrating with monitoring
 

@@ -6,23 +6,13 @@ Perstack automatically saves execution state, enabling continuation and replay.
 
 Perstack organizes execution into three levels:
 
-```
-Job
- ├── Run (Coordinator Expert)
- │    ├── Checkpoint 1
- │    ├── Checkpoint 2
- │    └── ...
- ├── Run (Delegated Expert A)
- │    └── Checkpoints...
- └── Run (Delegated Expert B)
-      └── Checkpoints...
-```
-
 | Level | Description | Created when |
 |-------|-------------|--------------|
 | **Job** | Top-level execution unit | `perstack run` starts |
 | **Run** | Single Expert execution | Expert starts or delegation occurs |
 | **Checkpoint** | Snapshot at step end | Each step completes |
+
+For the full execution model, including step counting and Coordinator vs. Delegated Expert differences, see [Runtime](/understanding-perstack/runtime).
 
 ## Jobs
 
@@ -143,13 +133,7 @@ When total steps reach the limit, the Job stops gracefully.
 
 Every state change is recorded as an event in `perstack/jobs/{jobId}/runs/{runId}/`.
 
-**Event types:**
-- `startRun` / `finishRun` — run lifecycle
-- `startGeneration` / `finishGeneration` — LLM calls
-- `finishStep` — step completion
-- `errorRun` — errors
-
-Events enable debugging, monitoring, and analysis. See [Runtime](/understanding-perstack/runtime) for the event notification system.
+Events enable debugging, monitoring, and analysis. See [Runtime](/understanding-perstack/runtime#event-notification) for event types and the notification system.
 
 ## What's next
 

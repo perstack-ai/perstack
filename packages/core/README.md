@@ -60,21 +60,13 @@ export const apiExpertSchema = expertSchema.omit({
 
 ### Execution Hierarchy
 
-```
-Job
- ├── Run (Coordinator Expert)
- │    └── Checkpoints...
- ├── Run (Delegated Expert A)
- │    └── Checkpoints...
- └── Run (Delegated Expert B)
-      └── Checkpoints...
-```
+| Schema       | Description                                         |
+| ------------ | --------------------------------------------------- |
+| `Job`        | Top-level execution unit. Contains all Runs.        |
+| `Run`        | Single Expert execution within a Job.               |
+| `Checkpoint` | Snapshot at step end within a Run.                  |
 
-| Schema       | Description                                                           |
-| ------------ | --------------------------------------------------------------------- |
-| `Job`        | Top-level execution unit. Contains all Runs for a task.               |
-| `Run`        | Single Expert execution. Created for Coordinator and each delegation. |
-| `Checkpoint` | Snapshot at step end within a Run.                                    |
+For the full hierarchy and execution model, see [State Management](https://docs.perstack.ai/using-experts/state-management).
 
 ### What Core Should NOT Contain
 
