@@ -185,10 +185,10 @@ stateDiagram-v2
     [*] --> Init
     Init --> PreparingForStep: startRun
     PreparingForStep --> GeneratingToolCall: startGeneration
+    PreparingForStep --> CallingTools: resumeToolCalls
+    PreparingForStep --> FinishingStep: finishAllToolCalls
     
     GeneratingToolCall --> CallingTools: callTools
-    GeneratingToolCall --> CallingInteractiveTool: callInteractiveTool
-    GeneratingToolCall --> CallingDelegate: callDelegate
     GeneratingToolCall --> FinishingStep: retry
 
     CallingTools --> ResolvingToolResults: resolveToolResults
@@ -196,6 +196,8 @@ stateDiagram-v2
     CallingTools --> ResolvingPdfFile: resolvePdfFile
     CallingTools --> ResolvingImageFile: resolveImageFile
     CallingTools --> GeneratingRunResult: attemptCompletion
+    CallingTools --> CallingDelegate: callDelegate
+    CallingTools --> CallingInteractiveTool: callInteractiveTool
 
     ResolvingToolResults --> FinishingStep: finishToolCall
     ResolvingThought --> FinishingStep: finishToolCall
@@ -216,8 +218,9 @@ stateDiagram-v2
 Events trigger state transitions. They are emitted by the runtime logic or external inputs.
 
 - **Lifecycle**: `startRun`, `startGeneration`, `continueToNextStep`, `completeRun`
-- **Tool Execution**: `callTools`, `resolveToolResults`, `finishToolCall`
+- **Tool Execution**: `callTools`, `resolveToolResults`, `finishToolCall`, `resumeToolCalls`, `finishAllToolCalls`
 - **Special Types**: `resolveThought`, `resolvePdfFile`, `resolveImageFile`
+- **Mixed Tool Calls**: `callDelegate`, `callInteractiveTool` (from CallingTools state)
 - **Interruption**: `stopRunByInteractiveTool`, `stopRunByDelegate`, `stopRunByExceededMaxSteps`
 - **Error Handling**: `retry`
 
