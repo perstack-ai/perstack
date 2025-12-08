@@ -23,7 +23,7 @@ export async function getSkillManagers(
   setting: RunSetting,
   eventListener?: (event: RunEvent | RuntimeEvent) => void,
 ): Promise<Record<string, BaseSkillManager>> {
-  const { perstackBaseSkillCommand, env, runId } = setting
+  const { perstackBaseSkillCommand, env, jobId, runId } = setting
   const { skills } = expert
   if (!skills["@perstack/base"]) {
     throw new Error("Base skill is not defined")
@@ -56,7 +56,7 @@ export async function getSkillManagers(
       return skill
     })
   const mcpSkillManagers = mcpSkills.map((skill) => {
-    const manager = new McpSkillManager(skill, env, runId, eventListener)
+    const manager = new McpSkillManager(skill, env, jobId, runId, eventListener)
     allManagers.push(manager)
     return manager
   })
@@ -65,7 +65,7 @@ export async function getSkillManagers(
     (skill) => skill.type === "interactiveSkill",
   )
   const interactiveSkillManagers = interactiveSkills.map((interactiveSkill) => {
-    const manager = new InteractiveSkillManager(interactiveSkill, runId, eventListener)
+    const manager = new InteractiveSkillManager(interactiveSkill, jobId, runId, eventListener)
     allManagers.push(manager)
     return manager
   })
@@ -77,7 +77,7 @@ export async function getSkillManagers(
       await Promise.all(allManagers.map((m) => m.close().catch(() => {})))
       throw new Error(`Delegate expert "${delegateExpertName}" not found in experts`)
     }
-    const manager = new DelegateSkillManager(delegate, runId, eventListener)
+    const manager = new DelegateSkillManager(delegate, jobId, runId, eventListener)
     allManagers.push(manager)
     delegateSkillManagers.push(manager)
   }

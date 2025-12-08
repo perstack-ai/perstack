@@ -62,6 +62,8 @@ export interface RunSetting {
   model: string
   /** Provider configuration */
   providerConfig: ProviderConfig
+  /** Job ID this run belongs to */
+  jobId: string
   /** Unique run identifier */
   runId: string
   /** Expert key to run */
@@ -72,7 +74,7 @@ export interface RunSetting {
   experts: Record<string, Expert>
   /** Temperature for generation (0-1) */
   temperature: number
-  /** Maximum steps before stopping */
+  /** Maximum steps before stopping (applies to Job's totalSteps) */
   maxSteps?: number
   /** Maximum retries on generation failure */
   maxRetries: number
@@ -116,6 +118,7 @@ export type RunParamsInput = {
   setting: {
     model: string
     providerConfig: ProviderConfig
+    jobId?: string
     runId?: string
     expertKey: string
     input: RunInput
@@ -137,6 +140,7 @@ export type RunParamsInput = {
 export const runSettingSchema = z.object({
   model: z.string(),
   providerConfig: providerConfigSchema,
+  jobId: z.string(),
   runId: z.string(),
   expertKey: z.string().min(1).regex(expertKeyRegex),
   input: z.object({
@@ -166,6 +170,7 @@ export const runParamsSchema = z.object({
   setting: z.object({
     model: z.string(),
     providerConfig: providerConfigSchema,
+    jobId: z.string().optional().default(createId()),
     runId: z.string().optional().default(createId()),
     expertKey: z.string().min(1).regex(expertKeyRegex),
     input: z.object({
@@ -293,6 +298,8 @@ export interface BaseEvent {
   expertKey: string
   /** Unix timestamp when event was emitted */
   timestamp: number
+  /** Job ID this event belongs to */
+  jobId: string
   /** Run ID this event belongs to */
   runId: string
   /** Step number when event was emitted */
@@ -315,13 +322,17 @@ export function createEvent<T extends EventType>(type: T) {
   return (
     setting: RunSetting,
     checkpoint: Checkpoint,
-    data: Omit<EventForType<T>, "type" | "id" | "expertKey" | "timestamp" | "runId" | "stepNumber">,
+    data: Omit<
+      EventForType<T>,
+      "type" | "id" | "expertKey" | "timestamp" | "jobId" | "runId" | "stepNumber"
+    >,
   ): EventForType<T> => {
     return {
       type,
       id: createId(),
       expertKey: checkpoint.expert.key,
       timestamp: Date.now(),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       ...data,
@@ -353,6 +364,8 @@ interface BaseRuntimeEvent {
   id: string
   /** Unix timestamp */
   timestamp: number
+  /** Job ID */
+  jobId: string
   /** Run ID */
   runId: string
 }
@@ -412,13 +425,15 @@ export type RuntimeEventForType<T extends RuntimeEventType> = Extract<RuntimeEve
 /** Factory function to create runtime events */
 export function createRuntimeEvent<T extends RuntimeEventType>(
   type: T,
+  jobId: string,
   runId: string,
-  data: Omit<RuntimeEventForType<T>, "type" | "id" | "timestamp" | "runId">,
+  data: Omit<RuntimeEventForType<T>, "type" | "id" | "timestamp" | "jobId" | "runId">,
 ): RuntimeEventForType<T> {
   return {
     type,
     id: createId(),
     timestamp: Date.now(),
+    jobId,
     runId,
     ...data,
   } as RuntimeEventForType<T>

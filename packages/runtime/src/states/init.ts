@@ -33,7 +33,7 @@ export async function initLogic({
       const completedToolCall = pendingToolCalls.find((tc) => tc.id === toolCallId)
       const skillName =
         completedToolCall?.skillName ??
-        (checkpoint.status === "stoppedByDelegate" ? checkpoint.delegateTo?.expert.key : "") ??
+        (checkpoint.status === "stoppedByDelegate" ? checkpoint.delegateTo?.[0]?.expert.key : "") ??
         ""
       const newToolResult: ToolResult = {
         id: toolCallId,

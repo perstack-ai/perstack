@@ -17,10 +17,11 @@ export class InteractiveSkillManager extends BaseSkillManager {
 
   constructor(
     interactiveSkill: InteractiveSkill,
+    jobId: string,
     runId: string,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
   ) {
-    super(runId, eventListener)
+    super(jobId, runId, eventListener)
     this.name = interactiveSkill.name
     this.interactiveSkill = interactiveSkill
   }

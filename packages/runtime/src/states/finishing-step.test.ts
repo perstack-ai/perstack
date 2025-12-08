@@ -20,6 +20,7 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       checkpoint: {
@@ -54,6 +55,7 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       checkpoint: {
@@ -84,6 +86,7 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       checkpoint: {

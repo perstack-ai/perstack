@@ -62,7 +62,7 @@ export async function run(
   while (true) {
     const { expertToRun, experts } = await setupExperts(setting, options?.resolveExpertToRun)
     if (options?.eventListener) {
-      const initEvent = createRuntimeEvent("initializeRuntime", setting.runId, {
+      const initEvent = createRuntimeEvent("initializeRuntime", setting.jobId, setting.runId, {
         runtimeVersion: pkg.version,
         expertName: expertToRun.name,
         experts: Object.keys(experts),
@@ -85,6 +85,7 @@ export async function run(
     const initialCheckpoint = checkpoint
       ? createNextStepCheckpoint(createId(), checkpoint)
       : createInitialCheckpoint(createId(), {
+          jobId: setting.jobId,
           runId: setting.runId,
           expertKey: setting.expertKey,
           expert: expertToRun,

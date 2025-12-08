@@ -13,6 +13,7 @@ import { createEmptyUsage } from "./usage.js"
 function createTestCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {
     id: createId(),
+    jobId: overrides.jobId ?? createId(),
     runId: createId(),
     status: "proceeding",
     stepNumber: 1,
@@ -35,6 +36,7 @@ function createTestEvent(overrides: Partial<RunEvent> = {}): RunEvent {
     id: createId(),
     expertKey: "test-expert",
     timestamp: Date.now(),
+    jobId: createId(),
     runId: createId(),
     stepNumber: 1,
     ...overrides,
@@ -120,4 +122,3 @@ describe("@perstack/runtime: default-store", () => {
     })
   })
 })
-

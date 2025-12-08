@@ -45,6 +45,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       newMessages: [

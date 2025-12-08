@@ -25,6 +25,7 @@ describe("@perstack/runtime: defaultGetRunDir", () => {
 
 describe("@perstack/runtime: storeRunSetting", () => {
   const baseSetting: RunSetting = {
+    jobId: "job-123",
     runId: "run-123",
     model: "claude-sonnet-4-20250514",
     providerConfig: { providerName: "anthropic", apiKey: "test-key" },
