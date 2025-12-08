@@ -9,12 +9,13 @@ export async function callingInteractiveToolLogic({
   if (!step.pendingToolCalls || step.pendingToolCalls.length === 0) {
     throw new Error("No pending tool calls found")
   }
+  const currentToolCall = step.pendingToolCalls[0]
   const remainingToolCalls = step.pendingToolCalls.slice(1)
   return stopRunByInteractiveTool(setting, checkpoint, {
     checkpoint: {
       ...checkpoint,
       status: "stoppedByInteractiveTool",
-      pendingToolCalls: remainingToolCalls.length > 0 ? remainingToolCalls : undefined,
+      pendingToolCalls: [currentToolCall, ...remainingToolCalls],
       partialToolResults: step.partialToolResults,
     },
     step: {

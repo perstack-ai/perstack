@@ -64,7 +64,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
           toolName: "@perstack/math-expert",
           query: "Calculate 2 + 2",
         },
-        pendingToolCalls: undefined,
+        pendingToolCalls: [
+          {
+            id: "tc_123",
+            skillName: "@perstack/math-expert",
+            toolName: "@perstack/math-expert",
+            args: { query: "Calculate 2 + 2" },
+          },
+        ],
         partialToolResults: undefined,
       },
       step: {

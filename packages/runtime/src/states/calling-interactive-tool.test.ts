@@ -34,7 +34,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
       checkpoint: {
         ...checkpoint,
         status: "stoppedByInteractiveTool",
-        pendingToolCalls: undefined,
+        pendingToolCalls: [
+          {
+            id: "tc_interactive_123",
+            skillName: "interactive",
+            toolName: "humanApproval",
+            args: { message: "Please approve this action" },
+          },
+        ],
         partialToolResults: undefined,
       },
       step: {
