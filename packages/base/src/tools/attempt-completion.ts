@@ -1,10 +1,18 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
 import { errorToolResult, successToolResult } from "../lib/tool-result.js"
-export async function attemptCompletion() {
-  return {
-    message: "End the agent loop and provide a final report",
+import { getRemainingTodos } from "./todo.js"
+
+export type AttemptCompletionResult =
+  | { remainingTodos: { id: number; title: string; completed: boolean }[] }
+  | Record<string, never>
+
+export async function attemptCompletion(): Promise<AttemptCompletionResult> {
+  const remainingTodos = getRemainingTodos()
+  if (remainingTodos.length > 0) {
+    return { remainingTodos }
   }
+  return {}
 }
 
 export function registerAttemptCompletion(server: McpServer) {
@@ -13,20 +21,19 @@ export function registerAttemptCompletion(server: McpServer) {
     {
       title: "Attempt completion",
       description: dedent`
-      Task completion signal that triggers immediate final report generation.
+      Task completion signal with automatic todo validation.
       Use cases:
       - Signaling task completion to Perstack runtime
-      - Triggering final report generation
+      - Validating all todos are complete before ending
       - Ending the current expert's work cycle
       How it works:
-      - Sends completion signal to Perstack runtime
-      - Runtime immediately proceeds to final report generation
-      - No confirmation or approval step required
-      - No parameters needed for this signal
+      - Checks the current todo list for incomplete items
+      - If incomplete todos exist: returns them and continues the agent loop
+      - If no incomplete todos: returns empty object and ends the agent loop
       Notes:
-      - Triggers immediate transition to final report
-      - Should only be used when task is fully complete
-      - Cannot be reverted once called
+      - Mark all todos as complete before calling
+      - Use clearTodo if you want to reset and start fresh
+      - Prevents premature completion by surfacing forgotten tasks
     `,
       inputSchema: {},
     },
