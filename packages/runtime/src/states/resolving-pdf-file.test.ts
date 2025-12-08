@@ -1,5 +1,5 @@
-import { createId } from "@paralleldrive/cuid2"
 import { readFile } from "node:fs/promises"
+import { createId } from "@paralleldrive/cuid2"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
@@ -27,25 +27,25 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
     const step = createStep({
       toolCalls: [
         {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readPdfFile",
-        args: { path: "/test/file.pdf" },
-      },
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readPdfFile",
+          args: { path: "/test/file.pdf" },
+        },
       ],
       toolResults: [
         {
           id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readPdfFile",
-        result: [
-          {
-            type: "textPart" as const,
-            text: JSON.stringify(pdfInfo),
-            id: createId(),
-          },
-        ],
-      },
+          skillName: "@perstack/base",
+          toolName: "readPdfFile",
+          result: [
+            {
+              type: "textPart" as const,
+              text: JSON.stringify(pdfInfo),
+              id: createId(),
+            },
+          ],
+        },
       ],
     })
     await expect(
@@ -100,25 +100,25 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingPdfFile']", () => {
     const step = createStep({
       toolCalls: [
         {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readPdfFile",
-        args: { path: "/nonexistent.pdf" },
-      },
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readPdfFile",
+          args: { path: "/nonexistent.pdf" },
+        },
       ],
       toolResults: [
         {
           id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readPdfFile",
-        result: [
-          {
-            type: "textPart" as const,
-            text: JSON.stringify(pdfInfo),
-            id: createId(),
-          },
-        ],
-      },
+          skillName: "@perstack/base",
+          toolName: "readPdfFile",
+          result: [
+            {
+              type: "textPart" as const,
+              text: JSON.stringify(pdfInfo),
+              id: createId(),
+            },
+          ],
+        },
       ],
     })
     const result = await StateMachineLogics.ResolvingPdfFile({

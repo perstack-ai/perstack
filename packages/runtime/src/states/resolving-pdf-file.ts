@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises"
-import { type FileInlinePart, type RunEvent, type TextPart, finishToolCall } from "@perstack/core"
+import { type FileInlinePart, finishToolCall, type RunEvent, type TextPart } from "@perstack/core"
 import { createToolMessage } from "../messages/message.js"
 import type { RunSnapshot } from "../runtime-state-machine.js"
 

@@ -66,7 +66,9 @@ export function createExpertMessage(
 export function createToolMessage(
   contents: Array<
     Omit<ToolResultPart, "id" | "contents"> & {
-      contents: Array<Omit<TextPart, "id"> | Omit<ImageInlinePart, "id"> | Omit<FileInlinePart, "id">>
+      contents: Array<
+        Omit<TextPart, "id"> | Omit<ImageInlinePart, "id"> | Omit<FileInlinePart, "id">
+      >
     }
   >,
 ): ToolMessage {

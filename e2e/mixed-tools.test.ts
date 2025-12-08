@@ -12,10 +12,14 @@ describe("Mixed Tool Calls (MCP + Delegate + Interactive)", () => {
   let result: RunResult
 
   beforeAll(async () => {
-    result = await runExpert("e2e-mixed-tools", "Test mixed tool calls: search, delegate, and ask user", {
-      configPath: "./e2e/experts/mixed-tools.toml",
-      timeout: 180000,
-    })
+    result = await runExpert(
+      "e2e-mixed-tools",
+      "Test mixed tool calls: search, delegate, and ask user",
+      {
+        configPath: "./e2e/experts/mixed-tools.toml",
+        timeout: 180000,
+      },
+    )
   }, 200000)
 
   it("should generate 3 tool calls in priority order", () => {
@@ -37,9 +41,9 @@ describe("Mixed Tool Calls (MCP + Delegate + Interactive)", () => {
       pendingToolCalls: [{}, {}] as ToolCallInfo[],
     })
     expect(checkResult.passed).toBe(true)
-    expect(assertPartialResultsContain(result.events, "stopRunByDelegate", ["web_search_exa"]).passed).toBe(
-      true,
-    )
+    expect(
+      assertPartialResultsContain(result.events, "stopRunByDelegate", ["web_search_exa"]).passed,
+    ).toBe(true)
   })
 
   it("should resume with delegate result and process interactive", () => {

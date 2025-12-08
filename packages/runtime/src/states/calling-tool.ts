@@ -11,8 +11,8 @@ import {
 } from "@perstack/core"
 import type { RunSnapshot } from "../runtime-state-machine.js"
 import type { BaseSkillManager } from "../skill-manager/index.js"
-import type { McpSkillManager } from "../skill-manager/mcp.js"
 import { getSkillManagerByToolName } from "../skill-manager/index.js"
+import type { McpSkillManager } from "../skill-manager/mcp.js"
 
 function hasRemainingTodos(toolResult: ToolResult): boolean {
   const firstPart = toolResult.result[0]
@@ -152,7 +152,9 @@ export async function callingToolLogic({
     })),
   )
   const mcpToolCalls = toolCallTypes.filter((t) => t.type === "mcp").map((t) => t.toolCall)
-  const delegateToolCalls = toolCallTypes.filter((t) => t.type === "delegate").map((t) => t.toolCall)
+  const delegateToolCalls = toolCallTypes
+    .filter((t) => t.type === "delegate")
+    .map((t) => t.toolCall)
   const interactiveToolCalls = toolCallTypes
     .filter((t) => t.type === "interactive")
     .map((t) => t.toolCall)
