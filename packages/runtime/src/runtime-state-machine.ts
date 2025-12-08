@@ -269,24 +269,26 @@ export const runtimeStateMachine = setup({
         callDelegate: {
           target: "CallingDelegate",
           actions: assign({
-            step: ({ context, event }) =>
+            step: ({ context }) =>
               ({
                 ...context.step,
                 toolCalls: context.step.toolCalls,
                 toolResults: context.step.toolResults,
                 pendingToolCalls: context.step.pendingToolCalls,
+                partialToolResults: context.step.partialToolResults,
               }) satisfies Step,
           }),
         },
         callInteractiveTool: {
           target: "CallingInteractiveTool",
           actions: assign({
-            step: ({ context, event }) =>
+            step: ({ context }) =>
               ({
                 ...context.step,
                 toolCalls: context.step.toolCalls,
                 toolResults: context.step.toolResults,
                 pendingToolCalls: context.step.pendingToolCalls,
+                partialToolResults: context.step.partialToolResults,
               }) satisfies Step,
           }),
         },

@@ -1,11 +1,10 @@
+import { readFile } from "node:fs/promises"
 import {
   attemptCompletion,
   callDelegate,
   callInteractiveTool,
+  type MessagePart,
   type RunEvent,
-  resolveImageFile,
-  resolvePdfFile,
-  resolveThought,
   resolveToolResults,
   type ToolCall,
   type ToolResult,
@@ -28,6 +27,74 @@ function hasRemainingTodos(toolResult: ToolResult): boolean {
   }
 }
 
+type FileInfo = { path: string; mimeType: string; size: number }
+
+function isFileInfo(value: unknown): value is FileInfo {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "path" in value &&
+    "mimeType" in value &&
+    "size" in value &&
+    typeof (value as FileInfo).path === "string" &&
+    typeof (value as FileInfo).mimeType === "string" &&
+    typeof (value as FileInfo).size === "number"
+  )
+}
+
+async function processFileToolResult(
+  toolResult: ToolResult,
+  toolName: "readPdfFile" | "readImageFile",
+): Promise<ToolResult> {
+  const processedContents: MessagePart[] = []
+  for (const part of toolResult.result) {
+    if (part.type !== "textPart") {
+      processedContents.push(part)
+      continue
+    }
+    let fileInfo: FileInfo | undefined
+    try {
+      const parsed = JSON.parse(part.text)
+      if (isFileInfo(parsed)) {
+        fileInfo = parsed
+      }
+    } catch {
+      processedContents.push(part)
+      continue
+    }
+    if (!fileInfo) {
+      processedContents.push(part)
+      continue
+    }
+    const { path, mimeType } = fileInfo
+    try {
+      const buffer = await readFile(path)
+      if (toolName === "readImageFile") {
+        processedContents.push({
+          type: "imageInlinePart",
+          id: part.id,
+          encodedData: buffer.toString("base64"),
+          mimeType,
+        })
+      } else {
+        processedContents.push({
+          type: "fileInlinePart",
+          id: part.id,
+          encodedData: buffer.toString("base64"),
+          mimeType,
+        })
+      }
+    } catch (error) {
+      processedContents.push({
+        type: "textPart",
+        id: part.id,
+        text: `Failed to read file "${path}": ${error instanceof Error ? error.message : String(error)}`,
+      })
+    }
+  }
+  return { ...toolResult, result: processedContents }
+}
+
 async function executeMcpToolCall(
   toolCall: ToolCall,
   skillManagers: Record<string, BaseSkillManager>,
@@ -37,12 +104,16 @@ async function executeMcpToolCall(
     throw new Error(`Incorrect SkillType, required MCP, got ${skillManager.type}`)
   }
   const result = await (skillManager as McpSkillManager).callTool(toolCall.toolName, toolCall.args)
-  return {
+  const toolResult: ToolResult = {
     id: toolCall.id,
     skillName: toolCall.skillName,
     toolName: toolCall.toolName,
     result,
   }
+  if (toolCall.toolName === "readPdfFile" || toolCall.toolName === "readImageFile") {
+    return processFileToolResult(toolResult, toolCall.toolName)
+  }
+  return toolResult
 }
 
 async function getToolType(
@@ -64,37 +135,16 @@ export async function callingToolLogic({
     throw new Error("No tool calls found")
   }
   const toolResults: ToolResult[] = step.toolResults ? [...step.toolResults] : []
-  const thinkTool = pendingToolCalls.find(
-    (tc) => tc.skillName === "@perstack/base" && tc.toolName === "think",
-  )
-  if (thinkTool) {
-    const toolResult = await executeMcpToolCall(thinkTool, skillManagers)
-    return resolveThought(setting, checkpoint, { toolResult })
-  }
   const attemptCompletionTool = pendingToolCalls.find(
     (tc) => tc.skillName === "@perstack/base" && tc.toolName === "attemptCompletion",
   )
   if (attemptCompletionTool) {
     const toolResult = await executeMcpToolCall(attemptCompletionTool, skillManagers)
-      if (hasRemainingTodos(toolResult)) {
+    if (hasRemainingTodos(toolResult)) {
       return resolveToolResults(setting, checkpoint, { toolResults: [toolResult] })
-      }
-      return attemptCompletion(setting, checkpoint, { toolResult })
     }
-  const readPdfFileTool = pendingToolCalls.find(
-    (tc) => tc.skillName === "@perstack/base" && tc.toolName === "readPdfFile",
-  )
-  if (readPdfFileTool) {
-    const toolResult = await executeMcpToolCall(readPdfFileTool, skillManagers)
-      return resolvePdfFile(setting, checkpoint, { toolResult })
-    }
-  const readImageFileTool = pendingToolCalls.find(
-    (tc) => tc.skillName === "@perstack/base" && tc.toolName === "readImageFile",
-  )
-  if (readImageFileTool) {
-    const toolResult = await executeMcpToolCall(readImageFileTool, skillManagers)
-      return resolveImageFile(setting, checkpoint, { toolResult })
-    }
+    return attemptCompletion(setting, checkpoint, { toolResult })
+  }
   const toolCallTypes = await Promise.all(
     pendingToolCalls.map(async (tc) => ({
       toolCall: tc,

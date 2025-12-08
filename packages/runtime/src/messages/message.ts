@@ -66,7 +66,7 @@ export function createExpertMessage(
 export function createToolMessage(
   contents: Array<
     Omit<ToolResultPart, "id" | "contents"> & {
-      contents: Array<Omit<TextPart, "id"> | Omit<ImageInlinePart, "id">>
+      contents: Array<Omit<TextPart, "id"> | Omit<ImageInlinePart, "id"> | Omit<FileInlinePart, "id">>
     }
   >,
 ): ToolMessage {
@@ -244,11 +244,12 @@ function toolResultPartToCoreToolResultPart(part: ToolResultPart): ToolResultMod
       output: { type: "text" as const, value: contents[0].text },
     }
   }
-  const contentValue = contents.map((content) =>
-    content.type === "textPart"
-      ? { type: "text" as const, text: content.text }
-      : { type: "media" as const, data: content.encodedData, mediaType: content.mimeType },
-  )
+  const contentValue = contents.map((content) => {
+    if (content.type === "textPart") {
+      return { type: "text" as const, text: content.text }
+    }
+    return { type: "media" as const, data: content.encodedData, mediaType: content.mimeType }
+  })
   return {
     type: "tool-result",
     toolCallId: part.toolCallId,

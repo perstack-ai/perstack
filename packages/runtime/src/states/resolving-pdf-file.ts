@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises"
 import { type FileInlinePart, type RunEvent, type TextPart, finishToolCall } from "@perstack/core"
-import { createToolMessage, createUserMessage } from "../messages/message.js"
+import { createToolMessage } from "../messages/message.js"
 import type { RunSnapshot } from "../runtime-state-machine.js"
 
 type ReadPdfFileResult = { path: string; mimeType: string; size: number }
@@ -19,13 +19,13 @@ export async function resolvingPdfFileLogic({
   const toolCall = step.toolCalls.find((tc) => tc.id === toolResult.id)
   const { result } = toolResult
   const textParts = result.filter((part): part is TextPart => part.type === "textPart")
-  const files: (Omit<FileInlinePart, "id"> | Omit<TextPart, "id">)[] = []
+  const contents: (Omit<FileInlinePart, "id"> | Omit<TextPart, "id">)[] = []
   for (const textPart of textParts) {
     let pdfInfo: ReadPdfFileResult | undefined
     try {
       pdfInfo = JSON.parse(textPart.text) as ReadPdfFileResult
     } catch {
-      files.push({
+      contents.push({
         type: "textPart",
         text: textPart.text,
       })
@@ -34,13 +34,13 @@ export async function resolvingPdfFileLogic({
     const { path, mimeType } = pdfInfo
     try {
       const buffer = await readFile(path)
-      files.push({
+      contents.push({
         type: "fileInlinePart",
         encodedData: buffer.toString("base64"),
         mimeType,
       })
     } catch (error) {
-      files.push({
+      contents.push({
         type: "textPart",
         text: `Failed to read PDF file "${path}": ${error instanceof Error ? error.message : String(error)}`,
       })
@@ -53,15 +53,9 @@ export async function resolvingPdfFileLogic({
           type: "toolResultPart",
           toolCallId: toolResult.id,
           toolName: toolCall?.toolName ?? toolResult.toolName,
-          contents: [
-            {
-              type: "textPart",
-              text: "User uploads PDF file as follows.",
-            },
-          ],
+          contents,
         },
       ]),
-      createUserMessage(files),
     ],
   })
 }
