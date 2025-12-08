@@ -30,6 +30,7 @@ e2e/
 │   ├── event-parser.ts       # Runtime event parsing
 │   └── assertions.ts         # Custom assertions
 ├── experts/                  # Expert definitions for tests
+│   ├── cli-commands.toml     # CLI command tests (publish, etc.)
 │   ├── mixed-tools.toml      # MCP + Delegate + Interactive
 │   ├── parallel-mcp.toml     # Parallel MCP calls
 │   ├── delegate-chain.toml   # Delegation chain
