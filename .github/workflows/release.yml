@@ -43,6 +43,12 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
