@@ -144,9 +144,9 @@ Note the asymmetry: Expert A sees Expert B's `description` (public interface), b
 | **Message history** | Not shared | Each Expert has a single responsibility; mixing contexts breaks focus |
 | **Communication** | Natural language | No schema versioning, maximum flexibility, humans and Experts use the same interface |
 | **State exchange** | Workspace files | Persistent, inspectable, works across restarts |
-| **Interactive tools** | Coordinator only | Delegated Experts cannot pause for user input — return to Coordinator instead |
+| **Interactive tools** | Coordinator only | See [below](#why-no-interactive-tools-for-delegates) |
 
-This is intentional. Shared context leads to prompt bloat, context window exhaustion, and confused LLM reasoning. Isolated Experts stay focused.
+This is intentional. See [Why context isolation matters](/understanding-perstack/concept#isolation) for the security rationale.
 
 ### Why no interactive tools for delegates?
 

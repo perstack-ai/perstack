@@ -28,20 +28,7 @@ When a Run stops with `stoppedByExceededMaxSteps`, you can resume from the last 
 
 ## Delegation errors
 
-When a Delegated Expert fails, the Job continues running. The error is returned to the Coordinator as the delegation result:
-
-| Delegate outcome | Job behavior | Coordinator receives |
-|------------------|--------------|---------------------|
-| Success | Continues | Run result (natural language) |
-| Failure | Continues | Error message |
-
-The Coordinator can then decide to:
-- Retry the delegation
-- Try a different delegate
-- Handle the error gracefully
-- Give up and report to the user
-
-This design ensures a single delegate failure doesn't crash the entire Job.
+When a Delegated Expert fails, the Job continues — the error is returned to the Coordinator, which decides how to handle it. See [Delegation failure handling](/understanding-perstack/experts#delegation-failure-handling) for details.
 
 ## Events for monitoring
 

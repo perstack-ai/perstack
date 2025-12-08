@@ -85,7 +85,7 @@ All managers extend `BaseSkillManager` which provides:
 - `getToolDefinitions()` — Get available tools
 - `callTool()` — Execute a tool call
 
-**Note:** Interactive skills are only available to the Coordinator Expert (the first Expert in a Job). Delegated Experts cannot use interactive tools.
+**Note:** Interactive skills are only available to the Coordinator Expert. See [Experts documentation](https://docs.perstack.ai/understanding-perstack/experts#why-no-interactive-tools-for-delegates) for details.
 
 ### Initialization Flow
 
