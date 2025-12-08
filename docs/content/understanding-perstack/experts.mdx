@@ -132,7 +132,7 @@ Job
 ```
 
 <Callout type="warning">
-**Context is never shared between Experts.** The delegate receives only the query — no message history, no parent context. This is a deliberate design decision, not a limitation.
+**Context is never shared between Experts.** The delegate receives only the query — no message history, no parent context. This is a security boundary, not a limitation. See [Why context isolation matters](/understanding-perstack/concept#isolation).
 </Callout>
 
 Note the asymmetry: Expert A sees Expert B's `description` (public interface), but never its `instruction` (private implementation). This is what makes Experts composable — the caller only needs to know *what* a delegate does, not *how* it does it.

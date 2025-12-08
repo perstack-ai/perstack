@@ -91,6 +91,14 @@ Isolation means separating an agent from everything except its role — that's w
 - **Context isolation**: context windows are never shared; data flows through runtime/workspace
 - **Sandbox support**: designed to align with infra-level isolation
 
+**Why context isolation matters for security:**
+
+Each Expert has different skills with different capabilities. Some skills access secrets (API keys, credentials). Some skills retrieve sensitive data (customer records, internal documents). This means an Expert's context may contain information with attack value.
+
+If contexts were shared between Experts, a malicious or compromised Expert could extract secrets and sensitive data from another Expert's context. Context isolation prevents this by design — each Expert sees only its own instruction and the query it receives. No message history, no parent context, no leaked secrets.
+
+This isn't just about preventing prompt bloat. It's a security boundary.
+
 ### Observability
 
 Observability means agent behavior is fully transparent and inspectable.
