@@ -58,7 +58,7 @@ registerWriteTextFile(server)
 - `think` - Sequential thinking for problem analysis
 - `todo` - Task list management
 - `clearTodo` - Clear task list
-- `attemptCompletion` - Signal task completion
+- `attemptCompletion` - Signal task completion (validates todos first)
 
 ## License
 

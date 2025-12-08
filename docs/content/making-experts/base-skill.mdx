@@ -146,19 +146,41 @@ While `cwd` is validated, the executed command itself can still access files out
 
 ### attemptCompletion
 
-Signals task completion and triggers final report generation.
+Signals task completion with automatic todo validation.
 
 **Parameters:** None
 
-**Returns:**
+**Returns (remaining todos):**
 ```json
-{ "message": "End the agent loop and provide a final report" }
+{
+  "remainingTodos": [
+    { "id": 0, "title": "Incomplete task 1", "completed": false },
+    { "id": 2, "title": "Incomplete task 2", "completed": false }
+  ]
+}
+```
+
+**Returns (all todos complete or no todos):**
+```json
+{}
 ```
 
 **Behavior:**
-- Sends completion signal to Perstack runtime
-- Triggers immediate transition to final report
-- Cannot be reverted once called
+- Checks the current todo list for incomplete items
+- If incomplete todos exist: returns them in `remainingTodos` and continues the agent loop
+- If no incomplete todos (or no todos at all): triggers run result generation and ends the agent loop
+- The Expert should complete remaining todos before calling again
+
+**Run result:**
+
+When todo validation passes, the LLM generates a run result — a summary of the work done. This ensures every completed run has a clear outcome, regardless of whether the Expert was delegated or run directly.
+
+For delegated Experts, the run result is returned to the delegating Expert as the tool call result, maintaining context isolation.
+
+**Best Practice:**
+- Mark all todos as complete before calling `attemptCompletion`
+- Use `clearTodo` if you want to reset and start fresh
+- The tool prevents premature completion by surfacing forgotten tasks
 
 ---
 
@@ -631,11 +653,21 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  6. COMPLETE                                                    │
+│  6. MARK TODOS COMPLETE                                         │
+│  ─────────────────────────────────────────────────────────────  │
+│  tool: todo                                                     │
+│  input: { completedTodos: [0, 1, 2] }                           │
+│  output: { todos: [{ id: 0, completed: true }, ...] }           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  7. COMPLETE                                                    │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: attemptCompletion                                        │
 │  input: {}                                                      │
-│  → Triggers final report generation                             │
+│  output: {} (no remaining todos)                                │
+│  → Agent loop ends                                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

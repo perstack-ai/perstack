@@ -113,8 +113,11 @@ Expert A                              Expert B
     │                                     │
     │  [checkpoint saved]                 ├─ executes task
     │                                     │
-    ├─ resumes ←─────────────────────────── returns result
-    │  (receives result)                  
+    │                                     ├─ calls attemptCompletion
+    │                                     │  (generates run result)
+    │                                     │
+    ├─ resumes ←─────────────────────────── returns run result
+    │  (receives summary)                 
     ▼                                     
 ```
 
