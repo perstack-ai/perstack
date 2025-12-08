@@ -90,36 +90,50 @@ packageName = "@eslint/mcp"
 
 When you run an Expert:
 
-1. The runtime loads the Expert definition from `perstack.toml` or Registry
+1. The runtime creates a **Job** and starts the first **Run** with your Expert (the Coordinator)
 2. The instruction becomes the system prompt (with [runtime meta-instructions](https://github.com/perstack-ai/perstack/blob/main/packages/runtime/src/messages/instruction-message.ts))
 3. Your query becomes the user message
 4. The LLM reasons and calls tools (skills) as needed
-5. Each step produces a checkpoint — a complete snapshot of the execution state
+5. Each step produces a checkpoint — a complete snapshot of the Run's state
 
 The runtime manages the execution loop. The Expert definition declares *what* to achieve; the runtime handles *how*.
 
 ### Delegation
 
-Experts collaborate through delegation, not shared context.
+Experts collaborate through delegation, not shared context. Each delegation creates a new Run within the same Job.
 
 ```
-Expert A                              Expert B
-    │                                     
-    ├─ sees delegates as tools            
-    │  (description → tool description)   
-    │                                     
-    ├─ calls delegate ──────────────────→ starts fresh
-    │  (writes query)                     (empty history, own instruction)
-    │                                     │
-    │  [checkpoint saved]                 ├─ executes task
-    │                                     │
-    │                                     ├─ calls attemptCompletion
-    │                                     │  (generates run result)
-    │                                     │
-    ├─ resumes ←─────────────────────────── returns run result
-    │  (receives summary)                 
-    ▼                                     
+Job
+ │
+ ├── Run 1: Expert A (Coordinator)
+ │       │
+ │       ├─ sees delegates as tools
+ │       │  (description → tool description)
+ │       │
+ │       ├─ calls delegate ─────────────────────┐
+ │       │  (writes query)                      │
+ │       │                                      │
+ │       │  [Run 1 paused]                      │
+ │       │                                      ▼
+ │       │                              ┌── Run 2: Expert B ──┐
+ │       │                              │  starts fresh       │
+ │       │                              │  (empty history)    │
+ │       │                              │  (own instruction)  │
+ │       │                              │       │             │
+ │       │                              │       ├─ executes   │
+ │       │                              │       │             │
+ │       │                              │       ├─ completes  │
+ │       │                              │       │             │
+ │       │                              └───────┼─────────────┘
+ │       │                                      │
+ │       ├─ resumes ◄───────────────────────────┘
+ │       │  (receives run result only)
+ │       ▼
 ```
+
+<Callout type="warning">
+**Context is never shared between Experts.** The delegate receives only the query — no message history, no parent context. This is a deliberate design decision, not a limitation.
+</Callout>
 
 Note the asymmetry: Expert A sees Expert B's `description` (public interface), but never its `instruction` (private implementation). This is what makes Experts composable — the caller only needs to know *what* a delegate does, not *how* it does it.
 
@@ -130,8 +144,20 @@ Note the asymmetry: Expert A sees Expert B's `description` (public interface), b
 | **Message history** | Not shared | Each Expert has a single responsibility; mixing contexts breaks focus |
 | **Communication** | Natural language | No schema versioning, maximum flexibility, humans and Experts use the same interface |
 | **State exchange** | Workspace files | Persistent, inspectable, works across restarts |
+| **Interactive tools** | Coordinator only | Delegated Experts cannot pause for user input — return to Coordinator instead |
 
 This is intentional. Shared context leads to prompt bloat, context window exhaustion, and confused LLM reasoning. Isolated Experts stay focused.
+
+### Why no interactive tools for delegates?
+
+Delegated Experts run without interactive tool access. If a delegate needs clarification:
+
+1. It should return what it knows (via `attemptCompletion`)
+2. The Coordinator receives the result
+3. The Coordinator can ask the user for clarification
+4. The Coordinator can re-delegate with better information
+
+This keeps the user interface at the Coordinator level and prevents deep call chains from blocking on user input.
 
 ### Workspace
 
