@@ -22,12 +22,13 @@ export const runCommand = new Command()
     "--timeout <timeout>",
     "Timeout for each generation in milliseconds, default is 60000 (1 minute)",
   )
+  .option("--job-id <jobId>", "Job ID for identifying the job")
   .option("--run-id <runId>", "Run ID for identifying the run")
   .option("--env-path <envPath...>", "Path to the environment file, default is .env and .env.local")
   .option("--verbose", "Enable verbose logging")
-  .option("--continue", "Continue the most recent run with new query")
-  .option("--continue-run <runId>", "Continue the specified run with new query")
-  .option("--resume-from <checkpointId>", "Resume from a specific checkpoint")
+  .option("--continue", "Continue the most recent job with new query")
+  .option("--continue-job <jobId>", "Continue the specified job with new query")
+  .option("--resume-from <checkpointId>", "Resume from a specific checkpoint (requires --continue or --continue-job)")
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
@@ -40,13 +41,14 @@ export const runCommand = new Command()
           model: input.options.model,
           envPath: input.options.envPath,
           continue: input.options.continue,
-          continueRun: input.options.continueRun,
+          continueJob: input.options.continueJob,
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
 
       await run({
         setting: {
+          jobId: checkpoint?.jobId ?? input.options.jobId,
           runId: checkpoint?.runId ?? input.options.runId,
           expertKey: input.expertKey,
           input:

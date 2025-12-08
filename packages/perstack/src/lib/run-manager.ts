@@ -54,6 +54,19 @@ export async function getMostRecentRunId(): Promise<string> {
   return run.runId
 }
 
+export async function getRunsByJobId(jobId: string): Promise<RunSetting[]> {
+  const allRuns = await getAllRuns()
+  return allRuns.filter((r) => r.jobId === jobId)
+}
+
+export async function getMostRecentRunInJob(jobId: string): Promise<RunSetting> {
+  const runs = await getRunsByJobId(jobId)
+  if (runs.length === 0) {
+    throw new Error(`No runs found for job ${jobId}`)
+  }
+  return runs[0]
+}
+
 export async function getCheckpoints(
   jobId: string,
   runId: string,

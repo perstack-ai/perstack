@@ -18,17 +18,19 @@ export interface CommandOptions {
   maxRetries?: number
   /** Timeout in milliseconds */
   timeout?: number
+  /** Custom job ID */
+  jobId?: string
   /** Custom run ID */
   runId?: string
   /** Paths to .env files */
   envPath?: string[]
   /** Enable verbose logging */
   verbose?: boolean
-  /** Continue most recent run */
+  /** Continue most recent job */
   continue?: boolean
-  /** Continue specific run by ID */
-  continueRun?: string
-  /** Resume from specific checkpoint */
+  /** Continue specific job by ID */
+  continueJob?: string
+  /** Resume from specific checkpoint (requires --continue or --continue-job) */
   resumeFrom?: string
   /** Query is interactive tool call result */
   interactiveToolCallResult?: boolean
@@ -74,11 +76,12 @@ const commandOptionsSchema = z.object({
       if (Number.isNaN(parsedValue)) return undefined
       return parsedValue
     }),
+  jobId: z.string().optional(),
   runId: z.string().optional(),
   envPath: z.array(z.string()).optional(),
   verbose: z.boolean().optional(),
   continue: z.boolean().optional(),
-  continueRun: z.string().optional(),
+  continueJob: z.string().optional(),
   resumeFrom: z.string().optional(),
   interactiveToolCallResult: z.boolean().optional(),
 })

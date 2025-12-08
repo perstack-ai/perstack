@@ -9,6 +9,7 @@ export type CommandResult = {
 
 export type RunResult = CommandResult & {
   events: ParsedEvent[]
+  jobId: string | null
   runId: string | null
 }
 
@@ -53,7 +54,7 @@ export async function runExpert(
   options?: {
     configPath?: string
     timeout?: number
-    continueRunId?: string
+    continueJobId?: string
     isInteractiveResult?: boolean
   },
 ): Promise<RunResult> {
@@ -62,8 +63,8 @@ export async function runExpert(
   if (options?.configPath) {
     args.push("--config", options.configPath)
   }
-  if (options?.continueRunId) {
-    args.push("--continue-run", options.continueRunId)
+  if (options?.continueJobId) {
+    args.push("--continue-job", options.continueJobId)
   }
   if (options?.isInteractiveResult) {
     args.push("-i")
@@ -91,12 +92,14 @@ export async function runExpert(
       clearTimeout(timer)
       const events = parseEvents(stdout)
       const startRunEvent = events.find((e) => e.type === "startRun")
+      const jobId = startRunEvent ? ((startRunEvent as { jobId?: string }).jobId ?? null) : null
       const runId = startRunEvent ? ((startRunEvent as { runId?: string }).runId ?? null) : null
       resolve({
         stdout,
         stderr,
         events,
         exitCode: code ?? 0,
+        jobId,
         runId,
       })
     })
