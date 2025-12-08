@@ -61,6 +61,8 @@ export const runtimeStateMachine = setup({
                 ...context.checkpoint,
                 status: "proceeding",
                 messages: [...context.checkpoint.messages, ...event.inputMessages],
+                pendingToolCalls: event.initialCheckpoint.pendingToolCalls,
+                partialToolResults: event.initialCheckpoint.partialToolResults,
               }) satisfies Checkpoint,
             step: ({ context, event }) =>
               ({
@@ -410,11 +412,7 @@ export const runtimeStateMachine = setup({
         stopRunByInteractiveTool: {
           target: "Stopped",
           actions: assign({
-            checkpoint: ({ context, event }) => ({
-              ...event.checkpoint,
-              pendingToolCalls: context.step.pendingToolCalls,
-              partialToolResults: context.step.toolResults,
-            }),
+            checkpoint: ({ event }) => event.checkpoint,
             step: ({ event }) => ({
               ...event.step,
               inputMessages: undefined,
@@ -429,11 +427,7 @@ export const runtimeStateMachine = setup({
         stopRunByDelegate: {
           target: "Stopped",
           actions: assign({
-            checkpoint: ({ context, event }) => ({
-              ...event.checkpoint,
-              pendingToolCalls: context.step.pendingToolCalls,
-              partialToolResults: context.step.toolResults,
-            }),
+            checkpoint: ({ event }) => event.checkpoint,
             step: ({ event }) => ({
               ...event.step,
               inputMessages: undefined,

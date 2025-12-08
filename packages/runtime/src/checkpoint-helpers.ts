@@ -76,6 +76,8 @@ export function buildDelegationReturnState(
       ...parentCheckpoint,
       stepNumber: resultCheckpoint.stepNumber,
       usage: resultCheckpoint.usage,
+      pendingToolCalls: parentCheckpoint.pendingToolCalls,
+      partialToolResults: parentCheckpoint.partialToolResults,
     },
   }
 }
@@ -118,6 +120,8 @@ export function buildDelegateToState(
         checkpointId: resultCheckpoint.id,
       },
       usage: resultCheckpoint.usage,
+      pendingToolCalls: undefined,
+      partialToolResults: undefined,
     },
   }
 }

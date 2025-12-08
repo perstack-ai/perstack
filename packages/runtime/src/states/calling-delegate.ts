@@ -8,12 +8,12 @@ export async function callingDelegateLogic({
   step,
   skillManagers,
 }: RunSnapshot["context"]): Promise<RunEvent> {
-  if (!step.toolCalls || step.toolCalls.length === 0) {
-    throw new Error("No tool calls found")
+  if (!step.pendingToolCalls || step.pendingToolCalls.length === 0) {
+    throw new Error("No pending tool calls found")
   }
-  const toolCall = step.toolCalls[0]
+  const toolCall = step.pendingToolCalls[0]
   if (!toolCall) {
-    throw new Error("No tool call found")
+    throw new Error("No pending tool call found")
   }
   const { id, toolName, args } = toolCall
   const skillManager = await getSkillManagerByToolName(skillManagers, toolName)
@@ -23,6 +23,7 @@ export async function callingDelegateLogic({
   if (!args || !args.query || typeof args.query !== "string") {
     throw new Error("Delegation error: query is undefined")
   }
+  const remainingToolCalls = step.pendingToolCalls.slice(1)
   return stopRunByDelegate(setting, checkpoint, {
     checkpoint: {
       ...checkpoint,
@@ -37,6 +38,8 @@ export async function callingDelegateLogic({
         toolName,
         query: args.query,
       },
+      pendingToolCalls: remainingToolCalls.length > 0 ? remainingToolCalls : undefined,
+      partialToolResults: step.partialToolResults,
     },
     step: {
       ...step,

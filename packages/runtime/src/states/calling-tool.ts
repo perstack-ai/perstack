@@ -76,25 +76,25 @@ export async function callingToolLogic({
   )
   if (attemptCompletionTool) {
     const toolResult = await executeMcpToolCall(attemptCompletionTool, skillManagers)
-    if (hasRemainingTodos(toolResult)) {
+      if (hasRemainingTodos(toolResult)) {
       return resolveToolResults(setting, checkpoint, { toolResults: [toolResult] })
+      }
+      return attemptCompletion(setting, checkpoint, { toolResult })
     }
-    return attemptCompletion(setting, checkpoint, { toolResult })
-  }
   const readPdfFileTool = pendingToolCalls.find(
     (tc) => tc.skillName === "@perstack/base" && tc.toolName === "readPdfFile",
   )
   if (readPdfFileTool) {
     const toolResult = await executeMcpToolCall(readPdfFileTool, skillManagers)
-    return resolvePdfFile(setting, checkpoint, { toolResult })
-  }
+      return resolvePdfFile(setting, checkpoint, { toolResult })
+    }
   const readImageFileTool = pendingToolCalls.find(
     (tc) => tc.skillName === "@perstack/base" && tc.toolName === "readImageFile",
   )
   if (readImageFileTool) {
     const toolResult = await executeMcpToolCall(readImageFileTool, skillManagers)
-    return resolveImageFile(setting, checkpoint, { toolResult })
-  }
+      return resolveImageFile(setting, checkpoint, { toolResult })
+    }
   const toolCallTypes = await Promise.all(
     pendingToolCalls.map(async (tc) => ({
       toolCall: tc,
@@ -118,8 +118,8 @@ export async function callingToolLogic({
     if (!delegateToolCall) {
       throw new Error("No delegate tool call found")
     }
-    step.toolResults = toolResults
-    step.pendingToolCalls = remainingToolCalls.slice(1)
+    step.partialToolResults = toolResults
+    step.pendingToolCalls = remainingToolCalls
     return callDelegate(setting, checkpoint, {
       newMessage: checkpoint.messages[checkpoint.messages.length - 1] as never,
       toolCall: delegateToolCall,
@@ -131,8 +131,8 @@ export async function callingToolLogic({
     if (!interactiveToolCall) {
       throw new Error("No interactive tool call found")
     }
-    step.toolResults = toolResults
-    step.pendingToolCalls = remainingToolCalls.slice(1)
+    step.partialToolResults = toolResults
+    step.pendingToolCalls = remainingToolCalls
     return callInteractiveTool(setting, checkpoint, {
       newMessage: checkpoint.messages[checkpoint.messages.length - 1] as never,
       toolCall: interactiveToolCall,
