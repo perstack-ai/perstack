@@ -186,7 +186,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
     })
-    expect(event.type).toBe("callTool")
+    expect(event.type).toBe("callTools")
   })
 
   it("returns callInteractiveTool event for interactive skill", async () => {
@@ -307,6 +307,6 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
     })
-    expect(event.type).toBe("callTool")
+    expect(event.type).toBe("callTools")
   })
 })

@@ -9,12 +9,16 @@ export async function resolvingImageFileLogic({
   checkpoint,
   step,
 }: RunSnapshot["context"]): Promise<RunEvent> {
-  if (!step.toolCall || !step.toolResult) {
-    throw new Error("No tool call or tool result found")
+  if (!step.toolCalls || !step.toolResults || step.toolResults.length === 0) {
+    throw new Error("No tool calls or tool results found")
   }
-  const { id, toolName } = step.toolCall
-  const { result } = step.toolResult
-  const textParts = result.filter((part) => part.type === "textPart")
+  const toolResult = step.toolResults[0]
+  if (!toolResult) {
+    throw new Error("No tool result found")
+  }
+  const toolCall = step.toolCalls.find((tc) => tc.id === toolResult.id)
+  const { result } = toolResult
+  const textParts = result.filter((part): part is TextPart => part.type === "textPart")
   const files: (Omit<ImageInlinePart, "id"> | Omit<TextPart, "id">)[] = []
   for (const textPart of textParts) {
     let imageInfo: ReadImageFileResult | undefined
@@ -27,7 +31,7 @@ export async function resolvingImageFileLogic({
       })
       continue
     }
-    const { path, mimeType, size } = imageInfo
+    const { path, mimeType } = imageInfo
     try {
       const buffer = await readFile(path)
       files.push({
@@ -47,8 +51,8 @@ export async function resolvingImageFileLogic({
       createToolMessage([
         {
           type: "toolResultPart",
-          toolCallId: id,
-          toolName,
+          toolCallId: toolResult.id,
+          toolName: toolCall?.toolName ?? toolResult.toolName,
           contents: files,
         },
       ]),

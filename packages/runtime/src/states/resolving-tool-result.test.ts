@@ -9,24 +9,28 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readTextFile",
-        args: { path: "/test/file.txt" },
-      },
-      toolResult: {
-        id: "tr_123",
-        skillName: "@perstack/base",
-        toolName: "readTextFile",
-        result: [
-          {
-            type: "textPart" as const,
-            text: "File content successfully read",
-            id: createId(),
-          },
-        ],
-      },
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readTextFile",
+          args: { path: "/test/file.txt" },
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readTextFile",
+          result: [
+            {
+              type: "textPart" as const,
+              text: "File content successfully read",
+              id: createId(),
+            },
+          ],
+        },
+      ],
     })
     await expect(
       StateMachineLogics.ResolvingToolResult({
@@ -67,7 +71,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
     })
   })
 
-  it("throws error when tool call or result missing", async () => {
+  it("throws error when tool calls or results missing", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
@@ -84,39 +88,43 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
         eventListener: async () => {},
         skillManagers: {},
       }),
-    ).rejects.toThrow("No tool call or tool result found")
+    ).rejects.toThrow("No tool calls or tool results found")
   })
 
   it("filters non-text and non-image parts from result", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_456",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        args: { path: "/test/image.png" },
-      },
-      toolResult: {
-        id: "tr_456",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        result: [
-          { type: "textPart" as const, text: "Image description", id: createId() },
-          {
-            type: "imageInlinePart" as const,
-            encodedData: "base64data",
-            mimeType: "image/png",
-            id: createId(),
-          },
-          {
-            type: "fileBinaryPart" as const,
-            data: "binary",
-            mimeType: "application/pdf",
-            id: createId(),
-          },
-        ],
-      },
+      toolCalls: [
+        {
+          id: "tc_456",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          args: { path: "/test/image.png" },
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_456",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          result: [
+            { type: "textPart" as const, text: "Image description", id: createId() },
+            {
+              type: "imageInlinePart" as const,
+              encodedData: "base64data",
+              mimeType: "image/png",
+              id: createId(),
+            },
+            {
+              type: "fileBinaryPart" as const,
+              data: "binary",
+              mimeType: "application/pdf",
+              id: createId(),
+            },
+          ],
+        },
+      ],
     })
     const result = await StateMachineLogics.ResolvingToolResult({
       setting,

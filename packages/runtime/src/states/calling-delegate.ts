@@ -8,10 +8,14 @@ export async function callingDelegateLogic({
   step,
   skillManagers,
 }: RunSnapshot["context"]): Promise<RunEvent> {
-  if (!step.toolCall) {
+  if (!step.toolCalls || step.toolCalls.length === 0) {
+    throw new Error("No tool calls found")
+  }
+  const toolCall = step.toolCalls[0]
+  if (!toolCall) {
     throw new Error("No tool call found")
   }
-  const { id, toolName, args } = step.toolCall
+  const { id, toolName, args } = toolCall
   const skillManager = await getSkillManagerByToolName(skillManagers, toolName)
   if (!skillManager.expert) {
     throw new Error(`Delegation error: skill manager "${toolName}" not found`)

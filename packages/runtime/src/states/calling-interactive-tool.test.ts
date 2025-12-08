@@ -7,12 +7,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_interactive_123",
-        skillName: "interactive",
-        toolName: "humanApproval",
-        args: { message: "Please approve this action" },
-      },
+      toolCalls: [
+        {
+          id: "tc_interactive_123",
+          skillName: "interactive",
+          toolName: "humanApproval",
+          args: { message: "Please approve this action" },
+        },
+      ],
     })
     await expect(
       StateMachineLogics.CallingInteractiveTool({

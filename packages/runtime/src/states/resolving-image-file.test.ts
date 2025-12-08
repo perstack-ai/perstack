@@ -25,24 +25,28 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        args: { path: "/test/image.png" },
-      },
-      toolResult: {
-        id: "tr_123",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        result: [
-          {
-            type: "textPart" as const,
-            text: JSON.stringify(imageInfo),
-            id: createId(),
-          },
-        ],
-      },
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          args: { path: "/test/image.png" },
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          result: [
+            {
+              type: "textPart" as const,
+              text: JSON.stringify(imageInfo),
+              id: createId(),
+            },
+          ],
+        },
+      ],
     })
     await expect(
       StateMachineLogics.ResolvingImageFile({
@@ -94,24 +98,28 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingImageFile']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        args: { path: "/nonexistent.png" },
-      },
-      toolResult: {
-        id: "tr_123",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        result: [
-          {
-            type: "textPart" as const,
-            text: JSON.stringify(imageInfo),
-            id: createId(),
-          },
-        ],
-      },
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          args: { path: "/nonexistent.png" },
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          result: [
+            {
+              type: "textPart" as const,
+              text: JSON.stringify(imageInfo),
+              id: createId(),
+            },
+          ],
+        },
+      ],
     })
     const result = await StateMachineLogics.ResolvingImageFile({
       setting,

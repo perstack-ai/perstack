@@ -8,12 +8,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_123",
-        skillName: "@perstack/math-expert",
-        toolName: "@perstack/math-expert",
-        args: { query: "Calculate 2 + 2" },
-      },
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/math-expert",
+          toolName: "@perstack/math-expert",
+          args: { query: "Calculate 2 + 2" },
+        },
+      ],
     })
     const skillManagers = {
       "@perstack/math-expert": {
@@ -74,7 +76,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: undefined,
+      toolCalls: undefined,
     })
     await expect(
       StateMachineLogics.CallingDelegate({
@@ -84,19 +86,21 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         eventListener: async () => {},
         skillManagers: {},
       }),
-    ).rejects.toThrow("No tool call found")
+    ).rejects.toThrow("No tool calls found")
   })
 
   it("throws error when skill manager missing", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_123",
-        skillName: "@perstack/math-expert",
-        toolName: "@perstack/math-expert",
-        args: { query: "Calculate 2 + 2" },
-      },
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/math-expert",
+          toolName: "@perstack/math-expert",
+          args: { query: "Calculate 2 + 2" },
+        },
+      ],
     })
     const skillManagers = {
       "@perstack/math-expert": {
@@ -128,12 +132,14 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep({
-      toolCall: {
-        id: "tc_123",
-        skillName: "@perstack/math-expert",
-        toolName: "@perstack/math-expert",
-        args: { query: undefined },
-      },
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/math-expert",
+          toolName: "@perstack/math-expert",
+          args: { query: undefined },
+        },
+      ],
     })
     const skillManagers = {
       "@perstack/math-expert": {
