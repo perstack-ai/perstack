@@ -170,8 +170,14 @@ export const runParamsSchema = z.object({
   setting: z.object({
     model: z.string(),
     providerConfig: providerConfigSchema,
-    jobId: z.string().optional().default(createId()),
-    runId: z.string().optional().default(createId()),
+    jobId: z
+      .string()
+      .optional()
+      .default(() => createId()),
+    runId: z
+      .string()
+      .optional()
+      .default(() => createId()),
     expertKey: z.string().min(1).regex(expertKeyRegex),
     input: z.object({
       text: z.string().optional(),
