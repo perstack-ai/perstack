@@ -36,6 +36,13 @@ const meta: MetaRecord = {
       copyPage: false,
     },
   },
+  "multi-runtime": {
+    title: "Multi-Runtime Support",
+    theme: {
+      timestamp: false,
+      copyPage: false,
+    },
+  },
 }
 
 export default meta
