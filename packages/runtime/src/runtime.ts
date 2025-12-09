@@ -34,7 +34,6 @@ import {
 } from "./run-setting-store.js"
 import { type ResolveExpertToRunFn, setupExperts } from "./setup-experts.js"
 import { getSkillManagers } from "./skill-manager/index.js"
-import { sumUsage } from "./usage.js"
 
 export async function run(
   runInput: RunParamsInput,
@@ -112,8 +111,8 @@ export async function run(
     })
     job = {
       ...job,
-      totalSteps: job.totalSteps + runResultCheckpoint.stepNumber,
-      usage: sumUsage(job.usage, runResultCheckpoint.usage),
+      totalSteps: runResultCheckpoint.stepNumber,
+      usage: runResultCheckpoint.usage,
     }
     switch (runResultCheckpoint.status) {
       case "completed": {

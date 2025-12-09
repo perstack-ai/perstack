@@ -2,12 +2,12 @@ import { existsSync, readFileSync } from "node:fs"
 import type { Checkpoint, Job, RunEvent, RunSetting } from "@perstack/core"
 import { checkpointSchema } from "@perstack/core"
 import {
+  getCheckpointPath,
+  getEventsByRun,
   getAllJobs as runtimeGetAllJobs,
   getAllRuns as runtimeGetAllRuns,
-  getCheckpointPath,
   getCheckpointsByJobId as runtimeGetCheckpointsByJobId,
   getEventContents as runtimeGetEventContents,
-  getEventsByRun,
 } from "@perstack/runtime"
 
 export function getAllJobs(): Job[] {
@@ -114,10 +114,6 @@ export function getEventsWithDetails(
     .sort((a, b) => a.timestamp - b.timestamp)
 }
 
-export function getEventContents(
-  jobId: string,
-  runId: string,
-  maxStepNumber?: number,
-): RunEvent[] {
+export function getEventContents(jobId: string, runId: string, maxStepNumber?: number): RunEvent[] {
   return runtimeGetEventContents(jobId, runId, maxStepNumber)
 }
