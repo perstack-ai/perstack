@@ -165,11 +165,11 @@ Job (jobId)
       └── Checkpoints...
 ```
 
-| Concept        | Description                                         |
-| -------------- | --------------------------------------------------- |
-| **Job**        | Top-level execution unit. Contains all Runs.        |
-| **Run**        | Single Expert execution.                            |
-| **Checkpoint** | Snapshot at step end. Enables pause/resume.         |
+| Concept        | Description                                  |
+| -------------- | -------------------------------------------- |
+| **Job**        | Top-level execution unit. Contains all Runs. |
+| **Run**        | Single Expert execution.                     |
+| **Checkpoint** | Snapshot at step end. Enables pause/resume.  |
 
 For details on step counting, Coordinator vs. Delegated Expert differences, and the full execution model, see [Runtime](https://docs.perstack.ai/understanding-perstack/runtime).
 

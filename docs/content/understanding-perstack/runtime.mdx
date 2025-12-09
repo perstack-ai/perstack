@@ -65,16 +65,18 @@ When `attemptCompletion` is called, the runtime checks the todo list. If incompl
 
 ### Step counting
 
-Each Run maintains its own `stepNumber`, starting from 1. The Job tracks total steps across all Runs:
+Step numbers are continuous across all Runs within a Job. When delegation occurs, the delegated Run continues from the parent's step number:
 
 ```
 Job (totalSteps = 8)
- ├── Run 1: stepNumber 1 → 2 → 3          (3 steps)
- ├── Run 2: stepNumber 1 → 2              (2 steps)
- └── Run 3: stepNumber 1 → 2 → 3          (3 steps)
+ ├── Run 1 (Coordinator): step 1 → 2 → delegates at step 3
+ │                              ↓
+ ├── Run 2 (Delegate A): step 3 → 4 → completes
+ │                              ↓
+ └── Run 1 continues: step 5 → 6 → 7 → 8
 ```
 
-The `maxSteps` limit applies to the Job's total steps, not individual Runs.
+The `maxSteps` limit applies to the Job's total steps across all Runs.
 
 ### Stopping and resuming
 

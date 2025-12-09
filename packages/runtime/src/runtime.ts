@@ -11,10 +11,10 @@ import {
   type RuntimeEvent,
   runParamsSchema,
   type Step,
-  type ToolMessage,
   type ToolResult,
-  type ToolResultPart,
+  type Usage,
 } from "@perstack/core"
+import { sumUsage } from "./usage.js"
 import pkg from "../package.json" with { type: "json" }
 import {
   buildDelegateToState,
@@ -160,6 +160,10 @@ export async function run(
             runDelegate(delegation, setting, runResultCheckpoint, expertToRun, options),
           ),
         )
+        const delegationUsage = [firstResult, ...restResults].reduce(
+          (acc, result) => sumUsage(acc, result.usage),
+          runResultCheckpoint.usage,
+        )
         const restToolResults: ToolResult[] = restResults.map((result) => ({
           id: result.toolCallId,
           skillName: `delegate/${result.expertKey}`,
@@ -185,6 +189,7 @@ export async function run(
           ...runResultCheckpoint,
           status: "stoppedByDelegate",
           delegateTo: undefined,
+          usage: delegationUsage,
           pendingToolCalls: remainingToolCalls?.length ? remainingToolCalls : undefined,
           partialToolResults: [
             ...(runResultCheckpoint.partialToolResults ?? []),
@@ -218,29 +223,12 @@ function getEventListener(options?: { eventListener?: (event: RunEvent | Runtime
   }
 }
 
-function createDelegateToolMessage(toolResults: ToolResult[]): ToolMessage {
-  const contents: ToolResultPart[] = toolResults.map((tr) => {
-    const textContent = tr.result.find((p) => p.type === "textPart")
-    return {
-      type: "toolResultPart" as const,
-      id: createId(),
-      toolCallId: tr.id,
-      toolName: tr.toolName,
-      contents: textContent ? [textContent] : [],
-    }
-  })
-  return {
-    type: "toolMessage",
-    id: createId(),
-    contents,
-  }
-}
-
 type DelegationResult = {
   toolCallId: string
   toolName: string
   expertKey: string
   text: string
+  usage: Usage
 }
 
 async function runDelegate(
@@ -249,10 +237,15 @@ async function runDelegate(
   parentCheckpoint: Checkpoint,
   parentExpert: Pick<Expert, "key" | "name" | "version">,
   options?: {
-    shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
+    shouldContinueRun?: (
+      setting: RunSetting,
+      checkpoint: Checkpoint,
+      step: Step,
+    ) => Promise<boolean>
     retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
     storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
     eventListener?: (event: RunEvent | RuntimeEvent) => void
+    resolveExpertToRun?: ResolveExpertToRunFn
     fileSystem?: FileSystem
     getRunDir?: GetRunDirFn
   },
@@ -307,6 +300,7 @@ async function runDelegate(
     toolName,
     expertKey: expert.key,
     text: textPart.text,
+    usage: resultCheckpoint.usage,
   }
 }
 

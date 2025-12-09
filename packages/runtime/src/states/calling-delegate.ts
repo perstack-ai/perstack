@@ -26,7 +26,9 @@ export async function callingDelegateLogic({
       type: await getToolType(tc.toolName, skillManagers),
     })),
   )
-  const delegateToolCalls = toolCallTypes.filter((t) => t.type === "delegate").map((t) => t.toolCall)
+  const delegateToolCalls = toolCallTypes
+    .filter((t) => t.type === "delegate")
+    .map((t) => t.toolCall)
   const nonDelegateToolCalls = toolCallTypes
     .filter((t) => t.type !== "delegate")
     .map((t) => t.toolCall)
