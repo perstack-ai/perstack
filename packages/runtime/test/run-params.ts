@@ -43,6 +43,7 @@ export function createRunSetting(overrides: Partial<RunParamsInput["setting"]> =
 export function createCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return checkpointSchema.parse({
     id: createId(),
+    jobId: createId(),
     runId: createId(),
     status: "proceeding",
     stepNumber: 1,

@@ -6,18 +6,18 @@ import type {
   EventHistoryItem,
   ExpertOption,
   InputState,
+  JobHistoryItem,
   PerstackEvent,
-  RunHistoryItem,
 } from "../../types/index.js"
 import { useErrorHandler } from "../core/use-error-handler.js"
 import type { InputAction } from "../state/use-input-state.js"
 
 type UseHistoryActionsOptions = {
   allExperts: ExpertOption[]
-  historyRuns?: RunHistoryItem[]
-  onLoadCheckpoints?: (run: RunHistoryItem) => Promise<CheckpointHistoryItem[]>
+  historyJobs?: JobHistoryItem[]
+  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
   onLoadEvents?: (
-    run: RunHistoryItem,
+    job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
   onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
@@ -32,7 +32,7 @@ type UseHistoryActionsOptions = {
 export const useHistoryActions = (options: UseHistoryActionsOptions) => {
   const {
     allExperts,
-    historyRuns,
+    historyJobs,
     onLoadCheckpoints,
     onLoadEvents,
     onResumeFromCheckpoint,
@@ -44,16 +44,16 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     setExpertName,
     onError,
   } = options
-  const [selectedRun, setSelectedRun] = useState<RunHistoryItem | null>(null)
+  const [selectedJob, setSelectedJob] = useState<JobHistoryItem | null>(null)
   const handleError = useErrorHandler(onError)
-  const handleRunSelect = useCallback(
-    async (run: RunHistoryItem) => {
+  const handleJobSelect = useCallback(
+    async (job: JobHistoryItem) => {
       try {
-        setSelectedRun(run)
-        setExpertName(run.expertKey)
+        setSelectedJob(job)
+        setExpertName(job.expertKey)
         if (onLoadCheckpoints) {
-          const checkpoints = await onLoadCheckpoints(run)
-          dispatch({ type: "SELECT_RUN", run, checkpoints })
+          const checkpoints = await onLoadCheckpoints(job)
+          dispatch({ type: "SELECT_JOB", job, checkpoints })
         }
       } catch (error) {
         handleError(error, "Failed to load checkpoints")
@@ -61,13 +61,13 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     },
     [onLoadCheckpoints, dispatch, setExpertName, handleError],
   )
-  const handleRunResume = useCallback(
-    async (run: RunHistoryItem) => {
+  const handleJobResume = useCallback(
+    async (job: JobHistoryItem) => {
       try {
-        setSelectedRun(run)
-        setExpertName(run.expertKey)
+        setSelectedJob(job)
+        setExpertName(job.expertKey)
         if (onLoadCheckpoints && onResumeFromCheckpoint) {
-          const checkpoints = await onLoadCheckpoints(run)
+          const checkpoints = await onLoadCheckpoints(job)
           const latestCheckpoint = checkpoints[0]
           if (latestCheckpoint) {
             if (onLoadHistoricalEvents) {
@@ -76,12 +76,12 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
             }
             setCurrentStep(latestCheckpoint.stepNumber)
             setContextWindowUsage(latestCheckpoint.contextWindowUsage)
-            dispatch({ type: "RESUME_CHECKPOINT", expertKey: run.expertKey })
+            dispatch({ type: "RESUME_CHECKPOINT", expertKey: job.expertKey })
             onResumeFromCheckpoint(latestCheckpoint)
           }
         }
       } catch (error) {
-        handleError(error, "Failed to resume run")
+        handleError(error, "Failed to resume job")
       }
     },
     [
@@ -99,15 +99,15 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
   const handleCheckpointSelect = useCallback(
     async (checkpoint: CheckpointHistoryItem) => {
       try {
-        if (selectedRun && onLoadEvents) {
-          const eventsData = await onLoadEvents(selectedRun, checkpoint)
-          dispatch({ type: "SELECT_CHECKPOINT", run: selectedRun, checkpoint, events: eventsData })
+        if (selectedJob && onLoadEvents) {
+          const eventsData = await onLoadEvents(selectedJob, checkpoint)
+          dispatch({ type: "SELECT_CHECKPOINT", job: selectedJob, checkpoint, events: eventsData })
         }
       } catch (error) {
         handleError(error, "Failed to load events")
       }
     },
-    [selectedRun, onLoadEvents, dispatch, handleError],
+    [selectedJob, onLoadEvents, dispatch, handleError],
   )
   const handleCheckpointResume = useCallback(
     async (checkpoint: CheckpointHistoryItem) => {
@@ -118,7 +118,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
         }
         setCurrentStep(checkpoint.stepNumber)
         setContextWindowUsage(checkpoint.contextWindowUsage)
-        dispatch({ type: "RESUME_CHECKPOINT", expertKey: selectedRun?.expertKey || "" })
+        dispatch({ type: "RESUME_CHECKPOINT", expertKey: selectedJob?.expertKey || "" })
         onResumeFromCheckpoint(checkpoint)
       }
     },
@@ -129,25 +129,25 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
       setCurrentStep,
       setContextWindowUsage,
       dispatch,
-      selectedRun?.expertKey,
+      selectedJob?.expertKey,
     ],
   )
   const handleBackFromEvents = useCallback(async () => {
     try {
-      if (selectedRun && onLoadCheckpoints) {
-        const checkpoints = await onLoadCheckpoints(selectedRun)
-        dispatch({ type: "GO_BACK_FROM_EVENTS", run: selectedRun, checkpoints })
+      if (selectedJob && onLoadCheckpoints) {
+        const checkpoints = await onLoadCheckpoints(selectedJob)
+        dispatch({ type: "GO_BACK_FROM_EVENTS", job: selectedJob, checkpoints })
       }
     } catch (error) {
       handleError(error, "Failed to go back from events")
     }
-  }, [selectedRun, onLoadCheckpoints, dispatch, handleError])
+  }, [selectedJob, onLoadCheckpoints, dispatch, handleError])
   const handleBackFromCheckpoints = useCallback(() => {
-    if (historyRuns) {
-      setSelectedRun(null)
-      dispatch({ type: "GO_BACK_FROM_CHECKPOINTS", historyRuns })
+    if (historyJobs) {
+      setSelectedJob(null)
+      dispatch({ type: "GO_BACK_FROM_CHECKPOINTS", historyJobs })
     }
-  }, [historyRuns, dispatch])
+  }, [historyJobs, dispatch])
   const handleEventSelect = useCallback(
     (state: BrowsingEventsState, event: EventHistoryItem) => {
       dispatch({
@@ -189,14 +189,14 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     dispatch({ type: "BROWSE_EXPERTS", experts: allExperts })
   }, [dispatch, allExperts])
   const handleSwitchToHistory = useCallback(() => {
-    if (historyRuns) {
-      dispatch({ type: "BROWSE_HISTORY", runs: historyRuns })
+    if (historyJobs) {
+      dispatch({ type: "BROWSE_HISTORY", jobs: historyJobs })
     }
-  }, [dispatch, historyRuns])
+  }, [dispatch, historyJobs])
   return {
-    selectedRun,
-    handleRunSelect,
-    handleRunResume,
+    selectedJob,
+    handleJobSelect,
+    handleJobResume,
     handleCheckpointSelect,
     handleCheckpointResume,
     handleEventSelect,

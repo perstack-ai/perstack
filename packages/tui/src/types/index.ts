@@ -5,6 +5,7 @@ export type {
   EventResult,
   ExpertOption,
   InitialRuntimeConfig,
+  JobHistoryItem,
   PerstackEvent,
   RunHistoryItem,
   RuntimeInfo,

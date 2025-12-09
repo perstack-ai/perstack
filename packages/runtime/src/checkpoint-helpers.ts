@@ -2,6 +2,7 @@ import type { Checkpoint, Expert, RunSetting } from "@perstack/core"
 import { createEmptyUsage } from "./usage.js"
 
 export type CreateInitialCheckpointParams = {
+  jobId: string
   runId: string
   expertKey: string
   expert: Pick<Expert, "name" | "version">
@@ -14,6 +15,7 @@ export function createInitialCheckpoint(
 ): Checkpoint {
   return {
     id: checkpointId,
+    jobId: params.jobId,
     runId: params.runId,
     expert: {
       key: params.expertKey,
@@ -68,6 +70,7 @@ export function buildDelegationReturnState(
         interactiveToolCallResult: {
           toolCallId,
           toolName,
+          skillName: `delegate/${resultCheckpoint.expert.key}`,
           text: delegateText.text,
         },
       },
@@ -88,10 +91,11 @@ export function buildDelegateToState(
   currentExpert: Pick<Expert, "key" | "name" | "version">,
 ): DelegationStateResult {
   const { delegateTo } = resultCheckpoint
-  if (!delegateTo) {
+  if (!delegateTo || delegateTo.length === 0) {
     throw new Error("delegateTo is required for buildDelegateToState")
   }
-  const { expert, toolCallId, toolName, query } = delegateTo
+  const firstDelegation = delegateTo[0]
+  const { expert, toolCallId, toolName, query } = firstDelegation
   return {
     setting: {
       ...currentSetting,

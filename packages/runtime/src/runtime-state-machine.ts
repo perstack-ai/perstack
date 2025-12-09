@@ -204,7 +204,7 @@ export const runtimeStateMachine = setup({
               ({
                 ...context.step,
                 newMessages: [event.newMessage],
-                toolCalls: [event.toolCall],
+                toolCalls: event.toolCalls,
                 usage: sumUsage(context.step.usage, event.usage),
               }) satisfies Step,
           }),

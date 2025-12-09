@@ -13,6 +13,7 @@ import { createEmptyUsage } from "./usage.js"
 function createTestCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {
     id: createId(),
+    jobId: overrides.jobId ?? createId(),
     runId: createId(),
     status: "proceeding",
     stepNumber: 1,
@@ -35,6 +36,7 @@ function createTestEvent(overrides: Partial<RunEvent> = {}): RunEvent {
     id: createId(),
     expertKey: "test-expert",
     timestamp: Date.now(),
+    jobId: createId(),
     runId: createId(),
     stepNumber: 1,
     ...overrides,
@@ -42,36 +44,35 @@ function createTestEvent(overrides: Partial<RunEvent> = {}): RunEvent {
 }
 
 describe("@perstack/runtime: default-store", () => {
+  const testJobId = `test-job-${Date.now()}`
   const testRunId = `test-run-${Date.now()}`
-  const testRunDir = `${process.cwd()}/perstack/runs/${testRunId}`
+  const testJobDir = `${process.cwd()}/perstack/jobs/${testJobId}`
+  const testCheckpointDir = `${testJobDir}/checkpoints`
+  const testRunDir = `${testJobDir}/runs/${testRunId}`
 
   beforeEach(async () => {
-    await fs.rm(testRunDir, { recursive: true, force: true })
+    await fs.rm(testJobDir, { recursive: true, force: true })
   })
 
   afterEach(async () => {
-    await fs.rm(testRunDir, { recursive: true, force: true })
+    await fs.rm(testJobDir, { recursive: true, force: true })
   })
 
   describe("defaultStoreCheckpoint", () => {
     it("stores checkpoint to filesystem", async () => {
-      const checkpoint = createTestCheckpoint({ runId: testRunId })
-      const timestamp = Date.now()
-      await defaultStoreCheckpoint(checkpoint, timestamp)
-      const expectedPath = path.join(
-        testRunDir,
-        `checkpoint-${timestamp}-${checkpoint.stepNumber}-${checkpoint.id}.json`,
-      )
+      const checkpoint = createTestCheckpoint({ jobId: testJobId, runId: testRunId })
+      await defaultStoreCheckpoint(checkpoint)
+      const expectedPath = path.join(testCheckpointDir, `${checkpoint.id}.json`)
       const stored = JSON.parse(await fs.readFile(expectedPath, "utf-8"))
       expect(stored.id).toBe(checkpoint.id)
       expect(stored.runId).toBe(checkpoint.runId)
     })
 
-    it("creates run directory if not exists", async () => {
-      const checkpoint = createTestCheckpoint({ runId: testRunId })
-      await defaultStoreCheckpoint(checkpoint, Date.now())
+    it("creates checkpoints directory if not exists", async () => {
+      const checkpoint = createTestCheckpoint({ jobId: testJobId, runId: testRunId })
+      await defaultStoreCheckpoint(checkpoint)
       const dirExists = await fs
-        .stat(testRunDir)
+        .stat(testCheckpointDir)
         .then(() => true)
         .catch(() => false)
       expect(dirExists).toBe(true)
@@ -80,17 +81,15 @@ describe("@perstack/runtime: default-store", () => {
 
   describe("defaultRetrieveCheckpoint", () => {
     it("retrieves stored checkpoint by id", async () => {
-      const checkpoint = createTestCheckpoint({ runId: testRunId })
-      const timestamp = Date.now()
-      await defaultStoreCheckpoint(checkpoint, timestamp)
-      const retrieved = await defaultRetrieveCheckpoint(testRunId, checkpoint.id)
+      const checkpoint = createTestCheckpoint({ jobId: testJobId, runId: testRunId })
+      await defaultStoreCheckpoint(checkpoint)
+      const retrieved = await defaultRetrieveCheckpoint(testJobId, checkpoint.id)
       expect(retrieved.id).toBe(checkpoint.id)
       expect(retrieved.runId).toBe(checkpoint.runId)
     })
 
     it("throws error when checkpoint not found", async () => {
-      await fs.mkdir(testRunDir, { recursive: true })
-      await expect(defaultRetrieveCheckpoint(testRunId, "nonexistent-id")).rejects.toThrow(
+      await expect(defaultRetrieveCheckpoint(testJobId, "nonexistent-id")).rejects.toThrow(
         "checkpoint not found",
       )
     })
@@ -98,7 +97,7 @@ describe("@perstack/runtime: default-store", () => {
 
   describe("defaultStoreEvent", () => {
     it("stores event to filesystem", async () => {
-      const event = createTestEvent({ runId: testRunId })
+      const event = createTestEvent({ jobId: testJobId, runId: testRunId })
       await defaultStoreEvent(event)
       const expectedPath = path.join(
         testRunDir,
@@ -110,7 +109,7 @@ describe("@perstack/runtime: default-store", () => {
     })
 
     it("creates run directory if not exists", async () => {
-      const event = createTestEvent({ runId: testRunId })
+      const event = createTestEvent({ jobId: testJobId, runId: testRunId })
       await defaultStoreEvent(event)
       const dirExists = await fs
         .stat(testRunDir)
@@ -120,4 +119,3 @@ describe("@perstack/runtime: default-store", () => {
     })
   })
 })
-

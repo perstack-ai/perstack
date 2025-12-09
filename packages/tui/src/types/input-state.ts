@@ -2,7 +2,7 @@ import type {
   CheckpointHistoryItem,
   EventHistoryItem,
   ExpertOption,
-  RunHistoryItem,
+  JobHistoryItem,
 } from "./base.js"
 
 export type EnteringQueryState = {
@@ -14,7 +14,7 @@ export type RunningState = {
 }
 export type BrowsingHistoryState = {
   type: "browsingHistory"
-  runs: RunHistoryItem[]
+  jobs: JobHistoryItem[]
 }
 export type BrowsingExpertsState = {
   type: "browsingExperts"
@@ -22,7 +22,7 @@ export type BrowsingExpertsState = {
 }
 export type BrowsingCheckpointsState = {
   type: "browsingCheckpoints"
-  run: RunHistoryItem
+  job: JobHistoryItem
   checkpoints: CheckpointHistoryItem[]
 }
 export type BrowsingEventsState = {

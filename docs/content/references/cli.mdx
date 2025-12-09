@@ -49,8 +49,8 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--max-steps <n>` | Maximum steps | unlimited |
-| `--max-retries <n>` | Max retry attempts | `5` |
+| `--max-steps <n>` | Maximum total steps across all Runs in a Job | unlimited |
+| `--max-retries <n>` | Max retry attempts per generation | `5` |
 | `--timeout <ms>` | Timeout per generation (ms) | `60000` |
 
 ### Configuration
@@ -60,14 +60,29 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 | `--config <path>` | Path to `perstack.toml` | Auto-discover from cwd |
 | `--env-path <path...>` | Environment file paths | `.env`, `.env.local` |
 
-### Run Management
+### Job and Run Management
 
 | Option | Description |
 |--------|-------------|
-| `--run-id <id>` | Custom run ID (default: auto-generated) |
-| `--continue` | Continue latest run with new query |
-| `--continue-run <id>` | Continue specific run |
-| `--resume-from <id>` | Resume from specific checkpoint |
+| `--job-id <id>` | Custom Job ID for new Job (default: auto-generated) |
+| `--continue` | Continue latest Job with new Run |
+| `--continue-job <id>` | Continue specific Job with new Run |
+| `--resume-from <id>` | Resume from specific checkpoint (requires `--continue-job`) |
+
+**Combining options:**
+
+```bash
+# Continue latest Job from its latest checkpoint
+--continue
+
+# Continue specific Job from its latest checkpoint
+--continue-job <jobId>
+
+# Continue specific Job from a specific checkpoint
+--continue-job <jobId> --resume-from <checkpointId>
+```
+
+**Note:** `--resume-from` requires `--continue-job` (Job ID must be specified). You can only resume from the Coordinator Expert's checkpoints.
 
 ### Interactive
 
@@ -75,7 +90,7 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 |--------|-------------|
 | `-i, --interactive-tool-call-result` | Treat query as interactive tool call result |
 
-Use with `--continue` to respond to interactive tool calls.
+Use with `--continue` to respond to interactive tool calls from the Coordinator Expert.
 
 ### Other
 
@@ -86,7 +101,7 @@ Use with `--continue` to respond to interactive tool calls.
 ## Examples
 
 ```bash
-# Basic execution
+# Basic execution (creates new Job)
 npx perstack run my-expert "Review this code"
 
 # With model options
@@ -96,12 +111,23 @@ npx perstack run my-expert "query" \
   --temperature 0.7 \
   --max-steps 100
 
-# Continue execution
+# Continue Job with follow-up
 npx perstack run my-expert "initial query"
 npx perstack run my-expert "follow-up" --continue
 
-# Continue specific run
-npx perstack run my-expert "continue" --continue-run abc123
+# Continue specific Job from latest checkpoint
+npx perstack run my-expert "continue" --continue-job job_abc123
+
+# Continue specific Job from specific checkpoint
+npx perstack run my-expert "retry with different approach" \
+  --continue-job job_abc123 \
+  --resume-from checkpoint_xyz
+
+# Custom Job ID for new Job
+npx perstack run my-expert "query" --job-id my-custom-job
+
+# Respond to interactive tool call
+npx perstack run my-expert "user response" --continue -i
 
 # Custom config
 npx perstack run my-expert "query" \

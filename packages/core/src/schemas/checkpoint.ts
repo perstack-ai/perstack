@@ -28,6 +28,18 @@ export const checkpointStatusSchema = z.enum([
   "stoppedByError",
 ])
 
+/** Information about a delegation target */
+export interface DelegationTarget {
+  expert: {
+    key: string
+    name: string
+    version: string
+  }
+  toolCallId: string
+  toolName: string
+  query: string
+}
+
 /**
  * A checkpoint represents a point-in-time snapshot of an Expert's execution state.
  * Used for resuming, debugging, and observability.
@@ -35,11 +47,13 @@ export const checkpointStatusSchema = z.enum([
 export interface Checkpoint {
   /** Unique identifier for this checkpoint */
   id: string
+  /** Job ID this checkpoint belongs to */
+  jobId: string
   /** Run ID this checkpoint belongs to */
   runId: string
   /** Current execution status */
   status: CheckpointStatus
-  /** Current step number */
+  /** Current step number within this Run */
   stepNumber: number
   /** All messages in the conversation so far */
   messages: Message[]
@@ -52,21 +66,8 @@ export interface Checkpoint {
     /** Expert version */
     version: string
   }
-  /** If delegating, information about the target Expert */
-  delegateTo?: {
-    /** The Expert being delegated to */
-    expert: {
-      key: string
-      name: string
-      version: string
-    }
-    /** Tool call ID that triggered delegation */
-    toolCallId: string
-    /** Name of the delegation tool */
-    toolName: string
-    /** Query passed to the delegate */
-    query: string
-  }
+  /** If delegating, information about the target Expert(s) - supports parallel delegation */
+  delegateTo?: DelegationTarget[]
   /** If delegated, information about the parent Expert */
   delegatedBy?: {
     /** The parent Expert that delegated */
@@ -94,8 +95,21 @@ export interface Checkpoint {
   partialToolResults?: ToolResult[]
 }
 
+export const delegationTargetSchema = z.object({
+  expert: z.object({
+    key: z.string(),
+    name: z.string(),
+    version: z.string(),
+  }),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  query: z.string(),
+})
+delegationTargetSchema satisfies z.ZodType<DelegationTarget>
+
 export const checkpointSchema = z.object({
   id: z.string(),
+  jobId: z.string(),
   runId: z.string(),
   status: checkpointStatusSchema,
   stepNumber: z.number(),
@@ -105,18 +119,7 @@ export const checkpointSchema = z.object({
     name: z.string(),
     version: z.string(),
   }),
-  delegateTo: z
-    .object({
-      expert: z.object({
-        key: z.string(),
-        name: z.string(),
-        version: z.string(),
-      }),
-      toolCallId: z.string(),
-      toolName: z.string(),
-      query: z.string(),
-    })
-    .optional(),
+  delegateTo: z.array(delegationTargetSchema).optional(),
   delegatedBy: z
     .object({
       expert: z.object({

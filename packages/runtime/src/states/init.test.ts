@@ -24,6 +24,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       initialCheckpoint: checkpoint,
@@ -65,20 +66,24 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
   it("resumes from stopped by delegate correctly", async () => {
     const setting = createRunSetting({
       input: {
-        interactiveToolCallResult: { toolCallId: "123", toolName: "test", text: "test-delegate" },
+        interactiveToolCallResult: {
+          toolCallId: "123",
+          toolName: "test",
+          skillName: "test-skill",
+          text: "test-delegate",
+        },
       },
     })
     const checkpoint = createCheckpoint({
       status: "stoppedByDelegate",
-      pendingToolCalls: [{ id: "123", skillName: "test-skill", toolName: "test", args: {} }],
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers: {},
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -114,21 +119,21 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         interactiveToolCallResult: {
           toolCallId: "123",
           toolName: "test",
+          skillName: "test-skill",
           text: "test-interactive-tool",
         },
       },
     })
     const checkpoint = createCheckpoint({
       status: "stoppedByInteractiveTool",
-      pendingToolCalls: [{ id: "123", skillName: "test-skill", toolName: "test", args: {} }],
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers: {},
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -179,6 +184,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       initialCheckpoint: checkpoint,

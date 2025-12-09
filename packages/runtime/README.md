@@ -12,22 +12,22 @@ npm install @perstack/runtime
 
 ## Usage
 
-The primary entry point is the `run` function. It takes a `RunSetting` object and an optional `RunOptions` object.
+The primary entry point is the `run` function. It takes a `JobSetting` object and an optional `RunOptions` object.
 
 ```typescript
 import { run } from "@perstack/runtime"
-import { type RunSetting } from "@perstack/core"
+import { type JobSetting } from "@perstack/core"
 
-// Configure the run
-const setting: RunSetting = {
-  runId: "run-123",
+// Configure the job
+const setting: JobSetting = {
+  jobId: "job-123",
   expertKey: "researcher",
   input: { text: "Research quantum computing" },
   // ... configuration for model, experts, etc.
 }
 
-// Execute the run
-const finalCheckpoint = await run({ setting }, {
+// Execute the job
+const finalJob = await run({ setting }, {
   eventListener: (event) => {
     console.log(`[${event.type}]`, event)
   }
@@ -43,8 +43,9 @@ type RunEvent = {
   type: EventType       // e.g., "startRun", "callTools"
   id: string            // Unique event ID
   timestamp: number     // Unix timestamp
-  runId: string         // ID of the current run
-  stepNumber: number    // Current step number
+  jobId: string         // ID of the Job
+  runId: string         // ID of the current Run
+  stepNumber: number    // Current step number within this Run
   // ... plus payload specific to the event type
 }
 ```
@@ -72,17 +73,19 @@ eventListener: (event) => {
 
 The runtime manages skills through specialized Skill Managers. Each skill type has its own manager class:
 
-| Type            | Manager                   | Purpose                            |
-| --------------- | ------------------------- | ---------------------------------- |
-| MCP (stdio/SSE) | `McpSkillManager`         | External tools via MCP protocol    |
-| Interactive     | `InteractiveSkillManager` | User input tools (pause execution) |
-| Delegate        | `DelegateSkillManager`    | Expert-to-Expert calls             |
+| Type            | Manager                   | Purpose                             |
+| --------------- | ------------------------- | ----------------------------------- |
+| MCP (stdio/SSE) | `McpSkillManager`         | External tools via MCP protocol     |
+| Interactive     | `InteractiveSkillManager` | User input tools (Coordinator only) |
+| Delegate        | `DelegateSkillManager`    | Expert-to-Expert calls              |
 
 All managers extend `BaseSkillManager` which provides:
 - `init()` — Initialize the skill (connect MCP servers, parse definitions)
 - `close()` — Clean up resources (disconnect MCP servers)
 - `getToolDefinitions()` — Get available tools
 - `callTool()` — Execute a tool call
+
+**Note:** Interactive skills are only available to the Coordinator Expert. See [Experts documentation](https://docs.perstack.ai/understanding-perstack/experts#why-no-interactive-tools-for-delegates) for details.
 
 ### Initialization Flow
 
@@ -92,7 +95,7 @@ getSkillManagers(expert, experts, setting)
     ├─► Initialize MCP skills (parallel)
     │   └─► McpSkillManager × N
     │
-    ├─► Initialize Interactive skills (parallel)
+    ├─► Initialize Interactive skills (Coordinator only)
     │   └─► InteractiveSkillManager × N
     │
     └─► Initialize Delegate skills (parallel)
@@ -113,15 +116,20 @@ graph TD
     User((User)) -->|Provides| Input[Input / Query]
     
     subgraph Runtime [Runtime Engine]
-        subgraph Instance [Expert Instance]
-            State[State Machine]
-            Context[Execution Context]
-            
-            subgraph Skills [Skill Layer]
-                SM[Skill Manager]
-                MCP[MCP Client]
-                MCPServer[MCP Server]
+        subgraph Job [Job]
+            subgraph Run1 [Run: Coordinator]
+                State[State Machine]
+                Context[Execution Context]
+                
+                subgraph Skills [Skill Layer]
+                    SM[Skill Manager]
+                    MCP[MCP Client]
+                    MCPServer[MCP Server]
+                end
             end
+            
+            Run2["Run: Delegate A"]
+            Run3["Run: Delegate B"]
         end
     end
 
@@ -130,8 +138,8 @@ graph TD
         Workspace[Workspace / FS]
     end
 
-    Def -->|Instantiates| Instance
-    Input -->|Starts| Instance
+    Def -->|Instantiates| Run1
+    Input -->|Starts| Run1
 
     State -->|Reasoning| LLM
     State -->|Act| SM
@@ -139,12 +147,33 @@ graph TD
     MCP -->|Connect| MCPServer
     MCPServer -->|Access| Workspace
     
-    SM -.->|Delegate| Instance2["Expert Instance (Delegate)"]
-
-    State ~~~ Context
+    SM -.->|Delegate| Run2
+    SM -.->|Delegate| Run3
 ```
 
 ## Core Concepts
+
+### Execution Hierarchy
+
+```
+Job (jobId)
+ ├── Run 1 (Coordinator Expert)
+ │    └── Checkpoints...
+ ├── Run 2 (Delegated Expert A)
+ │    └── Checkpoints...
+ └── Run 3 (Delegated Expert B)
+      └── Checkpoints...
+```
+
+| Concept        | Description                                  |
+| -------------- | -------------------------------------------- |
+| **Job**        | Top-level execution unit. Contains all Runs. |
+| **Run**        | Single Expert execution.                     |
+| **Checkpoint** | Snapshot at step end. Enables pause/resume.  |
+
+For details on step counting, Coordinator vs. Delegated Expert differences, and the full execution model, see [Runtime](https://docs.perstack.ai/understanding-perstack/runtime).
+
+### Events, Steps, Checkpoints
 
 The runtime's execution model can be visualized as a timeline where **Events** are points, **Steps** are the lines connecting them, and **Checkpoints** are the anchors.
 
@@ -164,13 +193,13 @@ graph LR
     style CP2 fill:#f96,stroke:#333,stroke-width:4px
 ```
 
-### 1. Events
+#### 1. Events
 **Events** are granular moments in time that occur *during* execution. They represent specific actions or observations, such as "started reasoning", "called tool", or "finished tool".
 
-### 2. Step
+#### 2. Step
 A **Step** is the continuous process that connects these events. It represents one atomic cycle of the agent's loop (Reasoning -> Act -> Observe, repeat).
 
-### 3. Checkpoint
+#### 3. Checkpoint
 A **Checkpoint** is the immutable result at the end of a Step. It serves as the anchor point that:
 - Finalizes the previous Step.
 - Becomes the starting point for the next Step.
@@ -194,7 +223,7 @@ stateDiagram-v2
     CallingTools --> ResolvingToolResults: resolveToolResults
     CallingTools --> ResolvingThought: resolveThought
     CallingTools --> GeneratingRunResult: attemptCompletion
-    CallingTools --> CallingDelegate: callDelegate
+    CallingTools --> CallingDelegate: callDelegates
     CallingTools --> CallingInteractiveTool: callInteractiveTool
 
     ResolvingToolResults --> FinishingStep: finishToolCall
@@ -216,24 +245,24 @@ Events trigger state transitions. They are emitted by the runtime logic or exter
 - **Lifecycle**: `startRun`, `startGeneration`, `continueToNextStep`, `completeRun`
 - **Tool Execution**: `callTools`, `resolveToolResults`, `finishToolCall`, `resumeToolCalls`, `finishAllToolCalls`
 - **Special Types**: `resolveThought`
-- **Mixed Tool Calls**: `callDelegate`, `callInteractiveTool` (from CallingTools state)
+- **Delegation**: `callDelegate` (triggers new Run(s) for delegate(s), parallel when multiple)
+- **Interactive**: `callInteractiveTool` (Coordinator only)
 - **Interruption**: `stopRunByInteractiveTool`, `stopRunByDelegate`, `stopRunByExceededMaxSteps`
 - **Error Handling**: `retry`
 
 ## Checkpoint Status
 
-The `status` field in a Checkpoint indicates the current state of the execution.
+The `status` field in a Checkpoint indicates the current state:
 
-- **init**: The run has been created but not yet started.
-- **proceeding**: The run is currently active and executing steps.
-- **completed**: The run has finished successfully.
-- **stoppedByInteractiveTool**: The run is paused, waiting for user input (e.g., confirmation or parameter entry).
-- **stoppedByDelegate**: The run is paused, waiting for a delegated sub-agent to complete.
-- **stoppedByExceededMaxSteps**: The run stopped because it reached the maximum allowed steps.
-- **stoppedByError**: The run stopped due to an unrecoverable error.
+- `init`, `proceeding` — Run lifecycle
+- `completed` — Task finished successfully
+- `stoppedByInteractiveTool`, `stoppedByDelegate` — Waiting for external input
+- `stoppedByExceededMaxSteps`, `stoppedByError` — Run stopped
+
+For stop reasons and error handling, see [Error Handling](https://docs.perstack.ai/using-experts/error-handling).
 
 ## Related Documentation
 
-- [Running Experts](https://perstack.ai/docs/using-experts/running-experts) - How to run Experts
-- [State Management](https://perstack.ai/docs/using-experts/state-management) - Understanding checkpoints and state
-
+- [Runtime](https://docs.perstack.ai/understanding-perstack/runtime) — Full execution model
+- [State Management](https://docs.perstack.ai/using-experts/state-management) — Jobs, Runs, and Checkpoints
+- [Running Experts](https://docs.perstack.ai/using-experts/running-experts) — CLI usage

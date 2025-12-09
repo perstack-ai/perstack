@@ -41,6 +41,7 @@ describe("@perstack/core: parseExpertKey", () => {
 
 describe("@perstack/core: createEvent", () => {
   const mockSetting = {
+    jobId: "job-123",
     runId: "run-123",
     expertKey: "test-expert",
     model: "test-model",
@@ -57,6 +58,7 @@ describe("@perstack/core: createEvent", () => {
   }
   const mockCheckpoint = {
     id: "cp-123",
+    jobId: "job-123",
     runId: "run-123",
     expert: { key: "test-expert", name: "test-expert", version: "1.0.0" },
     stepNumber: 1,
@@ -78,6 +80,7 @@ describe("@perstack/core: createEvent", () => {
       inputMessages: [],
     })
     expect(event.type).toBe("startRun")
+    expect(event.jobId).toBe("job-123")
     expect(event.runId).toBe("run-123")
     expect(event.expertKey).toBe("test-expert")
     expect(event.stepNumber).toBe(1)
@@ -88,7 +91,7 @@ describe("@perstack/core: createEvent", () => {
 
 describe("@perstack/core: createRuntimeEvent", () => {
   it("creates initializeRuntime event", () => {
-    const event = createRuntimeEvent("initializeRuntime", "run-123", {
+    const event = createRuntimeEvent("initializeRuntime", "job-123", "run-123", {
       runtimeVersion: "1.0.0",
       expertName: "test-expert",
       experts: ["expert-1", "expert-2"],
@@ -98,6 +101,7 @@ describe("@perstack/core: createRuntimeEvent", () => {
       timeout: 30000,
     })
     expect(event.type).toBe("initializeRuntime")
+    expect(event.jobId).toBe("job-123")
     expect(event.runId).toBe("run-123")
     expect(event.runtimeVersion).toBe("1.0.0")
     expect(event.id).toBeDefined()
@@ -105,20 +109,22 @@ describe("@perstack/core: createRuntimeEvent", () => {
   })
 
   it("creates skillConnected event", () => {
-    const event = createRuntimeEvent("skillConnected", "run-456", {
+    const event = createRuntimeEvent("skillConnected", "job-456", "run-456", {
       skillName: "@perstack/base",
       serverInfo: { name: "base", version: "1.0.0" },
     })
     expect(event.type).toBe("skillConnected")
+    expect(event.jobId).toBe("job-456")
     expect(event.runId).toBe("run-456")
     expect(event.skillName).toBe("@perstack/base")
   })
 
   it("creates skillDisconnected event", () => {
-    const event = createRuntimeEvent("skillDisconnected", "run-789", {
+    const event = createRuntimeEvent("skillDisconnected", "job-789", "run-789", {
       skillName: "@perstack/base",
     })
     expect(event.type).toBe("skillDisconnected")
+    expect(event.jobId).toBe("job-789")
     expect(event.skillName).toBe("@perstack/base")
   })
 })

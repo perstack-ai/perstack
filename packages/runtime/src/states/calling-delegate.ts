@@ -1,6 +1,15 @@
-import { type RunEvent, stopRunByDelegate } from "@perstack/core"
+import { type DelegationTarget, type RunEvent, stopRunByDelegate } from "@perstack/core"
 import type { RunSnapshot } from "../runtime-state-machine.js"
+import type { BaseSkillManager } from "../skill-manager/index.js"
 import { getSkillManagerByToolName } from "../skill-manager/index.js"
+
+async function getToolType(
+  toolName: string,
+  skillManagers: Record<string, BaseSkillManager>,
+): Promise<"mcp" | "delegate" | "interactive"> {
+  const skillManager = await getSkillManagerByToolName(skillManagers, toolName)
+  return skillManager.type
+}
 
 export async function callingDelegateLogic({
   setting,
@@ -11,35 +20,48 @@ export async function callingDelegateLogic({
   if (!step.pendingToolCalls || step.pendingToolCalls.length === 0) {
     throw new Error("No pending tool calls found")
   }
-  const toolCall = step.pendingToolCalls[0]
-  if (!toolCall) {
-    throw new Error("No pending tool call found")
+  const toolCallTypes = await Promise.all(
+    step.pendingToolCalls.map(async (tc) => ({
+      toolCall: tc,
+      type: await getToolType(tc.toolName, skillManagers),
+    })),
+  )
+  const delegateToolCalls = toolCallTypes
+    .filter((t) => t.type === "delegate")
+    .map((t) => t.toolCall)
+  const nonDelegateToolCalls = toolCallTypes
+    .filter((t) => t.type !== "delegate")
+    .map((t) => t.toolCall)
+  if (delegateToolCalls.length === 0) {
+    throw new Error("No delegate tool calls found")
   }
-  const { id, toolName, args } = toolCall
-  const skillManager = await getSkillManagerByToolName(skillManagers, toolName)
-  if (!skillManager.expert) {
-    throw new Error(`Delegation error: skill manager "${toolName}" not found`)
-  }
-  if (!args || !args.query || typeof args.query !== "string") {
-    throw new Error("Delegation error: query is undefined")
-  }
-  const currentToolCall = step.pendingToolCalls[0]
-  const remainingToolCalls = step.pendingToolCalls.slice(1)
-  return stopRunByDelegate(setting, checkpoint, {
-    checkpoint: {
-      ...checkpoint,
-      status: "stoppedByDelegate",
-      delegateTo: {
+  const delegations: DelegationTarget[] = await Promise.all(
+    delegateToolCalls.map(async (tc) => {
+      const skillManager = await getSkillManagerByToolName(skillManagers, tc.toolName)
+      if (!skillManager.expert) {
+        throw new Error(`Delegation error: skill manager "${tc.toolName}" not found`)
+      }
+      if (!tc.args || !tc.args.query || typeof tc.args.query !== "string") {
+        throw new Error(`Delegation error: query is undefined for ${tc.toolName}`)
+      }
+      return {
         expert: {
           key: skillManager.expert.key,
           name: skillManager.expert.name,
           version: skillManager.expert.version,
         },
-        toolCallId: id,
-        toolName,
-        query: args.query,
-      },
-      pendingToolCalls: [currentToolCall, ...remainingToolCalls],
+        toolCallId: tc.id,
+        toolName: tc.toolName,
+        query: tc.args.query,
+      }
+    }),
+  )
+  return stopRunByDelegate(setting, checkpoint, {
+    checkpoint: {
+      ...checkpoint,
+      status: "stoppedByDelegate",
+      delegateTo: delegations,
+      pendingToolCalls: nonDelegateToolCalls.length > 0 ? nonDelegateToolCalls : undefined,
       partialToolResults: step.partialToolResults,
     },
     step: {

@@ -2,7 +2,7 @@ import type { Checkpoint, PerstackConfig, ProviderConfig, ProviderName } from "@
 import { getEnv } from "./get-env.js"
 import { getPerstackConfig } from "./perstack-toml.js"
 import { getProviderConfig } from "./provider-config.js"
-import { getCheckpoint, getMostRecentCheckpoint } from "./run-manager.js"
+import { getCheckpointById, getMostRecentCheckpoint } from "./run-manager.js"
 
 const defaultProvider: ProviderName = "anthropic"
 const defaultModel = "claude-sonnet-4-5"
@@ -24,26 +24,25 @@ export type ResolveRunContextInput = {
   model?: string
   envPath?: string[]
   continue?: boolean
-  continueRun?: string
+  continueJob?: string
   resumeFrom?: string
   expertKey?: string
 }
 
 export async function resolveRunContext(input: ResolveRunContextInput): Promise<RunContext> {
   const perstackConfig = await getPerstackConfig(input.configPath)
-  const checkpoint = input.continue
-    ? await getMostRecentCheckpoint()
-    : input.continueRun
-      ? await getMostRecentCheckpoint(input.continueRun)
-      : input.resumeFrom
-        ? await getCheckpoint(input.resumeFrom)
-        : undefined
-
-  if (
-    (input.continue && !checkpoint) ||
-    (input.continueRun && !checkpoint) ||
-    (input.resumeFrom && !checkpoint)
-  ) {
+  let checkpoint: Checkpoint | undefined
+  if (input.resumeFrom) {
+    if (!input.continueJob) {
+      throw new Error("--resume-from requires --continue-job")
+    }
+    checkpoint = await getCheckpointById(input.continueJob, input.resumeFrom)
+  } else if (input.continueJob) {
+    checkpoint = await getMostRecentCheckpoint(input.continueJob)
+  } else if (input.continue) {
+    checkpoint = await getMostRecentCheckpoint()
+  }
+  if ((input.continue || input.continueJob || input.resumeFrom) && !checkpoint) {
     throw new Error("No checkpoint found")
   }
 

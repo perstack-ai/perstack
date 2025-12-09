@@ -4,9 +4,48 @@ import { Callout } from 'nextra/components'
 
 The Perstack runtime combines probabilistic LLM reasoning with deterministic state management — making agent execution predictable, reproducible, and auditable.
 
+## Execution model
+
+The runtime organizes execution into a three-level hierarchy:
+
+```
+Job (jobId)
+ ├── Run 1 (runId, Coordinator Expert)
+ │    └── Checkpoints...
+ ├── Run 2 (runId, Delegated Expert A)
+ │    └── Checkpoints...
+ └── Run 3 (runId, Delegated Expert B)
+      └── Checkpoints...
+```
+
+| Concept | Description |
+|---------|-------------|
+| **Job** | Top-level execution unit. Created per `perstack run` invocation. Contains all Runs. |
+| **Run** | Single Expert execution. Each delegation creates a new Run within the same Job. |
+| **Checkpoint** | Snapshot at the end of each step within a Run. |
+
+### Coordinator vs. Delegated Expert
+
+| Role | Description |
+|------|-------------|
+| **Coordinator Expert** | The initial Expert that starts a Job. Has full capabilities. |
+| **Delegated Expert** | Expert started via delegation. Restricted capabilities. |
+
+Key differences:
+
+| Capability | Coordinator | Delegated |
+|------------|-------------|-----------|
+| Interactive tool calls | ✅ Available | ❌ Not available |
+| `--continue` / `--resume-from` | ✅ Supported | ❌ Not supported |
+| Context from parent | N/A | Only the query (no shared history) |
+
+<Callout type="info">
+Delegated Experts cannot use interactive tools. See [Why no interactive tools for delegates?](/understanding-perstack/experts#why-no-interactive-tools-for-delegates)
+</Callout>
+
 ## Agent loop
 
-The runtime executes Experts through an agent loop:
+Each Run executes through an agent loop:
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -19,12 +58,25 @@ The runtime executes Experts through an agent loop:
 
 The loop ends when:
 - LLM calls `attemptCompletion` with all todos complete (or no todos)
-- `maxSteps` limit reached
+- Job reaches `maxSteps` limit
 - External signal (SIGTERM/SIGINT)
 
 When `attemptCompletion` is called, the runtime checks the todo list. If incomplete todos remain, they are returned to the LLM to continue work. This prevents premature completion and ensures all planned tasks are addressed.
 
-When todo validation passes, the LLM generates a run result — a summary of the work done. This ensures every completed run has a clear, observable outcome.
+### Step counting
+
+Step numbers are continuous across all Runs within a Job. When delegation occurs, the delegated Run continues from the parent's step number:
+
+```
+Job (totalSteps = 8)
+ ├── Run 1 (Coordinator): step 1 → 2 → delegates at step 3
+ │                              ↓
+ ├── Run 2 (Delegate A): step 3 → 4 → completes
+ │                              ↓
+ └── Run 1 continues: step 5 → 6 → 7 → 8
+```
+
+The `maxSteps` limit applies to the Job's total steps across all Runs.
 
 ### Stopping and resuming
 
@@ -36,10 +88,12 @@ npx perstack run my-expert "query" --max-steps 50
 |----------------|----------|-------------|
 | `attemptCompletion` (no remaining todos) | Task complete | N/A |
 | `attemptCompletion` (remaining todos) | Continue loop | N/A (loop continues) |
-| `maxSteps` reached | Graceful stop at step boundary | Last checkpoint |
-| SIGTERM/SIGINT | Immediate stop | Previous checkpoint |
+| `maxSteps` reached | Graceful stop | Coordinator's last checkpoint |
+| SIGTERM/SIGINT | Immediate stop | Coordinator's previous checkpoint |
 
-Checkpoints enable pause/resume across process restarts — useful for long-running tasks, debugging, and resource management.
+<Callout type="warning">
+`--continue` and `--resume-from` only work with the Coordinator Expert's checkpoints. You cannot resume from a Delegated Expert's checkpoint.
+</Callout>
 
 ## Deterministic state
 
@@ -69,16 +123,19 @@ This combines **Event Sourcing** (complete history) with **Checkpoint/Restore** 
 
 ### The `perstack/` directory
 
-The runtime stores execution history in `perstack/runs/` within the workspace:
+The runtime stores execution history in `perstack/jobs/` within the workspace:
 
 ```
 /workspace
 └── perstack/
-    └── runs/
-        └── {runId}/
-            ├── run-setting.json                          # Run configuration
-            ├── checkpoint-{timestamp}-{step}-{id}.json   # Execution snapshots
-            └── event-{timestamp}-{step}-{type}.json      # Execution events
+    └── jobs/
+        └── {jobId}/
+            ├── job.json                                   # Job metadata
+            └── runs/
+                └── {runId}/
+                    ├── run-setting.json                   # Run configuration
+                    ├── checkpoint-{timestamp}-{step}-{id}.json
+                    └── event-{timestamp}-{step}-{type}.json
 ```
 
 This directory is managed automatically — don't modify it manually.

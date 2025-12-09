@@ -186,6 +186,7 @@ export const assertExpertJob = {
 
 export const runtimeCheckpoint: z.input<typeof checkpointSchema> = {
   id: "checkpoint123456789012345",
+  jobId: "job123456789012345",
   runId: "run123456789012345",
   status: "completed",
   stepNumber: 3,
@@ -230,6 +231,7 @@ export const checkpoint: z.input<typeof apiCheckpointSchema> = {
     todos: [],
   },
   expertJobId: expertJob.id,
+  jobId: "testjob123456789012345",
   runId: "testrun123456789012345",
   stepNumber: 1,
   status: "completed",

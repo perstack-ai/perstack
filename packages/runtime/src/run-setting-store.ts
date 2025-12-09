@@ -1,5 +1,7 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 import { type RunSetting, runSettingSchema } from "@perstack/core"
+import { getJobsDir } from "./job-store.js"
 
 export type FileSystem = {
   existsSync: (path: string) => boolean
@@ -8,7 +10,7 @@ export type FileSystem = {
   writeFile: (path: string, data: string, encoding: BufferEncoding) => Promise<void>
 }
 
-export type GetRunDirFn = (runId: string) => string
+export type GetRunDirFn = (jobId: string, runId: string) => string
 
 export async function createDefaultFileSystem(): Promise<FileSystem> {
   const fs = await import("node:fs")
@@ -23,8 +25,8 @@ export async function createDefaultFileSystem(): Promise<FileSystem> {
   }
 }
 
-export function defaultGetRunDir(runId: string): string {
-  return `${process.cwd()}/perstack/runs/${runId}`
+export function defaultGetRunDir(jobId: string, runId: string): string {
+  return `${process.cwd()}/perstack/jobs/${jobId}/runs/${runId}`
 }
 
 export async function storeRunSetting(
@@ -33,7 +35,7 @@ export async function storeRunSetting(
   getRunDir: GetRunDirFn = defaultGetRunDir,
 ): Promise<void> {
   const fileSystem = fs ?? (await createDefaultFileSystem())
-  const runDir = getRunDir(setting.runId)
+  const runDir = getRunDir(setting.jobId, setting.runId)
   if (fileSystem.existsSync(runDir)) {
     const runSettingPath = path.resolve(runDir, "run-setting.json")
     const runSetting = runSettingSchema.parse(
@@ -49,4 +51,40 @@ export async function storeRunSetting(
       "utf-8",
     )
   }
+}
+
+export function getAllRuns(): RunSetting[] {
+  const jobsDir = getJobsDir()
+  if (!existsSync(jobsDir)) {
+    return []
+  }
+  const jobDirNames = readdirSync(jobsDir, { withFileTypes: true })
+    .filter((dir) => dir.isDirectory())
+    .map((dir) => dir.name)
+  if (jobDirNames.length === 0) {
+    return []
+  }
+  const runs: RunSetting[] = []
+  for (const jobDirName of jobDirNames) {
+    const runsDir = path.resolve(jobsDir, jobDirName, "runs")
+    if (!existsSync(runsDir)) {
+      continue
+    }
+    const runDirNames = readdirSync(runsDir, { withFileTypes: true })
+      .filter((dir) => dir.isDirectory())
+      .map((dir) => dir.name)
+    for (const runDirName of runDirNames) {
+      const runSettingPath = path.resolve(runsDir, runDirName, "run-setting.json")
+      if (!existsSync(runSettingPath)) {
+        continue
+      }
+      try {
+        const content = readFileSync(runSettingPath, "utf-8")
+        runs.push(runSettingSchema.parse(JSON.parse(content)))
+      } catch {
+        // Ignore invalid runs
+      }
+    }
+  }
+  return runs.sort((a, b) => b.updatedAt - a.updatedAt)
 }

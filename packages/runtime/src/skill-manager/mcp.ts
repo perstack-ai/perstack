@@ -30,10 +30,11 @@ export class McpSkillManager extends BaseSkillManager {
   constructor(
     skill: McpStdioSkill | McpSseSkill,
     env: Record<string, string>,
+    jobId: string,
     runId: string,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
   ) {
-    super(runId, eventListener)
+    super(jobId, runId, eventListener)
     this.name = skill.name
     this.skill = skill
     this._env = env
@@ -75,7 +76,7 @@ export class McpSkillManager extends BaseSkillManager {
     const startTime = Date.now()
     const { command, args } = this._getCommandArgs(skill)
     if (this._eventListener) {
-      const event = createRuntimeEvent("skillStarting", this._runId, {
+      const event = createRuntimeEvent("skillStarting", this._jobId, this._runId, {
         skillName: skill.name,
         command,
         args,
@@ -86,7 +87,7 @@ export class McpSkillManager extends BaseSkillManager {
     if (transport.stderr) {
       transport.stderr.on("data", (chunk: Buffer) => {
         if (this._eventListener) {
-          const event = createRuntimeEvent("skillStderr", this._runId, {
+          const event = createRuntimeEvent("skillStderr", this._jobId, this._runId, {
             skillName: skill.name,
             message: chunk.toString().trim(),
           })
@@ -99,7 +100,7 @@ export class McpSkillManager extends BaseSkillManager {
     const connectTime = Date.now()
     if (this._eventListener) {
       const serverInfo = this._mcpClient!.getServerVersion()
-      const event = createRuntimeEvent("skillConnected", this._runId, {
+      const event = createRuntimeEvent("skillConnected", this._jobId, this._runId, {
         skillName: skill.name,
         serverInfo: serverInfo ? { name: serverInfo.name, version: serverInfo.version } : undefined,
         connectDurationMs: connectTime - connectStartTime,
@@ -138,7 +139,7 @@ export class McpSkillManager extends BaseSkillManager {
     if (this._mcpClient) {
       await this._mcpClient.close()
       if (this._eventListener && this.skill) {
-        const event = createRuntimeEvent("skillDisconnected", this._runId, {
+        const event = createRuntimeEvent("skillDisconnected", this._jobId, this._runId, {
           skillName: this.skill.name,
         })
         this._eventListener(event)

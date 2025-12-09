@@ -21,5 +21,16 @@ describe("CLI run", () => {
     const result = await runCli(["run", "expert", "query", "--config", "nonexistent.toml"])
     expect(result.exitCode).toBe(1)
   })
-})
 
+  it("should fail when --resume-from is used without --continue or --continue-job", async () => {
+    const result = await runCli([
+      "run",
+      "test-expert",
+      "test query",
+      "--resume-from",
+      "checkpoint-123",
+    ])
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain("--resume-from requires --continue-job")
+  })
+})

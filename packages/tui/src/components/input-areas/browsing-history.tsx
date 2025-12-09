@@ -1,29 +1,29 @@
 import { Text } from "ink"
-import { KEY_HINTS, UI_CONSTANTS } from "../../constants.js"
-import { formatTimestamp, truncateText } from "../../helpers.js"
-import type { RunHistoryItem } from "../../types/index.js"
+import { KEY_HINTS } from "../../constants.js"
+import { formatTimestamp } from "../../helpers.js"
+import type { JobHistoryItem } from "../../types/index.js"
 import { ListBrowser } from "../list-browser.js"
 
 export type BrowsingHistoryInputProps = {
-  runs: RunHistoryItem[]
-  onRunSelect: (run: RunHistoryItem) => void
-  onRunResume: (run: RunHistoryItem) => void
+  jobs: JobHistoryItem[]
+  onJobSelect: (job: JobHistoryItem) => void
+  onJobResume: (job: JobHistoryItem) => void
   onSwitchToExperts: () => void
 }
 export const BrowsingHistoryInput = ({
-  runs,
-  onRunSelect,
-  onRunResume,
+  jobs,
+  onJobSelect,
+  onJobResume,
   onSwitchToExperts,
 }: BrowsingHistoryInputProps) => (
   <ListBrowser
-    title={`Run History ${KEY_HINTS.NAVIGATE} ${KEY_HINTS.RESUME} ${KEY_HINTS.CHECKPOINTS} ${KEY_HINTS.NEW}`}
-    items={runs}
-    onSelect={onRunResume}
-    emptyMessage="No runs found. Press n to start a new run."
+    title={`Job History ${KEY_HINTS.NAVIGATE} ${KEY_HINTS.RESUME} ${KEY_HINTS.CHECKPOINTS} ${KEY_HINTS.NEW}`}
+    items={jobs}
+    onSelect={onJobResume}
+    emptyMessage="No jobs found. Press n to start a new job."
     extraKeyHandler={(char, _key, selected) => {
       if (char === "c" && selected) {
-        onRunSelect(selected)
+        onJobSelect(selected)
         return true
       }
       if (char === "n") {
@@ -32,11 +32,10 @@ export const BrowsingHistoryInput = ({
       }
       return false
     }}
-    renderItem={(run, isSelected) => (
-      <Text key={run.runId} color={isSelected ? "cyan" : "gray"}>
-        {isSelected ? ">" : " "} {run.expertKey} -{" "}
-        {truncateText(run.inputText, UI_CONSTANTS.TRUNCATE_TEXT_SHORT)} (
-        {formatTimestamp(run.startedAt)})
+    renderItem={(job, isSelected) => (
+      <Text key={job.jobId} color={isSelected ? "cyan" : "gray"}>
+        {isSelected ? ">" : " "} {job.expertKey} - {job.totalSteps} steps ({job.jobId}) (
+        {formatTimestamp(job.startedAt)})
       </Text>
     )}
   />
