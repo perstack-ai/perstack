@@ -164,17 +164,12 @@ export async function callingToolLogic({
     )
     toolResults.push(...mcpResults)
   }
-  const remainingToolCalls = [...delegateToolCalls, ...interactiveToolCalls]
   if (delegateToolCalls.length > 0) {
-    const delegateToolCall = delegateToolCalls[0]
-    if (!delegateToolCall) {
-      throw new Error("No delegate tool call found")
-    }
     step.partialToolResults = toolResults
-    step.pendingToolCalls = remainingToolCalls
+    step.pendingToolCalls = [...delegateToolCalls, ...interactiveToolCalls]
     return callDelegate(setting, checkpoint, {
       newMessage: checkpoint.messages[checkpoint.messages.length - 1] as never,
-      toolCall: delegateToolCall,
+      toolCalls: delegateToolCalls,
       usage: step.usage,
     })
   }
@@ -184,7 +179,7 @@ export async function callingToolLogic({
       throw new Error("No interactive tool call found")
     }
     step.partialToolResults = toolResults
-    step.pendingToolCalls = remainingToolCalls
+    step.pendingToolCalls = interactiveToolCalls
     return callInteractiveTool(setting, checkpoint, {
       newMessage: checkpoint.messages[checkpoint.messages.length - 1] as never,
       toolCall: interactiveToolCall,

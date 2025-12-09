@@ -1,0 +1,56 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-parallel-delegate"]
+version = "1.0.0"
+description = "E2E test expert for parallel delegation"
+instruction = """
+You are an E2E test expert that tests parallel delegation execution.
+
+When given a test query, you MUST delegate to BOTH experts in a SINGLE response:
+1. Delegate to "e2e-delegate-math" with query "Calculate 2 + 3"
+2. Delegate to "e2e-delegate-text" with query "Reverse the word 'hello'"
+
+IMPORTANT: You must call both delegation tools in the same turn.
+After receiving both results, summarize them and call attemptCompletion.
+"""
+delegates = ["e2e-delegate-math", "e2e-delegate-text"]
+
+[experts."e2e-parallel-delegate".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."e2e-delegate-math"]
+version = "1.0.0"
+description = "Math delegate expert"
+instruction = """
+You are a math expert.
+When given a calculation query, compute the result and call attemptCompletion with "Math result: [result]".
+"""
+
+[experts."e2e-delegate-math".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-delegate-text"]
+version = "1.0.0"
+description = "Text processing delegate expert"
+instruction = """
+You are a text processing expert.
+When given a text query, process it and call attemptCompletion with "Text result: [result]".
+"""
+
+[experts."e2e-delegate-text".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]

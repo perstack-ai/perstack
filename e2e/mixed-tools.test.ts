@@ -38,7 +38,7 @@ describe("Mixed Tool Calls (MCP + Delegate + Interactive)", () => {
     const checkResult = assertCheckpointState(result.events, "stopRunByDelegate", {
       status: "stoppedByDelegate",
       partialToolResults: [{}] as ToolCallInfo[],
-      pendingToolCalls: [{}, {}] as ToolCallInfo[],
+      pendingToolCalls: [{}] as ToolCallInfo[],
     })
     expect(checkResult.passed).toBe(true)
     expect(

@@ -22,6 +22,7 @@ export async function getSkillManagers(
   experts: Record<string, Expert>,
   setting: RunSetting,
   eventListener?: (event: RunEvent | RuntimeEvent) => void,
+  options?: { isDelegatedRun?: boolean },
 ): Promise<Record<string, BaseSkillManager>> {
   const { perstackBaseSkillCommand, env, jobId, runId } = setting
   const { skills } = expert
@@ -61,15 +62,17 @@ export async function getSkillManagers(
     return manager
   })
   await initSkillManagersWithCleanup(mcpSkillManagers, allManagers)
-  const interactiveSkills = Object.values(skills).filter(
-    (skill) => skill.type === "interactiveSkill",
-  )
-  const interactiveSkillManagers = interactiveSkills.map((interactiveSkill) => {
-    const manager = new InteractiveSkillManager(interactiveSkill, jobId, runId, eventListener)
-    allManagers.push(manager)
-    return manager
-  })
-  await initSkillManagersWithCleanup(interactiveSkillManagers, allManagers)
+  if (!options?.isDelegatedRun) {
+    const interactiveSkills = Object.values(skills).filter(
+      (skill) => skill.type === "interactiveSkill",
+    )
+    const interactiveSkillManagers = interactiveSkills.map((interactiveSkill) => {
+      const manager = new InteractiveSkillManager(interactiveSkill, jobId, runId, eventListener)
+      allManagers.push(manager)
+      return manager
+    })
+    await initSkillManagersWithCleanup(interactiveSkillManagers, allManagers)
+  }
   const delegateSkillManagers: DelegateSkillManager[] = []
   for (const delegateExpertName of expert.delegates) {
     const delegate = experts[delegateExpertName]

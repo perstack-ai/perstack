@@ -70,6 +70,7 @@ export function buildDelegationReturnState(
         interactiveToolCallResult: {
           toolCallId,
           toolName,
+          skillName: `delegate/${resultCheckpoint.expert.key}`,
           text: delegateText.text,
         },
       },

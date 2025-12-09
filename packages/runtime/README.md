@@ -165,11 +165,11 @@ Job (jobId)
       └── Checkpoints...
 ```
 
-| Concept        | Description                                         |
-| -------------- | --------------------------------------------------- |
-| **Job**        | Top-level execution unit. Contains all Runs.        |
-| **Run**        | Single Expert execution.                            |
-| **Checkpoint** | Snapshot at step end. Enables pause/resume.         |
+| Concept        | Description                                  |
+| -------------- | -------------------------------------------- |
+| **Job**        | Top-level execution unit. Contains all Runs. |
+| **Run**        | Single Expert execution.                     |
+| **Checkpoint** | Snapshot at step end. Enables pause/resume.  |
 
 For details on step counting, Coordinator vs. Delegated Expert differences, and the full execution model, see [Runtime](https://docs.perstack.ai/understanding-perstack/runtime).
 
@@ -245,7 +245,7 @@ Events trigger state transitions. They are emitted by the runtime logic or exter
 - **Lifecycle**: `startRun`, `startGeneration`, `continueToNextStep`, `completeRun`
 - **Tool Execution**: `callTools`, `resolveToolResults`, `finishToolCall`, `resumeToolCalls`, `finishAllToolCalls`
 - **Special Types**: `resolveThought`
-- **Delegation**: `callDelegates` (triggers new Run for delegate)
+- **Delegation**: `callDelegate` (triggers new Run(s) for delegate(s), parallel when multiple)
 - **Interactive**: `callInteractiveTool` (Coordinator only)
 - **Interruption**: `stopRunByInteractiveTool`, `stopRunByDelegate`, `stopRunByExceededMaxSteps`
 - **Error Handling**: `retry`
