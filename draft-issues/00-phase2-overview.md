@@ -52,13 +52,13 @@ All issues ──► #12 Documentation Update
 
 ## Recommended Implementation Order
 
-### Wave 1: Foundation (can be parallelized)
+### Wave 1: Foundation
 1. **#01** Core schema `runtime` field
-2. **#08** Event Normalization (depends on #01)
 
-### Wave 2: Infrastructure
-3. **#02** CLI `--runtime` option (depends on #01)
-4. **#03** RuntimeAdapter interface (depends on #01)
+### Wave 2: Infrastructure (can be parallelized after #01)
+2. **#02** CLI `--runtime` option (depends on #01)
+3. **#03** RuntimeAdapter interface (depends on #01)
+4. **#08** Event Normalization (depends on #01)
 5. **#10** Registry runtime field (depends on #01)
 
 ### Wave 3: Integration

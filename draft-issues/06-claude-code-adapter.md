@@ -155,6 +155,7 @@ export class ClaudeCodeAdapter implements RuntimeAdapter {
       }
 
       const proc = spawn("claude", args, {
+        cwd: process.cwd(),
         env: { ...process.env },
         stdio: ["pipe", "pipe", "pipe"],
       })
@@ -189,7 +190,7 @@ export class ClaudeCodeAdapter implements RuntimeAdapter {
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     return new Promise((resolve) => {
       const [cmd, ...cmdArgs] = args
-      const proc = spawn(cmd, cmdArgs, { stdio: ["pipe", "pipe", "pipe"] })
+      const proc = spawn(cmd, cmdArgs, { cwd: process.cwd(), stdio: ["pipe", "pipe", "pipe"] })
       let stdout = ""
       let stderr = ""
       proc.stdout.on("data", (data) => { stdout += data.toString() })

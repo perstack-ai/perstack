@@ -147,7 +147,84 @@ export class PerstackAdapter implements RuntimeAdapter {
 }
 ```
 
-### 4. Create Adapter Index
+### 4. Create BaseExternalAdapter (Abstract Base Class)
+
+**File:** `packages/runtime/src/adapters/base-external-adapter.ts` (new file)
+
+Extract common functionality shared by all external adapters (Cursor, Claude Code, Gemini):
+
+```typescript
+import { spawn, type ChildProcess } from "node:child_process"
+import type { Expert } from "@perstack/core"
+import type { RuntimeAdapter, PrerequisiteResult, RuntimeExpertConfig } from "./types.js"
+
+export type ExecResult = {
+  stdout: string
+  stderr: string
+  exitCode: number
+}
+
+export abstract class BaseExternalAdapter implements RuntimeAdapter {
+  abstract readonly name: string
+
+  abstract checkPrerequisites(): Promise<PrerequisiteResult>
+  abstract run(params: AdapterRunParams): Promise<AdapterRunResult>
+
+  convertExpert(expert: Expert): RuntimeExpertConfig {
+    let instruction = expert.instruction
+    if (expert.delegates.length > 0) {
+      const delegateInfo = expert.delegates.map((key) => `- ${key}`).join("\n")
+      instruction += `\n\n## Available Delegates\n${delegateInfo}\n\nWhen you need specialized help, consider the above delegates' capabilities.`
+    }
+    return { instruction }
+  }
+
+  protected async execCommand(args: string[]): Promise<ExecResult> {
+    return new Promise((resolve) => {
+      const [cmd, ...cmdArgs] = args
+      const proc = spawn(cmd, cmdArgs, { cwd: process.cwd(), stdio: ["pipe", "pipe", "pipe"] })
+      let stdout = ""
+      let stderr = ""
+      proc.stdout.on("data", (data) => { stdout += data.toString() })
+      proc.stderr.on("data", (data) => { stderr += data.toString() })
+      proc.on("close", (code) => {
+        resolve({ stdout, stderr, exitCode: code ?? 127 })
+      })
+      proc.on("error", () => {
+        resolve({ stdout: "", stderr: "", exitCode: 127 })
+      })
+    })
+  }
+
+  protected executeWithTimeout(
+    proc: ChildProcess,
+    timeout: number,
+  ): Promise<ExecResult> {
+    return new Promise((resolve, reject) => {
+      let stdout = ""
+      let stderr = ""
+      const timer = setTimeout(() => {
+        proc.kill("SIGTERM")
+        reject(new Error(`${this.name} timed out after ${timeout}ms`))
+      }, timeout)
+      proc.stdout?.on("data", (data) => { stdout += data.toString() })
+      proc.stderr?.on("data", (data) => { stderr += data.toString() })
+      proc.on("close", (code) => {
+        clearTimeout(timer)
+        resolve({ stdout, stderr, exitCode: code ?? 0 })
+      })
+      proc.on("error", (err) => {
+        clearTimeout(timer)
+        reject(err)
+      })
+    })
+  }
+}
+```
+
+> **Note:** External adapters (Cursor, Claude Code, Gemini) should extend this base class to reduce code duplication.
+
+### 5. Create Adapter Index
 
 **File:** `packages/runtime/src/adapters/index.ts` (new file)
 
@@ -162,9 +239,10 @@ export type {
   RuntimeExpertConfig,
 } from "./types.js"
 export { PerstackAdapter } from "./perstack-adapter.js"
+export { BaseExternalAdapter, type ExecResult } from "./base-external-adapter.js"
 ```
 
-### 5. Export from Runtime Package
+### 6. Export from Runtime Package
 
 **File:** `packages/runtime/src/index.ts`
 
@@ -184,13 +262,14 @@ export type {
 
 ## Affected Files
 
-| File                                                | Change                        |
-| --------------------------------------------------- | ----------------------------- |
-| `packages/runtime/src/adapters/types.ts`            | New: Interface definitions    |
-| `packages/runtime/src/adapters/factory.ts`          | New: Adapter factory          |
-| `packages/runtime/src/adapters/perstack-adapter.ts` | New: Perstack adapter wrapper |
-| `packages/runtime/src/adapters/index.ts`            | New: Exports                  |
-| `packages/runtime/src/index.ts`                     | Export adapters               |
+| File                                                       | Change                              |
+| ---------------------------------------------------------- | ----------------------------------- |
+| `packages/runtime/src/adapters/types.ts`                   | New: Interface definitions          |
+| `packages/runtime/src/adapters/factory.ts`                 | New: Adapter factory                |
+| `packages/runtime/src/adapters/perstack-adapter.ts`        | New: Perstack adapter wrapper       |
+| `packages/runtime/src/adapters/base-external-adapter.ts`   | New: Base class for external adapters |
+| `packages/runtime/src/adapters/index.ts`                   | New: Exports                        |
+| `packages/runtime/src/index.ts`                            | Export adapters                     |
 
 ## Testing
 

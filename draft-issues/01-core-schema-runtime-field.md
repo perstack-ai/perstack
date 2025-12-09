@@ -18,17 +18,21 @@ See: [Multi-Runtime Support Documentation](../../docs/content/using-experts/mult
 
 ## Implementation
 
-### 1. Add Runtime Type Definition
+### 1. Add Runtime Name Type Definition
 
-**File:** `packages/core/src/schemas/runtime.ts` (update existing file)
+**File:** `packages/core/src/schemas/runtime-name.ts` (new file)
 
-Add runtime name type and schema:
+Create a new file to avoid confusion with `runtime.ts` (which contains `RunEvent`, `RuntimeEvent`, etc.):
 
 ```typescript
+import { z } from "zod"
+
 export type RuntimeName = "perstack" | "cursor" | "claude-code" | "gemini"
 
 export const runtimeNameSchema = z.enum(["perstack", "cursor", "claude-code", "gemini"])
 ```
+
+> **Note:** `RuntimeName` (execution environment) is semantically different from `RuntimeEvent` (infrastructure events). Separate file prevents confusion.
 
 ### 2. Update Expert Schema
 
@@ -95,18 +99,18 @@ z.object({
 Add exports:
 
 ```typescript
-export type { RuntimeName } from "./schemas/runtime.js"
-export { runtimeNameSchema } from "./schemas/runtime.js"
+export type { RuntimeName } from "./schemas/runtime-name.js"
+export { runtimeNameSchema } from "./schemas/runtime-name.js"
 ```
 
 ## Affected Files
 
-| File                                         | Change                            |
-| -------------------------------------------- | --------------------------------- |
-| `packages/core/src/schemas/runtime.ts`       | Add `RuntimeName` type and schema |
-| `packages/core/src/schemas/expert.ts`        | Add `runtime` field               |
-| `packages/core/src/schemas/perstack-toml.ts` | Add `runtime` field               |
-| `packages/core/src/index.ts`                 | Export new types                  |
+| File                                          | Change                                    |
+| --------------------------------------------- | ----------------------------------------- |
+| `packages/core/src/schemas/runtime-name.ts`   | New: `RuntimeName` type and schema        |
+| `packages/core/src/schemas/expert.ts`         | Add `runtime` field, import RuntimeName   |
+| `packages/core/src/schemas/perstack-toml.ts`  | Add `runtime` field, import RuntimeName   |
+| `packages/core/src/index.ts`                  | Export new types from runtime-name.ts     |
 
 ## Testing
 

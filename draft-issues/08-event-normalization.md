@@ -58,17 +58,8 @@ export function parseExternalOutput(stdout: string, runtime: RuntimeName): Parse
 }
 
 function parseCursorOutput(stdout: string): ParsedOutput {
-  // Cursor agent outputs plain text with tool call markers
-  // Format: Tool calls are prefixed with specific markers
-  // For now, treat entire output as final result
-  const lines = stdout.split("\n")
-  const events: (RunEvent | RuntimeEvent)[] = []
-  
-  // Extract any structured output if available
-  // Cursor may output JSON events in future versions
-  
   return {
-    events,
+    events: [],
     finalOutput: stdout.trim(),
   }
 }
@@ -86,11 +77,9 @@ function parseClaudeCodeOutput(stdout: string): ParsedOutput {
     
     try {
       const parsed = JSON.parse(trimmed)
-      // Check if it's a structured event
       if (parsed.type === "result" || parsed.type === "output") {
         finalOutput = parsed.content || parsed.text || ""
       }
-      // Could map to Perstack events in future
     } catch {
       // Not JSON, append to final output
       if (finalOutput) {
@@ -108,8 +97,6 @@ function parseClaudeCodeOutput(stdout: string): ParsedOutput {
 }
 
 function parseGeminiOutput(stdout: string): ParsedOutput {
-  // Gemini CLI outputs plain text
-  // May have structured sections in future
   return {
     events: [],
     finalOutput: stdout.trim(),
@@ -266,11 +253,14 @@ export {
 
 ## Affected Files
 
-| File                                             | Change                        |
-| ------------------------------------------------ | ----------------------------- |
-| `packages/runtime/src/adapters/output-parser.ts` | New: Output parsing utilities |
-| `packages/core/src/schemas/checkpoint.ts`        | Add `metadata` field          |
-| `packages/runtime/src/adapters/index.ts`         | Export parser functions       |
+| File                                             | Change                                        |
+| ------------------------------------------------ | --------------------------------------------- |
+| `packages/runtime/src/adapters/output-parser.ts` | New: Output parsing utilities                 |
+| `packages/core/src/schemas/checkpoint.ts`        | Add `metadata` field (interface and schema)   |
+| `packages/runtime/src/adapters/index.ts`         | Export parser functions                       |
+| `packages/runtime/src/index.ts`                  | Re-export from adapters/index.ts              |
+
+> **Backward Compatibility:** The `metadata` field uses `.optional()` so existing checkpoints without this field will parse correctly. No migration needed.
 
 ## Testing
 
@@ -376,6 +366,14 @@ describe("createCompleteRunEvent", () => {
   })
 })
 ```
+
+## Known Limitations
+
+**Usage Tracking:** External runtimes do not expose token usage information. Checkpoints from external runtimes will have `usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }`. This means:
+- Cost calculations will not include external runtime usage
+- Job history usage statistics will show 0 for external runs
+
+This is a known limitation documented in the multi-runtime feature.
 
 ## Documentation
 
