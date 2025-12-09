@@ -8,6 +8,7 @@ function createMockEvent(overrides: Partial<RunEvent> = {}): RunEvent {
     id: "test-id",
     expertKey: "test-expert",
     timestamp: Date.now(),
+    jobId: "test-job-id",
     runId: "test-run-id",
     stepNumber: 1,
     ...overrides,
@@ -89,4 +90,3 @@ describe("@perstack/runtime: RunEventEmitter", () => {
     expect(listener3).toHaveBeenCalledTimes(1)
   })
 })
-

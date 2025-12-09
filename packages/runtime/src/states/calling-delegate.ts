@@ -29,16 +29,18 @@ export async function callingDelegateLogic({
     checkpoint: {
       ...checkpoint,
       status: "stoppedByDelegate",
-      delegateTo: {
-        expert: {
-          key: skillManager.expert.key,
-          name: skillManager.expert.name,
-          version: skillManager.expert.version,
+      delegateTo: [
+        {
+          expert: {
+            key: skillManager.expert.key,
+            name: skillManager.expert.name,
+            version: skillManager.expert.version,
+          },
+          toolCallId: id,
+          toolName,
+          query: args.query,
         },
-        toolCallId: id,
-        toolName,
-        query: args.query,
-      },
+      ],
       pendingToolCalls: [currentToolCall, ...remainingToolCalls],
       partialToolResults: step.partialToolResults,
     },

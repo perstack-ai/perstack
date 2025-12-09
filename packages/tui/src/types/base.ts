@@ -46,6 +46,7 @@ export type ExpertOption = {
   source?: "configured" | "recent"
 }
 export type RunHistoryItem = {
+  jobId: string
   runId: string
   expertKey: string
   model: string
@@ -55,6 +56,7 @@ export type RunHistoryItem = {
 }
 export type CheckpointHistoryItem = {
   id: string
+  jobId: string
   runId: string
   stepNumber: number
   timestamp: number
@@ -62,6 +64,7 @@ export type CheckpointHistoryItem = {
 }
 export type EventHistoryItem = {
   id: string
+  jobId: string
   runId: string
   stepNumber: number
   type: string

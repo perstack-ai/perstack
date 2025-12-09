@@ -40,12 +40,16 @@ export const startCommand = new Command()
     "--timeout <timeout>",
     "Timeout for each generation in milliseconds, default is 60000 (1 minute)",
   )
+  .option("--job-id <jobId>", "Job ID for identifying the job")
   .option("--run-id <runId>", "Run ID for identifying the run")
   .option("--env-path <envPath...>", "Path to the environment file, default is .env and .env.local")
   .option("--verbose", "Enable verbose logging")
-  .option("--continue", "Continue the most recent run with new query")
-  .option("--continue-run <runId>", "Continue the specified run with new query")
-  .option("--resume-from <checkpointId>", "Resume from a specific checkpoint")
+  .option("--continue", "Continue the most recent job with new query")
+  .option("--continue-job <jobId>", "Continue the specified job with new query")
+  .option(
+    "--resume-from <checkpointId>",
+    "Resume from a specific checkpoint (requires --continue or --continue-job)",
+  )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
@@ -57,7 +61,7 @@ export const startCommand = new Command()
           model: input.options.model,
           envPath: input.options.envPath,
           continue: input.options.continue,
-          continueRun: input.options.continueRun,
+          continueJob: input.options.continueJob,
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
@@ -70,6 +74,7 @@ export const startCommand = new Command()
       const recentExperts = await getRecentExperts(10)
       const historyRuns: RunHistoryItem[] = showHistory
         ? (await getAllRuns()).map((r) => ({
+            jobId: r.jobId,
             runId: r.runId,
             expertKey: r.expertKey,
             model: r.model,
@@ -112,16 +117,18 @@ export const startCommand = new Command()
           resumeState.checkpoint = cp
         },
         onLoadCheckpoints: async (r: RunHistoryItem): Promise<CheckpointHistoryItem[]> => {
-          return await getCheckpointsWithDetails(r.runId)
+          const checkpoints = await getCheckpointsWithDetails(r.jobId, r.runId)
+          return checkpoints.map((cp) => ({ ...cp, jobId: r.jobId }))
         },
         onLoadEvents: async (
           r: RunHistoryItem,
           cp: CheckpointHistoryItem,
         ): Promise<EventHistoryItem[]> => {
-          return await getEventsWithDetails(r.runId, cp.stepNumber)
+          const events = await getEventsWithDetails(r.jobId, r.runId, cp.stepNumber)
+          return events.map((e) => ({ ...e, jobId: r.jobId }))
         },
         onLoadHistoricalEvents: async (cp: CheckpointHistoryItem) => {
-          return await getEventContents(cp.runId, cp.stepNumber)
+          return await getEventContents(cp.jobId, cp.runId, cp.stepNumber)
         },
       })
       const finalExpertKey = result.expertKey || input.expertKey
@@ -132,7 +139,11 @@ export const startCommand = new Command()
       }
       let currentCheckpoint =
         resumeState.checkpoint !== null
-          ? await getCheckpointById(resumeState.checkpoint.runId, resumeState.checkpoint.id)
+          ? await getCheckpointById(
+              resumeState.checkpoint.jobId,
+              resumeState.checkpoint.runId,
+              resumeState.checkpoint.id,
+            )
           : checkpoint
       if (currentCheckpoint && currentCheckpoint.expert.key !== finalExpertKey) {
         console.error(
@@ -144,11 +155,13 @@ export const startCommand = new Command()
         console.error("Query is required")
         return
       }
+      let currentJobId = currentCheckpoint?.jobId ?? input.options.jobId
       let currentRunId = currentCheckpoint?.runId ?? input.options.runId
       while (true) {
         const runResult = await run(
           {
             setting: {
+              jobId: currentJobId,
               runId: currentRunId,
               expertKey: finalExpertKey,
               input:
@@ -188,6 +201,7 @@ export const startCommand = new Command()
           if (nextQuery) {
             finalQuery = nextQuery
             currentCheckpoint = runResult
+            currentJobId = runResult.jobId
             currentRunId = runResult.runId
           } else {
             break

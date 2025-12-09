@@ -64,12 +64,13 @@ function createDelegateExpert(overrides: Partial<Expert> = {}): Expert {
   }
 }
 
+const testJobId = "test-job-id"
 const testRunId = "test-run-id"
 
 describe("@perstack/runtime: McpSkillManager", () => {
   it("starts init without awaiting when lazyInit true", async () => {
     const skill = createMcpSkill()
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     const initSpy = vi
       .spyOn(sm, "_doInit")
@@ -81,7 +82,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("waits for init completion when lazyInit false", async () => {
     const skill = createMcpSkill({ lazyInit: false })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     const initSpy = vi
       .spyOn(sm, "_doInit")
@@ -93,7 +94,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("returns empty array from getToolDefinitions when lazyInit true", async () => {
     const skill = createMcpSkill()
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockImplementation(
       () => new Promise((resolve) => setTimeout(resolve, 10)),
@@ -106,7 +107,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("returns array from getToolDefinitions when lazyInit false", async () => {
     const skill = createMcpSkill({ lazyInit: false })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockImplementation(
       () =>
@@ -137,13 +138,13 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("throws error from getToolDefinitions when not lazyInit and not initialized", async () => {
     const skill = createMcpSkill({ lazyInit: false, name: "test-eager" })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     await expect(skillManager.getToolDefinitions()).rejects.toThrow("not initialized")
   })
 
   it("filters tools with pick option", async () => {
     const skill = createMcpSkill({ lazyInit: false, pick: ["allowed-tool"] })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockImplementation(
       () =>
@@ -173,7 +174,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("filters tools with omit option", async () => {
     const skill = createMcpSkill({ lazyInit: false, omit: ["blocked-tool"] })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockImplementation(
       () =>
@@ -203,7 +204,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("throws error when init called twice", async () => {
     const skill = createMcpSkill({ lazyInit: false })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockResolvedValue(undefined)
     await skillManager.init()
@@ -212,13 +213,13 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("sets lazyInit false for @perstack/base skill", () => {
     const skill = createMcpSkill({ name: "@perstack/base", lazyInit: true })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     expect(skillManager.lazyInit).toBe(false)
   })
 
   it("resets state when init fails with lazyInit false", async () => {
     const skill = createMcpSkill({ lazyInit: false })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockRejectedValue(new Error("Init failed"))
     await expect(skillManager.init()).rejects.toThrow("Init failed")
@@ -227,7 +228,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 
   it("throws error when init called while already initializing", async () => {
     const skill = createMcpSkill({ lazyInit: false })
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockImplementation(
       () => new Promise((resolve) => setTimeout(resolve, 100)),
@@ -245,7 +246,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
       pick: [],
       omit: [],
     }
-    const skillManager = new McpSkillManager(skill, {}, testRunId)
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     expect(skillManager.type).toBe("mcp")
     expect(skillManager.name).toBe("sse-skill")
     expect(skillManager.lazyInit).toBe(false)
@@ -255,7 +256,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
 describe("@perstack/runtime: InteractiveSkillManager", () => {
   it("initializes interactive skill correctly", async () => {
     const interactiveSkill = createInteractiveSkill()
-    const skillManager = new InteractiveSkillManager(interactiveSkill, testRunId)
+    const skillManager = new InteractiveSkillManager(interactiveSkill, testJobId, testRunId)
     expect(skillManager.type).toBe("interactive")
     expect(skillManager.name).toBe("interactive-skill")
     expect(skillManager.lazyInit).toBe(false)
@@ -265,7 +266,7 @@ describe("@perstack/runtime: InteractiveSkillManager", () => {
 
   it("returns tool definitions for interactive skill", async () => {
     const interactiveSkill = createInteractiveSkill()
-    const skillManager = new InteractiveSkillManager(interactiveSkill, testRunId)
+    const skillManager = new InteractiveSkillManager(interactiveSkill, testJobId, testRunId)
     await skillManager.init()
     const tools = await skillManager.getToolDefinitions()
     expect(tools).toHaveLength(1)
@@ -275,7 +276,7 @@ describe("@perstack/runtime: InteractiveSkillManager", () => {
 
   it("callTool returns empty array for interactive skill", async () => {
     const interactiveSkill = createInteractiveSkill()
-    const skillManager = new InteractiveSkillManager(interactiveSkill, testRunId)
+    const skillManager = new InteractiveSkillManager(interactiveSkill, testJobId, testRunId)
     await skillManager.init()
     const result = await skillManager.callTool("interactive-tool", { input: "test" })
     expect(result).toEqual([])
@@ -285,7 +286,7 @@ describe("@perstack/runtime: InteractiveSkillManager", () => {
 describe("@perstack/runtime: DelegateSkillManager", () => {
   it("initializes delegate skill correctly", async () => {
     const expert = createDelegateExpert()
-    const skillManager = new DelegateSkillManager(expert, testRunId)
+    const skillManager = new DelegateSkillManager(expert, testJobId, testRunId)
     expect(skillManager.type).toBe("delegate")
     expect(skillManager.name).toBe("@test/delegate-expert")
     expect(skillManager.lazyInit).toBe(false)
@@ -295,7 +296,7 @@ describe("@perstack/runtime: DelegateSkillManager", () => {
 
   it("returns tool definitions for delegate skill", async () => {
     const expert = createDelegateExpert()
-    const skillManager = new DelegateSkillManager(expert, testRunId)
+    const skillManager = new DelegateSkillManager(expert, testJobId, testRunId)
     await skillManager.init()
     const tools = await skillManager.getToolDefinitions()
     expect(tools).toHaveLength(1)
@@ -310,7 +311,7 @@ describe("@perstack/runtime: DelegateSkillManager", () => {
 
   it("callTool returns empty array for delegate skill", async () => {
     const expert = createDelegateExpert()
-    const skillManager = new DelegateSkillManager(expert, testRunId)
+    const skillManager = new DelegateSkillManager(expert, testJobId, testRunId)
     await skillManager.init()
     const result = await skillManager.callTool("delegate-expert", { query: "test" })
     expect(result).toEqual([])

@@ -24,6 +24,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       initialCheckpoint: checkpoint,
@@ -74,11 +75,11 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers: {},
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -124,11 +125,11 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers: {},
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -179,6 +180,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       initialCheckpoint: checkpoint,

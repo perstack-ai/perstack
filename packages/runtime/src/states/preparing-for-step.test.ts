@@ -21,6 +21,7 @@ describe("@perstack/runtime: StateMachineLogic['PreparingForStep']", () => {
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       messages: checkpoint.messages,
@@ -86,8 +87,18 @@ describe("@perstack/runtime: StateMachineLogic['PreparingForStep']", () => {
         toolName: "testTool",
         result: [
           { type: "textPart" as const, text: "text", id: createId() },
-          { type: "imageInlinePart" as const, encodedData: "base64", mimeType: "image/png", id: createId() },
-          { type: "fileInlinePart" as const, encodedData: "base64", mimeType: "application/pdf", id: createId() },
+          {
+            type: "imageInlinePart" as const,
+            encodedData: "base64",
+            mimeType: "image/png",
+            id: createId(),
+          },
+          {
+            type: "fileInlinePart" as const,
+            encodedData: "base64",
+            mimeType: "application/pdf",
+            id: createId(),
+          },
         ],
       },
     ]

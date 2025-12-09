@@ -22,10 +22,16 @@ export abstract class BaseSkillManager {
   readonly skill?: McpStdioSkill | McpSseSkill
   readonly interactiveSkill?: InteractiveSkill
   readonly expert?: Expert
+  protected _jobId: string
   protected _runId: string
   protected _eventListener?: (event: RunEvent | RuntimeEvent) => void
 
-  constructor(runId: string, eventListener?: (event: RunEvent | RuntimeEvent) => void) {
+  constructor(
+    jobId: string,
+    runId: string,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+  ) {
+    this._jobId = jobId
     this._runId = runId
     this._eventListener = eventListener
   }

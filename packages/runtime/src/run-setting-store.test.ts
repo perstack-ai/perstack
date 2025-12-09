@@ -4,27 +4,31 @@ import { defaultGetRunDir, type FileSystem, storeRunSetting } from "./run-settin
 
 describe("@perstack/runtime: defaultGetRunDir", () => {
   it("returns correct run directory path", () => {
+    const jobId = "test-job-123"
     const runId = "test-run-123"
-    const expected = `${process.cwd()}/perstack/runs/${runId}`
-    expect(defaultGetRunDir(runId)).toBe(expected)
+    const expected = `${process.cwd()}/perstack/jobs/${jobId}/runs/${runId}`
+    expect(defaultGetRunDir(jobId, runId)).toBe(expected)
   })
 
   it("handles special characters in runId", () => {
+    const jobId = "test-job-456"
     const runId = "test-run_with.special-chars"
-    const expected = `${process.cwd()}/perstack/runs/${runId}`
-    expect(defaultGetRunDir(runId)).toBe(expected)
+    const expected = `${process.cwd()}/perstack/jobs/${jobId}/runs/${runId}`
+    expect(defaultGetRunDir(jobId, runId)).toBe(expected)
   })
 
   it("returns path relative to current working directory", () => {
+    const jobId = "job123"
     const runId = "abc123"
-    const result = defaultGetRunDir(runId)
-    expect(result).toContain("/perstack/runs/")
+    const result = defaultGetRunDir(jobId, runId)
+    expect(result).toContain("/perstack/jobs/")
     expect(result.endsWith(runId)).toBe(true)
   })
 })
 
 describe("@perstack/runtime: storeRunSetting", () => {
   const baseSetting: RunSetting = {
+    jobId: "job-123",
     runId: "run-123",
     model: "claude-sonnet-4-20250514",
     providerConfig: { providerName: "anthropic", apiKey: "test-key" },

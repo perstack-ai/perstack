@@ -17,10 +17,11 @@ export class DelegateSkillManager extends BaseSkillManager {
 
   constructor(
     expert: Expert,
+    jobId: string,
     runId: string,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
   ) {
-    super(runId, eventListener)
+    super(jobId, runId, eventListener)
     this.name = expert.name
     this.expert = expert
   }

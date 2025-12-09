@@ -10,6 +10,7 @@ import {
 describe("@perstack/runtime: createInitialCheckpoint", () => {
   it("creates checkpoint with correct initial values", () => {
     const result = createInitialCheckpoint("checkpoint-id", {
+      jobId: "job-123",
       runId: "run-123",
       expertKey: "expert-key",
       expert: { name: "test-expert", version: "1.0.0" },
@@ -17,6 +18,7 @@ describe("@perstack/runtime: createInitialCheckpoint", () => {
     })
     expect(result).toEqual({
       id: "checkpoint-id",
+      jobId: "job-123",
       runId: "run-123",
       expert: {
         key: "expert-key",
@@ -40,6 +42,7 @@ describe("@perstack/runtime: createInitialCheckpoint", () => {
 
   it("sets contextWindowUsage to undefined when contextWindow is undefined", () => {
     const result = createInitialCheckpoint("checkpoint-id", {
+      jobId: "job-123",
       runId: "run-123",
       expertKey: "expert-key",
       expert: { name: "test-expert", version: "1.0.0" },
@@ -53,6 +56,7 @@ describe("@perstack/runtime: createInitialCheckpoint", () => {
 describe("@perstack/runtime: createNextStepCheckpoint", () => {
   const baseCheckpoint: Checkpoint = {
     id: "old-id",
+    jobId: "job-123",
     runId: "run-123",
     expert: { key: "expert-key", name: "test-expert", version: "1.0.0" },
     stepNumber: 5,
@@ -89,6 +93,7 @@ describe("@perstack/runtime: createNextStepCheckpoint", () => {
 
 describe("@perstack/runtime: buildDelegationReturnState", () => {
   const baseSetting = {
+    jobId: "job-123",
     runId: "run-123",
     model: "claude-sonnet-4-20250514",
     providerConfig: { providerName: "anthropic" as const, apiKey: "test-key" },
@@ -105,6 +110,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
   } satisfies RunSetting
   const parentCheckpoint: Checkpoint = {
     id: "parent-checkpoint-id",
+    jobId: "job-123",
     runId: "run-123",
     expert: { key: "parent-expert", name: "parent", version: "1.0.0" },
     stepNumber: 3,
@@ -120,6 +126,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
   }
   const resultCheckpoint: Checkpoint = {
     id: "child-checkpoint-id",
+    jobId: "job-123",
     runId: "run-123",
     expert: { key: "child-expert", name: "child", version: "1.0.0" },
     stepNumber: 5,
@@ -209,6 +216,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
 
 describe("@perstack/runtime: buildDelegateToState", () => {
   const baseSetting = {
+    jobId: "job-123",
     runId: "run-123",
     model: "claude-sonnet-4-20250514",
     providerConfig: { providerName: "anthropic" as const, apiKey: "test-key" },
@@ -225,6 +233,7 @@ describe("@perstack/runtime: buildDelegateToState", () => {
   } satisfies RunSetting
   const resultCheckpoint: Checkpoint = {
     id: "parent-checkpoint-id",
+    jobId: "job-123",
     runId: "run-123",
     expert: { key: "parent-expert", name: "parent", version: "1.0.0" },
     stepNumber: 3,
@@ -239,12 +248,14 @@ describe("@perstack/runtime: buildDelegateToState", () => {
       totalTokens: 150,
       cachedInputTokens: 0,
     },
-    delegateTo: {
-      expert: { key: "child-expert", name: "child", version: "2.0.0" },
-      toolCallId: "tool-call-456",
-      toolName: "delegateToChild",
-      query: "please do this",
-    },
+    delegateTo: [
+      {
+        expert: { key: "child-expert", name: "child", version: "2.0.0" },
+        toolCallId: "tool-call-456",
+        toolName: "delegateToChild",
+        query: "please do this",
+      },
+    ],
   }
   const currentExpert = { key: "parent-expert", name: "parent", version: "1.0.0" }
 

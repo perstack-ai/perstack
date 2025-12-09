@@ -9,11 +9,11 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
     const step = createStep({
       pendingToolCalls: [
         {
-        id: "tc_interactive_123",
-        skillName: "interactive",
-        toolName: "humanApproval",
-        args: { message: "Please approve this action" },
-      },
+          id: "tc_interactive_123",
+          skillName: "interactive",
+          toolName: "humanApproval",
+          args: { message: "Please approve this action" },
+        },
       ],
     })
     await expect(
@@ -29,6 +29,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
       id: expect.any(String),
       expertKey: setting.expertKey,
       timestamp: expect.any(Number),
+      jobId: setting.jobId,
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       checkpoint: {
@@ -108,13 +109,9 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
   it("preserves partialToolResults in checkpoint", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
-    const partialToolResults = [
-      { id: "tc_0", skillName: "mcp", toolName: "prevTool", result: [] },
-    ]
+    const partialToolResults = [{ id: "tc_0", skillName: "mcp", toolName: "prevTool", result: [] }]
     const step = createStep({
-      pendingToolCalls: [
-        { id: "tc_1", skillName: "interactive", toolName: "tool1", args: {} },
-      ],
+      pendingToolCalls: [{ id: "tc_1", skillName: "interactive", toolName: "tool1", args: {} }],
       partialToolResults,
     })
     const result = await StateMachineLogics.CallingInteractiveTool({

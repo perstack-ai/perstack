@@ -2,7 +2,7 @@ import type { Checkpoint, PerstackConfig, ProviderConfig, ProviderName } from "@
 import { getEnv } from "./get-env.js"
 import { getPerstackConfig } from "./perstack-toml.js"
 import { getProviderConfig } from "./provider-config.js"
-import { getCheckpoint, getMostRecentCheckpoint } from "./run-manager.js"
+import { getCheckpointById, getMostRecentCheckpoint, getMostRecentRunInJob } from "./run-manager.js"
 
 const defaultProvider: ProviderName = "anthropic"
 const defaultModel = "claude-sonnet-4-5"
@@ -24,26 +24,28 @@ export type ResolveRunContextInput = {
   model?: string
   envPath?: string[]
   continue?: boolean
-  continueRun?: string
+  continueJob?: string
   resumeFrom?: string
   expertKey?: string
 }
 
 export async function resolveRunContext(input: ResolveRunContextInput): Promise<RunContext> {
   const perstackConfig = await getPerstackConfig(input.configPath)
-  const checkpoint = input.continue
-    ? await getMostRecentCheckpoint()
-    : input.continueRun
-      ? await getMostRecentCheckpoint(input.continueRun)
-      : input.resumeFrom
-        ? await getCheckpoint(input.resumeFrom)
-        : undefined
-
-  if (
-    (input.continue && !checkpoint) ||
-    (input.continueRun && !checkpoint) ||
-    (input.resumeFrom && !checkpoint)
-  ) {
+  let checkpoint: Checkpoint | undefined
+  if (input.resumeFrom) {
+    if (!input.continue && !input.continueJob) {
+      throw new Error("--resume-from requires --continue or --continue-job")
+    }
+    const jobId = input.continueJob ?? (await getMostRecentCheckpoint()).jobId
+    const run = await getMostRecentRunInJob(jobId)
+    checkpoint = await getCheckpointById(jobId, run.runId, input.resumeFrom)
+  } else if (input.continueJob) {
+    const run = await getMostRecentRunInJob(input.continueJob)
+    checkpoint = await getMostRecentCheckpoint(run.jobId, run.runId)
+  } else if (input.continue) {
+    checkpoint = await getMostRecentCheckpoint()
+  }
+  if ((input.continue || input.continueJob || input.resumeFrom) && !checkpoint) {
     throw new Error("No checkpoint found")
   }
 

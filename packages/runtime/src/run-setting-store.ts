@@ -8,7 +8,7 @@ export type FileSystem = {
   writeFile: (path: string, data: string, encoding: BufferEncoding) => Promise<void>
 }
 
-export type GetRunDirFn = (runId: string) => string
+export type GetRunDirFn = (jobId: string, runId: string) => string
 
 export async function createDefaultFileSystem(): Promise<FileSystem> {
   const fs = await import("node:fs")
@@ -23,8 +23,8 @@ export async function createDefaultFileSystem(): Promise<FileSystem> {
   }
 }
 
-export function defaultGetRunDir(runId: string): string {
-  return `${process.cwd()}/perstack/runs/${runId}`
+export function defaultGetRunDir(jobId: string, runId: string): string {
+  return `${process.cwd()}/perstack/jobs/${jobId}/runs/${runId}`
 }
 
 export async function storeRunSetting(
@@ -33,7 +33,7 @@ export async function storeRunSetting(
   getRunDir: GetRunDirFn = defaultGetRunDir,
 ): Promise<void> {
   const fileSystem = fs ?? (await createDefaultFileSystem())
-  const runDir = getRunDir(setting.runId)
+  const runDir = getRunDir(setting.jobId, setting.runId)
   if (fileSystem.existsSync(runDir)) {
     const runSettingPath = path.resolve(runDir, "run-setting.json")
     const runSetting = runSettingSchema.parse(

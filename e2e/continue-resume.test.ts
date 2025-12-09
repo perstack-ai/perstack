@@ -7,7 +7,7 @@ const CONFIG_PATH = "./e2e/experts/continue-resume.toml"
 const TIMEOUT = 180000
 
 describe("Continue and Resume From Checkpoint", () => {
-  it("should stop at interactive tool and get run ID", async () => {
+  it("should stop at interactive tool and get job ID", async () => {
     const result = await runExpert("e2e-continue", "Test continue/resume functionality", {
       configPath: CONFIG_PATH,
       timeout: TIMEOUT,
@@ -19,18 +19,18 @@ describe("Continue and Resume From Checkpoint", () => {
         "stopRunByInteractiveTool",
       ]).passed,
     ).toBe(true)
-    expect(result.runId).not.toBeNull()
+    expect(result.jobId).not.toBeNull()
   }, 200000)
 
-  it("should continue run with --continue-run", async () => {
+  it("should continue job with --continue-job", async () => {
     const initialResult = await runExpert("e2e-continue", "Test continue/resume functionality", {
       configPath: CONFIG_PATH,
       timeout: TIMEOUT,
     })
-    expect(initialResult.runId).not.toBeNull()
+    expect(initialResult.jobId).not.toBeNull()
     const continueResult = await runExpert("e2e-continue", "User confirmed the test", {
       configPath: CONFIG_PATH,
-      continueRunId: initialResult.runId!,
+      continueJobId: initialResult.jobId!,
       isInteractiveResult: true,
       timeout: TIMEOUT,
     })
@@ -50,10 +50,10 @@ describe("Continue and Resume From Checkpoint", () => {
       configPath: CONFIG_PATH,
       timeout: TIMEOUT,
     })
-    expect(initialResult.runId).not.toBeNull()
+    expect(initialResult.jobId).not.toBeNull()
     const continueResult = await runExpert("e2e-continue", "User confirmed the test", {
       configPath: CONFIG_PATH,
-      continueRunId: initialResult.runId!,
+      continueJobId: initialResult.jobId!,
       isInteractiveResult: true,
       timeout: TIMEOUT,
     })
@@ -68,6 +68,6 @@ describe("Continue and Resume From Checkpoint", () => {
     const stopEvent = filterEventsByType(result.events, "stopRunByInteractiveTool")[0]
     expect(stopEvent).toBeDefined()
     expect((stopEvent as { checkpoint?: { id?: string } }).checkpoint?.id).toBeDefined()
-    expect(result.runId).not.toBeNull()
+    expect(result.jobId).not.toBeNull()
   }, 200000)
 })

@@ -41,7 +41,7 @@ export async function run(
       checkpoint: Checkpoint,
       step: Step,
     ) => Promise<boolean>
-    retrieveCheckpoint?: (runId: string, checkpointId: string) => Promise<Checkpoint>
+    retrieveCheckpoint?: (jobId: string, runId: string, checkpointId: string) => Promise<Checkpoint>
     storeCheckpoint?: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
     eventListener?: (event: RunEvent | RuntimeEvent) => void
     resolveExpertToRun?: ResolveExpertToRunFn
@@ -62,7 +62,7 @@ export async function run(
   while (true) {
     const { expertToRun, experts } = await setupExperts(setting, options?.resolveExpertToRun)
     if (options?.eventListener) {
-      const initEvent = createRuntimeEvent("initializeRuntime", setting.runId, {
+      const initEvent = createRuntimeEvent("initializeRuntime", setting.jobId, setting.runId, {
         runtimeVersion: pkg.version,
         expertName: expertToRun.name,
         experts: Object.keys(experts),
@@ -85,6 +85,7 @@ export async function run(
     const initialCheckpoint = checkpoint
       ? createNextStepCheckpoint(createId(), checkpoint)
       : createInitialCheckpoint(createId(), {
+          jobId: setting.jobId,
           runId: setting.runId,
           expertKey: setting.expertKey,
           expert: expertToRun,
@@ -103,6 +104,7 @@ export async function run(
       case "completed": {
         if (runResultCheckpoint.delegatedBy) {
           const parentCheckpoint = await retrieveCheckpoint(
+            setting.jobId,
             setting.runId,
             runResultCheckpoint.delegatedBy.checkpointId,
           )

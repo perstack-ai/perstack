@@ -14,6 +14,7 @@ describe("@perstack/runtime: setupExperts", () => {
   }
 
   const baseSetting: RunSetting = {
+    jobId: "job-123",
     runId: "run-123",
     model: "claude-sonnet-4-20250514",
     providerConfig: { providerName: "anthropic", apiKey: "test-key" },
@@ -34,14 +35,10 @@ describe("@perstack/runtime: setupExperts", () => {
     const result = await setupExperts(baseSetting, mockResolve)
     expect(result.expertToRun).toEqual(baseExpert)
     expect(result.experts).toEqual({ "test-expert": baseExpert })
-    expect(mockResolve).toHaveBeenCalledWith(
-      "test-expert",
-      expect.any(Object),
-      {
-        perstackApiBaseUrl: "https://api.perstack.dev",
-        perstackApiKey: undefined,
-      },
-    )
+    expect(mockResolve).toHaveBeenCalledWith("test-expert", expect.any(Object), {
+      perstackApiBaseUrl: "https://api.perstack.dev",
+      perstackApiKey: undefined,
+    })
   })
 
   it("copies experts from setting and does not mutate original", async () => {
@@ -96,13 +93,9 @@ describe("@perstack/runtime: setupExperts", () => {
     }
     const mockResolve = vi.fn().mockResolvedValue(baseExpert)
     await setupExperts(settingWithKey, mockResolve)
-    expect(mockResolve).toHaveBeenCalledWith(
-      "test-expert",
-      expect.any(Object),
-      {
-        perstackApiBaseUrl: "https://api.perstack.dev",
-        perstackApiKey: "my-api-key",
-      },
-    )
+    expect(mockResolve).toHaveBeenCalledWith("test-expert", expect.any(Object), {
+      perstackApiBaseUrl: "https://api.perstack.dev",
+      perstackApiKey: "my-api-key",
+    })
   })
 })

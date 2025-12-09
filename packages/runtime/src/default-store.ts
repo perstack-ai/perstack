@@ -4,10 +4,11 @@ import { type Checkpoint, checkpointSchema } from "@perstack/core"
 import { defaultGetRunDir as getRunDir } from "./run-setting-store.js"
 
 export async function defaultRetrieveCheckpoint(
+  jobId: string,
   runId: string,
   checkpointId: string,
 ): Promise<Checkpoint> {
-  const runDir = getRunDir(runId)
+  const runDir = getRunDir(jobId, runId)
   const checkpointFiles = await readdir(runDir, { withFileTypes: true }).then((files) =>
     files.filter((file) => file.isFile() && file.name.startsWith("checkpoint-")),
   )
@@ -24,16 +25,16 @@ export async function defaultStoreCheckpoint(
   checkpoint: Checkpoint,
   timestamp: number,
 ): Promise<void> {
-  const { id, runId, stepNumber } = checkpoint
-  const runDir = getRunDir(runId)
+  const { id, jobId, runId, stepNumber } = checkpoint
+  const runDir = getRunDir(jobId, runId)
   const checkpointPath = `${runDir}/checkpoint-${timestamp}-${stepNumber}-${id}.json`
   await mkdir(runDir, { recursive: true })
   await writeFile(checkpointPath, JSON.stringify(checkpoint))
 }
 
 export async function defaultStoreEvent(event: RunEvent): Promise<void> {
-  const { timestamp, runId, stepNumber, type } = event
-  const runDir = getRunDir(runId)
+  const { timestamp, jobId, runId, stepNumber, type } = event
+  const runDir = getRunDir(jobId, runId)
   const eventPath = `${runDir}/event-${timestamp}-${stepNumber}-${type}.json`
   await mkdir(runDir, { recursive: true })
   await writeFile(eventPath, JSON.stringify(event))
