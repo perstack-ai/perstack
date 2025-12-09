@@ -64,9 +64,11 @@ export function defaultEventListener(e: RunEvent): void {
       break
     }
     case "callDelegate": {
-      log(`${header(e)} Calling delegate`)
-      log(`${header(e)} Tool: ${e.toolCall.toolName}`)
-      debug(`${header(e)} Args: ${JSON.stringify(e.toolCall.args, null, 2)}`)
+      log(`${header(e)} Calling ${e.toolCalls.length} delegate(s)`)
+      for (const tc of e.toolCalls) {
+        log(`${header(e)} Tool: ${tc.toolName}`)
+        debug(`${header(e)} Args: ${JSON.stringify(tc.args, null, 2)}`)
+      }
       break
     }
     case "resolveToolResults": {

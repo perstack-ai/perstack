@@ -2,6 +2,8 @@ import { createId } from "@paralleldrive/cuid2"
 import {
   type Checkpoint,
   createRuntimeEvent,
+  type DelegationTarget,
+  type Expert,
   type Job,
   type RunEvent,
   type RunParamsInput,
@@ -9,6 +11,9 @@ import {
   type RuntimeEvent,
   runParamsSchema,
   type Step,
+  type ToolMessage,
+  type ToolResult,
+  type ToolResultPart,
 } from "@perstack/core"
 import pkg from "../package.json" with { type: "json" }
 import {
@@ -49,6 +54,7 @@ export async function run(
     resolveExpertToRun?: ResolveExpertToRunFn
     fileSystem?: FileSystem
     getRunDir?: GetRunDirFn
+    returnOnDelegationComplete?: boolean
   },
 ): Promise<Checkpoint> {
   const runParams = runParamsSchema.parse(runInput)
@@ -90,6 +96,7 @@ export async function run(
       experts,
       setting,
       options?.eventListener,
+      { isDelegatedRun: !!checkpoint?.delegatedBy },
     )
     const initialCheckpoint = checkpoint
       ? createNextStepCheckpoint(createId(), checkpoint)
@@ -116,7 +123,7 @@ export async function run(
     }
     switch (runResultCheckpoint.status) {
       case "completed": {
-        if (runResultCheckpoint.delegatedBy) {
+        if (runResultCheckpoint.delegatedBy && !options?.returnOnDelegationComplete) {
           storeJob(job)
           const parentCheckpoint = await retrieveCheckpoint(
             setting.jobId,
@@ -136,9 +143,54 @@ export async function run(
       }
       case "stoppedByDelegate": {
         storeJob(job)
-        const result = buildDelegateToState(setting, runResultCheckpoint, expertToRun)
-        setting = result.setting
-        checkpoint = result.checkpoint
+        const { delegateTo } = runResultCheckpoint
+        if (!delegateTo || delegateTo.length === 0) {
+          throw new Error("No delegations found in checkpoint")
+        }
+        if (delegateTo.length === 1) {
+          const result = buildDelegateToState(setting, runResultCheckpoint, expertToRun)
+          setting = result.setting
+          checkpoint = result.checkpoint
+          break
+        }
+        const firstDelegation = delegateTo[0]
+        const remainingDelegations = delegateTo.slice(1)
+        const [firstResult, ...restResults] = await Promise.all(
+          delegateTo.map((delegation) =>
+            runDelegate(delegation, setting, runResultCheckpoint, expertToRun, options),
+          ),
+        )
+        const restToolResults: ToolResult[] = restResults.map((result) => ({
+          id: result.toolCallId,
+          skillName: `delegate/${result.expertKey}`,
+          toolName: result.toolName,
+          result: [{ type: "textPart", id: createId(), text: result.text }],
+        }))
+        const processedToolCallIds = new Set(remainingDelegations.map((d) => d.toolCallId))
+        const remainingToolCalls = runResultCheckpoint.pendingToolCalls?.filter(
+          (tc) => !processedToolCallIds.has(tc.id) && tc.id !== firstDelegation.toolCallId,
+        )
+        setting = {
+          ...setting,
+          expertKey: expertToRun.key,
+          input: {
+            interactiveToolCallResult: {
+              toolCallId: firstResult.toolCallId,
+              toolName: firstResult.toolName,
+              text: firstResult.text,
+            },
+          },
+        }
+        checkpoint = {
+          ...runResultCheckpoint,
+          status: "stoppedByDelegate",
+          delegateTo: undefined,
+          pendingToolCalls: remainingToolCalls?.length ? remainingToolCalls : undefined,
+          partialToolResults: [
+            ...(runResultCheckpoint.partialToolResults ?? []),
+            ...restToolResults,
+          ],
+        }
         break
       }
       case "stoppedByExceededMaxSteps": {
@@ -163,6 +215,98 @@ function getEventListener(options?: { eventListener?: (event: RunEvent | Runtime
       await defaultStoreEvent(event)
     }
     listener(event)
+  }
+}
+
+function createDelegateToolMessage(toolResults: ToolResult[]): ToolMessage {
+  const contents: ToolResultPart[] = toolResults.map((tr) => {
+    const textContent = tr.result.find((p) => p.type === "textPart")
+    return {
+      type: "toolResultPart" as const,
+      id: createId(),
+      toolCallId: tr.id,
+      toolName: tr.toolName,
+      contents: textContent ? [textContent] : [],
+    }
+  })
+  return {
+    type: "toolMessage",
+    id: createId(),
+    contents,
+  }
+}
+
+type DelegationResult = {
+  toolCallId: string
+  toolName: string
+  expertKey: string
+  text: string
+}
+
+async function runDelegate(
+  delegation: DelegationTarget,
+  parentSetting: RunSetting,
+  parentCheckpoint: Checkpoint,
+  parentExpert: Pick<Expert, "key" | "name" | "version">,
+  options?: {
+    shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
+    retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+    eventListener?: (event: RunEvent | RuntimeEvent) => void
+    fileSystem?: FileSystem
+    getRunDir?: GetRunDirFn
+  },
+): Promise<DelegationResult> {
+  const { expert, toolCallId, toolName, query } = delegation
+  const delegateRunId = createId()
+  const delegateSetting: RunSetting = {
+    ...parentSetting,
+    runId: delegateRunId,
+    expertKey: expert.key,
+    input: { text: query },
+  }
+  const delegateCheckpoint: Checkpoint = {
+    id: createId(),
+    jobId: parentSetting.jobId,
+    runId: delegateRunId,
+    status: "init",
+    stepNumber: parentCheckpoint.stepNumber,
+    messages: [],
+    expert: {
+      key: expert.key,
+      name: expert.name,
+      version: expert.version,
+    },
+    delegatedBy: {
+      expert: {
+        key: parentExpert.key,
+        name: parentExpert.name,
+        version: parentExpert.version,
+      },
+      toolCallId,
+      toolName,
+      checkpointId: parentCheckpoint.id,
+    },
+    usage: parentCheckpoint.usage,
+    contextWindow: parentCheckpoint.contextWindow,
+  }
+  const resultCheckpoint = await run(
+    { setting: delegateSetting, checkpoint: delegateCheckpoint },
+    { ...options, returnOnDelegationComplete: true },
+  )
+  const lastMessage = resultCheckpoint.messages[resultCheckpoint.messages.length - 1]
+  if (!lastMessage || lastMessage.type !== "expertMessage") {
+    throw new Error("Delegation error: delegation result message is incorrect")
+  }
+  const textPart = lastMessage.contents.find((c) => c.type === "textPart")
+  if (!textPart || textPart.type !== "textPart") {
+    throw new Error("Delegation error: delegation result message does not contain text")
+  }
+  return {
+    toolCallId,
+    toolName,
+    expertKey: expert.key,
+    text: textPart.text,
   }
 }
 

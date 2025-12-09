@@ -249,7 +249,7 @@ type ExpertEventPayloads = {
   }
   callDelegate: {
     newMessage: ExpertMessage
-    toolCall: ToolCall
+    toolCalls: ToolCall[]
     usage: Usage
   }
   resolveToolResults: {
