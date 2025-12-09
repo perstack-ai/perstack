@@ -185,6 +185,26 @@ export async function getCheckpointById(
   const checkpoint = await readFile(checkpointPath, "utf-8")
   return checkpointSchema.parse(JSON.parse(checkpoint))
 }
+
+export async function findCheckpointInJob(jobId: string, checkpointId: string): Promise<Checkpoint> {
+  const runs = await getRunsByJobId(jobId)
+  for (const run of runs) {
+    const runDir = getRunDir(jobId, run.runId)
+    if (!existsSync(runDir)) {
+      continue
+    }
+    const files = await readdir(runDir)
+    const checkpointFile = files.find(
+      (file) => file.startsWith("checkpoint-") && file.includes(`-${checkpointId}.`),
+    )
+    if (checkpointFile) {
+      const checkpointPath = path.resolve(runDir, checkpointFile)
+      const checkpoint = await readFile(checkpointPath, "utf-8")
+      return checkpointSchema.parse(JSON.parse(checkpoint))
+    }
+  }
+  throw new Error(`Checkpoint ${checkpointId} not found in job ${jobId}`)
+}
 export async function getCheckpointsWithDetails(
   jobId: string,
   runId: string,

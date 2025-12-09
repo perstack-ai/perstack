@@ -2,7 +2,7 @@ import type { Checkpoint, PerstackConfig, ProviderConfig, ProviderName } from "@
 import { getEnv } from "./get-env.js"
 import { getPerstackConfig } from "./perstack-toml.js"
 import { getProviderConfig } from "./provider-config.js"
-import { getCheckpointById, getMostRecentCheckpoint, getMostRecentRunInJob } from "./run-manager.js"
+import { findCheckpointInJob, getMostRecentCheckpoint, getMostRecentRunInJob } from "./run-manager.js"
 
 const defaultProvider: ProviderName = "anthropic"
 const defaultModel = "claude-sonnet-4-5"
@@ -37,8 +37,7 @@ export async function resolveRunContext(input: ResolveRunContextInput): Promise<
       throw new Error("--resume-from requires --continue or --continue-job")
     }
     const jobId = input.continueJob ?? (await getMostRecentCheckpoint()).jobId
-    const run = await getMostRecentRunInJob(jobId)
-    checkpoint = await getCheckpointById(jobId, run.runId, input.resumeFrom)
+    checkpoint = await findCheckpointInJob(jobId, input.resumeFrom)
   } else if (input.continueJob) {
     const run = await getMostRecentRunInJob(input.continueJob)
     checkpoint = await getMostRecentCheckpoint(run.jobId, run.runId)
