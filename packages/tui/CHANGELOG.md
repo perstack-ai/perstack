@@ -1,5 +1,18 @@
 # @perstack/tui
 
+## 0.0.20
+
+### Patch Changes
+
+- [#78](https://github.com/perstack-ai/perstack/pull/78) [`654ea63`](https://github.com/perstack-ai/perstack/commit/654ea635245f77baa43020dcab75efe31ab42cf4) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add Job concept as parent container for Runs
+
+  - Add Job schema and jobId to Checkpoint, RunSetting, and Event types
+  - Update storage structure to perstack/jobs/{jobId}/runs/{runId}/
+  - Update CLI options: --job-id, --continue-job (replacing --continue-run)
+
+- Updated dependencies [[`654ea63`](https://github.com/perstack-ai/perstack/commit/654ea635245f77baa43020dcab75efe31ab42cf4)]:
+  - @perstack/core@0.0.22
+
 ## 0.0.19
 
 ### Patch Changes
