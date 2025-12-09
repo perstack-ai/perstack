@@ -135,6 +135,38 @@ Job
 **Context is never shared between Experts.** The delegate receives only the query — no message history, no parent context. This is a security boundary, not a limitation. See [Why context isolation matters](/understanding-perstack/concept#isolation).
 </Callout>
 
+### Parallel delegation
+
+When the LLM calls multiple delegate tools in a single response, the runtime executes them in parallel:
+
+```
+Job
+ │
+ ├── Run 1: Expert A (Coordinator)
+ │       │
+ │       ├─ calls Expert B and Expert C ────────┬─────────────┐
+ │       │  (in single response)                │             │
+ │       │                                      │             │
+ │       │  [Run 1 paused]                      ▼             ▼
+ │       │                              ┌── Run 2 ──┐  ┌── Run 3 ──┐
+ │       │                              │ Expert B  │  │ Expert C  │
+ │       │                              │           │  │           │
+ │       │                              │ executes  │  │ executes  │
+ │       │                              │ in        │  │ in        │
+ │       │                              │ parallel  │  │ parallel  │
+ │       │                              │           │  │           │
+ │       │                              └─────┬─────┘  └─────┬─────┘
+ │       │                                    │              │
+ │       ├─ resumes ◄─────────────────────────┴──────────────┘
+ │       │  (receives all results)
+ │       ▼
+```
+
+Benefits:
+- **Performance**: Independent tasks run concurrently
+- **Natural**: LLM decides when to parallelize based on task requirements
+- **No configuration**: Automatic when multiple delegates called together
+
 Note the asymmetry: Expert A sees Expert B's `description` (public interface), but never its `instruction` (private implementation). This is what makes Experts composable — the caller only needs to know *what* a delegate does, not *how* it does it.
 
 **Key design decisions:**
