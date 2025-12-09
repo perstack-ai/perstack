@@ -10,25 +10,25 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingThought']", () => {
     const step = createStep({
       toolCalls: [
         {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "think",
-        args: { thought: "Let me analyze this problem step by step" },
-      },
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "think",
+          args: { thought: "Let me analyze this problem step by step" },
+        },
       ],
       toolResults: [
         {
           id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "think",
-        result: [
-          {
-            type: "textPart" as const,
-            text: "Analysis: The problem requires breaking down into smaller components.",
-            id: createId(),
-          },
-        ],
-      },
+          skillName: "@perstack/base",
+          toolName: "think",
+          result: [
+            {
+              type: "textPart" as const,
+              text: "Analysis: The problem requires breaking down into smaller components.",
+              id: createId(),
+            },
+          ],
+        },
       ],
     })
     await expect(

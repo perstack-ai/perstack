@@ -2,11 +2,7 @@ import type { Checkpoint, PerstackConfig, ProviderConfig, ProviderName } from "@
 import { getEnv } from "./get-env.js"
 import { getPerstackConfig } from "./perstack-toml.js"
 import { getProviderConfig } from "./provider-config.js"
-import {
-  getCheckpointById,
-  getMostRecentCheckpoint,
-  getMostRecentRunInJob,
-} from "./run-manager.js"
+import { getCheckpointById, getMostRecentCheckpoint, getMostRecentRunInJob } from "./run-manager.js"
 
 const defaultProvider: ProviderName = "anthropic"
 const defaultModel = "claude-sonnet-4-5"

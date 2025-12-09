@@ -46,7 +46,10 @@ export const startCommand = new Command()
   .option("--verbose", "Enable verbose logging")
   .option("--continue", "Continue the most recent job with new query")
   .option("--continue-job <jobId>", "Continue the specified job with new query")
-  .option("--resume-from <checkpointId>", "Resume from a specific checkpoint (requires --continue or --continue-job)")
+  .option(
+    "--resume-from <checkpointId>",
+    "Resume from a specific checkpoint (requires --continue or --continue-job)",
+  )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
@@ -136,7 +139,11 @@ export const startCommand = new Command()
       }
       let currentCheckpoint =
         resumeState.checkpoint !== null
-          ? await getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.runId, resumeState.checkpoint.id)
+          ? await getCheckpointById(
+              resumeState.checkpoint.jobId,
+              resumeState.checkpoint.runId,
+              resumeState.checkpoint.id,
+            )
           : checkpoint
       if (currentCheckpoint && currentCheckpoint.expert.key !== finalExpertKey) {
         console.error(

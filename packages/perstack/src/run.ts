@@ -28,7 +28,10 @@ export const runCommand = new Command()
   .option("--verbose", "Enable verbose logging")
   .option("--continue", "Continue the most recent job with new query")
   .option("--continue-job <jobId>", "Continue the specified job with new query")
-  .option("--resume-from <checkpointId>", "Resume from a specific checkpoint (requires --continue or --continue-job)")
+  .option(
+    "--resume-from <checkpointId>",
+    "Resume from a specific checkpoint (requires --continue or --continue-job)",
+  )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })

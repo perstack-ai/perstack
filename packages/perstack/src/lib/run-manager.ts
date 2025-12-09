@@ -168,7 +168,11 @@ export async function getEvents(
       .sort((a, b) => Number(a.stepNumber) - Number(b.stepNumber)),
   )
 }
-export async function getCheckpointById(jobId: string, runId: string, checkpointId: string): Promise<Checkpoint> {
+export async function getCheckpointById(
+  jobId: string,
+  runId: string,
+  checkpointId: string,
+): Promise<Checkpoint> {
   const runDir = getRunDir(jobId, runId)
   const files = await readdir(runDir)
   const checkpointFile = files.find(
@@ -236,7 +240,11 @@ export async function getEventsWithDetails(
       .sort((a, b) => a.timestamp - b.timestamp),
   )
 }
-export async function getEventContents(jobId: string, runId: string, maxStepNumber?: number): Promise<RunEvent[]> {
+export async function getEventContents(
+  jobId: string,
+  runId: string,
+  maxStepNumber?: number,
+): Promise<RunEvent[]> {
   const runDir = getRunDir(jobId, runId)
   if (!existsSync(runDir)) {
     return []

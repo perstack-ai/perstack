@@ -121,3 +121,49 @@ describe("@perstack/core: startCommandInputSchema", () => {
     expect(result.query).toBeUndefined()
   })
 })
+
+describe("@perstack/core: commandOptionsSchema - Job options", () => {
+  it("parses jobId option", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { jobId: "job-123" },
+    })
+    expect(result.options.jobId).toBe("job-123")
+  })
+
+  it("parses continueJob option", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { continueJob: "job-456" },
+    })
+    expect(result.options.continueJob).toBe("job-456")
+  })
+
+  it("parses resumeFrom option", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { resumeFrom: "checkpoint-789" },
+    })
+    expect(result.options.resumeFrom).toBe("checkpoint-789")
+  })
+
+  it("parses all job-related options together", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: {
+        jobId: "job-123",
+        continueJob: "job-456",
+        resumeFrom: "checkpoint-789",
+        continue: true,
+      },
+    })
+    expect(result.options.jobId).toBe("job-123")
+    expect(result.options.continueJob).toBe("job-456")
+    expect(result.options.resumeFrom).toBe("checkpoint-789")
+    expect(result.options.continue).toBe(true)
+  })
+})

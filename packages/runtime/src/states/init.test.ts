@@ -75,11 +75,11 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers: {},
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -125,11 +125,11 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
-        setting,
-        checkpoint,
-        step,
-        eventListener: async () => {},
-        skillManagers: {},
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {

@@ -11,25 +11,25 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
     const step = createStep({
       toolCalls: [
         {
-        id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readTextFile",
-        args: { path: "/test/file.txt" },
-      },
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "readTextFile",
+          args: { path: "/test/file.txt" },
+        },
       ],
       toolResults: [
         {
           id: "tc_123",
-        skillName: "@perstack/base",
-        toolName: "readTextFile",
-        result: [
-          {
-            type: "textPart" as const,
-            text: "File content successfully read",
-            id: createId(),
-          },
-        ],
-      },
+          skillName: "@perstack/base",
+          toolName: "readTextFile",
+          result: [
+            {
+              type: "textPart" as const,
+              text: "File content successfully read",
+              id: createId(),
+            },
+          ],
+        },
       ],
     })
     await expect(
@@ -98,33 +98,33 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
     const step = createStep({
       toolCalls: [
         {
-        id: "tc_456",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        args: { path: "/test/image.png" },
-      },
+          id: "tc_456",
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          args: { path: "/test/image.png" },
+        },
       ],
       toolResults: [
         {
           id: "tc_456",
-        skillName: "@perstack/base",
-        toolName: "readImageFile",
-        result: [
-          { type: "textPart" as const, text: "Image description", id: createId() },
-          {
-            type: "imageInlinePart" as const,
-            encodedData: "base64data",
-            mimeType: "image/png",
-            id: createId(),
-          },
-          {
-            type: "fileBinaryPart" as const,
-            data: "binary",
-            mimeType: "application/pdf",
-            id: createId(),
-          },
-        ],
-      },
+          skillName: "@perstack/base",
+          toolName: "readImageFile",
+          result: [
+            { type: "textPart" as const, text: "Image description", id: createId() },
+            {
+              type: "imageInlinePart" as const,
+              encodedData: "base64data",
+              mimeType: "image/png",
+              id: createId(),
+            },
+            {
+              type: "fileBinaryPart" as const,
+              data: "binary",
+              mimeType: "application/pdf",
+              id: createId(),
+            },
+          ],
+        },
       ],
     })
     const result = await StateMachineLogics.ResolvingToolResult({

@@ -87,8 +87,18 @@ describe("@perstack/runtime: StateMachineLogic['PreparingForStep']", () => {
         toolName: "testTool",
         result: [
           { type: "textPart" as const, text: "text", id: createId() },
-          { type: "imageInlinePart" as const, encodedData: "base64", mimeType: "image/png", id: createId() },
-          { type: "fileInlinePart" as const, encodedData: "base64", mimeType: "application/pdf", id: createId() },
+          {
+            type: "imageInlinePart" as const,
+            encodedData: "base64",
+            mimeType: "image/png",
+            id: createId(),
+          },
+          {
+            type: "fileInlinePart" as const,
+            encodedData: "base64",
+            mimeType: "application/pdf",
+            id: createId(),
+          },
         ],
       },
     ]

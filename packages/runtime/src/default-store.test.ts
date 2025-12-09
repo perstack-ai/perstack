@@ -93,9 +93,9 @@ describe("@perstack/runtime: default-store", () => {
 
     it("throws error when checkpoint not found", async () => {
       await fs.mkdir(testRunDir, { recursive: true })
-      await expect(defaultRetrieveCheckpoint(testJobId, testRunId, "nonexistent-id")).rejects.toThrow(
-        "checkpoint not found",
-      )
+      await expect(
+        defaultRetrieveCheckpoint(testJobId, testRunId, "nonexistent-id"),
+      ).rejects.toThrow("checkpoint not found")
     })
   })
 
