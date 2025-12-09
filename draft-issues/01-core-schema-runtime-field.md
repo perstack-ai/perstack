@@ -9,10 +9,16 @@ Add the `runtime` field to Expert schema in `@perstack/core` to support multi-ru
 
 ## Background
 
-The `runtime` field allows Experts to declare which execution runtimes they target. When multiple runtimes are specified, the Expert executes on all of them in parallel. This enables:
-- Running the same Expert on Cursor, Claude Code, and Gemini
-- Comparing results across different runtimes
-- Leveraging runtime-specific capabilities
+The `runtime` field declares **which runtimes an Expert is compatible with** (similar to `engines` in `package.json`). This is a compatibility declaration, not parallel execution:
+
+```toml
+runtime = ["cursor", "claude-code"]  # Works on both, runs on ONE at a time
+```
+
+This enables:
+- Publishing Experts that work across multiple runtimes
+- Users choosing their preferred runtime via `--runtime` option
+- Registry filtering by runtime compatibility
 
 See: [Multi-Runtime Support Documentation](../../docs/content/using-experts/multi-runtime.mdx)
 
@@ -105,12 +111,12 @@ export { runtimeNameSchema } from "./schemas/runtime-name.js"
 
 ## Affected Files
 
-| File                                          | Change                                    |
-| --------------------------------------------- | ----------------------------------------- |
-| `packages/core/src/schemas/runtime-name.ts`   | New: `RuntimeName` type and schema        |
-| `packages/core/src/schemas/expert.ts`         | Add `runtime` field, import RuntimeName   |
-| `packages/core/src/schemas/perstack-toml.ts`  | Add `runtime` field, import RuntimeName   |
-| `packages/core/src/index.ts`                  | Export new types from runtime-name.ts     |
+| File                                         | Change                                  |
+| -------------------------------------------- | --------------------------------------- |
+| `packages/core/src/schemas/runtime-name.ts`  | New: `RuntimeName` type and schema      |
+| `packages/core/src/schemas/expert.ts`        | Add `runtime` field, import RuntimeName |
+| `packages/core/src/schemas/perstack-toml.ts` | Add `runtime` field, import RuntimeName |
+| `packages/core/src/index.ts`                 | Export new types from runtime-name.ts   |
 
 ## Testing
 

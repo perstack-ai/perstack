@@ -253,12 +253,12 @@ export {
 
 ## Affected Files
 
-| File                                             | Change                                        |
-| ------------------------------------------------ | --------------------------------------------- |
-| `packages/runtime/src/adapters/output-parser.ts` | New: Output parsing utilities                 |
-| `packages/core/src/schemas/checkpoint.ts`        | Add `metadata` field (interface and schema)   |
-| `packages/runtime/src/adapters/index.ts`         | Export parser functions                       |
-| `packages/runtime/src/index.ts`                  | Re-export from adapters/index.ts              |
+| File                                             | Change                                      |
+| ------------------------------------------------ | ------------------------------------------- |
+| `packages/runtime/src/adapters/output-parser.ts` | New: Output parsing utilities               |
+| `packages/core/src/schemas/checkpoint.ts`        | Add `metadata` field (interface and schema) |
+| `packages/runtime/src/adapters/index.ts`         | Export parser functions                     |
+| `packages/runtime/src/index.ts`                  | Re-export from adapters/index.ts            |
 
 > **Backward Compatibility:** The `metadata` field uses `.optional()` so existing checkpoints without this field will parse correctly. No migration needed.
 

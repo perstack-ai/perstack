@@ -262,14 +262,14 @@ export type {
 
 ## Affected Files
 
-| File                                                       | Change                              |
-| ---------------------------------------------------------- | ----------------------------------- |
-| `packages/runtime/src/adapters/types.ts`                   | New: Interface definitions          |
-| `packages/runtime/src/adapters/factory.ts`                 | New: Adapter factory                |
-| `packages/runtime/src/adapters/perstack-adapter.ts`        | New: Perstack adapter wrapper       |
-| `packages/runtime/src/adapters/base-external-adapter.ts`   | New: Base class for external adapters |
-| `packages/runtime/src/adapters/index.ts`                   | New: Exports                        |
-| `packages/runtime/src/index.ts`                            | Export adapters                     |
+| File                                                     | Change                                |
+| -------------------------------------------------------- | ------------------------------------- |
+| `packages/runtime/src/adapters/types.ts`                 | New: Interface definitions            |
+| `packages/runtime/src/adapters/factory.ts`               | New: Adapter factory                  |
+| `packages/runtime/src/adapters/perstack-adapter.ts`      | New: Perstack adapter wrapper         |
+| `packages/runtime/src/adapters/base-external-adapter.ts` | New: Base class for external adapters |
+| `packages/runtime/src/adapters/index.ts`                 | New: Exports                          |
+| `packages/runtime/src/index.ts`                          | Export adapters                       |
 
 ## Testing
 

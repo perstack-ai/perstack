@@ -152,14 +152,39 @@ All work should be done on `epic/multi-runtime` branch (already exists with docu
 
 Merge to `main` when Phase 2 is complete and all acceptance criteria in Epic #86 are met.
 
+## Key Design Decision: Runtime as Compatibility Declaration
+
+The `runtime` field declares **which runtimes an Expert is compatible with**, not parallel execution:
+
+```toml
+[experts.my-expert]
+runtime = ["cursor", "claude-code"]  # Compatible with both, runs on ONE at a time
+```
+
+**Execution is always single-runtime:**
+- `perstack run my-expert "query" --runtime cursor` → runs on Cursor only
+- If no `--runtime` specified, uses first compatible runtime from Expert's list
+
+**Delegation behavior by runtime:**
+
+| Caller Runtime | Delegate Behavior |
+| -------------- | ----------------- |
+| `perstack`     | Full delegation via tool call (existing behavior) |
+| `cursor`       | Instruction-based only (delegate info embedded in prompt) |
+| `claude-code`  | Instruction-based only (delegate info embedded in prompt) |
+| `gemini`       | Instruction-based only (delegate info embedded in prompt) |
+
+> **Phase 2 Scope:** External runtimes cannot invoke Perstack's delegate tool. They receive delegate information as instruction context only. True cross-runtime delegation may be explored in future phases.
+
 ## Acceptance Criteria (from Epic #86)
 
 - [ ] `perstack run my-expert "query" --runtime cursor` works
 - [ ] `perstack run my-expert "query" --runtime claude-code` works
 - [ ] `perstack run my-expert "query" --runtime gemini` works
 - [ ] `perstack start my-expert --runtime <runtime>` works
-- [ ] `runtime = ["cursor", "claude-code"]` executes on both runtimes in parallel
-- [ ] Delegation to Expert with different `runtime` routes correctly
+- [ ] `runtime = ["cursor", "claude-code"]` declares compatibility (single execution)
+- [ ] CLI validates `--runtime` against Expert's compatible runtimes
+- [ ] Delegation to Expert respects runtime specification
 - [ ] Checkpoints are stored in `perstack/jobs/` for all runtimes
 - [ ] Prerequisites check shows helpful error messages
 - [ ] Registry supports `runtime` field

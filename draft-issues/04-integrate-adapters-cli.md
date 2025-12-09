@@ -141,29 +141,32 @@ const runResult = await dispatchToRuntime({
 
 Note: For `start` command, the event listener integration needs special handling since it uses TUI. This will be fully addressed in #09 TUI Multi-Runtime.
 
-### 4. Handle Multiple Runtimes in Expert Definition
+### 4. Runtime Selection Logic
 
-When an Expert has `runtime: ["cursor", "claude-code"]`, the dispatcher should:
+The `runtime` field in Expert definition is a **compatibility declaration**, not parallel execution:
 
-1. For `perstack run` (no `--runtime` option): Run on all specified runtimes in parallel
-2. For `perstack run --runtime cursor`: Run only on the specified runtime
+```toml
+[experts.my-expert]
+runtime = ["cursor", "claude-code"]  # This Expert works on both runtimes
+```
 
-**File:** `packages/perstack/src/lib/runtime-dispatcher.ts`
-
-Add parallel execution support:
+**Selection priority:**
+1. `--runtime` CLI option (explicit user choice)
+2. First compatible runtime from Expert's `runtime` array
+3. Default to `"perstack"` if Expert has no `runtime` field
 
 ```typescript
-export async function dispatchToMultipleRuntimes(
-  params: Omit<DispatchParams, "runtime"> & { runtimes: RuntimeName[] },
-): Promise<DispatchResult[]> {
-  const { runtimes, ...rest } = params
-  
-  // Execute all runtimes in parallel
-  const results = await Promise.all(
-    runtimes.map((runtime) => dispatchToRuntime({ ...rest, runtime }))
-  )
-  
-  return results
+function selectRuntime(expert: Expert, cliRuntime?: RuntimeName): RuntimeName {
+  if (cliRuntime) {
+    if (!expert.runtime.includes(cliRuntime)) {
+      throw new Error(
+        `Expert "${expert.key}" does not support runtime "${cliRuntime}". ` +
+        `Supported: ${expert.runtime.join(", ")}`
+      )
+    }
+    return cliRuntime
+  }
+  return expert.runtime[0] ?? "perstack"
 }
 ```
 
