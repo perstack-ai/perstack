@@ -67,16 +67,13 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 | `--job-id <id>` | Custom Job ID for new Job (default: auto-generated) |
 | `--continue` | Continue latest Job with new Run |
 | `--continue-job <id>` | Continue specific Job with new Run |
-| `--resume-from <id>` | Resume from specific checkpoint (requires `--continue` or `--continue-job`) |
+| `--resume-from <id>` | Resume from specific checkpoint (requires `--continue-job`) |
 
 **Combining options:**
 
 ```bash
 # Continue latest Job from its latest checkpoint
 --continue
-
-# Continue latest Job from a specific checkpoint
---continue --resume-from <checkpointId>
 
 # Continue specific Job from its latest checkpoint
 --continue-job <jobId>
@@ -85,7 +82,7 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 --continue-job <jobId> --resume-from <checkpointId>
 ```
 
-**Note:** `--resume-from` must be combined with `--continue` or `--continue-job`. You can only resume from the Coordinator Expert's checkpoints.
+**Note:** `--resume-from` requires `--continue-job` (Job ID must be specified). You can only resume from the Coordinator Expert's checkpoints.
 
 ### Interactive
 

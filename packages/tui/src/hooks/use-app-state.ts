@@ -5,8 +5,8 @@ import type {
   EventHistoryItem,
   ExpertOption,
   InitialRuntimeConfig,
+  JobHistoryItem,
   PerstackEvent,
-  RunHistoryItem,
 } from "../types/index.js"
 import { useExpertActions, useHistoryActions, useRunActions } from "./actions/index.js"
 import { useInputState } from "./state/use-input-state.js"
@@ -21,13 +21,13 @@ type UseAppStateProps = {
   initialConfig: InitialRuntimeConfig
   configuredExperts?: ExpertOption[]
   recentExperts?: ExpertOption[]
-  historyRuns?: RunHistoryItem[]
+  historyJobs?: JobHistoryItem[]
   onComplete: (expertKey: string, query: string) => void
   onContinue?: (query: string) => void
   onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
-  onLoadCheckpoints?: (run: RunHistoryItem) => Promise<CheckpointHistoryItem[]>
+  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
   onLoadEvents?: (
-    run: RunHistoryItem,
+    job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
   onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
@@ -42,7 +42,7 @@ export const useAppState = (props: UseAppStateProps) => {
     initialConfig,
     configuredExperts,
     recentExperts,
-    historyRuns,
+    historyJobs,
     onComplete,
     onContinue,
     onResumeFromCheckpoint,
@@ -66,7 +66,7 @@ export const useAppState = (props: UseAppStateProps) => {
     initialExpertName,
     configuredExperts,
     recentExperts,
-    historyRuns,
+    historyJobs,
   })
   const { markAsStarted, handleQuerySubmit } = useRunActions({
     expertName: runtimeInfo.expertName,
@@ -98,7 +98,7 @@ export const useAppState = (props: UseAppStateProps) => {
   })
   const history = useHistoryActions({
     allExperts,
-    historyRuns,
+    historyJobs,
     onLoadCheckpoints,
     onLoadEvents,
     onResumeFromCheckpoint,
@@ -116,8 +116,8 @@ export const useAppState = (props: UseAppStateProps) => {
     () => ({
       onExpertSelect: handleExpertSelect,
       onQuerySubmit: handleQuerySubmit,
-      onRunSelect: history.handleRunSelect,
-      onRunResume: history.handleRunResume,
+      onJobSelect: history.handleJobSelect,
+      onJobResume: history.handleJobResume,
       onCheckpointSelect: history.handleCheckpointSelect,
       onCheckpointResume: history.handleCheckpointResume,
       onEventSelect: history.handleEventSelect,
@@ -128,8 +128,8 @@ export const useAppState = (props: UseAppStateProps) => {
     [
       handleExpertSelect,
       handleQuerySubmit,
-      history.handleRunSelect,
-      history.handleRunResume,
+      history.handleJobSelect,
+      history.handleJobResume,
       history.handleCheckpointSelect,
       history.handleCheckpointResume,
       history.handleEventSelect,

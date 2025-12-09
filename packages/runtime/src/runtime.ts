@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2"
 import {
   type Checkpoint,
   createRuntimeEvent,
+  type Job,
   type RunEvent,
   type RunParamsInput,
   type RunSetting,
@@ -23,6 +24,7 @@ import {
 } from "./default-store.js"
 import { RunEventEmitter } from "./events/event-emitter.js"
 import { executeStateMachine } from "./execute-state-machine.js"
+import { createInitialJob, retrieveJob, storeJob } from "./job-store.js"
 import { getContextWindow } from "./model.js"
 import {
   defaultGetRunDir,
@@ -41,8 +43,8 @@ export async function run(
       checkpoint: Checkpoint,
       step: Step,
     ) => Promise<boolean>
-    retrieveCheckpoint?: (jobId: string, runId: string, checkpointId: string) => Promise<Checkpoint>
-    storeCheckpoint?: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
+    retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
     eventListener?: (event: RunEvent | RuntimeEvent) => void
     resolveExpertToRun?: ResolveExpertToRunFn
     fileSystem?: FileSystem
@@ -59,6 +61,13 @@ export async function run(
   const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
   const getRunDir = options?.getRunDir ?? defaultGetRunDir
   await storeRunSetting(setting, options?.fileSystem, getRunDir)
+  let job: Job =
+    retrieveJob(setting.jobId) ??
+    createInitialJob(setting.jobId, setting.expertKey, setting.maxSteps)
+  if (job.status !== "running") {
+    job = { ...job, status: "running", finishedAt: undefined }
+  }
+  storeJob(job)
   while (true) {
     const { expertToRun, experts } = await setupExperts(setting, options?.resolveExpertToRun)
     if (options?.eventListener) {
@@ -100,12 +109,17 @@ export async function run(
       storeCheckpoint,
       shouldContinueRun: options?.shouldContinueRun,
     })
+    job = {
+      ...job,
+      totalSteps: runResultCheckpoint.stepNumber,
+      usage: runResultCheckpoint.usage,
+    }
     switch (runResultCheckpoint.status) {
       case "completed": {
         if (runResultCheckpoint.delegatedBy) {
+          storeJob(job)
           const parentCheckpoint = await retrieveCheckpoint(
             setting.jobId,
-            setting.runId,
             runResultCheckpoint.delegatedBy.checkpointId,
           )
           const result = buildDelegationReturnState(setting, runResultCheckpoint, parentCheckpoint)
@@ -113,21 +127,26 @@ export async function run(
           checkpoint = result.checkpoint
           break
         }
+        storeJob({ ...job, status: "completed", finishedAt: Date.now() })
         return runResultCheckpoint
       }
       case "stoppedByInteractiveTool": {
+        storeJob({ ...job, status: "stoppedByInteractiveTool" })
         return runResultCheckpoint
       }
       case "stoppedByDelegate": {
+        storeJob(job)
         const result = buildDelegateToState(setting, runResultCheckpoint, expertToRun)
         setting = result.setting
         checkpoint = result.checkpoint
         break
       }
       case "stoppedByExceededMaxSteps": {
+        storeJob({ ...job, status: "stoppedByMaxSteps", finishedAt: Date.now() })
         return runResultCheckpoint
       }
       case "stoppedByError": {
+        storeJob({ ...job, status: "stoppedByError", finishedAt: Date.now() })
         return runResultCheckpoint
       }
       default:

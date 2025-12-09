@@ -1,5 +1,7 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 import { type RunSetting, runSettingSchema } from "@perstack/core"
+import { getJobsDir } from "./job-store.js"
 
 export type FileSystem = {
   existsSync: (path: string) => boolean
@@ -49,4 +51,40 @@ export async function storeRunSetting(
       "utf-8",
     )
   }
+}
+
+export function getAllRuns(): RunSetting[] {
+  const jobsDir = getJobsDir()
+  if (!existsSync(jobsDir)) {
+    return []
+  }
+  const jobDirNames = readdirSync(jobsDir, { withFileTypes: true })
+    .filter((dir) => dir.isDirectory())
+    .map((dir) => dir.name)
+  if (jobDirNames.length === 0) {
+    return []
+  }
+  const runs: RunSetting[] = []
+  for (const jobDirName of jobDirNames) {
+    const runsDir = path.resolve(jobsDir, jobDirName, "runs")
+    if (!existsSync(runsDir)) {
+      continue
+    }
+    const runDirNames = readdirSync(runsDir, { withFileTypes: true })
+      .filter((dir) => dir.isDirectory())
+      .map((dir) => dir.name)
+    for (const runDirName of runDirNames) {
+      const runSettingPath = path.resolve(runsDir, runDirName, "run-setting.json")
+      if (!existsSync(runSettingPath)) {
+        continue
+      }
+      try {
+        const content = readFileSync(runSettingPath, "utf-8")
+        runs.push(runSettingSchema.parse(JSON.parse(content)))
+      } catch {
+        // Ignore invalid runs
+      }
+    }
+  }
+  return runs.sort((a, b) => b.updatedAt - a.updatedAt)
 }

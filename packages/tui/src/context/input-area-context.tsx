@@ -3,13 +3,13 @@ import type {
   BrowsingEventsState,
   CheckpointHistoryItem,
   EventHistoryItem,
-  RunHistoryItem,
+  JobHistoryItem,
 } from "../types/index.js"
 export type InputAreaContextValue = {
   onExpertSelect: (expertKey: string) => void
   onQuerySubmit: (query: string) => void
-  onRunSelect: (run: RunHistoryItem) => void
-  onRunResume: (run: RunHistoryItem) => void
+  onJobSelect: (job: JobHistoryItem) => void
+  onJobResume: (job: JobHistoryItem) => void
   onCheckpointSelect: (checkpoint: CheckpointHistoryItem) => void
   onCheckpointResume: (checkpoint: CheckpointHistoryItem) => void
   onEventSelect: (state: BrowsingEventsState, event: EventHistoryItem) => void
