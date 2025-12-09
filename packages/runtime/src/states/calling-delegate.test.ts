@@ -5,6 +5,7 @@ type StopRunByDelegateResult = {
   type: "stopRunByDelegate"
   checkpoint: Checkpoint
 }
+
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
 import type { BaseSkillManager } from "../skill-manager/index.js"

@@ -28,13 +28,8 @@ export async function initLogic({
       if (!setting.input.interactiveToolCallResult) {
         throw new Error("Interactive tool call result is undefined")
       }
-      const { toolCallId, toolName, text } = setting.input.interactiveToolCallResult
+      const { toolCallId, toolName, skillName, text } = setting.input.interactiveToolCallResult
       const pendingToolCalls = checkpoint.pendingToolCalls ?? []
-      const completedToolCall = pendingToolCalls.find((tc) => tc.id === toolCallId)
-      const skillName =
-        completedToolCall?.skillName ??
-        (checkpoint.status === "stoppedByDelegate" ? checkpoint.delegateTo?.[0]?.expert.key : "") ??
-        ""
       const newToolResult: ToolResult = {
         id: toolCallId,
         skillName,

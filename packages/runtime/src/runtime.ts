@@ -123,7 +123,11 @@ export async function run(
     }
     switch (runResultCheckpoint.status) {
       case "completed": {
-        if (runResultCheckpoint.delegatedBy && !options?.returnOnDelegationComplete) {
+        if (options?.returnOnDelegationComplete) {
+          storeJob(job)
+          return runResultCheckpoint
+        }
+        if (runResultCheckpoint.delegatedBy) {
           storeJob(job)
           const parentCheckpoint = await retrieveCheckpoint(
             setting.jobId,
@@ -183,6 +187,7 @@ export async function run(
             interactiveToolCallResult: {
               toolCallId: firstResult.toolCallId,
               toolName: firstResult.toolName,
+              skillName: `delegate/${firstResult.expertKey}`,
               text: firstResult.text,
             },
           },

@@ -7,6 +7,7 @@ export function parseInteractiveToolCallResult(
   interactiveToolCallResult: {
     toolCallId: string
     toolName: string
+    skillName: string
     text: string
   }
 } {
@@ -20,10 +21,13 @@ export function parseInteractiveToolCallResult(
   }
   const toolCallId = content.toolCallId
   const toolName = content.toolName
+  const pendingToolCall = checkpoint.pendingToolCalls?.find((tc) => tc.id === toolCallId)
+  const skillName = pendingToolCall?.skillName ?? ""
   return {
     interactiveToolCallResult: {
       toolCallId,
       toolName,
+      skillName,
       text: query,
     },
   }

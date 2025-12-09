@@ -66,12 +66,16 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
   it("resumes from stopped by delegate correctly", async () => {
     const setting = createRunSetting({
       input: {
-        interactiveToolCallResult: { toolCallId: "123", toolName: "test", text: "test-delegate" },
+        interactiveToolCallResult: {
+          toolCallId: "123",
+          toolName: "test",
+          skillName: "test-skill",
+          text: "test-delegate",
+        },
       },
     })
     const checkpoint = createCheckpoint({
       status: "stoppedByDelegate",
-      pendingToolCalls: [{ id: "123", skillName: "test-skill", toolName: "test", args: {} }],
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({
@@ -115,13 +119,13 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         interactiveToolCallResult: {
           toolCallId: "123",
           toolName: "test",
+          skillName: "test-skill",
           text: "test-interactive-tool",
         },
       },
     })
     const checkpoint = createCheckpoint({
       status: "stoppedByInteractiveTool",
-      pendingToolCalls: [{ id: "123", skillName: "test-skill", toolName: "test", args: {} }],
     })
     const step = createStep()
     const event = await StateMachineLogics.Init({

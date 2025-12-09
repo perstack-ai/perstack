@@ -52,6 +52,7 @@ export interface RunInput {
   interactiveToolCallResult?: {
     toolCallId: string
     toolName: string
+    skillName: string
     text: string
   }
 }
@@ -149,6 +150,7 @@ export const runSettingSchema = z.object({
       .object({
         toolCallId: z.string(),
         toolName: z.string(),
+        skillName: z.string(),
         text: z.string(),
       })
       .optional(),
@@ -185,6 +187,7 @@ export const runParamsSchema = z.object({
         .object({
           toolCallId: z.string(),
           toolName: z.string(),
+          skillName: z.string(),
           text: z.string(),
         })
         .optional(),

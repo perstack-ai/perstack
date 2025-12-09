@@ -160,6 +160,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
       interactiveToolCallResult: {
         toolCallId: "tool-call-123",
         toolName: "delegateTool",
+        skillName: "delegate/child-expert",
         text: "delegation result",
       },
     })
