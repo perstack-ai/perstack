@@ -1,4 +1,10 @@
+import type { Checkpoint } from "@perstack/core"
 import { describe, expect, it } from "vitest"
+
+type StopRunByDelegateResult = {
+  type: "stopRunByDelegate"
+  checkpoint: Checkpoint
+}
 import { createCheckpoint, createRunSetting, createStep } from "../../test/run-params.js"
 import { StateMachineLogics } from "../index.js"
 import type { BaseSkillManager } from "../skill-manager/index.js"
@@ -231,13 +237,13 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         close: async () => {},
       } as unknown as BaseSkillManager,
     }
-    const result = await StateMachineLogics.CallingDelegate({
+    const result = (await StateMachineLogics.CallingDelegate({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers,
-    })
+    })) as StopRunByDelegateResult
     expect(result.type).toBe("stopRunByDelegate")
     expect(result.checkpoint.delegateTo).toHaveLength(2)
     expect(result.checkpoint.delegateTo).toEqual([
@@ -321,13 +327,13 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         close: async () => {},
       } as unknown as BaseSkillManager,
     }
-    const result = await StateMachineLogics.CallingDelegate({
+    const result = (await StateMachineLogics.CallingDelegate({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers,
-    })
+    })) as StopRunByDelegateResult
     expect(result.type).toBe("stopRunByDelegate")
     expect(result.checkpoint.delegateTo).toHaveLength(1)
     expect(result.checkpoint.pendingToolCalls).toHaveLength(1)

@@ -14,7 +14,6 @@ import {
   type ToolResult,
   type Usage,
 } from "@perstack/core"
-import { sumUsage } from "./usage.js"
 import pkg from "../package.json" with { type: "json" }
 import {
   buildDelegateToState,
@@ -39,6 +38,7 @@ import {
 } from "./run-setting-store.js"
 import { type ResolveExpertToRunFn, setupExperts } from "./setup-experts.js"
 import { getSkillManagers } from "./skill-manager/index.js"
+import { createEmptyUsage, sumUsage } from "./usage.js"
 
 export async function run(
   runInput: RunParamsInput,
@@ -160,10 +160,12 @@ export async function run(
             runDelegate(delegation, setting, runResultCheckpoint, expertToRun, options),
           ),
         )
-        const delegationUsage = [firstResult, ...restResults].reduce(
-          (acc, result) => sumUsage(acc, result.usage),
+        const allResults = [firstResult, ...restResults]
+        const aggregatedUsage = allResults.reduce(
+          (acc, result) => sumUsage(acc, result.deltaUsage),
           runResultCheckpoint.usage,
         )
+        const maxStepNumber = Math.max(...allResults.map((r) => r.stepNumber))
         const restToolResults: ToolResult[] = restResults.map((result) => ({
           id: result.toolCallId,
           skillName: `delegate/${result.expertKey}`,
@@ -189,7 +191,8 @@ export async function run(
           ...runResultCheckpoint,
           status: "stoppedByDelegate",
           delegateTo: undefined,
-          usage: delegationUsage,
+          stepNumber: maxStepNumber,
+          usage: aggregatedUsage,
           pendingToolCalls: remainingToolCalls?.length ? remainingToolCalls : undefined,
           partialToolResults: [
             ...(runResultCheckpoint.partialToolResults ?? []),
@@ -228,7 +231,8 @@ type DelegationResult = {
   toolName: string
   expertKey: string
   text: string
-  usage: Usage
+  stepNumber: number
+  deltaUsage: Usage
 }
 
 async function runDelegate(
@@ -280,7 +284,7 @@ async function runDelegate(
       toolName,
       checkpointId: parentCheckpoint.id,
     },
-    usage: parentCheckpoint.usage,
+    usage: createEmptyUsage(),
     contextWindow: parentCheckpoint.contextWindow,
   }
   const resultCheckpoint = await run(
@@ -300,7 +304,8 @@ async function runDelegate(
     toolName,
     expertKey: expert.key,
     text: textPart.text,
-    usage: resultCheckpoint.usage,
+    stepNumber: resultCheckpoint.stepNumber,
+    deltaUsage: resultCheckpoint.usage,
   }
 }
 
