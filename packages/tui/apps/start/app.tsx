@@ -7,8 +7,8 @@ import type {
   EventHistoryItem,
   ExpertOption,
   InitialRuntimeConfig,
+  JobHistoryItem,
   PerstackEvent,
-  RunHistoryItem,
 } from "../../src/types/index.js"
 
 type AppProps = {
@@ -19,13 +19,13 @@ type AppProps = {
   initialConfig: InitialRuntimeConfig
   configuredExperts?: ExpertOption[]
   recentExperts?: ExpertOption[]
-  historyRuns?: RunHistoryItem[]
+  historyJobs?: JobHistoryItem[]
   onComplete: (expertKey: string, query: string) => void
   onContinue?: (query: string) => void
   onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
-  onLoadCheckpoints?: (run: RunHistoryItem) => Promise<CheckpointHistoryItem[]>
+  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
   onLoadEvents?: (
-    run: RunHistoryItem,
+    job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
   onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>

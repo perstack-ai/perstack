@@ -6,6 +6,7 @@ export { renderUnpublish, type UnpublishWizardResult } from "../apps/unpublish/r
 export type {
   CheckpointHistoryItem,
   EventHistoryItem,
+  JobHistoryItem,
   PerstackEvent,
   RunHistoryItem,
   WizardExpertChoice,

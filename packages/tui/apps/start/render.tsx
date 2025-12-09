@@ -1,13 +1,13 @@
 import { render } from "ink"
-import { App } from "./app.js"
 import type {
   CheckpointHistoryItem,
   EventHistoryItem,
   InitialRuntimeConfig,
+  JobHistoryItem,
   PerstackEvent,
-  RunHistoryItem,
 } from "../../src/types/index.js"
 import { EventQueue } from "../../src/utils/event-queue.js"
+import { App } from "./app.js"
 
 const createEventEmitter = () => {
   const eventQueue = new EventQueue()
@@ -24,12 +24,12 @@ type RenderTuiInteractiveOptions = {
   initialConfig: InitialRuntimeConfig
   configuredExperts?: Array<{ key: string; name: string }>
   recentExperts?: Array<{ key: string; name: string; lastUsed?: number }>
-  historyRuns?: RunHistoryItem[]
+  historyJobs?: JobHistoryItem[]
   onContinue?: (query: string) => void
   onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
-  onLoadCheckpoints?: (run: RunHistoryItem) => Promise<CheckpointHistoryItem[]>
+  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
   onLoadEvents?: (
-    run: RunHistoryItem,
+    job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
   onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
@@ -51,7 +51,7 @@ export async function renderStart(
         initialConfig={options.initialConfig}
         configuredExperts={options.configuredExperts}
         recentExperts={options.recentExperts}
-        historyRuns={options.historyRuns}
+        historyJobs={options.historyJobs}
         onComplete={(expertKey, query) => {
           resolved = true
           resolve({

@@ -77,13 +77,9 @@ npx perstack run my-expert "Follow-up" --continue-job <jobId>
 
 ## Resuming from a checkpoint
 
-Resume from a specific checkpoint to branch execution. Use `--resume-from` with `--continue` or `--continue-job`:
+Resume from a specific checkpoint to branch execution. Use `--resume-from` with `--continue-job`:
 
 ```bash
-# Resume from checkpoint in latest Job
-npx perstack run my-expert "try again" --continue --resume-from <checkpointId>
-
-# Resume from checkpoint in specific Job
 npx perstack run my-expert "try again" --continue-job <jobId> --resume-from <checkpointId>
 ```
 
@@ -93,7 +89,7 @@ Useful for:
 - Debugging
 
 **Important:**
-- `--resume-from` requires `--continue` or `--continue-job`
+- `--resume-from` requires `--continue-job` (Job ID must be specified)
 - You can only resume from the Coordinator Expert's checkpoints
 
 ## Interactive tool calls

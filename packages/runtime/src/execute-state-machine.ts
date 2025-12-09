@@ -10,7 +10,7 @@ export type ExecuteStateMachineParams = {
   eventListener: (event: RunEvent | RuntimeEvent) => Promise<void>
   skillManagers: Record<string, BaseSkillManager>
   eventEmitter: RunEventEmitter
-  storeCheckpoint: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
+  storeCheckpoint: (checkpoint: Checkpoint) => Promise<void>
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
 }
 
@@ -45,7 +45,7 @@ export async function executeStateMachine(params: ExecuteStateMachineParams): Pr
         } else {
           const event = await StateMachineLogics[runState.value](runState.context)
           if ("checkpoint" in event) {
-            await storeCheckpoint(event.checkpoint, event.timestamp)
+            await storeCheckpoint(event.checkpoint)
           }
           await eventEmitter.emit(event)
           if (shouldContinueRun) {

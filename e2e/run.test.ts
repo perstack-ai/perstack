@@ -31,6 +31,6 @@ describe("CLI run", () => {
       "checkpoint-123",
     ])
     expect(result.exitCode).toBe(1)
-    expect(result.stderr).toContain("--resume-from requires --continue or --continue-job")
+    expect(result.stderr).toContain("--resume-from requires --continue-job")
   })
 })

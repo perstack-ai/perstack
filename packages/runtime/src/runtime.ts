@@ -44,8 +44,8 @@ export async function run(
       checkpoint: Checkpoint,
       step: Step,
     ) => Promise<boolean>
-    retrieveCheckpoint?: (jobId: string, runId: string, checkpointId: string) => Promise<Checkpoint>
-    storeCheckpoint?: (checkpoint: Checkpoint, timestamp: number) => Promise<void>
+    retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
     eventListener?: (event: RunEvent | RuntimeEvent) => void
     resolveExpertToRun?: ResolveExpertToRunFn
     fileSystem?: FileSystem
@@ -62,7 +62,9 @@ export async function run(
   const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
   const getRunDir = options?.getRunDir ?? defaultGetRunDir
   await storeRunSetting(setting, options?.fileSystem, getRunDir)
-  let job: Job = retrieveJob(setting.jobId) ?? createInitialJob(setting.jobId, setting.expertKey, setting.maxSteps)
+  let job: Job =
+    retrieveJob(setting.jobId) ??
+    createInitialJob(setting.jobId, setting.expertKey, setting.maxSteps)
   if (job.status !== "running") {
     job = { ...job, status: "running", finishedAt: undefined }
   }
@@ -119,7 +121,6 @@ export async function run(
           storeJob(job)
           const parentCheckpoint = await retrieveCheckpoint(
             setting.jobId,
-            setting.runId,
             runResultCheckpoint.delegatedBy.checkpointId,
           )
           const result = buildDelegationReturnState(setting, runResultCheckpoint, parentCheckpoint)

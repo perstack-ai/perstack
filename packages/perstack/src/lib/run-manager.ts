@@ -1,8 +1,43 @@
 import { existsSync } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
-import { type Checkpoint, checkpointSchema, type RunEvent, type RunSetting } from "@perstack/core"
-import { getRunDir } from "@perstack/runtime"
+import {
+  type Checkpoint,
+  checkpointSchema,
+  type Job,
+  jobSchema,
+  type RunEvent,
+  type RunSetting,
+} from "@perstack/core"
+import { getCheckpointDir, getCheckpointPath, getRunDir } from "@perstack/runtime"
+
+export async function getAllJobs(): Promise<Job[]> {
+  const dataDir = path.resolve(process.cwd(), "perstack")
+  if (!existsSync(dataDir)) {
+    return []
+  }
+  const jobsDir = path.resolve(dataDir, "jobs")
+  if (!existsSync(jobsDir)) {
+    return []
+  }
+  const jobDirs = await readdir(jobsDir, { withFileTypes: true }).then((dirs) =>
+    dirs.filter((dir) => dir.isDirectory()).map((dir) => dir.name),
+  )
+  if (jobDirs.length === 0) {
+    return []
+  }
+  const jobs: Job[] = []
+  for (const jobDir of jobDirs) {
+    const jobPath = path.resolve(jobsDir, jobDir, "job.json")
+    try {
+      const jobContent = await readFile(jobPath, "utf-8")
+      jobs.push(jobSchema.parse(JSON.parse(jobContent)))
+    } catch {
+      // Ignore invalid jobs
+    }
+  }
+  return jobs.sort((a, b) => b.startedAt - a.startedAt)
+}
 
 export async function getAllRuns(): Promise<RunSetting[]> {
   const dataDir = path.resolve(process.cwd(), "perstack")
@@ -67,63 +102,30 @@ export async function getMostRecentRunInJob(jobId: string): Promise<RunSetting> 
   return runs[0]
 }
 
-export async function getCheckpoints(
-  jobId: string,
-  runId: string,
-): Promise<{ timestamp: string; stepNumber: string; id: string }[]> {
-  const runDir = getRunDir(jobId, runId)
-  if (!existsSync(runDir)) {
+export async function getCheckpointsByJobId(jobId: string): Promise<Checkpoint[]> {
+  const checkpointDir = getCheckpointDir(jobId)
+  if (!existsSync(checkpointDir)) {
     return []
   }
-  return await readdir(runDir).then((files) =>
-    files
-      .filter((file) => file.startsWith("checkpoint-"))
-      .map((file) => {
-        const [_, timestamp, stepNumber, id] = file.split(".")[0].split("-")
-        return {
-          timestamp,
-          stepNumber,
-          id,
-        }
-      })
-      .sort((a, b) => Number(a.stepNumber) - Number(b.stepNumber)),
-  )
-}
-
-export async function getCheckpoint(checkpointId: string): Promise<Checkpoint> {
-  const run = await getMostRecentRun()
-  const runDir = getRunDir(run.jobId, run.runId)
-  const checkpointPath = path.resolve(runDir, `checkpoint-${checkpointId}.json`)
-  const checkpoint = await readFile(checkpointPath, "utf-8")
-  return checkpointSchema.parse(JSON.parse(checkpoint))
-}
-
-export async function getMostRecentCheckpoint(jobId?: string, runId?: string): Promise<Checkpoint> {
-  let runJobId: string
-  let runIdForCheckpoint: string
-  if (jobId && runId) {
-    runJobId = jobId
-    runIdForCheckpoint = runId
-  } else {
-    const run = await getMostRecentRun()
-    runJobId = run.jobId
-    runIdForCheckpoint = run.runId
-  }
-  const runDir = getRunDir(runJobId, runIdForCheckpoint)
-  const checkpointFiles = await readdir(runDir, { withFileTypes: true }).then((files) =>
-    files.filter((file) => file.isFile() && file.name.startsWith("checkpoint-")),
-  )
-  if (checkpointFiles.length === 0) {
-    throw new Error(`No checkpoints found for run ${runIdForCheckpoint}`)
-  }
+  const files = await readdir(checkpointDir)
+  const checkpointFiles = files.filter((file) => file.endsWith(".json"))
   const checkpoints = await Promise.all(
     checkpointFiles.map(async (file) => {
-      const checkpointPath = path.resolve(runDir, file.name)
-      const checkpoint = await readFile(checkpointPath, "utf-8")
-      return checkpointSchema.parse(JSON.parse(checkpoint))
+      const checkpointPath = path.resolve(checkpointDir, file)
+      const content = await readFile(checkpointPath, "utf-8")
+      return checkpointSchema.parse(JSON.parse(content))
     }),
   )
-  return checkpoints.sort((a, b) => b.stepNumber - a.stepNumber)[0]
+  return checkpoints.sort((a, b) => a.stepNumber - b.stepNumber)
+}
+
+export async function getMostRecentCheckpoint(jobId?: string): Promise<Checkpoint> {
+  const targetJobId = jobId ?? (await getMostRecentRun()).jobId
+  const checkpoints = await getCheckpointsByJobId(targetJobId)
+  if (checkpoints.length === 0) {
+    throw new Error(`No checkpoints found for job ${targetJobId}`)
+  }
+  return checkpoints[checkpoints.length - 1]
 }
 
 export async function getRecentExperts(
@@ -168,51 +170,26 @@ export async function getEvents(
       .sort((a, b) => Number(a.stepNumber) - Number(b.stepNumber)),
   )
 }
-export async function getCheckpointById(
-  jobId: string,
-  runId: string,
-  checkpointId: string,
-): Promise<Checkpoint> {
-  const runDir = getRunDir(jobId, runId)
-  const files = await readdir(runDir)
-  const checkpointFile = files.find(
-    (file) => file.startsWith("checkpoint-") && file.includes(`-${checkpointId}.`),
-  )
-  if (!checkpointFile) {
-    throw new Error(`Checkpoint ${checkpointId} not found in run ${runId}`)
+export async function getCheckpointById(jobId: string, checkpointId: string): Promise<Checkpoint> {
+  const checkpointPath = getCheckpointPath(jobId, checkpointId)
+  if (!existsSync(checkpointPath)) {
+    throw new Error(`Checkpoint ${checkpointId} not found in job ${jobId}`)
   }
-  const checkpointPath = path.resolve(runDir, checkpointFile)
   const checkpoint = await readFile(checkpointPath, "utf-8")
   return checkpointSchema.parse(JSON.parse(checkpoint))
 }
 export async function getCheckpointsWithDetails(
   jobId: string,
-  runId: string,
-): Promise<
-  { id: string; runId: string; stepNumber: number; timestamp: number; contextWindowUsage: number }[]
-> {
-  const runDir = getRunDir(jobId, runId)
-  if (!existsSync(runDir)) {
-    return []
-  }
-  const files = await readdir(runDir)
-  const checkpointFiles = files.filter((file) => file.startsWith("checkpoint-"))
-  const checkpoints = await Promise.all(
-    checkpointFiles.map(async (file) => {
-      const [_, timestamp, stepNumber, id] = file.split(".")[0].split("-")
-      const checkpointPath = path.resolve(runDir, file)
-      const content = await readFile(checkpointPath, "utf-8")
-      const checkpoint = checkpointSchema.parse(JSON.parse(content))
-      return {
-        id,
-        runId,
-        stepNumber: Number(stepNumber),
-        timestamp: Number(timestamp),
-        contextWindowUsage: checkpoint.contextWindowUsage ?? 0,
-      }
-    }),
-  )
-  return checkpoints.sort((a, b) => b.stepNumber - a.stepNumber)
+): Promise<{ id: string; runId: string; stepNumber: number; contextWindowUsage: number }[]> {
+  const checkpoints = await getCheckpointsByJobId(jobId)
+  return checkpoints
+    .map((cp) => ({
+      id: cp.id,
+      runId: cp.runId,
+      stepNumber: cp.stepNumber,
+      contextWindowUsage: cp.contextWindowUsage ?? 0,
+    }))
+    .sort((a, b) => b.stepNumber - a.stepNumber)
 }
 export async function getEventsWithDetails(
   jobId: string,

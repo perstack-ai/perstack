@@ -6,13 +6,13 @@ import {
   startCommandInputSchema,
 } from "@perstack/core"
 import { run, runtimeVersion } from "@perstack/runtime"
-import type { CheckpointHistoryItem, EventHistoryItem, RunHistoryItem } from "@perstack/tui"
+import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "@perstack/tui"
 import { renderStart } from "@perstack/tui"
 import { Command } from "commander"
 import { resolveRunContext } from "./lib/context.js"
 import { parseInteractiveToolCallResult } from "./lib/interactive.js"
 import {
-  getAllRuns,
+  getAllJobs,
   getCheckpointById,
   getCheckpointsWithDetails,
   getEventContents,
@@ -72,15 +72,14 @@ export const startCommand = new Command()
         name: key,
       }))
       const recentExperts = await getRecentExperts(10)
-      const historyRuns: RunHistoryItem[] = showHistory
-        ? (await getAllRuns()).map((r) => ({
-            jobId: r.jobId,
-            runId: r.runId,
-            expertKey: r.expertKey,
-            model: r.model,
-            inputText: r.input.text ?? "",
-            startedAt: r.startedAt,
-            updatedAt: r.updatedAt,
+      const historyJobs: JobHistoryItem[] = showHistory
+        ? (await getAllJobs()).map((j) => ({
+            jobId: j.id,
+            status: j.status,
+            expertKey: j.coordinatorExpertKey,
+            totalSteps: j.totalSteps,
+            startedAt: j.startedAt,
+            finishedAt: j.finishedAt,
           }))
         : []
       const resumeState: { checkpoint: CheckpointHistoryItem | null } = { checkpoint: null }
@@ -106,7 +105,7 @@ export const startCommand = new Command()
         },
         configuredExperts,
         recentExperts,
-        historyRuns,
+        historyJobs,
         onContinue: (query: string) => {
           if (resolveContinueQuery) {
             resolveContinueQuery(query)
@@ -116,16 +115,16 @@ export const startCommand = new Command()
         onResumeFromCheckpoint: (cp: CheckpointHistoryItem) => {
           resumeState.checkpoint = cp
         },
-        onLoadCheckpoints: async (r: RunHistoryItem): Promise<CheckpointHistoryItem[]> => {
-          const checkpoints = await getCheckpointsWithDetails(r.jobId, r.runId)
-          return checkpoints.map((cp) => ({ ...cp, jobId: r.jobId }))
+        onLoadCheckpoints: async (j: JobHistoryItem): Promise<CheckpointHistoryItem[]> => {
+          const checkpoints = await getCheckpointsWithDetails(j.jobId)
+          return checkpoints.map((cp) => ({ ...cp, jobId: j.jobId }))
         },
         onLoadEvents: async (
-          r: RunHistoryItem,
+          j: JobHistoryItem,
           cp: CheckpointHistoryItem,
         ): Promise<EventHistoryItem[]> => {
-          const events = await getEventsWithDetails(r.jobId, r.runId, cp.stepNumber)
-          return events.map((e) => ({ ...e, jobId: r.jobId }))
+          const events = await getEventsWithDetails(j.jobId, cp.runId, cp.stepNumber)
+          return events.map((e) => ({ ...e, jobId: j.jobId }))
         },
         onLoadHistoricalEvents: async (cp: CheckpointHistoryItem) => {
           return await getEventContents(cp.jobId, cp.runId, cp.stepNumber)
@@ -139,11 +138,7 @@ export const startCommand = new Command()
       }
       let currentCheckpoint =
         resumeState.checkpoint !== null
-          ? await getCheckpointById(
-              resumeState.checkpoint.jobId,
-              resumeState.checkpoint.runId,
-              resumeState.checkpoint.id,
-            )
+          ? await getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.id)
           : checkpoint
       if (currentCheckpoint && currentCheckpoint.expert.key !== finalExpertKey) {
         console.error(

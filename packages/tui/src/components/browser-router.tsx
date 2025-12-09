@@ -28,9 +28,9 @@ export const BrowserRouter = ({ inputState }: BrowserRouterProps) => {
     case "browsingHistory":
       return (
         <BrowsingHistoryInput
-          runs={inputState.runs}
-          onRunSelect={ctx.onRunSelect}
-          onRunResume={ctx.onRunResume}
+          jobs={inputState.jobs}
+          onJobSelect={ctx.onJobSelect}
+          onJobResume={ctx.onJobResume}
           onSwitchToExperts={ctx.onSwitchToExperts}
         />
       )
@@ -45,7 +45,7 @@ export const BrowserRouter = ({ inputState }: BrowserRouterProps) => {
     case "browsingCheckpoints":
       return (
         <BrowsingCheckpointsInput
-          run={inputState.run}
+          job={inputState.job}
           checkpoints={inputState.checkpoints}
           onCheckpointSelect={ctx.onCheckpointSelect}
           onCheckpointResume={ctx.onCheckpointResume}

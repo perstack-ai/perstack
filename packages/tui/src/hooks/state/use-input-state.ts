@@ -5,25 +5,25 @@ import type {
   EventHistoryItem,
   ExpertOption,
   InputState,
-  RunHistoryItem,
+  JobHistoryItem,
 } from "../../types/index.js"
 
 type InputAction =
   | { type: "SELECT_EXPERT"; expertKey: string; needsQuery: boolean }
   | { type: "START_RUN" }
   | { type: "END_RUN"; expertName: string; reason: "completed" | "stopped" }
-  | { type: "BROWSE_HISTORY"; runs: RunHistoryItem[] }
+  | { type: "BROWSE_HISTORY"; jobs: JobHistoryItem[] }
   | { type: "BROWSE_EXPERTS"; experts: ExpertOption[] }
-  | { type: "SELECT_RUN"; run: RunHistoryItem; checkpoints: CheckpointHistoryItem[] }
+  | { type: "SELECT_JOB"; job: JobHistoryItem; checkpoints: CheckpointHistoryItem[] }
   | {
       type: "SELECT_CHECKPOINT"
-      run: RunHistoryItem
+      job: JobHistoryItem
       checkpoint: CheckpointHistoryItem
       events: EventHistoryItem[]
     }
   | { type: "RESUME_CHECKPOINT"; expertKey: string }
-  | { type: "GO_BACK_FROM_EVENTS"; run: RunHistoryItem; checkpoints: CheckpointHistoryItem[] }
-  | { type: "GO_BACK_FROM_CHECKPOINTS"; historyRuns: RunHistoryItem[] }
+  | { type: "GO_BACK_FROM_EVENTS"; job: JobHistoryItem; checkpoints: CheckpointHistoryItem[] }
+  | { type: "GO_BACK_FROM_CHECKPOINTS"; historyJobs: JobHistoryItem[] }
   | { type: "INITIALIZE_RUNTIME" }
   | {
       type: "SELECT_EVENT"
@@ -49,11 +49,11 @@ const inputReducer = (_state: InputState, action: InputAction): InputState => {
     case "END_RUN":
       return { type: "enteringQuery", expertName: action.expertName }
     case "BROWSE_HISTORY":
-      return { type: "browsingHistory", runs: action.runs }
+      return { type: "browsingHistory", jobs: action.jobs }
     case "BROWSE_EXPERTS":
       return { type: "browsingExperts", experts: action.experts }
-    case "SELECT_RUN":
-      return { type: "browsingCheckpoints", run: action.run, checkpoints: action.checkpoints }
+    case "SELECT_JOB":
+      return { type: "browsingCheckpoints", job: action.job, checkpoints: action.checkpoints }
     case "SELECT_CHECKPOINT":
       return {
         type: "browsingEvents",
@@ -63,9 +63,9 @@ const inputReducer = (_state: InputState, action: InputAction): InputState => {
     case "RESUME_CHECKPOINT":
       return { type: "enteringQuery", expertName: action.expertKey }
     case "GO_BACK_FROM_EVENTS":
-      return { type: "browsingCheckpoints", run: action.run, checkpoints: action.checkpoints }
+      return { type: "browsingCheckpoints", job: action.job, checkpoints: action.checkpoints }
     case "GO_BACK_FROM_CHECKPOINTS":
-      return { type: "browsingHistory", runs: action.historyRuns }
+      return { type: "browsingHistory", jobs: action.historyJobs }
     case "SELECT_EVENT":
       return {
         type: "browsingEventDetail",
@@ -89,11 +89,11 @@ type UseInputStateOptions = {
   initialExpertName?: string
   configuredExperts?: ExpertOption[]
   recentExperts?: ExpertOption[]
-  historyRuns?: RunHistoryItem[]
+  historyJobs?: JobHistoryItem[]
 }
 const getInitialState = (options: UseInputStateOptions): InputState => {
-  if (options.showHistory && options.historyRuns) {
-    return { type: "browsingHistory", runs: options.historyRuns }
+  if (options.showHistory && options.historyJobs) {
+    return { type: "browsingHistory", jobs: options.historyJobs }
   }
   if (options.needsQueryInput) {
     return { type: "enteringQuery", expertName: options.initialExpertName || "" }

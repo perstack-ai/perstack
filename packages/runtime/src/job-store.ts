@@ -25,11 +25,7 @@ export function retrieveJob(jobId: string): Job | undefined {
   return jobSchema.parse(JSON.parse(content))
 }
 
-export function createInitialJob(
-  jobId: string,
-  expertKey: string,
-  maxSteps?: number,
-): Job {
+export function createInitialJob(jobId: string, expertKey: string, maxSteps?: number): Job {
   return {
     id: jobId,
     status: "running",
