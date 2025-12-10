@@ -263,20 +263,25 @@ For stop reasons and error handling, see [Error Handling](https://docs.perstack.
 
 ## Runtime Adapters
 
-The runtime supports multiple execution backends through the adapter pattern:
+The runtime supports multiple execution backends through the adapter pattern. External runtime adapters are provided as separate packages:
 
-| Adapter             | Runtime Name  | Description                |
-| ------------------- | ------------- | -------------------------- |
-| `PerstackAdapter`   | `perstack`    | Built-in runtime (default) |
-| `CursorAdapter`     | `cursor`      | Cursor IDE headless mode   |
-| `ClaudeCodeAdapter` | `claude-code` | Claude Code CLI            |
-| `GeminiAdapter`     | `gemini`      | Gemini CLI                 |
-| `MockAdapter`       | (any)         | For testing purposes       |
+| Package                 | Runtime Name  | Description                |
+| ----------------------- | ------------- | -------------------------- |
+| `@perstack/runtime`     | `perstack`    | Built-in runtime (default) |
+| `@perstack/cursor`      | `cursor`      | Cursor IDE headless mode   |
+| `@perstack/claude-code` | `claude-code` | Claude Code CLI            |
+| `@perstack/gemini`      | `gemini`      | Gemini CLI                 |
 
-### Usage
+### Registration Pattern
+
+External adapters must be registered before use:
 
 ```typescript
-import { getAdapter, isAdapterAvailable } from "@perstack/runtime"
+import { CursorAdapter } from "@perstack/cursor"
+import { getAdapter, isAdapterAvailable, registerAdapter } from "@perstack/runtime"
+
+// Register external adapter
+registerAdapter("cursor", () => new CursorAdapter())
 
 // Check availability
 if (isAdapterAvailable("cursor")) {
@@ -290,22 +295,22 @@ if (isAdapterAvailable("cursor")) {
 
 ### Creating Custom Adapters
 
-Extend `BaseAdapter` for CLI-based runtimes:
+Extend `BaseAdapter` from `@perstack/core` for CLI-based runtimes:
 
 ```typescript
-import { BaseAdapter } from "@perstack/runtime"
+import { BaseAdapter, type AdapterRunParams, type AdapterRunResult, type PrerequisiteResult } from "@perstack/core"
 
 class MyAdapter extends BaseAdapter {
   readonly name = "my-runtime"
   
-  async checkPrerequisites() {
-    const result = await this.execCommand("my-cli", ["--version"])
+  async checkPrerequisites(): Promise<PrerequisiteResult> {
+    const result = await this.execCommand(["my-cli", "--version"])
     return result.exitCode === 0
       ? { ok: true }
       : { ok: false, error: { type: "cli-not-found", message: "..." } }
   }
   
-  async run(params) {
+  async run(params: AdapterRunParams): Promise<AdapterRunResult> {
     // Implementation
   }
 }
