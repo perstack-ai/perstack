@@ -46,6 +46,7 @@ function parseClaudeCodeOutput(stdout: string): ParsedOutput {
         }
       }
     } catch {
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) continue
       if (finalOutput) {
         finalOutput += `\n${trimmed}`
       } else {
