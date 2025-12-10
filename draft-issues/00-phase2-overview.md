@@ -167,14 +167,14 @@ runtime = ["cursor", "claude-code"]  # Compatible with both, runs on ONE at a ti
 
 **Delegation behavior by runtime:**
 
-| Caller Runtime | Delegate Behavior |
-| -------------- | ----------------- |
-| `perstack`     | Full delegation via tool call (existing behavior) |
+| Caller Runtime | Delegate Behavior                                         |
+| -------------- | --------------------------------------------------------- |
+| `perstack`     | Full delegation via tool call (existing behavior)         |
 | `cursor`       | Instruction-based only (delegate info embedded in prompt) |
 | `claude-code`  | Instruction-based only (delegate info embedded in prompt) |
 | `gemini`       | Instruction-based only (delegate info embedded in prompt) |
 
-> **Phase 2 Scope:** External runtimes cannot invoke Perstack's delegate tool. They receive delegate information as instruction context only. True cross-runtime delegation may be explored in future phases.
+> **Technical Constraint:** External runtimes (Cursor, Claude Code, Gemini) do not expose skill/tool registration via their CLIs. Perstack cannot inject the `delegate` tool into these runtimes. Therefore, delegate information is embedded as instruction text only.
 
 ## Acceptance Criteria (from Epic #86)
 

@@ -86,15 +86,7 @@ export class GeminiAdapter implements RuntimeAdapter {
 
   convertExpert(expert: Expert): RuntimeExpertConfig {
     // Build instruction with delegate context
-    let instruction = expert.instruction
-
-    // Add delegate context if available
-    if (expert.delegates.length > 0) {
-      const delegateInfo = expert.delegates
-        .map((key) => `- ${key}`)
-        .join("\n")
-      instruction += `\n\n## Available Delegates\n${delegateInfo}\n\nWhen you need specialized help, consider the above delegates' capabilities.`
-    }
+    const instruction = expert.instruction
 
     return { instruction }
   }

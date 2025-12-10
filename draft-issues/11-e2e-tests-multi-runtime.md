@@ -145,7 +145,84 @@ describe("multi-runtime CLI", () => {
 })
 ```
 
-### 2. Create Multi-Runtime Expert Definition
+### 2. Create Mock Adapter for Testing
+
+**File:** `packages/runtime/src/adapters/mock-adapter.ts` (new file)
+
+Mock adapter enables E2E testing without external CLI dependencies:
+
+```typescript
+import type { Expert } from "@perstack/core"
+import type {
+  RuntimeAdapter,
+  AdapterRunParams,
+  AdapterRunResult,
+  PrerequisiteResult,
+  RuntimeExpertConfig,
+} from "./types.js"
+import { createNormalizedCheckpoint } from "./output-parser.js"
+
+export type MockAdapterOptions = {
+  name: string
+  shouldFail?: boolean
+  failureMessage?: string
+  mockOutput?: string
+  delay?: number
+}
+
+export class MockAdapter implements RuntimeAdapter {
+  readonly name: string
+  private options: MockAdapterOptions
+
+  constructor(options: MockAdapterOptions) {
+    this.name = options.name
+    this.options = options
+  }
+
+  async checkPrerequisites(): Promise<PrerequisiteResult> {
+    if (this.options.shouldFail) {
+      return {
+        ok: false,
+        error: {
+          type: "cli-not-found",
+          message: this.options.failureMessage ?? "Mock failure",
+        },
+      }
+    }
+    return { ok: true }
+  }
+
+  convertExpert(expert: Expert): RuntimeExpertConfig {
+    return { instruction: expert.instruction }
+  }
+
+  async run(params: AdapterRunParams): Promise<AdapterRunResult> {
+    const { setting, eventListener } = params
+    const expert = setting.experts[setting.expertKey]
+    if (this.options.delay) {
+      await new Promise((r) => setTimeout(r, this.options.delay))
+    }
+    const output = this.options.mockOutput ?? `Mock output from ${this.name}`
+    const checkpoint = createNormalizedCheckpoint({
+      jobId: setting.jobId,
+      runId: setting.runId,
+      expertKey: setting.expertKey,
+      expert,
+      output,
+      runtime: this.name as any,
+    })
+    return { checkpoint, events: [] }
+  }
+}
+```
+
+**File:** `packages/runtime/src/adapters/index.ts` (update)
+
+```typescript
+export { MockAdapter, type MockAdapterOptions } from "./mock-adapter.js"
+```
+
+### 3. Create Multi-Runtime Expert Definition
 
 **File:** `e2e/experts/multi-runtime.toml` (new file)
 
@@ -294,12 +371,14 @@ See `MANUAL-MULTI-RUNTIME.md` for manual test procedures.
 
 ## Affected Files
 
-| File                             | Change                         |
-| -------------------------------- | ------------------------------ |
-| `e2e/multi-runtime.test.ts`      | New: Automated tests           |
-| `e2e/experts/multi-runtime.toml` | New: Test expert definition    |
-| `e2e/MANUAL-MULTI-RUNTIME.md`    | New: Manual test documentation |
-| `e2e/README.md`                  | Add multi-runtime section      |
+| File                                            | Change                         |
+| ----------------------------------------------- | ------------------------------ |
+| `packages/runtime/src/adapters/mock-adapter.ts` | New: Mock adapter for testing  |
+| `packages/runtime/src/adapters/index.ts`        | Export MockAdapter             |
+| `e2e/multi-runtime.test.ts`                     | New: Automated tests           |
+| `e2e/experts/multi-runtime.toml`                | New: Test expert definition    |
+| `e2e/MANUAL-MULTI-RUNTIME.md`                   | New: Manual test documentation |
+| `e2e/README.md`                                 | Add multi-runtime section      |
 
 ## Testing
 

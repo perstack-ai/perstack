@@ -171,12 +171,7 @@ export abstract class BaseExternalAdapter implements RuntimeAdapter {
   abstract run(params: AdapterRunParams): Promise<AdapterRunResult>
 
   convertExpert(expert: Expert): RuntimeExpertConfig {
-    let instruction = expert.instruction
-    if (expert.delegates.length > 0) {
-      const delegateInfo = expert.delegates.map((key) => `- ${key}`).join("\n")
-      instruction += `\n\n## Available Delegates\n${delegateInfo}\n\nWhen you need specialized help, consider the above delegates' capabilities.`
-    }
-    return { instruction }
+    return { instruction: expert.instruction }
   }
 
   protected async execCommand(args: string[]): Promise<ExecResult> {
