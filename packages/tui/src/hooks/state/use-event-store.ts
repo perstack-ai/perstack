@@ -123,11 +123,17 @@ const processEventToLogs = (
     return
   }
   if (isDelegation) return
-  if (event.type === "startRun" && !state.queryLogged) {
+  if (event.type === "startRun") {
     const query = extractQuery(event)
     if (query) {
-      addLog({ id: `query-${runId}`, type: "query", text: query })
-      state.queryLogged = true
+      if (state.completionLogged) {
+        state.completionLogged = false
+        state.isComplete = false
+      }
+      if (!state.queryLogged) {
+        addLog({ id: `query-${runId}`, type: "query", text: query })
+        state.queryLogged = true
+      }
     }
   } else if (isToolCallsEvent(event)) {
     for (const toolCall of event.toolCalls) {

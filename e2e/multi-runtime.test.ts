@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { runCli } from "./lib/runner.js"
+import { assertEventSequenceContains } from "./lib/assertions.js"
+import { runCli, runExpert } from "./lib/runner.js"
 
 describe("multi-runtime CLI", () => {
   describe("--runtime option parsing", () => {
@@ -83,5 +84,31 @@ describe("multi-runtime CLI", () => {
         expect(result.stderr).toMatch(/not installed|prerequisites|API_KEY/i)
       }
     })
+  })
+
+  describe("continue with perstack runtime", () => {
+    it("should continue job and receive new completeRun event", async () => {
+      const initialResult = await runExpert("e2e-special-tools", "Use attemptCompletion to say hello", {
+        configPath: "./e2e/experts/special-tools.toml",
+        timeout: 120000,
+      })
+      expect(initialResult.jobId).not.toBeNull()
+      expect(
+        assertEventSequenceContains(initialResult.events, ["startRun", "completeRun"]).passed,
+      ).toBe(true)
+      const continueResult = await runExpert("e2e-special-tools", "Now say goodbye", {
+        configPath: "./e2e/experts/special-tools.toml",
+        continueJobId: initialResult.jobId!,
+        timeout: 120000,
+      })
+      expect(
+        assertEventSequenceContains(continueResult.events, ["startRun", "completeRun"]).passed,
+      ).toBe(true)
+      const completeEvents = continueResult.events.filter((e) => e.type === "completeRun")
+      expect(completeEvents.length).toBeGreaterThanOrEqual(1)
+      const lastComplete = completeEvents[completeEvents.length - 1] as { text?: string }
+      expect(lastComplete.text).toBeDefined()
+      expect(lastComplete.text?.length).toBeGreaterThan(0)
+    }, 300000)
   })
 })
