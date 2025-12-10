@@ -173,7 +173,7 @@ export class GeminiAdapter extends BaseAdapter {
 
   protected executeWithStreaming(
     proc: ChildProcess,
-    _timeout: number,
+    timeout: number,
     state: StreamingState,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
     storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>,
@@ -182,6 +182,10 @@ export class GeminiAdapter extends BaseAdapter {
       let stdout = ""
       let stderr = ""
       let buffer = ""
+      const timer = setTimeout(() => {
+        proc.kill("SIGTERM")
+        reject(new Error(`${this.name} timed out after ${timeout}ms`))
+      }, timeout)
       proc.stdout?.on("data", (data) => {
         const chunk = data.toString()
         stdout += chunk
@@ -203,9 +207,11 @@ export class GeminiAdapter extends BaseAdapter {
         stderr += data.toString()
       })
       proc.on("close", (code) => {
+        clearTimeout(timer)
         resolve({ stdout, stderr, exitCode: code ?? 127 })
       })
       proc.on("error", (err) => {
+        clearTimeout(timer)
         reject(err)
       })
     })
