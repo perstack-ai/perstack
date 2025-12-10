@@ -305,7 +305,18 @@ describe("@perstack/runtime: DelegateSkillManager", () => {
     expect(tools[0].skillName).toBe("@test/delegate-expert")
     expect(tools[0].inputSchema).toEqual({
       type: "object",
-      properties: { query: { type: "string" } },
+      properties: {
+        query: { type: "string" },
+        runtime: {
+          oneOf: [
+            { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
+            {
+              type: "array",
+              items: { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
+            },
+          ],
+        },
+      },
       required: ["query"],
     })
   })

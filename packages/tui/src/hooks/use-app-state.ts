@@ -11,7 +11,7 @@ import type {
 import { useExpertActions, useHistoryActions, useRunActions } from "./actions/index.js"
 import { useInputState } from "./state/use-input-state.js"
 import { useRuntimeInfo } from "./state/use-runtime-info.js"
-import { useStepStore } from "./state/use-step-store.js"
+import { useEventStore } from "./state/use-event-store.js"
 
 type UseAppStateProps = {
   needsQueryInput?: boolean
@@ -51,7 +51,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadHistoricalEvents,
     onReady,
   } = props
-  const stepStore = useStepStore()
+  const eventStore = useEventStore()
   const {
     runtimeInfo,
     handleEvent,
@@ -75,7 +75,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onComplete,
     onContinue,
     onReady,
-    stepStoreAddEvent: stepStore.addEvent,
+    stepStoreAddEvent: eventStore.addEvent,
     handleEvent,
   })
   useEffect(() => {
@@ -103,7 +103,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadEvents,
     onResumeFromCheckpoint,
     onLoadHistoricalEvents,
-    setHistoricalEvents: stepStore.setHistoricalEvents,
+    setHistoricalEvents: eventStore.setHistoricalEvents,
     setCurrentStep,
     setContextWindowUsage,
     dispatch,
@@ -139,7 +139,7 @@ export const useAppState = (props: UseAppStateProps) => {
     ],
   )
   return {
-    stepStore,
+    eventStore,
     runtimeInfo,
     inputState,
     inputAreaContextValue,

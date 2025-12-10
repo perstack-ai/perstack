@@ -1,4 +1,4 @@
-export { BaseExternalAdapter, type ExecResult } from "./base-external-adapter.js"
+export { BaseAdapter, type ExecResult } from "./base-adapter.js"
 export { ClaudeCodeAdapter } from "./claude-code-adapter.js"
 export { CursorAdapter } from "./cursor-adapter.js"
 export { getAdapter, isAdapterAvailable } from "./factory.js"
@@ -10,7 +10,7 @@ export {
   createNormalizedCheckpoint,
   createRuntimeInitEvent,
   type ParsedOutput,
-  parseExternalOutput,
+  parseOutput,
 } from "./output-parser.js"
 export { PerstackAdapter } from "./perstack-adapter.js"
 export type {

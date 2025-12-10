@@ -383,6 +383,7 @@ interface BaseRuntimeEvent {
 type RuntimeEventPayloads = {
   initializeRuntime: {
     runtimeVersion: string
+    runtime?: string
     expertName: string
     experts: string[]
     model: string
@@ -417,6 +418,9 @@ type RuntimeEventPayloads = {
   }
   skillDisconnected: {
     skillName: string
+  }
+  streamingText: {
+    text: string
   }
 }
 

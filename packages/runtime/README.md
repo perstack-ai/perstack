@@ -290,12 +290,12 @@ if (isAdapterAvailable("cursor")) {
 
 ### Creating Custom Adapters
 
-Extend `BaseExternalAdapter` for external CLI-based runtimes:
+Extend `BaseAdapter` for CLI-based runtimes:
 
 ```typescript
-import { BaseExternalAdapter } from "@perstack/runtime"
+import { BaseAdapter } from "@perstack/runtime"
 
-class MyAdapter extends BaseExternalAdapter {
+class MyAdapter extends BaseAdapter {
   readonly name = "my-runtime"
   
   async checkPrerequisites() {
@@ -318,4 +318,4 @@ See [Multi-Runtime Support](https://docs.perstack.ai/using-experts/multi-runtime
 - [Runtime](https://docs.perstack.ai/understanding-perstack/runtime) — Full execution model
 - [State Management](https://docs.perstack.ai/using-experts/state-management) — Jobs, Runs, and Checkpoints
 - [Running Experts](https://docs.perstack.ai/using-experts/running-experts) — CLI usage
-- [Multi-Runtime](https://docs.perstack.ai/using-experts/multi-runtime) — External runtime support
+- [Multi-Runtime](https://docs.perstack.ai/using-experts/multi-runtime) — Multi-runtime support

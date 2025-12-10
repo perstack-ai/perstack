@@ -15,8 +15,8 @@ import {
   type ToolResult,
   type Usage,
 } from "@perstack/core"
-import { getAdapter } from "./adapters/factory.js"
 import pkg from "../package.json" with { type: "json" }
+import { getAdapter } from "./adapters/factory.js"
 import {
   buildDelegateToState,
   buildDelegationReturnState,
@@ -81,6 +81,7 @@ export async function run(
     if (options?.eventListener) {
       const initEvent = createRuntimeEvent("initializeRuntime", setting.jobId, setting.runId, {
         runtimeVersion: pkg.version,
+        runtime: "perstack",
         expertName: expertToRun.name,
         experts: Object.keys(experts),
         model: setting.model,
@@ -153,7 +154,14 @@ export async function run(
         if (!delegateTo || delegateTo.length === 0) {
           throw new Error("No delegations found in checkpoint")
         }
-        if (delegateTo.length === 1) {
+        const hasNonDefaultRuntime = delegateTo.some(
+          (d) =>
+            d.runtime &&
+            (Array.isArray(d.runtime)
+              ? d.runtime.some((r) => r !== "perstack")
+              : d.runtime !== "perstack"),
+        )
+        if (delegateTo.length === 1 && !hasNonDefaultRuntime) {
           const result = buildDelegateToState(setting, runResultCheckpoint, expertToRun)
           setting = result.setting
           checkpoint = result.checkpoint
@@ -245,11 +253,7 @@ type DelegationResult = {
 type RuntimeDelegationResult = DelegationResult & { runtime: RuntimeName }
 
 type DelegateOptions = {
-  shouldContinueRun?: (
-    setting: RunSetting,
-    checkpoint: Checkpoint,
-    step: Step,
-  ) => Promise<boolean>
+  shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
   retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
   eventListener?: (event: RunEvent | RuntimeEvent) => void
@@ -265,19 +269,15 @@ async function runDelegate(
   parentExpert: Pick<Expert, "key" | "name" | "version">,
   options?: DelegateOptions,
 ): Promise<DelegationResult> {
-  const { expert: delegateExpertInfo, toolCallId, toolName, query } = delegation
-  const fullExpert = parentSetting.experts[delegateExpertInfo.key]
-  const runtimes = fullExpert?.runtime ?? ["perstack"]
+  const { expert: delegateExpertInfo, toolCallId, toolName, query, runtime } = delegation
+  const runtimes: RuntimeName[] = runtime
+    ? Array.isArray(runtime)
+      ? runtime
+      : [runtime]
+    : ["perstack"]
   const results = await Promise.all(
-    runtimes.map((runtime) =>
-      runDelegateOnRuntime(
-        delegation,
-        parentSetting,
-        parentCheckpoint,
-        parentExpert,
-        runtime,
-        options,
-      ),
+    runtimes.map((rt) =>
+      runDelegateOnRuntime(delegation, parentSetting, parentCheckpoint, parentExpert, rt, options),
     ),
   )
   const combinedText =
@@ -373,6 +373,7 @@ async function runDelegateOnRuntime(
       input: { text: query },
     },
     eventListener: options?.eventListener,
+    storeCheckpoint: options?.storeCheckpoint,
   })
   const lastMessage = result.checkpoint.messages[result.checkpoint.messages.length - 1]
   const textPart =

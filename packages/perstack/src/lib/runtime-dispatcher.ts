@@ -1,11 +1,18 @@
-import type { Checkpoint, RunEvent, RunParamsInput, RuntimeEvent, RuntimeName } from "@perstack/core"
-import { getAdapter, isAdapterAvailable } from "@perstack/runtime"
+import type {
+  Checkpoint,
+  RunEvent,
+  RunParamsInput,
+  RuntimeEvent,
+  RuntimeName,
+} from "@perstack/core"
+import { defaultStoreCheckpoint, getAdapter, isAdapterAvailable } from "@perstack/runtime"
 
 export type DispatchParams = {
   setting: RunParamsInput["setting"]
   checkpoint?: Checkpoint
   runtime: RuntimeName
   eventListener?: (event: RunEvent | RuntimeEvent) => void
+  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
 }
 
 export type DispatchResult = {
@@ -13,12 +20,11 @@ export type DispatchResult = {
 }
 
 export async function dispatchToRuntime(params: DispatchParams): Promise<DispatchResult> {
-  const { setting, checkpoint, runtime, eventListener } = params
+  const { setting, checkpoint, runtime, eventListener, storeCheckpoint } = params
   if (!isAdapterAvailable(runtime)) {
     throw new Error(
       `Runtime "${runtime}" is not available. ` +
-        `Available runtimes: perstack. ` +
-        `External runtimes (cursor, claude-code, gemini) will be available in future updates.`,
+        `Available runtimes: perstack, cursor, claude-code, gemini.`,
     )
   }
   const adapter = getAdapter(runtime)
@@ -31,6 +37,11 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     }
     throw new Error(message)
   }
-  const result = await adapter.run({ setting, checkpoint, eventListener })
+  const result = await adapter.run({
+    setting,
+    checkpoint,
+    eventListener,
+    storeCheckpoint: storeCheckpoint ?? defaultStoreCheckpoint,
+  })
   return { checkpoint: result.checkpoint }
 }

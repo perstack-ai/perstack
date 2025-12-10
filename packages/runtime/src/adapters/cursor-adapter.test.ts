@@ -21,12 +21,13 @@ const createBaseSetting = () => ({
 })
 
 class TestableCursorAdapter extends CursorAdapter {
-  mockResult = { stdout: "Mock output", stderr: "", exitCode: 0 }
+  mockResult = { stdout: "Mock output", stderr: "", exitCode: 0, finalOutput: "Mock output" }
 
-  protected override async executeCursorAgent(): Promise<{
+  protected override async executeCursorAgentStreaming(): Promise<{
     stdout: string
     stderr: string
     exitCode: number
+    finalOutput: string
   }> {
     return this.mockResult
   }
@@ -70,7 +71,12 @@ describe("CursorAdapter", () => {
   describe("run", () => {
     it("emits events and returns checkpoint on success", async () => {
       const adapter = new TestableCursorAdapter()
-      adapter.mockResult = { stdout: "Success output", stderr: "", exitCode: 0 }
+      adapter.mockResult = {
+        stdout: "Success output",
+        stderr: "",
+        exitCode: 0,
+        finalOutput: "Success output",
+      }
       const events: (RunEvent | RuntimeEvent)[] = []
       const result = await adapter.run({
         setting: {
@@ -97,7 +103,7 @@ describe("CursorAdapter", () => {
 
     it("throws error when CLI fails", async () => {
       const adapter = new TestableCursorAdapter()
-      adapter.mockResult = { stdout: "", stderr: "Error", exitCode: 1 }
+      adapter.mockResult = { stdout: "", stderr: "Error", exitCode: 1, finalOutput: "" }
       await expect(
         adapter.run({
           setting: {

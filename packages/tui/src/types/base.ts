@@ -7,13 +7,33 @@ export type ToolExecution = {
   result?: Array<{ type: string; text?: string }>
   isSuccess?: boolean
 }
-export type DisplayStep = {
-  id: string
-  stepNumber: number
-  query?: string
-  tools: ToolExecution[]
-  completion?: string
-}
+export type LogEntry =
+  | { id: string; type: "query"; text: string }
+  | {
+      id: string
+      type: "tool"
+      toolName: string
+      args: Record<string, unknown>
+      result?: Array<{ type: string; text?: string }>
+      isSuccess?: boolean
+    }
+  | {
+      id: string
+      type: "delegation-started"
+      expertName: string
+      runtime: string
+      version: string
+      query?: string
+    }
+  | {
+      id: string
+      type: "delegation-completed"
+      expertName: string
+      runtime: string
+      version: string
+      result?: string
+    }
+  | { id: string; type: "completion"; text: string }
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
   runtimeVersion?: string
@@ -30,6 +50,7 @@ export type RuntimeInfo = {
   activeSkills: string[]
   contextWindowUsage: number
   runtime?: string
+  streamingText?: string
 }
 export type InitialRuntimeConfig = {
   runtimeVersion: string

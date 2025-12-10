@@ -23,7 +23,7 @@ const createBaseSetting = () => ({
 class TestableGeminiAdapter extends GeminiAdapter {
   mockResult = { stdout: "Mock output", stderr: "", exitCode: 0 }
 
-  protected override async executeGeminiCli(): Promise<{
+  protected override async executeGeminiCliStreaming(): Promise<{
     stdout: string
     stderr: string
     exitCode: number

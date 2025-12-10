@@ -1,15 +1,39 @@
+import type { ChildProcess } from "node:child_process"
 import { spawn } from "node:child_process"
-import { BaseExternalAdapter } from "./base-external-adapter.js"
+import { createId } from "@paralleldrive/cuid2"
+import type {
+  Checkpoint,
+  ExpertMessage,
+  RunEvent,
+  RuntimeEvent,
+  ToolCall,
+  ToolMessage,
+} from "@perstack/core"
+import { createEmptyUsage } from "../usage.js"
+import { BaseAdapter } from "./base-adapter.js"
 import {
+  type CursorToolCall,
+  createCallToolsEvent,
   createCompleteRunEvent,
-  createNormalizedCheckpoint,
+  createResolveToolResultsEvent,
   createRuntimeInitEvent,
-  parseExternalOutput,
+  createStreamingTextEvent,
+  cursorToolCallToPerstack,
+  cursorToolResultToPerstack,
 } from "./output-parser.js"
 import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 
-export class CursorAdapter extends BaseExternalAdapter {
+type StreamingState = {
+  checkpoint: Checkpoint
+  events: (RunEvent | RuntimeEvent)[]
+  pendingToolCalls: Map<string, ToolCall>
+  finalOutput: string
+  lastStreamingText: string
+}
+
+export class CursorAdapter extends BaseAdapter {
   readonly name = "cursor"
+  protected version = "unknown"
 
   async checkPrerequisites(): Promise<PrerequisiteResult> {
     try {
@@ -24,6 +48,7 @@ export class CursorAdapter extends BaseExternalAdapter {
           },
         }
       }
+      this.version = result.stdout.trim() || "unknown"
     } catch {
       return {
         ok: false,
@@ -38,46 +63,79 @@ export class CursorAdapter extends BaseExternalAdapter {
   }
 
   async run(params: AdapterRunParams): Promise<AdapterRunResult> {
-    const { setting, eventListener } = params
+    const { setting, eventListener, storeCheckpoint } = params
     const expert = setting.experts?.[setting.expertKey]
     if (!expert) {
       throw new Error(`Expert "${setting.expertKey}" not found`)
     }
-    const jobId = setting.jobId ?? "external-job"
-    const runId = setting.runId ?? "external-run"
+    const jobId = setting.jobId ?? createId()
+    const runId = setting.runId ?? createId()
     const expertInfo = { key: setting.expertKey, name: expert.name, version: expert.version }
-    const prompt = this.buildPrompt(expert.instruction, setting.input.text)
-    const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, "cursor")
+    const query = setting.input.text
+    const prompt = this.buildPrompt(expert.instruction, query)
+    const initEvent = createRuntimeInitEvent(
+      jobId,
+      runId,
+      expert.name,
+      "cursor",
+      this.version,
+      query,
+    )
     eventListener?.(initEvent)
+    const initialCheckpoint: Checkpoint = {
+      id: createId(),
+      jobId,
+      runId,
+      status: "init",
+      stepNumber: 0,
+      messages: [],
+      expert: expertInfo,
+      usage: createEmptyUsage(),
+      metadata: { runtime: "cursor" },
+    }
+    const state: StreamingState = {
+      checkpoint: initialCheckpoint,
+      events: [initEvent],
+      pendingToolCalls: new Map(),
+      finalOutput: "",
+      lastStreamingText: "",
+    }
     const startedAt = Date.now()
-    const result = await this.executeCursorAgent(prompt, setting.timeout ?? 60000)
+    const result = await this.executeCursorAgentStreaming(
+      prompt,
+      setting.timeout ?? 60000,
+      state,
+      eventListener,
+      storeCheckpoint,
+    )
     if (result.exitCode !== 0) {
       throw new Error(
         `Cursor CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`,
       )
     }
-    const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "cursor")
-    for (const event of parsedEvents) {
-      eventListener?.(event)
+    const finalMessage: ExpertMessage = {
+      id: createId(),
+      type: "expertMessage",
+      contents: [{ type: "textPart", id: createId(), text: state.finalOutput }],
     }
-    const checkpoint = createNormalizedCheckpoint({
-      jobId,
-      runId,
-      expertKey: setting.expertKey,
-      expert: expertInfo,
-      output: finalOutput,
-      runtime: "cursor",
-    })
+    const finalCheckpoint: Checkpoint = {
+      ...state.checkpoint,
+      status: "completed",
+      stepNumber: state.checkpoint.stepNumber + 1,
+      messages: [...state.checkpoint.messages, finalMessage],
+    }
+    await storeCheckpoint?.(finalCheckpoint)
     const completeEvent = createCompleteRunEvent(
       jobId,
       runId,
       setting.expertKey,
-      checkpoint,
-      finalOutput,
+      finalCheckpoint,
+      state.finalOutput,
       startedAt,
     )
+    state.events.push(completeEvent)
     eventListener?.(completeEvent)
-    return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
+    return { checkpoint: finalCheckpoint, events: state.events }
   }
 
   protected buildPrompt(instruction: string, query?: string): string {
@@ -88,15 +146,136 @@ export class CursorAdapter extends BaseExternalAdapter {
     return prompt
   }
 
-  protected async executeCursorAgent(
+  protected async executeCursorAgentStreaming(
     prompt: string,
     timeout: number,
+    state: StreamingState,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-    const proc = spawn("cursor-agent", ["-p", prompt, "--force"], {
-      cwd: process.cwd(),
-      env: { ...process.env },
-      stdio: ["pipe", "pipe", "pipe"],
+    const proc = spawn(
+      "cursor-agent",
+      ["--print", "--output-format", "stream-json", "--stream-partial-output", "--force", prompt],
+      { cwd: process.cwd(), env: { ...process.env }, stdio: ["pipe", "pipe", "pipe"] },
+    )
+    proc.stdin.end()
+    return this.executeWithStreaming(proc, timeout, state, eventListener, storeCheckpoint)
+  }
+
+  protected executeWithStreaming(
+    proc: ChildProcess,
+    _timeout: number,
+    state: StreamingState,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>,
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    return new Promise((resolve, reject) => {
+      let stdout = ""
+      let stderr = ""
+      let buffer = ""
+      proc.stdout?.on("data", (data) => {
+        const chunk = data.toString()
+        stdout += chunk
+        buffer += chunk
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+          try {
+            const parsed = JSON.parse(trimmed)
+            this.handleStreamEvent(parsed, state, eventListener, storeCheckpoint)
+          } catch {
+            // ignore non-JSON lines
+          }
+        }
+      })
+      proc.stderr?.on("data", (data) => {
+        stderr += data.toString()
+      })
+      proc.on("close", (code) => {
+        resolve({ stdout, stderr, exitCode: code ?? 127 })
+      })
+      proc.on("error", (err) => {
+        reject(err)
+      })
     })
-    return this.executeWithTimeout(proc, timeout)
+  }
+
+  protected handleStreamEvent(
+    parsed: Record<string, unknown>,
+    state: StreamingState,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>,
+  ): void {
+    const { checkpoint } = state
+    const jobId = checkpoint.jobId
+    const runId = checkpoint.runId
+    const expertKey = checkpoint.expert.key
+    if (parsed.type === "result" && typeof parsed.result === "string") {
+      state.finalOutput = parsed.result
+    } else if (parsed.type === "assistant" && parsed.message) {
+      const message = parsed.message as { content?: Array<{ type: string; text?: string }> }
+      if (message.content) {
+        for (const content of message.content) {
+          const text = content.text?.trim()
+          if (content.type === "text" && text && text !== state.lastStreamingText) {
+            state.lastStreamingText = text
+            const event = createStreamingTextEvent(jobId, runId, text)
+            state.events.push(event)
+            eventListener?.(event)
+          }
+        }
+      }
+    } else if (parsed.type === "tool_call" && parsed.subtype === "started") {
+      const cursorToolCall = parsed as unknown as CursorToolCall
+      const { toolCall } = cursorToolCallToPerstack(cursorToolCall)
+      state.pendingToolCalls.set(cursorToolCall.call_id, toolCall)
+      const event = createCallToolsEvent(
+        jobId,
+        runId,
+        expertKey,
+        checkpoint.stepNumber,
+        [toolCall],
+        checkpoint,
+      )
+      state.events.push(event)
+      eventListener?.(event)
+    } else if (parsed.type === "tool_call" && parsed.subtype === "completed") {
+      const cursorToolCall = parsed as unknown as CursorToolCall
+      const toolResult = cursorToolResultToPerstack(cursorToolCall)
+      state.pendingToolCalls.delete(cursorToolCall.call_id)
+      const toolResultMessage: ToolMessage = {
+        id: createId(),
+        type: "toolMessage",
+        contents: [
+          {
+            type: "toolResultPart",
+            id: createId(),
+            toolCallId: toolResult.id,
+            toolName: toolResult.toolName,
+            contents: toolResult.result.filter(
+              (part): part is { type: "textPart"; id: string; text: string } =>
+                part.type === "textPart",
+            ),
+          },
+        ],
+      }
+      state.checkpoint = {
+        ...state.checkpoint,
+        stepNumber: state.checkpoint.stepNumber + 1,
+        messages: [...state.checkpoint.messages, toolResultMessage],
+      }
+      storeCheckpoint?.(state.checkpoint)
+      const event = createResolveToolResultsEvent(
+        jobId,
+        runId,
+        expertKey,
+        state.checkpoint.stepNumber,
+        [toolResult],
+      )
+      state.events.push(event)
+      eventListener?.(event)
+    }
   }
 }

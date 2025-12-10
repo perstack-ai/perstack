@@ -60,7 +60,7 @@ export class MockAdapter implements RuntimeAdapter {
     const runId = setting.runId ?? "mock-run"
     const output = this.options.mockOutput ?? `Mock output from ${this.name}`
     const expertInfo = { key: setting.expertKey, name: expert.name, version: expert.version }
-    const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, this.options.name)
+    const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, this.options.name, "mock")
     eventListener?.(initEvent)
     const checkpoint = createNormalizedCheckpoint({
       jobId,

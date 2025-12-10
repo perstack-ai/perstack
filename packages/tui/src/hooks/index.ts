@@ -2,9 +2,9 @@ export { useExpertActions, useHistoryActions, useRunActions } from "./actions/in
 export { useErrorHandler, useLatestRef } from "./core/index.js"
 export {
   type InputAction,
+  useEventStore,
   useInputState,
   useRuntimeInfo,
-  useStepStore,
   useTextInput,
 } from "./state/index.js"
 export { useExpertSelector, useListNavigation } from "./ui/index.js"

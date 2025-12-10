@@ -148,4 +148,28 @@ describe("@perstack/runtime: MockAdapter", () => {
       expect(elapsed).toBeGreaterThanOrEqual(45)
     })
   })
+
+  describe("parallel execution", () => {
+    it("runs multiple adapters in parallel", async () => {
+      const adapters = [
+        new MockAdapter({ name: "cursor", mockOutput: "Hello from cursor", delay: 50 }),
+        new MockAdapter({ name: "claude-code", mockOutput: "Hello from claude-code", delay: 50 }),
+        new MockAdapter({ name: "gemini", mockOutput: "Hello from gemini", delay: 50 }),
+        new MockAdapter({ name: "perstack", mockOutput: "Hello from perstack", delay: 50 }),
+      ]
+      const baseSetting = {
+        ...createBaseSetting(),
+        experts: { "test-expert": createMockExpert() },
+      }
+      const start = Date.now()
+      const results = await Promise.all(adapters.map((adapter) => adapter.run({ setting: baseSetting })))
+      const elapsed = Date.now() - start
+      expect(results).toHaveLength(4)
+      expect(results[0].checkpoint.metadata?.runtime).toBe("cursor")
+      expect(results[1].checkpoint.metadata?.runtime).toBe("claude-code")
+      expect(results[2].checkpoint.metadata?.runtime).toBe("gemini")
+      expect(results[3].checkpoint.metadata?.runtime).toBe("perstack")
+      expect(elapsed).toBeLessThan(150)
+    })
+  })
 })

@@ -2,13 +2,13 @@ import { Callout, Cards } from 'nextra/components'
 
 # Multi-Runtime Support
 
-Perstack supports running Experts through third-party coding agent runtimes. Instead of using the built-in runtime, you can leverage external tools like Cursor, Claude Code, or Gemini CLI as the execution engine.
+Perstack supports running Experts through third-party coding agent runtimes. Instead of using the default runtime, you can leverage Cursor, Claude Code, or Gemini CLI as the execution engine.
 
 <Callout type="warning">
 This feature is experimental. Some capabilities may be limited depending on the runtime.
 </Callout>
 
-## Why use external runtimes?
+## Why use non-default runtimes?
 
 ### Your Expert definitions are your assets
 
@@ -47,7 +47,7 @@ Agent definitions should not be trapped in vendor silos. With multi-runtime supp
 | `gemini` | Gemini only | General purpose | ⚠️ Via Gemini config |
 
 <Callout type="info">
-**Skill definition** in `perstack.toml` only works with the default Perstack runtime. External runtimes have their own tool/MCP configurations — you must set them up separately in each runtime.
+**Skill definition** in `perstack.toml` only works with the default Perstack runtime. Other runtimes have their own tool/MCP configurations — you must set them up separately in each runtime.
 </Callout>
 
 ## Basic usage
@@ -58,9 +58,46 @@ npx perstack run my-expert "query" --runtime claude-code
 npx perstack run my-expert "query" --runtime gemini
 ```
 
+## Runtime selection
+
+How the runtime is determined depends on whether you're running an Expert directly or delegating to one.
+
+### Direct execution (Coordinator Expert)
+
+When running an Expert via CLI, use `--runtime` to explicitly specify the runtime:
+
+```bash
+npx perstack run my-expert "query" --runtime cursor
+```
+
+If `--runtime` is not specified, the **Perstack runtime** is used by default.
+
+### Delegation (Delegate Expert)
+
+When a Coordinator Expert delegates to another Expert, the Coordinator decides which runtime(s) to use by passing the `runtime` parameter to the delegation tool:
+
+```
+# Coordinator calls delegation tool with:
+delegate("code-reviewer", query: "Review this code", runtime: ["cursor", "claude-code"])
+```
+
+The Coordinator should choose from the runtimes declared in the delegate's `runtime` field (compatibility declaration). If `runtime` is not specified, **Perstack runtime** is used by default.
+
+| Scenario | Runtime selection |
+|----------|-------------------|
+| Direct execution without `--runtime` | `perstack` (default) |
+| Direct execution with `--runtime cursor` | `cursor` |
+| Delegation without `runtime` param | `perstack` (default) |
+| Delegation with `runtime: "cursor"` | `cursor` |
+| Delegation with `runtime: ["cursor", "claude-code"]` | Both in parallel |
+
+<Callout type="info">
+The `runtime` field in Expert definitions is a **compatibility declaration** — it declares which runtimes the Expert can run on. The actual runtime selection happens at execution time via `--runtime` (CLI) or `runtime` parameter (delegation).
+</Callout>
+
 ## Example: Meta code review
 
-This example demonstrates running the **same Expert** across multiple runtimes using the `runtime` field, then aggregating the results with the default Perstack runtime.
+This example demonstrates running the **same Expert** across multiple runtimes by specifying the `runtime` parameter in the delegation call.
 
 **Use case:** Get code review feedback from both Cursor and Claude Code using identical instructions. Each runtime brings unique capabilities (Cursor's codebase indexing vs Claude Code's deep reasoning), producing different insights from the same prompt.
 
@@ -70,7 +107,7 @@ This example demonstrates running the **same Expert** across multiple runtimes u
 # perstack.toml
 
 [experts."code-reviewer"]
-runtime = ["cursor", "claude-code"]  # Run on both runtimes
+runtime = ["cursor", "claude-code"]  # Compatible with both runtimes
 description = "Reviews code for quality, security, and best practices"
 instruction = """
 You are a senior code reviewer. Analyze the codebase and provide feedback on:
@@ -87,13 +124,15 @@ Write your review to `{reviewer}-review.md` where {reviewer} is your name
 # runtime defaults to "perstack"
 description = "Aggregates and synthesizes multiple code reviews"
 instruction = """
-You are a meta-reviewer. Read all *-review.md files in the workspace and:
-1. Identify common issues raised by multiple reviewers
-2. Highlight unique insights from each review
-3. Prioritize findings by severity
-4. Create a unified action plan
+You are a meta-reviewer that orchestrates parallel code reviews.
 
-Write the final report to `meta-review.md`.
+When asked to review code:
+1. Delegate to code-reviewer with runtime: ["cursor", "claude-code"] to run on both runtimes in parallel
+2. Read all *-review.md files in the workspace
+3. Identify common issues raised by multiple reviewers
+4. Highlight unique insights from each review
+5. Prioritize findings by severity
+6. Create a unified action plan in `meta-review.md`
 """
 delegates = ["code-reviewer"]
 ```
@@ -106,14 +145,16 @@ A single command triggers the entire multi-runtime workflow:
 npx perstack run meta-reviewer "Review the src/ directory"
 ```
 
-### Execution flow
+### How parallel delegation works
+
+When the meta-reviewer calls the delegation tool with `runtime: ["cursor", "claude-code"]`:
 
 ```
 meta-reviewer (perstack)
         │
-        └─► delegate code-reviewer
+        └─► delegate code-reviewer (runtime: ["cursor", "claude-code"])
                     │
-                    ├─► cursor-agent -p ──► cursor-review.md
+                    ├─► cursor-agent --print ──► cursor-review.md
                     │   (same instruction)
                     │
                     └─► claude -p ──► claude-review.md
@@ -127,11 +168,10 @@ meta-reviewer (perstack)
    and creates unified meta-review.md
 ```
 
-The runtime automatically:
-1. Detects `runtime = ["cursor", "claude-code"]` on the delegate
-2. Executes the **same Expert** on both runtimes in parallel
-3. Collects results in the workspace (each runtime writes to its own file)
-4. Returns control to the coordinator Expert
+The delegation tool accepts an optional `runtime` parameter:
+- **Single runtime**: `runtime: "cursor"` — runs on Cursor only
+- **Multiple runtimes**: `runtime: ["cursor", "claude-code"]` — runs in parallel on both
+- **Not specified**: defaults to `"perstack"` (built-in runtime)
 
 ### Why this works
 
@@ -154,7 +194,7 @@ The `runtime` field is inspired by the `runtime` field in WinterCG's [Runtime Ke
 
 ## How it works
 
-When you specify an external runtime, Perstack:
+When you specify a non-default runtime, Perstack:
 
 1. **Converts** the Expert definition into the runtime's native format
 2. **Executes** the runtime CLI in headless mode
@@ -173,10 +213,10 @@ perstack run --runtime <runtime>
             │
             ▼
 ┌─────────────────────────┐
-│   External CLI          │
+│   Runtime CLI           │
 │   (headless mode)       │
 │                         │
-│   cursor-agent -p "..." │
+│   cursor-agent --print  │
 │   claude -p "..." --append-system-prompt "..."
 │   gemini -p "..."       │
 └───────────┬─────────────┘
@@ -203,12 +243,12 @@ perstack run --runtime <runtime>
 - `CURSOR_API_KEY` environment variable set
 
 **How Expert definitions are mapped:**
-- `instruction` → Passed via `cursor-agent -p "..."` prompt argument
+- `instruction` → Passed via `cursor-agent --print "..."` prompt argument
 - `skills` → ⚠️ Not supported (headless mode has no MCP)
 - `delegates` → Included in prompt as context
 
 <Callout type="warning">
-Cursor headless CLI (`cursor-agent -p`) does not support MCP tools. Only built-in capabilities (file read/write, shell commands via `--force`) are available. Custom skills defined in `perstack.toml` will not work.
+Cursor headless CLI (`cursor-agent --print`) does not support MCP tools. Only built-in capabilities (file read/write, shell commands via `--force`) are available. Custom skills defined in `perstack.toml` will not work.
 </Callout>
 
 ### Claude Code
@@ -245,7 +285,7 @@ Gemini CLI does not support MCP. Skills defined in `perstack.toml` will not be a
 
 ### Delegation
 
-External runtimes do not natively support Expert-to-Expert delegation. When using `--runtime`, delegation behavior depends on the adapter:
+Non-default runtimes do not natively support Expert-to-Expert delegation. When using `--runtime`, delegation behavior depends on the adapter:
 
 | Runtime | Delegation handling |
 |---------|---------------------|
@@ -269,7 +309,7 @@ Interactive tools (`interactiveSkill`) are handled differently:
 
 ### Checkpoint compatibility
 
-Checkpoints created with external runtimes use a normalized format. You can:
+Checkpoints created with non-default runtimes use a normalized format. You can:
 - ✅ View checkpoints with `perstack start --continue-job`
 - ✅ Query job history
 - ⚠️ Resume may have limitations (runtime-specific state not preserved)
@@ -277,10 +317,10 @@ Checkpoints created with external runtimes use a normalized format. You can:
 ## Best practices
 
 1. **Start with the default runtime** during development for full skill control
-2. **Design skill-free Experts** when targeting external runtimes (skill definitions in `perstack.toml` are ignored)
+2. **Design skill-free Experts** when targeting non-default runtimes (skill definitions in `perstack.toml` are ignored)
 3. **Configure tools in each runtime** — set up MCP servers via `claude mcp`, Cursor settings, etc.
-4. **Keep delegation simple** — external runtimes emulate delegation via instruction
-5. **Leverage built-in capabilities** — external runtimes have their own file/shell tools
+4. **Keep delegation simple** — non-default runtimes emulate delegation via instruction
+5. **Leverage built-in capabilities** — non-default runtimes have their own file/shell tools
 
 ## What's next
 

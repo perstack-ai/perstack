@@ -54,6 +54,13 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
       }))
       return null
     }
+    if (event.type === "streamingText") {
+      setRuntimeInfo((prev) => ({
+        ...prev,
+        streamingText: (prev.streamingText ?? "") + event.text,
+      }))
+      return null
+    }
     if ("stepNumber" in event) {
       const isComplete = event.type === "completeRun"
       const isStopped = STOP_EVENT_TYPES.includes(event.type as (typeof STOP_EVENT_TYPES)[number])

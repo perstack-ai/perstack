@@ -40,6 +40,8 @@ export interface DelegationTarget {
   toolCallId: string
   toolName: string
   query: string
+  /** Runtime(s) to execute the delegate on. If array, runs in parallel. */
+  runtime?: RuntimeName | RuntimeName[]
 }
 
 /**
@@ -99,8 +101,6 @@ export interface Checkpoint {
   metadata?: {
     /** Runtime that executed this checkpoint */
     runtime?: RuntimeName
-    /** Whether this was executed by an external runtime */
-    externalExecution?: boolean
     /** Additional runtime-specific data */
     [key: string]: unknown
   }
@@ -115,6 +115,7 @@ export const delegationTargetSchema = z.object({
   toolCallId: z.string(),
   toolName: z.string(),
   query: z.string(),
+  runtime: z.union([runtimeNameSchema, z.array(runtimeNameSchema)]).optional(),
 })
 delegationTargetSchema satisfies z.ZodType<DelegationTarget>
 
@@ -151,7 +152,6 @@ export const checkpointSchema = z.object({
   metadata: z
     .object({
       runtime: runtimeNameSchema.optional(),
-      externalExecution: z.boolean().optional(),
     })
     .passthrough()
     .optional(),

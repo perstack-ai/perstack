@@ -11,6 +11,7 @@ export type {
 } from "./adapters/index.js"
 export { getAdapter, isAdapterAvailable, MockAdapter } from "./adapters/index.js"
 export {
+  defaultStoreCheckpoint,
   getCheckpointDir,
   getCheckpointPath,
   getCheckpointsByJobId,

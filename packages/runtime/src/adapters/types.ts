@@ -4,6 +4,7 @@ export type AdapterRunParams = {
   setting: RunParamsInput["setting"]
   checkpoint?: Checkpoint
   eventListener?: (event: RunEvent | RuntimeEvent) => void
+  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
 }
 
 export type AdapterRunResult = {

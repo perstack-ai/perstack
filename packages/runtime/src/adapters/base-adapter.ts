@@ -15,7 +15,7 @@ export type ExecResult = {
   exitCode: number
 }
 
-export abstract class BaseExternalAdapter implements RuntimeAdapter {
+export abstract class BaseAdapter implements RuntimeAdapter {
   abstract readonly name: string
   abstract checkPrerequisites(): Promise<PrerequisiteResult>
   abstract run(params: AdapterRunParams): Promise<AdapterRunResult>

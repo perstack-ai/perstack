@@ -23,7 +23,7 @@ const createBaseSetting = () => ({
 class TestableClaudeCodeAdapter extends ClaudeCodeAdapter {
   mockResult = { stdout: "Mock output", stderr: "", exitCode: 0 }
 
-  protected override async executeClaudeCli(): Promise<{
+  protected override async executeClaudeCliStreaming(): Promise<{
     stdout: string
     stderr: string
     exitCode: number

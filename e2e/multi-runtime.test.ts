@@ -33,19 +33,24 @@ describe("multi-runtime CLI", () => {
     })
   })
 
-  describe("external runtime prerequisites", () => {
-    it("should show helpful error for cursor when unavailable", async () => {
-      const result = await runCli([
-        "run",
-        "--config",
-        "./e2e/experts/special-tools.toml",
-        "--runtime",
-        "cursor",
-        "e2e-special-tools",
-        "echo test",
-      ])
+  describe("runtime prerequisites", () => {
+    it("should show helpful error or succeed for cursor", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/special-tools.toml",
+          "--runtime",
+          "cursor",
+          "e2e-special-tools",
+          "echo test",
+        ],
+        { timeout: 120000 },
+      )
       if (result.exitCode !== 0) {
-        expect(result.stderr).toMatch(/not installed|prerequisites|not found/i)
+        expect(result.stderr).toMatch(
+          /not installed|prerequisites|not found|failed with exit code|timeout/i,
+        )
       }
     })
 

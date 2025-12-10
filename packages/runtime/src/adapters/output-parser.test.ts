@@ -3,13 +3,13 @@ import {
   createCompleteRunEvent,
   createNormalizedCheckpoint,
   createRuntimeInitEvent,
-  parseExternalOutput,
+  parseOutput,
 } from "./output-parser.js"
 
-describe("parseExternalOutput", () => {
+describe("parseOutput", () => {
   describe("cursor", () => {
     it("returns trimmed output", () => {
-      const result = parseExternalOutput("  Hello World  \n", "cursor")
+      const result = parseOutput("  Hello World  \n", "cursor")
       expect(result.finalOutput).toBe("Hello World")
       expect(result.events).toHaveLength(0)
     })
@@ -18,20 +18,20 @@ describe("parseExternalOutput", () => {
   describe("claude-code", () => {
     it("extracts text from JSON output", () => {
       const input = '{"type": "result", "content": "Hello World"}'
-      const result = parseExternalOutput(input, "claude-code")
+      const result = parseOutput(input, "claude-code")
       expect(result.finalOutput).toBe("Hello World")
     })
 
     it("falls back to raw output for non-JSON", () => {
       const input = "Plain text output"
-      const result = parseExternalOutput(input, "claude-code")
+      const result = parseOutput(input, "claude-code")
       expect(result.finalOutput).toBe("Plain text output")
     })
   })
 
   describe("gemini", () => {
     it("returns trimmed output", () => {
-      const result = parseExternalOutput("  Hello World  \n", "gemini")
+      const result = parseOutput("  Hello World  \n", "gemini")
       expect(result.finalOutput).toBe("Hello World")
       expect(result.events).toHaveLength(0)
     })
@@ -55,13 +55,13 @@ describe("createNormalizedCheckpoint", () => {
     expect(checkpoint.messages).toHaveLength(1)
     expect(checkpoint.messages[0].type).toBe("expertMessage")
     expect(checkpoint.metadata?.runtime).toBe("cursor")
-    expect(checkpoint.metadata?.externalExecution).toBe(true)
+    expect(checkpoint.metadata?.runtime).toBe("cursor")
   })
 })
 
 describe("createRuntimeInitEvent", () => {
   it("creates valid init event", () => {
-    const event = createRuntimeInitEvent("job-123", "run-456", "Test Expert", "cursor")
+    const event = createRuntimeInitEvent("job-123", "run-456", "Test Expert", "cursor", "1.0.0")
     expect(event.type).toBe("initializeRuntime")
     expect(event.jobId).toBe("job-123")
     expect(event.runId).toBe("run-456")
