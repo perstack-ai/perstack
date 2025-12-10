@@ -1,6 +1,6 @@
 {
   "name": "@perstack/claude-code",
-  "version": "0.0.22",
+  "version": "0.0.1",
   "description": "Perstack Claude Code Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
