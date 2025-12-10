@@ -45,6 +45,5 @@ describe("CLI run", () => {
       ])
       expect(result.exitCode).toBe(1)
     })
-
   })
 })

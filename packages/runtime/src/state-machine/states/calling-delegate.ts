@@ -4,9 +4,9 @@ import {
   type RuntimeName,
   stopRunByDelegate,
 } from "@perstack/core"
-import type { RunSnapshot } from "../machine.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { getSkillManagerByToolName } from "../../skill-manager/index.js"
+import type { RunSnapshot } from "../machine.js"
 
 async function getToolType(
   toolName: string,

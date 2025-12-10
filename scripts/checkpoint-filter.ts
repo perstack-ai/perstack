@@ -1,5 +1,5 @@
 #!/usr/bin/env npx tsx
-import * as readline from "readline"
+import * as readline from "node:readline"
 
 const COMMENT_ID = process.env.COMMENT_ID
 const GITHUB_REPO = process.env.GITHUB_REPO
@@ -54,7 +54,7 @@ ${logs.join("\n")}
           Accept: "application/vnd.github+json",
         },
         body: JSON.stringify({ body }),
-      }
+      },
     )
     if (!res.ok) {
       console.error("Failed to update comment:", await res.text())
@@ -113,7 +113,7 @@ const rl = readline.createInterface({
 })
 
 rl.on("line", (line) => {
-  process.stdout.write(line + "\n")
+  process.stdout.write(`${line}\n`)
   try {
     const event = JSON.parse(line) as Record<string, unknown>
     const formatted = formatEvent(event)

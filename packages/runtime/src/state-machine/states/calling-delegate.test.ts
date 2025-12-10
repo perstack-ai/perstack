@@ -7,8 +7,8 @@ type StopRunByDelegateResult = {
 }
 
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
-import { StateMachineLogics } from "../index.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
+import { StateMachineLogics } from "../index.js"
 
 describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
   it("processes delegate call correctly", async () => {

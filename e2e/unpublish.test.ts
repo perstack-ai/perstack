@@ -14,4 +14,3 @@ describe("CLI unpublish", () => {
     expect(result.stderr).toContain("--force")
   })
 })
-

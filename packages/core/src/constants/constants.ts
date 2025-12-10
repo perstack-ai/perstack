@@ -1,7 +1,7 @@
 export const defaultPerstackApiBaseUrl = "https://api.perstack.ai"
 
 // Organization
-export const organizationNameRegex = /^[a-z0-9][a-z0-9_\.-]*$/
+export const organizationNameRegex = /^[a-z0-9][a-z0-9_.-]*$/
 export const maxOrganizationNameLength = 128
 
 // Application
@@ -9,7 +9,7 @@ export const maxApplicationNameLength = 255
 
 // Expert
 export const expertKeyRegex =
-  /^((?:@[a-z0-9][a-z0-9_\.-]*\/)?[a-z0-9][a-z0-9_\.-]*)(?:@((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?)|@([a-z0-9][a-z0-9_\.-]*))?$/
+  /^((?:@[a-z0-9][a-z0-9_.-]*\/)?[a-z0-9][a-z0-9_.-]*)(?:@((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?)|@([a-z0-9][a-z0-9_.-]*))?$/
 export const expertNameRegex = /^(@[a-z0-9][a-z0-9_-]*\/)?[a-z0-9][a-z0-9_-]*$/
 export const expertVersionRegex =
   /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$/
@@ -33,7 +33,7 @@ export const maxExpertJobFileNameLength = 1024 * 10
 
 // Skill
 export const packageWithVersionRegex =
-  /^(?:@[a-z0-9][a-z0-9_\.-]*\/)?[a-z0-9][a-z0-9_\.-]*(?:@(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?|@[a-z0-9][a-z0-9_\.-]*)?$/
+  /^(?:@[a-z0-9][a-z0-9_.-]*\/)?[a-z0-9][a-z0-9_.-]*(?:@(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?|@[a-z0-9][a-z0-9_.-]*)?$/
 export const urlSafeRegex = /^[a-z0-9][a-z0-9_-]*$/
 export const maxSkillNameLength = 255
 export const maxSkillDescriptionLength = 1024 * 2

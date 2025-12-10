@@ -17,4 +17,3 @@ describe("CLI status", () => {
     expect(result.exitCode).toBe(1)
   })
 })
-

@@ -3,9 +3,9 @@ import {
   getAdapter as coreGetAdapter,
   getRegisteredRuntimes as coreGetRegisteredRuntimes,
   isAdapterAvailable as coreIsAdapterAvailable,
-  registerAdapter,
   type RuntimeAdapter,
   type RuntimeName,
+  registerAdapter,
 } from "@perstack/core"
 import { CursorAdapter } from "@perstack/cursor"
 import { GeminiAdapter } from "@perstack/gemini"

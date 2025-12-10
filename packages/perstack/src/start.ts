@@ -158,27 +158,27 @@ export const startCommand = new Command()
       let currentRunId = currentCheckpoint?.runId ?? input.options.runId
       while (true) {
         const { checkpoint: runResult } = await dispatchToRuntime({
-            setting: {
-              jobId: currentJobId,
-              runId: currentRunId,
-              expertKey: finalExpertKey,
-              input:
-                input.options.interactiveToolCallResult && currentCheckpoint
-                  ? parseInteractiveToolCallResult(finalQuery || "", currentCheckpoint)
-                  : { text: finalQuery },
-              experts,
-              model,
-              providerConfig,
-              temperature: input.options.temperature ?? perstackConfig.temperature,
-              maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
-              maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,
-              timeout: input.options.timeout ?? perstackConfig.timeout,
-              perstackApiBaseUrl: perstackConfig.perstackApiBaseUrl,
-              perstackApiKey: env.PERSTACK_API_KEY,
-              perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
-              env,
-            },
-            checkpoint: currentCheckpoint,
+          setting: {
+            jobId: currentJobId,
+            runId: currentRunId,
+            expertKey: finalExpertKey,
+            input:
+              input.options.interactiveToolCallResult && currentCheckpoint
+                ? parseInteractiveToolCallResult(finalQuery || "", currentCheckpoint)
+                : { text: finalQuery },
+            experts,
+            model,
+            providerConfig,
+            temperature: input.options.temperature ?? perstackConfig.temperature,
+            maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
+            maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,
+            timeout: input.options.timeout ?? perstackConfig.timeout,
+            perstackApiBaseUrl: perstackConfig.perstackApiBaseUrl,
+            perstackApiKey: env.PERSTACK_API_KEY,
+            perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
+            env,
+          },
+          checkpoint: currentCheckpoint,
           runtime,
           eventListener: result.eventListener,
         })

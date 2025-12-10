@@ -16,7 +16,8 @@ describe("Delegate Chain", () => {
 
   it("should delegate through chain", () => {
     expect(
-      assertEventSequenceContains(result.events, ["startRun", "callDelegate", "stopRunByDelegate"]).passed,
+      assertEventSequenceContains(result.events, ["startRun", "callDelegate", "stopRunByDelegate"])
+        .passed,
     ).toBe(true)
   })
 

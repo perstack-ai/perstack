@@ -86,7 +86,9 @@ function StatusSelector({
         </Box>
       )}
       <Box marginTop={1}>
-        <Text dimColor>{KEY_HINTS.NAVIGATE} {KEY_HINTS.SELECT} {KEY_HINTS.ESC_BACK} {KEY_HINTS.QUIT}</Text>
+        <Text dimColor>
+          {KEY_HINTS.NAVIGATE} {KEY_HINTS.SELECT} {KEY_HINTS.ESC_BACK} {KEY_HINTS.QUIT}
+        </Text>
       </Box>
     </Box>
   )
@@ -150,7 +152,9 @@ function ConfirmStep({
         ))}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>{KEY_HINTS.NAVIGATE} {KEY_HINTS.SELECT} {KEY_HINTS.ESC_BACK} {KEY_HINTS.QUIT}</Text>
+        <Text dimColor>
+          {KEY_HINTS.NAVIGATE} {KEY_HINTS.SELECT} {KEY_HINTS.ESC_BACK} {KEY_HINTS.QUIT}
+        </Text>
       </Box>
     </Box>
   )

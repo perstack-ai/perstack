@@ -20,7 +20,7 @@ export async function callingInteractiveToolLogic({
     },
     step: {
       ...step,
-      finishedAt: new Date().getTime(),
+      finishedAt: Date.now(),
     },
   })
 }

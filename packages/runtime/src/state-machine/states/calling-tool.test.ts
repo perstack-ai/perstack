@@ -255,7 +255,10 @@ describe("@perstack/runtime: callingToolLogic", () => {
         ],
       })
       const skillManagers = {
-        "interactive-skill": createMockInteractiveSkillManager("interactive-skill", "humanApproval"),
+        "interactive-skill": createMockInteractiveSkillManager(
+          "interactive-skill",
+          "humanApproval",
+        ),
       }
       const event = await callingToolLogic({
         setting,
@@ -571,12 +574,20 @@ describe("@perstack/runtime: callingToolLogic", () => {
       const step = createStep({
         toolCalls: [
           { id: "tc_mcp", skillName: "mcp-skill", toolName: "mcpTool", args: {} },
-          { id: "tc_interactive", skillName: "interactive-skill", toolName: "humanApproval", args: {} },
+          {
+            id: "tc_interactive",
+            skillName: "interactive-skill",
+            toolName: "humanApproval",
+            args: {},
+          },
         ],
       })
       const skillManagers = {
         "mcp-skill": createMockMcpSkillManager("mcp-skill", "mcpTool"),
-        "interactive-skill": createMockInteractiveSkillManager("interactive-skill", "humanApproval"),
+        "interactive-skill": createMockInteractiveSkillManager(
+          "interactive-skill",
+          "humanApproval",
+        ),
       }
       const event = await callingToolLogic({
         setting,
@@ -596,12 +607,20 @@ describe("@perstack/runtime: callingToolLogic", () => {
       const step = createStep({
         toolCalls: [
           { id: "tc_delegate", skillName: "delegate-skill", toolName: "delegate-skill", args: {} },
-          { id: "tc_interactive", skillName: "interactive-skill", toolName: "humanApproval", args: {} },
+          {
+            id: "tc_interactive",
+            skillName: "interactive-skill",
+            toolName: "humanApproval",
+            args: {},
+          },
         ],
       })
       const skillManagers = {
         "delegate-skill": createMockDelegateSkillManager("delegate-skill"),
-        "interactive-skill": createMockInteractiveSkillManager("interactive-skill", "humanApproval"),
+        "interactive-skill": createMockInteractiveSkillManager(
+          "interactive-skill",
+          "humanApproval",
+        ),
       }
       const event = await callingToolLogic({
         setting,

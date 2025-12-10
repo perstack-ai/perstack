@@ -1,7 +1,6 @@
 import type { Checkpoint } from "../schemas/checkpoint.js"
 import type { Expert } from "../schemas/expert.js"
-import type { RunEvent, RuntimeEvent } from "../schemas/runtime.js"
-import type { RunParamsInput } from "../schemas/runtime.js"
+import type { RunEvent, RunParamsInput, RuntimeEvent } from "../schemas/runtime.js"
 
 export type AdapterRunParams = {
   setting: RunParamsInput["setting"]
