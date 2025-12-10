@@ -35,7 +35,7 @@ export const RunSetting = ({
     >
       <Text>
         <Text bold color="cyan">
-          Perstack
+          {info.runtime && info.runtime !== "perstack" ? info.runtime : "Perstack"}
         </Text>
         {info.runtimeVersion && <Text color="gray"> (v{info.runtimeVersion})</Text>}
       </Text>
