@@ -1,0 +1,80 @@
+import { completeRun, type RunEvent, retry } from "@perstack/core"
+import { type GenerateTextResult, generateText, type ToolSet } from "ai"
+import {
+  createExpertMessage,
+  createToolMessage,
+  createUserMessage,
+  messageToCoreMessage,
+} from "../../messages/message.js"
+import { calculateContextWindowUsage, getModel } from "../../helpers/model.js"
+import type { RunSnapshot } from "../machine.js"
+import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
+
+export async function generatingRunResultLogic({
+  setting,
+  checkpoint,
+  step,
+}: RunSnapshot["context"]): Promise<RunEvent> {
+  if (!step.toolCalls || !step.toolResults || step.toolResults.length === 0) {
+    throw new Error("No tool calls or tool results found")
+  }
+  const toolResultParts = step.toolResults.map((toolResult) => {
+    const toolCall = step.toolCalls?.find((tc) => tc.id === toolResult.id)
+    return {
+      type: "toolResultPart" as const,
+      toolCallId: toolResult.id,
+      toolName: toolCall?.toolName ?? toolResult.toolName,
+      contents: toolResult.result.filter(
+        (part) =>
+          part.type === "textPart" ||
+          part.type === "imageInlinePart" ||
+          part.type === "fileInlinePart",
+      ),
+    }
+  })
+  const toolMessage = createToolMessage(toolResultParts)
+  const model = getModel(setting.model, setting.providerConfig)
+  const { messages } = checkpoint
+  let generationResult: GenerateTextResult<ToolSet, never>
+  try {
+    generationResult = await generateText({
+      model,
+      messages: [...messages, toolMessage].map(messageToCoreMessage),
+      temperature: setting.temperature,
+      maxRetries: setting.maxRetries,
+      abortSignal: AbortSignal.timeout(setting.timeout),
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      const reason = JSON.stringify({ error: error.name, message: error.message })
+      return retry(setting, checkpoint, {
+        reason,
+        newMessages: [toolMessage, createUserMessage([{ type: "textPart", text: reason }])],
+        usage: createEmptyUsage(),
+      })
+    }
+    throw error
+  }
+  const usage = usageFromGenerateTextResult(generationResult)
+  const { text } = generationResult
+  const newMessages = [toolMessage, createExpertMessage(text ? [{ type: "textPart", text }] : [])]
+  return completeRun(setting, checkpoint, {
+    checkpoint: {
+      ...checkpoint,
+      messages: [...messages, ...newMessages],
+      usage: sumUsage(checkpoint.usage, usage),
+      contextWindowUsage: checkpoint.contextWindow
+        ? calculateContextWindowUsage(usage, checkpoint.contextWindow)
+        : undefined,
+      status: "completed",
+    },
+    step: {
+      ...step,
+      newMessages: [...step.newMessages, ...newMessages],
+      finishedAt: Date.now(),
+      usage: sumUsage(step.usage, usage),
+    },
+    text,
+    usage,
+  })
+}

@@ -24,13 +24,13 @@ registerAdapter("perstack", () => mockAdapter)
 
 ## Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `name` | `RuntimeName` | Runtime name to mock |
-| `shouldFail` | `boolean` | Simulate prerequisite failure |
-| `failureMessage` | `string` | Custom failure message |
-| `mockOutput` | `string` | Mock output text |
-| `delay` | `number` | Simulated execution delay (ms) |
+| Option           | Type          | Description                    |
+| ---------------- | ------------- | ------------------------------ |
+| `name`           | `RuntimeName` | Runtime name to mock           |
+| `shouldFail`     | `boolean`     | Simulate prerequisite failure  |
+| `failureMessage` | `string`      | Custom failure message         |
+| `mockOutput`     | `string`      | Mock output text               |
+| `delay`          | `number`      | Simulated execution delay (ms) |
 
 ## Use Cases
 

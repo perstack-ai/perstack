@@ -1,10 +1,12 @@
 import { registerAdapter } from "@perstack/core"
 import pkg from "../package.json" with { type: "json" }
-import { PerstackAdapter } from "./adapters/index.js"
+import { PerstackAdapter } from "./perstack-adapter.js"
 
 registerAdapter("perstack", () => new PerstackAdapter())
 
-export { PerstackAdapter } from "./adapters/index.js"
+export { PerstackAdapter } from "./perstack-adapter.js"
+export { run } from "./run.js"
+export { getModel } from "./helpers/model.js"
 export {
   defaultStoreCheckpoint,
   getCheckpointDir,
@@ -12,10 +14,9 @@ export {
   getCheckpointsByJobId,
   getEventContents,
   getEventsByRun,
-} from "./default-store.js"
-export * from "./job-store.js"
-export * from "./model.js"
-export { defaultGetRunDir as getRunDir, getAllRuns } from "./run-setting-store.js"
-export * from "./runtime.js"
-export * from "./runtime-state-machine.js"
+  defaultGetRunDir as getRunDir,
+  getAllRuns,
+} from "./storage/index.js"
+export * from "./storage/job.js"
+export { runtimeStateMachine, type RunActor, type RunSnapshot } from "./state-machine/index.js"
 export const runtimeVersion = pkg.version
