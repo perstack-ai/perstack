@@ -344,17 +344,17 @@ This suggests incomplete implementation that will need revisiting.
 
 ## Recommended Changes Summary
 
-| Priority | Issue | Action |
-|----------|-------|--------|
-| Critical | #1 Parallel execution | Define aggregation strategy or defer feature |
-| Critical | #2 Cross-runtime delegation | Document limitation or design callback mechanism |
-| High | #3 Type naming | Create separate file or rename for clarity |
-| High | #4 Real-time events | Add waiting indicator and document limitation |
-| Medium | #5 Wave ordering | Fix dependency graph consistency |
-| Medium | #6 Checkpoint migration | Add backward compatibility handling |
-| Medium | #8 Skills warning | Add runtime compatibility warnings |
-| Medium | #10 Error recovery | Define comprehensive error handling |
-| Low | #15 Code duplication | Extract base class (can be done during implementation) |
+| Priority | Issue                       | Action                                                 |
+| -------- | --------------------------- | ------------------------------------------------------ |
+| Critical | #1 Parallel execution       | Define aggregation strategy or defer feature           |
+| Critical | #2 Cross-runtime delegation | Document limitation or design callback mechanism       |
+| High     | #3 Type naming              | Create separate file or rename for clarity             |
+| High     | #4 Real-time events         | Add waiting indicator and document limitation          |
+| Medium   | #5 Wave ordering            | Fix dependency graph consistency                       |
+| Medium   | #6 Checkpoint migration     | Add backward compatibility handling                    |
+| Medium   | #8 Skills warning           | Add runtime compatibility warnings                     |
+| Medium   | #10 Error recovery          | Define comprehensive error handling                    |
+| Low      | #15 Code duplication        | Extract base class (can be done during implementation) |
 
 ---
 
@@ -398,9 +398,9 @@ runtime = ["cursor", "claude-code"]  # Compatible with both, runs on ONE at a ti
 
 External runtimes (Cursor, Claude Code, Gemini) do not expose skill/tool registration via their CLIs. Perstack cannot inject the `delegate` tool into these runtimes.
 
-| Caller Runtime | Delegate Behavior |
-| -------------- | ----------------- |
-| `perstack`     | Full delegation via tool call (existing behavior) |
+| Caller Runtime | Delegate Behavior                                         |
+| -------------- | --------------------------------------------------------- |
+| `perstack`     | Full delegation via tool call (existing behavior)         |
 | External       | Instruction-based only (delegate info embedded in prompt) |
 
 **Note**: After further discussion, delegate info embedding was also removed since external runtimes cannot act on it anyway. Only `instruction + query` is passed to external CLI.
@@ -509,21 +509,21 @@ Speculative comments removed. Parsers now return simple trimmed output.
 
 ## Summary of Changes Made
 
-| Issue | Change |
-|-------|--------|
-| #1 | Clarified runtime as compatibility declaration |
-| #3 | Documented technical constraint, removed delegate embedding |
-| #4 | Changed to `runtime-name.ts` new file |
-| #5 | Acknowledged as known limitation |
-| #6 | Moved #08 to Wave 2 |
-| #7 | Added checkpoint.ts to Affected Files |
-| #8 | Verified exports in all issues |
-| #9 | Existing docs sufficient |
-| #10 | Added `cwd: process.cwd()` |
-| #11 | Keep simple error handling |
-| #12 | Added Known Limitations section |
-| #13 | Default is always perstack |
-| #14 | Added MockAdapter |
-| #15 | Backend handles |
-| #16 | Added BaseExternalAdapter |
-| #17 | Removed speculative comments |
+| Issue | Change                                                      |
+| ----- | ----------------------------------------------------------- |
+| #1    | Clarified runtime as compatibility declaration              |
+| #3    | Documented technical constraint, removed delegate embedding |
+| #4    | Changed to `runtime-name.ts` new file                       |
+| #5    | Acknowledged as known limitation                            |
+| #6    | Moved #08 to Wave 2                                         |
+| #7    | Added checkpoint.ts to Affected Files                       |
+| #8    | Verified exports in all issues                              |
+| #9    | Existing docs sufficient                                    |
+| #10   | Added `cwd: process.cwd()`                                  |
+| #11   | Keep simple error handling                                  |
+| #12   | Added Known Limitations section                             |
+| #13   | Default is always perstack                                  |
+| #14   | Added MockAdapter                                           |
+| #15   | Backend handles                                             |
+| #16   | Added BaseExternalAdapter                                   |
+| #17   | Removed speculative comments                                |
