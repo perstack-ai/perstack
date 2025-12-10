@@ -15,7 +15,8 @@ function checkCommand(command: string): { available: boolean; version?: string }
       stdio: ["pipe", "pipe", "pipe"],
       timeout: 5000,
     })
-    return { available: true, version: result.trim() }
+    const firstLine = result.trim().split("\n")[0]
+    return { available: true, version: firstLine }
   } catch {
     return { available: false }
   }
