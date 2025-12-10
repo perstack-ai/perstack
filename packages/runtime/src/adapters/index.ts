@@ -12,6 +12,7 @@ export { BaseExternalAdapter, type ExecResult } from "./base-external-adapter.js
 export { CursorAdapter } from "./cursor-adapter.js"
 export { ClaudeCodeAdapter } from "./claude-code-adapter.js"
 export { GeminiAdapter } from "./gemini-adapter.js"
+export { MockAdapter, type MockAdapterOptions } from "./mock-adapter.js"
 export {
   parseExternalOutput,
   createNormalizedCheckpoint,
