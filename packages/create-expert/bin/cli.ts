@@ -2,7 +2,6 @@
 import { spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { type PerstackEvent, renderProgress } from "@perstack/tui"
 import { Command } from "commander"
 import { config } from "dotenv"
 import { render } from "ink"
@@ -28,23 +27,6 @@ function getEnvVarName(provider: LLMProvider): string {
     case "google":
       return "GOOGLE_GENERATIVE_AI_API_KEY"
   }
-}
-
-function parseJsonLines(buffer: string, onEvent: (event: Record<string, unknown>) => void): string {
-  const lines = buffer.split("\n")
-  const remaining = lines.pop() || ""
-  for (const line of lines) {
-    if (!line.trim()) continue
-    try {
-      const parsed = JSON.parse(line)
-      if (parsed && typeof parsed === "object") {
-        onEvent(parsed)
-      }
-    } catch {
-      // Not JSON, ignore
-    }
-  }
-  return remaining
 }
 
 const program = new Command()
@@ -98,12 +80,10 @@ const program = new Command()
       process.env[envVarName] = wizardResult.apiKey
     }
     const isDefaultRuntime = wizardResult.runtime === "default"
-    let model = "claude-sonnet-4-5"
-    let provider: LLMProvider = "anthropic"
     if (!isImprovement) {
       if (isDefaultRuntime) {
-        provider = wizardResult.provider || "anthropic"
-        model = wizardResult.model || getDefaultModel(provider)
+        const provider = wizardResult.provider || "anthropic"
+        const model = wizardResult.model || getDefaultModel(provider)
         const agentsMd = generateAgentsMd({ provider, model })
         writeFileSync(agentsMdPath, agentsMd)
         console.log("✓ Created AGENTS.md")
@@ -130,41 +110,15 @@ const program = new Command()
     const query = isImprovement
       ? `Improve the Expert "${expertName}": ${expertDescription}`
       : `Create a new Expert based on these requirements: ${expertDescription}`
-    console.log("\n🚀 Starting Expert creation...\n")
     const runtimeArg = isDefaultRuntime ? [] : ["--runtime", wizardResult.runtime]
-    const args = ["perstack", "run", "create-expert", query, ...runtimeArg]
-    const progressHandle = renderProgress({
-      title: "🚀 Expert Creation Progress",
-    })
+    const args = ["perstack", "start", "create-expert", query, ...runtimeArg]
     const proc = spawn("npx", args, {
       cwd,
       env: process.env,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: "inherit",
     })
-    let buffer = ""
-    proc.stdout?.on("data", (data: Buffer) => {
-      buffer = parseJsonLines(buffer + data.toString(), (event) => {
-        progressHandle.emit(event as unknown as PerstackEvent)
-      })
-    })
-    proc.stderr?.on("data", (data: Buffer) => {
-      const text = data.toString().trim()
-      if (text) {
-        console.error(text)
-      }
-    })
-    proc.on("exit", async (code) => {
-      await progressHandle.waitUntilExit()
-      if (code === 0) {
-        console.log("\n✓ Expert creation complete!")
-        console.log("\nTo run your Expert:")
-        console.log("  perstack start")
-        console.log("\nTo run in headless mode:")
-        console.log('  perstack run <expert-name> "<query>"')
-      } else {
-        console.error(`\nExpert creation failed with code ${code}`)
-        process.exit(code || 1)
-      }
+    proc.on("exit", (code) => {
+      process.exit(code || 0)
     })
   })
 

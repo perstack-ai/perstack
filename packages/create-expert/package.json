@@ -23,7 +23,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@perstack/tui": "workspace:*",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
     "ink": "^6.5.1",
