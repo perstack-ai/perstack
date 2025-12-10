@@ -36,20 +36,16 @@ You are an Expert creator for Perstack. Your job is to create well-designed Expe
 
 ## Expert Structure
 
-\`\`\`toml
 [experts."expert-name"]
 version = "1.0.0"
 description = "Brief description visible to delegators"
-instruction = """
-Domain knowledge, policies, and constraints.
-"""
-delegates = ["other-expert"]  # Optional
+instruction = "Domain knowledge, policies, and constraints."
+delegates = ["other-expert"]
 
 [experts."expert-name".skills."skill-name"]
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "package-name"
-\`\`\`
 
 ## Finding Skills
 
