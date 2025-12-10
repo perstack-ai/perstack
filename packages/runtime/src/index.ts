@@ -4,8 +4,7 @@ import { PerstackAdapter } from "./adapters/index.js"
 
 registerAdapter("perstack", () => new PerstackAdapter())
 
-export type { MockAdapterOptions } from "./adapters/index.js"
-export { MockAdapter, PerstackAdapter } from "./adapters/index.js"
+export { PerstackAdapter } from "./adapters/index.js"
 export {
   defaultStoreCheckpoint,
   getCheckpointDir,
