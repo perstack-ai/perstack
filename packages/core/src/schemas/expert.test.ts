@@ -107,4 +107,50 @@ describe("@perstack/core: expertSchema", () => {
     expect(result.skills.interactive.type).toBe("interactiveSkill")
     expect(result.skills.interactive.name).toBe("interactive")
   })
+
+  describe("runtime field", () => {
+    it("defaults to perstack", () => {
+      const result = expertSchema.parse({
+        key: "test",
+        name: "test",
+        version: "1.0.0",
+        instruction: "test",
+      })
+      expect(result.runtime).toEqual(["perstack"])
+    })
+
+    it("transforms single string to array", () => {
+      const result = expertSchema.parse({
+        key: "test",
+        name: "test",
+        version: "1.0.0",
+        instruction: "test",
+        runtime: "cursor",
+      })
+      expect(result.runtime).toEqual(["cursor"])
+    })
+
+    it("preserves array", () => {
+      const result = expertSchema.parse({
+        key: "test",
+        name: "test",
+        version: "1.0.0",
+        instruction: "test",
+        runtime: ["cursor", "claude-code"],
+      })
+      expect(result.runtime).toEqual(["cursor", "claude-code"])
+    })
+
+    it("rejects invalid runtime", () => {
+      expect(() =>
+        expertSchema.parse({
+          key: "test",
+          name: "test",
+          version: "1.0.0",
+          instruction: "test",
+          runtime: "invalid",
+        }),
+      ).toThrow()
+    })
+  })
 })

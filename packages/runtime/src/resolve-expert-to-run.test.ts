@@ -56,6 +56,7 @@ function createTestExpert(overrides: Partial<Expert> = {}): Expert {
     },
     delegates: [],
     tags: [],
+    runtime: ["perstack"],
     ...overrides,
   }
 }

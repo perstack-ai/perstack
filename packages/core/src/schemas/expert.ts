@@ -6,6 +6,8 @@ import {
   maxExpertNameLength,
   tagNameRegex,
 } from "../constants/constants.js"
+import type { RuntimeName } from "./runtime-name.js"
+import { runtimeNameSchema } from "./runtime-name.js"
 import type { InteractiveSkill, McpSseSkill, McpStdioSkill, Skill } from "./skill.js"
 import { interactiveSkillSchema, mcpSseSkillSchema, mcpStdioSkillSchema } from "./skill.js"
 
@@ -30,6 +32,8 @@ export interface Expert {
   delegates: string[]
   /** Tags for categorization and discovery */
   tags: string[]
+  /** Compatible runtimes for this Expert */
+  runtime: RuntimeName[]
 }
 
 type SkillWithoutName =
@@ -88,4 +92,9 @@ export const expertSchema = z.object({
     }),
   delegates: z.array(z.string().regex(expertKeyRegex).min(1)).optional().default([]),
   tags: z.array(z.string().regex(tagNameRegex).min(1)).optional().default([]),
+  runtime: z
+    .union([runtimeNameSchema, z.array(runtimeNameSchema)])
+    .optional()
+    .default(["perstack"])
+    .transform((value) => (typeof value === "string" ? [value] : value)),
 })

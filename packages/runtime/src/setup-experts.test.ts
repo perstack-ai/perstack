@@ -11,6 +11,7 @@ describe("@perstack/runtime: setupExperts", () => {
     skills: {},
     delegates: [],
     tags: [],
+    runtime: ["perstack"],
   }
 
   const baseSetting: RunSetting = {
