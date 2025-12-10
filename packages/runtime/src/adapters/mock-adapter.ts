@@ -1,6 +1,16 @@
 import type { Expert, RuntimeName } from "@perstack/core"
-import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult, RuntimeAdapter, RuntimeExpertConfig } from "./types.js"
-import { createCompleteRunEvent, createNormalizedCheckpoint, createRuntimeInitEvent } from "./output-parser.js"
+import {
+  createCompleteRunEvent,
+  createNormalizedCheckpoint,
+  createRuntimeInitEvent,
+} from "./output-parser.js"
+import type {
+  AdapterRunParams,
+  AdapterRunResult,
+  PrerequisiteResult,
+  RuntimeAdapter,
+  RuntimeExpertConfig,
+} from "./types.js"
 
 export type MockAdapterOptions = {
   name: RuntimeName
@@ -42,6 +52,7 @@ export class MockAdapter implements RuntimeAdapter {
     if (!expert) {
       throw new Error(`Expert "${setting.expertKey}" not found`)
     }
+    const startedAt = Date.now()
     if (this.options.delay) {
       await new Promise((r) => setTimeout(r, this.options.delay))
     }
@@ -59,7 +70,14 @@ export class MockAdapter implements RuntimeAdapter {
       output,
       runtime: this.options.name,
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, output)
+    const completeEvent = createCompleteRunEvent(
+      jobId,
+      runId,
+      setting.expertKey,
+      checkpoint,
+      output,
+      startedAt,
+    )
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, completeEvent] }
   }

@@ -49,7 +49,11 @@ export class CursorAdapter extends BaseExternalAdapter {
     const prompt = this.buildPrompt(expert.instruction, setting.input.text)
     const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, "cursor")
     eventListener?.(initEvent)
+    const startedAt = Date.now()
     const result = await this.executeCursorAgent(prompt, setting.timeout ?? 60000)
+    if (result.exitCode !== 0) {
+      throw new Error(`Cursor CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`)
+    }
     const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "cursor")
     for (const event of parsedEvents) {
       eventListener?.(event)
@@ -62,7 +66,7 @@ export class CursorAdapter extends BaseExternalAdapter {
       output: finalOutput,
       runtime: "cursor",
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput)
+    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput, startedAt)
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }

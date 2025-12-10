@@ -61,7 +61,7 @@ export abstract class BaseExternalAdapter implements RuntimeAdapter {
       })
       proc.on("close", (code) => {
         clearTimeout(timer)
-        resolve({ stdout, stderr, exitCode: code ?? 0 })
+        resolve({ stdout, stderr, exitCode: code ?? 127 })
       })
       proc.on("error", (err) => {
         clearTimeout(timer)

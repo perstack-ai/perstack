@@ -1,18 +1,21 @@
 import { describe, expect, it } from "vitest"
-import { runCli, runExpert } from "./lib/runner.js"
+import { runCli } from "./lib/runner.js"
 
 describe("multi-runtime CLI", () => {
   describe("--runtime option parsing", () => {
     it("should accept perstack runtime flag", async () => {
-      const result = await runCli([
-        "run",
-        "--config",
-        "./e2e/experts/special-tools.toml",
-        "--runtime",
-        "perstack",
-        "e2e-special-tools",
-        "Use attemptCompletion to say hello",
-      ], { timeout: 120000 })
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/special-tools.toml",
+          "--runtime",
+          "perstack",
+          "e2e-special-tools",
+          "Use attemptCompletion to say hello",
+        ],
+        { timeout: 120000 },
+      )
       expect(result.exitCode).toBe(0)
     })
 

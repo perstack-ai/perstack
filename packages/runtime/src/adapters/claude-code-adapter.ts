@@ -49,7 +49,11 @@ export class ClaudeCodeAdapter extends BaseExternalAdapter {
     const prompt = setting.input.text ?? ""
     const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, "claude-code")
     eventListener?.(initEvent)
+    const startedAt = Date.now()
     const result = await this.executeClaudeCli(expert.instruction, prompt, setting.timeout ?? 60000)
+    if (result.exitCode !== 0) {
+      throw new Error(`Claude Code CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`)
+    }
     const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "claude-code")
     for (const event of parsedEvents) {
       eventListener?.(event)
@@ -62,7 +66,7 @@ export class ClaudeCodeAdapter extends BaseExternalAdapter {
       output: finalOutput,
       runtime: "claude-code",
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput)
+    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput, startedAt)
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }

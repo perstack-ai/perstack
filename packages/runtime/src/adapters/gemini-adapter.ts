@@ -59,7 +59,11 @@ export class GeminiAdapter extends BaseExternalAdapter {
     const prompt = this.buildPrompt(expert.instruction, setting.input.text)
     const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, "gemini")
     eventListener?.(initEvent)
+    const startedAt = Date.now()
     const result = await this.executeGeminiCli(prompt, setting.timeout ?? 60000)
+    if (result.exitCode !== 0) {
+      throw new Error(`Gemini CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`)
+    }
     const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "gemini")
     for (const event of parsedEvents) {
       eventListener?.(event)
@@ -72,7 +76,7 @@ export class GeminiAdapter extends BaseExternalAdapter {
       output: finalOutput,
       runtime: "gemini",
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput)
+    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput, startedAt)
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }

@@ -265,13 +265,13 @@ For stop reasons and error handling, see [Error Handling](https://docs.perstack.
 
 The runtime supports multiple execution backends through the adapter pattern:
 
-| Adapter | Runtime Name | Description |
-|---------|--------------|-------------|
-| `PerstackAdapter` | `perstack` | Built-in runtime (default) |
-| `CursorAdapter` | `cursor` | Cursor IDE headless mode |
-| `ClaudeCodeAdapter` | `claude-code` | Claude Code CLI |
-| `GeminiAdapter` | `gemini` | Gemini CLI |
-| `MockAdapter` | (any) | For testing purposes |
+| Adapter             | Runtime Name  | Description                |
+| ------------------- | ------------- | -------------------------- |
+| `PerstackAdapter`   | `perstack`    | Built-in runtime (default) |
+| `CursorAdapter`     | `cursor`      | Cursor IDE headless mode   |
+| `ClaudeCodeAdapter` | `claude-code` | Claude Code CLI            |
+| `GeminiAdapter`     | `gemini`      | Gemini CLI                 |
+| `MockAdapter`       | (any)         | For testing purposes       |
 
 ### Usage
 
