@@ -5,7 +5,7 @@ import {
   parseWithFriendlyError,
   startCommandInputSchema,
 } from "@perstack/core"
-import { run, runtimeVersion } from "@perstack/runtime"
+import { runtimeVersion } from "@perstack/runtime"
 import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "@perstack/tui"
 import { renderStart } from "@perstack/tui"
 import { Command } from "commander"
@@ -19,6 +19,7 @@ import {
   getEventsWithDetails,
   getRecentExperts,
 } from "./lib/run-manager.js"
+import { dispatchToRuntime } from "./lib/runtime-dispatcher.js"
 
 const CONTINUE_TIMEOUT_MS = 60_000
 
@@ -55,10 +56,6 @@ export const startCommand = new Command()
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
     const runtime = input.options.runtime ?? "perstack"
-    if (runtime !== "perstack") {
-      console.error(`Runtime "${runtime}" is not yet supported. Use --runtime perstack or omit the option.`)
-      process.exit(1)
-    }
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
@@ -159,32 +156,31 @@ export const startCommand = new Command()
       let currentJobId = currentCheckpoint?.jobId ?? input.options.jobId
       let currentRunId = currentCheckpoint?.runId ?? input.options.runId
       while (true) {
-        const runResult = await run(
-          {
-            setting: {
-              jobId: currentJobId,
-              runId: currentRunId,
-              expertKey: finalExpertKey,
-              input:
-                input.options.interactiveToolCallResult && currentCheckpoint
-                  ? parseInteractiveToolCallResult(finalQuery || "", currentCheckpoint)
-                  : { text: finalQuery },
-              experts,
-              model,
-              providerConfig,
-              temperature: input.options.temperature ?? perstackConfig.temperature,
-              maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
-              maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,
-              timeout: input.options.timeout ?? perstackConfig.timeout,
-              perstackApiBaseUrl: perstackConfig.perstackApiBaseUrl,
-              perstackApiKey: env.PERSTACK_API_KEY,
-              perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
-              env,
-            },
-            checkpoint: currentCheckpoint,
+        const { checkpoint: runResult } = await dispatchToRuntime({
+          setting: {
+            jobId: currentJobId,
+            runId: currentRunId,
+            expertKey: finalExpertKey,
+            input:
+              input.options.interactiveToolCallResult && currentCheckpoint
+                ? parseInteractiveToolCallResult(finalQuery || "", currentCheckpoint)
+                : { text: finalQuery },
+            experts,
+            model,
+            providerConfig,
+            temperature: input.options.temperature ?? perstackConfig.temperature,
+            maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
+            maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,
+            timeout: input.options.timeout ?? perstackConfig.timeout,
+            perstackApiBaseUrl: perstackConfig.perstackApiBaseUrl,
+            perstackApiKey: env.PERSTACK_API_KEY,
+            perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
+            env,
           },
-          { eventListener: result.eventListener },
-        )
+          checkpoint: currentCheckpoint,
+          runtime,
+          eventListener: result.eventListener,
+        })
         if (
           runResult.status === "completed" ||
           runResult.status === "stoppedByExceededMaxSteps" ||

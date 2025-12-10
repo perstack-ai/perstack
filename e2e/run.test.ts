@@ -49,7 +49,7 @@ describe("CLI run", () => {
     it("should reject unsupported runtime", async () => {
       const result = await runCli(["run", "test-expert", "test query", "--runtime", "cursor"])
       expect(result.exitCode).toBe(1)
-      expect(result.stderr).toContain('Runtime "cursor" is not yet supported')
+      expect(result.stderr).toContain('Runtime "cursor" is not available')
     })
   })
 })
