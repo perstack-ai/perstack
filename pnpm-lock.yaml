@@ -258,18 +258,12 @@ importers:
       '@perstack/api-client':
         specifier: workspace:*
         version: link:../api-client
-      '@perstack/claude-code':
-        specifier: workspace:*
-        version: link:../claude-code
       '@perstack/core':
         specifier: workspace:*
         version: link:../core
-      '@perstack/cursor':
+      '@perstack/runner':
         specifier: workspace:*
-        version: link:../cursor
-      '@perstack/gemini':
-        specifier: workspace:*
-        version: link:../gemini
+        version: link:../runner
       '@perstack/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -288,6 +282,40 @@ importers:
       ts-dedent:
         specifier: ^2.2.0
         version: 2.2.0
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.14
+        version: 4.0.14(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.3(@types/node@24.10.1)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runner:
+    dependencies:
+      '@perstack/claude-code':
+        specifier: workspace:*
+        version: link:../claude-code
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../core
+      '@perstack/cursor':
+        specifier: workspace:*
+        version: link:../cursor
+      '@perstack/gemini':
+        specifier: workspace:*
+        version: link:../gemini
+      '@perstack/runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5
