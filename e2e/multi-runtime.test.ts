@@ -49,7 +49,7 @@ describe("multi-runtime CLI", () => {
       )
       if (result.exitCode !== 0) {
         expect(result.stderr).toMatch(
-          /not installed|prerequisites|not found|failed with exit code|timeout/i,
+          /not installed|prerequisites|not found|failed with exit code|timed out/i,
         )
       }
     })
