@@ -1,15 +1,14 @@
 export type {
   CheckpointHistoryItem,
-  DisplayStep,
   EventHistoryItem,
   EventResult,
   ExpertOption,
   InitialRuntimeConfig,
   JobHistoryItem,
+  LogEntry,
   PerstackEvent,
   RunHistoryItem,
   RuntimeInfo,
-  ToolExecution,
 } from "./base.js"
 export type {
   BrowsingCheckpointsState,

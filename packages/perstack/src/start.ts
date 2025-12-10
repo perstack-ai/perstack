@@ -5,7 +5,7 @@ import {
   parseWithFriendlyError,
   startCommandInputSchema,
 } from "@perstack/core"
-import { run, runtimeVersion } from "@perstack/runtime"
+import { runtimeVersion } from "@perstack/runtime"
 import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "@perstack/tui"
 import { renderStart } from "@perstack/tui"
 import { Command } from "commander"
@@ -19,6 +19,7 @@ import {
   getEventsWithDetails,
   getRecentExperts,
 } from "./lib/run-manager.js"
+import { dispatchToRuntime } from "./lib/runtime-dispatcher.js"
 
 const CONTINUE_TIMEOUT_MS = 60_000
 
@@ -51,8 +52,10 @@ export const startCommand = new Command()
     "Resume from a specific checkpoint (requires --continue or --continue-job)",
   )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
+  .option("--runtime <runtime>", "Execution runtime (perstack, cursor, claude-code, gemini)")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
+    const runtime = input.options.runtime ?? "perstack"
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
@@ -102,6 +105,7 @@ export const startCommand = new Command()
           maxRetries,
           timeout,
           contextWindowUsage: checkpoint?.contextWindowUsage ?? 0,
+          runtime,
         },
         configuredExperts,
         recentExperts,
@@ -153,8 +157,7 @@ export const startCommand = new Command()
       let currentJobId = currentCheckpoint?.jobId ?? input.options.jobId
       let currentRunId = currentCheckpoint?.runId ?? input.options.runId
       while (true) {
-        const runResult = await run(
-          {
+        const { checkpoint: runResult } = await dispatchToRuntime({
             setting: {
               jobId: currentJobId,
               runId: currentRunId,
@@ -176,9 +179,9 @@ export const startCommand = new Command()
               env,
             },
             checkpoint: currentCheckpoint,
-          },
-          { eventListener: result.eventListener },
-        )
+          runtime,
+          eventListener: result.eventListener,
+        })
         if (
           runResult.status === "completed" ||
           runResult.status === "stoppedByExceededMaxSteps" ||

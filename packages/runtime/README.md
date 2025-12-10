@@ -261,8 +261,66 @@ The `status` field in a Checkpoint indicates the current state:
 
 For stop reasons and error handling, see [Error Handling](https://docs.perstack.ai/using-experts/error-handling).
 
+## Runtime Adapters
+
+The runtime supports multiple execution backends through the adapter pattern. External runtime adapters are provided as separate packages:
+
+| Package                 | Runtime Name  | Description                |
+| ----------------------- | ------------- | -------------------------- |
+| `@perstack/runtime`     | `perstack`    | Built-in runtime (default) |
+| `@perstack/cursor`      | `cursor`      | Cursor IDE headless mode   |
+| `@perstack/claude-code` | `claude-code` | Claude Code CLI            |
+| `@perstack/gemini`      | `gemini`      | Gemini CLI                 |
+
+### Registration Pattern
+
+External adapters must be registered before use:
+
+```typescript
+import { CursorAdapter } from "@perstack/cursor"
+import { getAdapter, isAdapterAvailable, registerAdapter } from "@perstack/runtime"
+
+// Register external adapter
+registerAdapter("cursor", () => new CursorAdapter())
+
+// Check availability
+if (isAdapterAvailable("cursor")) {
+  const adapter = getAdapter("cursor")
+  const result = await adapter.checkPrerequisites()
+  if (result.ok) {
+    await adapter.run({ setting, eventListener })
+  }
+}
+```
+
+### Creating Custom Adapters
+
+Extend `BaseAdapter` from `@perstack/core` for CLI-based runtimes:
+
+```typescript
+import { BaseAdapter, type AdapterRunParams, type AdapterRunResult, type PrerequisiteResult } from "@perstack/core"
+
+class MyAdapter extends BaseAdapter {
+  readonly name = "my-runtime"
+  
+  async checkPrerequisites(): Promise<PrerequisiteResult> {
+    const result = await this.execCommand(["my-cli", "--version"])
+    return result.exitCode === 0
+      ? { ok: true }
+      : { ok: false, error: { type: "cli-not-found", message: "..." } }
+  }
+  
+  async run(params: AdapterRunParams): Promise<AdapterRunResult> {
+    // Implementation
+  }
+}
+```
+
+See [Multi-Runtime Support](https://docs.perstack.ai/using-experts/multi-runtime) for details.
+
 ## Related Documentation
 
 - [Runtime](https://docs.perstack.ai/understanding-perstack/runtime) — Full execution model
 - [State Management](https://docs.perstack.ai/using-experts/state-management) — Jobs, Runs, and Checkpoints
 - [Running Experts](https://docs.perstack.ai/using-experts/running-experts) — CLI usage
+- [Multi-Runtime](https://docs.perstack.ai/using-experts/multi-runtime) — Multi-runtime support

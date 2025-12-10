@@ -58,6 +58,12 @@ export const apiExpertSchema = expertSchema.omit({
     - `JobSetting` - Job execution parameters
     - `RunSetting` - Run execution parameters
 
+4. **Adapter Abstractions**: Runtime adapter interfaces and base classes:
+    - `RuntimeAdapter` - Interface for runtime adapters
+    - `BaseAdapter` - Abstract base class for CLI-based adapters
+    - `AdapterRunParams`, `AdapterRunResult` - Adapter execution types
+    - Event creators for normalized checkpoint/event handling
+
 ### Execution Hierarchy
 
 | Schema       | Description                                         |

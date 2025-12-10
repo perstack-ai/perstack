@@ -1,6 +1,8 @@
 import { z } from "zod"
 import type { ProviderName } from "./provider-config.js"
 import { providerNameSchema } from "./provider-config.js"
+import type { RuntimeName } from "./runtime-name.js"
+import { runtimeNameSchema } from "./runtime-name.js"
 
 /** Parsed command options after transformation */
 export interface CommandOptions {
@@ -34,6 +36,8 @@ export interface CommandOptions {
   resumeFrom?: string
   /** Query is interactive tool call result */
   interactiveToolCallResult?: boolean
+  /** Execution runtime */
+  runtime?: RuntimeName
 }
 
 const commandOptionsSchema = z.object({
@@ -84,6 +88,7 @@ const commandOptionsSchema = z.object({
   continueJob: z.string().optional(),
   resumeFrom: z.string().optional(),
   interactiveToolCallResult: z.boolean().optional(),
+  runtime: runtimeNameSchema.optional(),
 })
 
 /** Input for the `perstack run` command */

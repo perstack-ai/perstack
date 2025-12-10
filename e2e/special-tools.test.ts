@@ -61,6 +61,15 @@ describe("Special Tools Parallel Execution", () => {
     expect(hasImageResult).toBe(true)
   })
 
+  it("should include web_search_exa in resolved results", () => {
+    const resolveEvents = filterEventsByType(result.events, "resolveToolResults")
+    const hasSearchResult = resolveEvents.some((e) => {
+      const toolResults = (e as { toolResults?: { toolName: string }[] }).toolResults ?? []
+      return toolResults.some((tr) => tr.toolName === "web_search_exa")
+    })
+    expect(hasSearchResult).toBe(true)
+  })
+
   it("should complete run successfully", () => {
     expect(assertEventSequenceContains(result.events, ["completeRun"]).passed).toBe(true)
     expect(result.exitCode).toBe(0)

@@ -33,4 +33,18 @@ describe("CLI run", () => {
     expect(result.exitCode).toBe(1)
     expect(result.stderr).toContain("--resume-from requires --continue-job")
   })
+
+  describe("--runtime option", () => {
+    it("should reject invalid runtime name", async () => {
+      const result = await runCli([
+        "run",
+        "test-expert",
+        "test query",
+        "--runtime",
+        "invalid-runtime",
+      ])
+      expect(result.exitCode).toBe(1)
+    })
+
+  })
 })

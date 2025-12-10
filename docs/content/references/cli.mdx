@@ -53,6 +53,20 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 | `--max-retries <n>` | Max retry attempts per generation | `5` |
 | `--timeout <ms>` | Timeout per generation (ms) | `60000` |
 
+### Runtime
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--runtime <runtime>` | Execution runtime | `perstack` |
+
+Available runtimes:
+- `perstack` — Built-in runtime (default)
+- `cursor` — Cursor CLI (experimental)
+- `claude-code` — Claude Code CLI (experimental)
+- `gemini` — Gemini CLI (experimental)
+
+See [Multi-Runtime Support](/using-experts/multi-runtime) for setup and limitations.
+
 ### Configuration
 
 | Option | Description | Default |
@@ -137,6 +151,11 @@ npx perstack run my-expert "query" \
 # Registry Experts
 npx perstack run tic-tac-toe "Let's play!"
 npx perstack run @org/expert@1.0.0 "query"
+
+# Non-default runtimes
+npx perstack run my-expert "query" --runtime cursor
+npx perstack run my-expert "query" --runtime claude-code
+npx perstack run my-expert "query" --runtime gemini
 ```
 
 ## Registry Management

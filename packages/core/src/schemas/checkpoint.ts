@@ -1,6 +1,8 @@
 import { z } from "zod"
 import type { Message } from "./message.js"
 import { messageSchema } from "./message.js"
+import type { RuntimeName } from "./runtime-name.js"
+import { runtimeNameSchema } from "./runtime-name.js"
 import type { ToolCall } from "./tool-call.js"
 import { toolCallSchema } from "./tool-call.js"
 import type { ToolResult } from "./tool-result.js"
@@ -38,6 +40,8 @@ export interface DelegationTarget {
   toolCallId: string
   toolName: string
   query: string
+  /** Runtime(s) to execute the delegate on. If array, runs in parallel. */
+  runtime?: RuntimeName | RuntimeName[]
 }
 
 /**
@@ -93,6 +97,13 @@ export interface Checkpoint {
   pendingToolCalls?: ToolCall[]
   /** Partial tool results collected before stopping (for resume) */
   partialToolResults?: ToolResult[]
+  /** Optional metadata for runtime-specific information */
+  metadata?: {
+    /** Runtime that executed this checkpoint */
+    runtime?: RuntimeName
+    /** Additional runtime-specific data */
+    [key: string]: unknown
+  }
 }
 
 export const delegationTargetSchema = z.object({
@@ -104,6 +115,7 @@ export const delegationTargetSchema = z.object({
   toolCallId: z.string(),
   toolName: z.string(),
   query: z.string(),
+  runtime: z.union([runtimeNameSchema, z.array(runtimeNameSchema)]).optional(),
 })
 delegationTargetSchema satisfies z.ZodType<DelegationTarget>
 
@@ -137,5 +149,11 @@ export const checkpointSchema = z.object({
   contextWindowUsage: z.number().optional(),
   pendingToolCalls: z.array(toolCallSchema).optional(),
   partialToolResults: z.array(toolResultSchema).optional(),
+  metadata: z
+    .object({
+      runtime: runtimeNameSchema.optional(),
+    })
+    .passthrough()
+    .optional(),
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>

@@ -18,6 +18,7 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
     timeout: options.initialConfig.timeout,
     activeSkills: [],
     contextWindowUsage: options.initialConfig.contextWindowUsage,
+    runtime: options.initialConfig.runtime,
   })
   const handleEvent = useCallback((event: PerstackEvent) => {
     if (event.type === "initializeRuntime") {
@@ -35,6 +36,7 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
         statusChangedAt: Date.now(),
         activeSkills: [],
         contextWindowUsage: prev.contextWindowUsage,
+        runtime: prev.runtime,
       }))
       return { initialized: true }
     }
@@ -49,6 +51,13 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
       setRuntimeInfo((prev) => ({
         ...prev,
         activeSkills: prev.activeSkills.filter((s) => s !== event.skillName),
+      }))
+      return null
+    }
+    if (event.type === "streamingText") {
+      setRuntimeInfo((prev) => ({
+        ...prev,
+        streamingText: (prev.streamingText ?? "") + event.text,
       }))
       return null
     }

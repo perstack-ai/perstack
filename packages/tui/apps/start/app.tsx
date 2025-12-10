@@ -1,5 +1,5 @@
-import { Box, Static } from "ink"
-import { BrowserRouter, RunSetting, Step } from "../../src/components/index.js"
+import { Box, Static, Text } from "ink"
+import { BrowserRouter, LogEntryRow, RunSetting } from "../../src/components/index.js"
 import { InputAreaProvider } from "../../src/context/index.js"
 import { useAppState } from "../../src/hooks/index.js"
 import type {
@@ -32,7 +32,7 @@ type AppProps = {
   onReady: (addEvent: (event: PerstackEvent) => void) => void
 }
 export const App = (props: AppProps) => {
-  const { stepStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
+  const { eventStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
   const isBrowsing =
     inputState.type === "browsingHistory" ||
     inputState.type === "browsingExperts" ||
@@ -40,15 +40,12 @@ export const App = (props: AppProps) => {
     inputState.type === "browsingEvents"
   const isEditing = inputState.type === "enteringQuery"
   const showRunSetting = isEditing || inputState.type === "running"
-  const stepsToShow = stepStore.completedSteps.filter(
-    (step) => step.query || step.tools.length > 0 || step.completion,
-  )
   return (
     <Box flexDirection="column">
-      <Static items={stepsToShow} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
-        {(step) => <Step key={step.id} step={step} />}
+      <Static items={eventStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
+        {(entry) => <LogEntryRow key={entry.id} entry={entry} />}
       </Static>
-      {stepStore.currentStep && <Step step={stepStore.currentStep} />}
+      {eventStore.streamingText && <Text dimColor>{eventStore.streamingText}</Text>}
       <InputAreaProvider value={inputAreaContextValue}>
         {isBrowsing && (
           <BrowserRouter
@@ -64,7 +61,7 @@ export const App = (props: AppProps) => {
       {showRunSetting && (
         <RunSetting
           info={runtimeInfo}
-          eventCount={stepStore.eventCount}
+          eventCount={eventStore.eventCount}
           isEditing={isEditing}
           expertName={isEditing ? inputState.expertName : undefined}
           onQuerySubmit={isEditing ? inputAreaContextValue.onQuerySubmit : undefined}

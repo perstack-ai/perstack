@@ -4,9 +4,9 @@ export { ExpertList, type ExpertListProps } from "./expert-list.js"
 export { ExpertSelectorBase, type ExpertSelectorBaseProps } from "./expert-selector-base.js"
 export { ListBrowser, type ListBrowserProps } from "./list-browser.js"
 export { RunSetting, type RunSettingProps } from "./run-setting.js"
-export { Step } from "./step.js"
+export { LogEntryRow } from "./step.js"
+export { VersionSelector, type VersionSelectorProps } from "./version-selector.js"
 export {
   WizardExpertSelector,
   type WizardExpertSelectorProps,
 } from "./wizard-expert-selector.js"
-export { VersionSelector, type VersionSelectorProps } from "./version-selector.js"

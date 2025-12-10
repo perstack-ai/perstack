@@ -34,7 +34,18 @@ export class DelegateSkillManager extends BaseSkillManager {
         description: this.expert.description,
         inputSchema: {
           type: "object",
-          properties: { query: { type: "string" } },
+          properties: {
+            query: { type: "string" },
+            runtime: {
+              oneOf: [
+                { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
+                {
+                  type: "array",
+                  items: { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
+                },
+              ],
+            },
+          },
           required: ["query"],
         },
         interactive: false,

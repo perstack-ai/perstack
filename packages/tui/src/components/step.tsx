@@ -1,7 +1,7 @@
 import { Box, Text } from "ink"
 import { RENDER_CONSTANTS, UI_CONSTANTS } from "../constants.js"
 import { shortenPath, summarizeOutput, truncateText } from "../helpers.js"
-import type { DisplayStep, ToolExecution } from "../types/index.js"
+import type { LogEntry } from "../types/index.js"
 import {
   ActionRow,
   ActionRowSimple,
@@ -11,10 +11,6 @@ import {
 } from "./action-row.js"
 
 type ToolResult = Array<{ type: string; text?: string }>
-const getStatusColor = (tool: ToolExecution): StatusColor => {
-  if (tool.isSuccess === undefined) return "yellow"
-  return tool.isSuccess ? "green" : "red"
-}
 const getResultText = (result?: ToolResult): string => {
   if (!result) return ""
   return result.find((r) => r.type === "textPart")?.text ?? ""
@@ -323,9 +319,42 @@ const renderDefault = (toolName: string, args: Record<string, unknown>, color: S
     <Text dimColor>{truncateText(JSON.stringify(args), UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}</Text>
   </ActionRow>
 )
-const renderTool = (tool: ToolExecution): React.ReactNode => {
-  const { toolName, args, result } = tool
-  const color = getStatusColor(tool)
+const renderDelegationStarted = (
+  expertName: string,
+  runtime: string,
+  version: string,
+  query?: string,
+): React.ReactNode => {
+  const label = `Delegation Started (${expertName}, ${runtime}, v${version})`
+  return (
+    <ActionRow indicatorColor="yellow" label={label}>
+      {query && <Text dimColor>{truncateText(query, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}</Text>}
+    </ActionRow>
+  )
+}
+const renderDelegationCompleted = (
+  expertName: string,
+  runtime: string,
+  version: string,
+  result?: string,
+): React.ReactNode => {
+  const label = `Delegation Completed (${expertName}, ${runtime}, v${version})`
+  const trimmedResult = result?.trim()
+  return (
+    <ActionRow indicatorColor="green" label={label}>
+      {trimmedResult && (
+        <Text dimColor>{truncateText(trimmedResult, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}</Text>
+      )}
+    </ActionRow>
+  )
+}
+const renderToolFromLog = (
+  toolName: string,
+  args: Record<string, unknown>,
+  result?: Array<{ type: string; text?: string }>,
+  isSuccess?: boolean,
+): React.ReactNode => {
+  const color: StatusColor = isSuccess === undefined ? "yellow" : isSuccess ? "green" : "red"
   switch (toolName) {
     case "think":
       return renderThink(args)
@@ -363,19 +392,30 @@ const renderTool = (tool: ToolExecution): React.ReactNode => {
       return renderDefault(toolName, args, color)
   }
 }
-type StepProps = {
-  step: DisplayStep
+type LogEntryRowProps = {
+  entry: LogEntry
 }
-export const Step = ({ step }: StepProps) => {
-  const hasContent = step.query || step.tools.length > 0 || step.completion
-  if (!hasContent) return null
-  return (
-    <>
-      {step.query && <QueryRow text={step.query} />}
-      {step.tools.map((tool) => (
-        <Box key={tool.id}>{renderTool(tool)}</Box>
-      ))}
-      {step.completion && <CompletionRow text={step.completion} />}
-    </>
-  )
+export const LogEntryRow = ({ entry }: LogEntryRowProps) => {
+  switch (entry.type) {
+    case "query":
+      return <QueryRow text={entry.text} />
+    case "tool":
+      return (
+        <Box>{renderToolFromLog(entry.toolName, entry.args, entry.result, entry.isSuccess)}</Box>
+      )
+    case "delegation-started":
+      return (
+        <Box>
+          {renderDelegationStarted(entry.expertName, entry.runtime, entry.version, entry.query)}
+        </Box>
+      )
+    case "delegation-completed":
+      return (
+        <Box>
+          {renderDelegationCompleted(entry.expertName, entry.runtime, entry.version, entry.result)}
+        </Box>
+      )
+    case "completion":
+      return <CompletionRow text={entry.text} />
+  }
 }
