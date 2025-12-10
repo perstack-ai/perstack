@@ -1,15 +1,15 @@
 ---
-"@perstack/core": minor
-"@perstack/runtime": minor
-"@perstack/api-client": minor
-"@perstack/base": minor
-"@perstack/tui": minor
-"@perstack/cursor": minor
-"@perstack/claude-code": minor
-"@perstack/gemini": minor
-"@perstack/mock": minor
-"@perstack/runner": minor
-"perstack": minor
+"@perstack/core": patch
+"@perstack/runtime": patch
+"@perstack/api-client": patch
+"@perstack/base": patch
+"@perstack/tui": patch
+"@perstack/cursor": patch
+"@perstack/claude-code": patch
+"@perstack/gemini": patch
+"@perstack/mock": patch
+"@perstack/runner": patch
+"perstack": patch
 ---
 
 Add multi-runtime support Wave 3
