@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process"
-import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 import { BaseExternalAdapter } from "./base-external-adapter.js"
 import {
   createCompleteRunEvent,
@@ -7,6 +6,7 @@ import {
   createRuntimeInitEvent,
   parseExternalOutput,
 } from "./output-parser.js"
+import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 
 export class CursorAdapter extends BaseExternalAdapter {
   readonly name = "cursor"
@@ -52,7 +52,9 @@ export class CursorAdapter extends BaseExternalAdapter {
     const startedAt = Date.now()
     const result = await this.executeCursorAgent(prompt, setting.timeout ?? 60000)
     if (result.exitCode !== 0) {
-      throw new Error(`Cursor CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`)
+      throw new Error(
+        `Cursor CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`,
+      )
     }
     const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "cursor")
     for (const event of parsedEvents) {
@@ -66,7 +68,14 @@ export class CursorAdapter extends BaseExternalAdapter {
       output: finalOutput,
       runtime: "cursor",
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput, startedAt)
+    const completeEvent = createCompleteRunEvent(
+      jobId,
+      runId,
+      setting.expertKey,
+      checkpoint,
+      finalOutput,
+      startedAt,
+    )
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }

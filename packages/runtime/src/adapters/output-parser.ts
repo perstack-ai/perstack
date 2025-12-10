@@ -37,16 +37,17 @@ function parseClaudeCodeOutput(stdout: string): ParsedOutput {
       const parsed = JSON.parse(trimmed)
       if (parsed.type === "result" || parsed.type === "output") {
         finalOutput = parsed.content || parsed.text || ""
-      } else {
+      } else if (parsed.content || parsed.text) {
+        const content = parsed.content || parsed.text
         if (finalOutput) {
-          finalOutput += "\n" + trimmed
+          finalOutput += `\n${content}`
         } else {
-          finalOutput = trimmed
+          finalOutput = content
         }
       }
     } catch {
       if (finalOutput) {
-        finalOutput += "\n" + trimmed
+        finalOutput += `\n${trimmed}`
       } else {
         finalOutput = trimmed
       }

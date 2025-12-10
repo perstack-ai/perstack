@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process"
-import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 import { BaseExternalAdapter } from "./base-external-adapter.js"
 import {
   createCompleteRunEvent,
@@ -7,6 +6,7 @@ import {
   createRuntimeInitEvent,
   parseExternalOutput,
 } from "./output-parser.js"
+import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 
 export class GeminiAdapter extends BaseExternalAdapter {
   readonly name = "gemini"
@@ -62,7 +62,9 @@ export class GeminiAdapter extends BaseExternalAdapter {
     const startedAt = Date.now()
     const result = await this.executeGeminiCli(prompt, setting.timeout ?? 60000)
     if (result.exitCode !== 0) {
-      throw new Error(`Gemini CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`)
+      throw new Error(
+        `Gemini CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`,
+      )
     }
     const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "gemini")
     for (const event of parsedEvents) {
@@ -76,7 +78,14 @@ export class GeminiAdapter extends BaseExternalAdapter {
       output: finalOutput,
       runtime: "gemini",
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput, startedAt)
+    const completeEvent = createCompleteRunEvent(
+      jobId,
+      runId,
+      setting.expertKey,
+      checkpoint,
+      finalOutput,
+      startedAt,
+    )
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }
