@@ -10,6 +10,12 @@ export {
   createStreamingTextEvent,
   createToolMessage,
 } from "./event-creators.js"
+export {
+  getAdapter,
+  getRegisteredRuntimes,
+  isAdapterAvailable,
+  registerAdapter,
+} from "./registry.js"
 export type {
   AdapterRunParams,
   AdapterRunResult,
