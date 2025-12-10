@@ -268,6 +268,7 @@ export function Wizard({
       }
       onComplete(finalResult)
       setStep("done")
+      exit()
     }
   }
   return (
