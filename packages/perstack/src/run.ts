@@ -33,9 +33,14 @@ export const runCommand = new Command()
     "Resume from a specific checkpoint (requires --continue or --continue-job)",
   )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
+  .option("--runtime <runtime>", "Execution runtime (perstack, cursor, claude-code, gemini)")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
-
+    const runtime = input.options.runtime ?? "perstack"
+    if (runtime !== "perstack") {
+      console.error(`Runtime "${runtime}" is not yet supported. Use --runtime perstack or omit the option.`)
+      process.exit(1)
+    }
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
