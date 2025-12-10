@@ -88,10 +88,14 @@ describe("multi-runtime CLI", () => {
 
   describe("continue with perstack runtime", () => {
     it("should continue job and receive new completeRun event", async () => {
-      const initialResult = await runExpert("e2e-special-tools", "Use attemptCompletion to say hello", {
-        configPath: "./e2e/experts/special-tools.toml",
-        timeout: 120000,
-      })
+      const initialResult = await runExpert(
+        "e2e-special-tools",
+        "Use attemptCompletion to say hello",
+        {
+          configPath: "./e2e/experts/special-tools.toml",
+          timeout: 120000,
+        },
+      )
       expect(initialResult.jobId).not.toBeNull()
       expect(
         assertEventSequenceContains(initialResult.events, ["startRun", "completeRun"]).passed,

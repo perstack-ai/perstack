@@ -129,6 +129,7 @@ const processEventToLogs = (
       if (state.completionLogged) {
         state.completionLogged = false
         state.isComplete = false
+        state.queryLogged = false
       }
       if (!state.queryLogged) {
         addLog({ id: `query-${runId}`, type: "query", text: query })

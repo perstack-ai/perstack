@@ -56,9 +56,15 @@ describe("Parallel Delegation with Continue", () => {
     const continueResult = await runExpert(
       "e2e-parallel-delegate",
       "Now summarize the previous results in one sentence",
-      { configPath: "./e2e/experts/parallel-delegate.toml", continueJobId: initialResult.jobId!, timeout: 180000 },
+      {
+        configPath: "./e2e/experts/parallel-delegate.toml",
+        continueJobId: initialResult.jobId!,
+        timeout: 180000,
+      },
     )
-    expect(assertEventSequenceContains(continueResult.events, ["startRun", "completeRun"]).passed).toBe(true)
+    expect(
+      assertEventSequenceContains(continueResult.events, ["startRun", "completeRun"]).passed,
+    ).toBe(true)
     const continueCompleteEvents = continueResult.events.filter((e) => e.type === "completeRun")
     expect(continueCompleteEvents.length).toBeGreaterThanOrEqual(1)
     const lastCompleteEvent = continueCompleteEvents[continueCompleteEvents.length - 1]
