@@ -1,8 +1,11 @@
+import type { RunEvent, RuntimeEvent } from "@perstack/core"
 import { parseWithFriendlyError, runCommandInputSchema } from "@perstack/core"
-import { run } from "@perstack/runtime"
 import { Command } from "commander"
 import { resolveRunContext } from "./lib/context.js"
 import { parseInteractiveToolCallResult } from "./lib/interactive.js"
+import { dispatchToRuntime } from "./lib/runtime-dispatcher.js"
+
+const defaultEventListener = (event: RunEvent | RuntimeEvent) => console.log(JSON.stringify(event))
 
 export const runCommand = new Command()
   .command("run")
@@ -37,10 +40,6 @@ export const runCommand = new Command()
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
     const runtime = input.options.runtime ?? "perstack"
-    if (runtime !== "perstack") {
-      console.error(`Runtime "${runtime}" is not yet supported. Use --runtime perstack or omit the option.`)
-      process.exit(1)
-    }
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
@@ -53,8 +52,7 @@ export const runCommand = new Command()
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
-
-      await run({
+      await dispatchToRuntime({
         setting: {
           jobId: checkpoint?.jobId ?? input.options.jobId,
           runId: checkpoint?.runId ?? input.options.runId,
@@ -76,6 +74,8 @@ export const runCommand = new Command()
           env,
         },
         checkpoint,
+        runtime,
+        eventListener: defaultEventListener,
       })
     } catch (error) {
       if (error instanceof Error) {

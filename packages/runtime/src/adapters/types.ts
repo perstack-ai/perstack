@@ -1,7 +1,7 @@
-import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent } from "@perstack/core"
+import type { Checkpoint, Expert, RunEvent, RunParamsInput, RuntimeEvent } from "@perstack/core"
 
 export type AdapterRunParams = {
-  setting: RunSetting
+  setting: RunParamsInput["setting"]
   checkpoint?: Checkpoint
   eventListener?: (event: RunEvent | RuntimeEvent) => void
 }
