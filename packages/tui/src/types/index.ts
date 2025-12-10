@@ -9,7 +9,6 @@ export type {
   PerstackEvent,
   RunHistoryItem,
   RuntimeInfo,
-  ToolExecution,
 } from "./base.js"
 export type {
   BrowsingCheckpointsState,

@@ -1,7 +1,7 @@
 import { Box, Text } from "ink"
 import { RENDER_CONSTANTS, UI_CONSTANTS } from "../constants.js"
 import { shortenPath, summarizeOutput, truncateText } from "../helpers.js"
-import type { LogEntry, ToolExecution } from "../types/index.js"
+import type { LogEntry } from "../types/index.js"
 import {
   ActionRow,
   ActionRowSimple,
@@ -11,10 +11,6 @@ import {
 } from "./action-row.js"
 
 type ToolResult = Array<{ type: string; text?: string }>
-const getStatusColor = (tool: ToolExecution): StatusColor => {
-  if (tool.isSuccess === undefined) return "yellow"
-  return tool.isSuccess ? "green" : "red"
-}
 const getResultText = (result?: ToolResult): string => {
   if (!result) return ""
   return result.find((r) => r.type === "textPart")?.text ?? ""
@@ -351,46 +347,6 @@ const renderDelegationCompleted = (
       )}
     </ActionRow>
   )
-}
-const renderTool = (tool: ToolExecution): React.ReactNode => {
-  const { toolName, args, result } = tool
-  const color = getStatusColor(tool)
-  switch (toolName) {
-    case "think":
-      return renderThink(args)
-    case "attemptCompletion":
-      return renderAttemptCompletion()
-    case "todo":
-      return renderTodo(args, result)
-    case "exec":
-      return renderExec(args, result, color)
-    case "readTextFile":
-      return renderReadTextFile(args, result, color)
-    case "writeTextFile":
-      return renderWriteTextFile(args, color)
-    case "editTextFile":
-      return renderEditTextFile(args, color)
-    case "appendTextFile":
-      return renderAppendTextFile(args, color)
-    case "listDirectory":
-      return renderListDirectory(args, result, color)
-    case "deleteFile":
-      return renderDeleteFile(args, color)
-    case "moveFile":
-      return renderMoveFile(args, color)
-    case "createDirectory":
-      return renderCreateDirectory(args, color)
-    case "getFileInfo":
-      return renderGetFileInfo(args, color)
-    case "readPdfFile":
-      return renderReadPdfFile(args, color)
-    case "readImageFile":
-      return renderReadImageFile(args, color)
-    case "testUrl":
-      return renderTestUrl(args, color)
-    default:
-      return renderDefault(toolName, args, color)
-  }
 }
 const renderToolFromLog = (
   toolName: string,

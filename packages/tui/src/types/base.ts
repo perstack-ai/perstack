@@ -1,12 +1,5 @@
 import type { RunEvent, RuntimeEvent } from "@perstack/core"
 export type PerstackEvent = RunEvent | RuntimeEvent
-export type ToolExecution = {
-  id: string
-  toolName: string
-  args: Record<string, unknown>
-  result?: Array<{ type: string; text?: string }>
-  isSuccess?: boolean
-}
 export type LogEntry =
   | { id: string; type: "query"; text: string }
   | {

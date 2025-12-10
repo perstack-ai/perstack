@@ -162,7 +162,9 @@ describe("@perstack/runtime: MockAdapter", () => {
         experts: { "test-expert": createMockExpert() },
       }
       const start = Date.now()
-      const results = await Promise.all(adapters.map((adapter) => adapter.run({ setting: baseSetting })))
+      const results = await Promise.all(
+        adapters.map((adapter) => adapter.run({ setting: baseSetting })),
+      )
       const elapsed = Date.now() - start
       expect(results).toHaveLength(4)
       expect(results[0].checkpoint.metadata?.runtime).toBe("cursor")

@@ -138,6 +138,7 @@ export function createRuntimeInitEvent(
     jobId,
     runId,
     runtimeVersion: version,
+    runtime,
     expertName,
     experts: [],
     model: `${runtime}:default`,
