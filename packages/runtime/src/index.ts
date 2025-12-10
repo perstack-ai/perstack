@@ -1,14 +1,11 @@
+import { registerAdapter } from "@perstack/core"
 import pkg from "../package.json" with { type: "json" }
+import { PerstackAdapter } from "./adapters/index.js"
+
+registerAdapter("perstack", () => new PerstackAdapter())
 
 export type { MockAdapterOptions } from "./adapters/index.js"
-export {
-  getAdapter,
-  getRegisteredRuntimes,
-  isAdapterAvailable,
-  MockAdapter,
-  PerstackAdapter,
-  registerAdapter,
-} from "./adapters/index.js"
+export { MockAdapter, PerstackAdapter } from "./adapters/index.js"
 export {
   defaultStoreCheckpoint,
   getCheckpointDir,

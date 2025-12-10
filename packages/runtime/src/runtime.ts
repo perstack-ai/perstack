@@ -4,6 +4,7 @@ import {
   createRuntimeEvent,
   type DelegationTarget,
   type Expert,
+  getAdapter,
   type Job,
   type RunEvent,
   type RunParamsInput,
@@ -16,7 +17,6 @@ import {
   type Usage,
 } from "@perstack/core"
 import pkg from "../package.json" with { type: "json" }
-import { getAdapter } from "./adapters/factory.js"
 import {
   buildDelegateToState,
   buildDelegationReturnState,
