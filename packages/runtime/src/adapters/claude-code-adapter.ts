@@ -80,7 +80,7 @@ export class ClaudeCodeAdapter extends BaseExternalAdapter {
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }
 
-  private async executeClaudeCli(
+  protected async executeClaudeCli(
     systemPrompt: string,
     prompt: string,
     timeout: number,

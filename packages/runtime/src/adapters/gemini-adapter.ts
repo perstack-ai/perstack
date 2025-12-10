@@ -90,7 +90,7 @@ export class GeminiAdapter extends BaseExternalAdapter {
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }
 
-  private buildPrompt(instruction: string, query?: string): string {
+  protected buildPrompt(instruction: string, query?: string): string {
     let prompt = `## Instructions\n${instruction}`
     if (query) {
       prompt += `\n\n## User Request\n${query}`
@@ -98,7 +98,7 @@ export class GeminiAdapter extends BaseExternalAdapter {
     return prompt
   }
 
-  private async executeGeminiCli(
+  protected async executeGeminiCli(
     prompt: string,
     timeout: number,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {

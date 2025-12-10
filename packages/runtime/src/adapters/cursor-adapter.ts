@@ -80,7 +80,7 @@ export class CursorAdapter extends BaseExternalAdapter {
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }
 
-  private buildPrompt(instruction: string, query?: string): string {
+  protected buildPrompt(instruction: string, query?: string): string {
     let prompt = instruction
     if (query) {
       prompt += `\n\n## User Request\n${query}`
@@ -88,7 +88,7 @@ export class CursorAdapter extends BaseExternalAdapter {
     return prompt
   }
 
-  private async executeCursorAgent(
+  protected async executeCursorAgent(
     prompt: string,
     timeout: number,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
