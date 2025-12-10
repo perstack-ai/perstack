@@ -1,8 +1,8 @@
 import { MockLanguageModelV2 } from "ai/test"
 import { describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
-import { StateMachineLogics } from "../index.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
+import { StateMachineLogics } from "../index.js"
 
 const mockGetModel = vi.fn()
 vi.mock("../../helpers/model.js", async (importOriginal) => ({
@@ -250,7 +250,11 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const mcpSkillManager = createMockSkillManager("mcp-skill", "mcp", "mcpTool")
-    const delegateSkillManager = createMockSkillManager("delegate-skill", "delegate", "delegateTool")
+    const delegateSkillManager = createMockSkillManager(
+      "delegate-skill",
+      "delegate",
+      "delegateTool",
+    )
     const interactiveSkillManager = createMockSkillManager(
       "interactive-skill",
       "interactive",

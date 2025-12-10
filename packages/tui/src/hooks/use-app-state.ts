@@ -9,9 +9,9 @@ import type {
   PerstackEvent,
 } from "../types/index.js"
 import { useExpertActions, useHistoryActions, useRunActions } from "./actions/index.js"
+import { useEventStore } from "./state/use-event-store.js"
 import { useInputState } from "./state/use-input-state.js"
 import { useRuntimeInfo } from "./state/use-runtime-info.js"
-import { useEventStore } from "./state/use-event-store.js"
 
 type UseAppStateProps = {
   needsQueryInput?: boolean

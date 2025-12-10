@@ -26,7 +26,7 @@ export async function validatePath(requestedPath: string): Promise<string> {
       throw new Error("Access denied - symlink target outside allowed directories")
     }
     return realAbsolute
-  } catch (error) {
+  } catch (_error) {
     const parentDir = path.dirname(absolute)
     try {
       const realParentPath = await fs.realpath(parentDir)

@@ -8,17 +8,17 @@ import {
   type ToolCallPart,
 } from "@perstack/core"
 import { type GenerateTextResult, generateText, type ToolSet } from "ai"
+import { getModel } from "../../helpers/model.js"
+import { createEmptyUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 import {
   createExpertMessage,
   createToolMessage,
   createUserMessage,
   messageToCoreMessage,
 } from "../../messages/message.js"
-import { getModel } from "../../helpers/model.js"
-import type { RunSnapshot } from "../machine.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { getSkillManagerByToolName, getToolSet } from "../../skill-manager/index.js"
-import { createEmptyUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
+import type { RunSnapshot } from "../machine.js"
 
 type ClassifiedToolCall = {
   toolCallId: string

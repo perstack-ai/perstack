@@ -12,4 +12,3 @@ describe("CLI tag", () => {
     expect(result.exitCode).toBe(1)
   })
 })
-

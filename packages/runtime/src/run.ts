@@ -271,7 +271,7 @@ async function runDelegate(
   parentExpert: Pick<Expert, "key" | "name" | "version">,
   options?: DelegateOptions,
 ): Promise<DelegationResult> {
-  const { expert: delegateExpertInfo, toolCallId, toolName, query, runtime } = delegation
+  const { expert: delegateExpertInfo, toolCallId, toolName, runtime } = delegation
   const runtimes: RuntimeName[] = runtime
     ? Array.isArray(runtime)
       ? runtime

@@ -9,15 +9,15 @@ import {
 import { ApiV1Client } from "../client.js"
 import {
   type CreateRegistryExpertInput,
-  type DeleteRegistryExpertInput,
-  type GetRegistryExpertInput,
-  type GetRegistryExpertVersionsInput,
-  type GetRegistryExpertsInput,
   createRegistryExpert,
+  type DeleteRegistryExpertInput,
   deleteRegistryExpert,
+  type GetRegistryExpertInput,
+  type GetRegistryExpertsInput,
+  type GetRegistryExpertVersionsInput,
   getRegistryExpert,
-  getRegistryExpertVersions,
   getRegistryExperts,
+  getRegistryExpertVersions,
 } from "./experts.js"
 
 describe("@perstack/api-client: Registry", () => {

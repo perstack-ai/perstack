@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
-import type { RuntimeAdapter } from "./types.js"
 import {
   getAdapter,
   getRegisteredRuntimes,
   isAdapterAvailable,
   registerAdapter,
 } from "./registry.js"
+import type { RuntimeAdapter } from "./types.js"
 
 function createMockAdapter(name: string): RuntimeAdapter {
   return {

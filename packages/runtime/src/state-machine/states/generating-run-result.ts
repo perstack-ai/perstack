@@ -1,14 +1,14 @@
 import { completeRun, type RunEvent, retry } from "@perstack/core"
 import { type GenerateTextResult, generateText, type ToolSet } from "ai"
+import { calculateContextWindowUsage, getModel } from "../../helpers/model.js"
+import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 import {
   createExpertMessage,
   createToolMessage,
   createUserMessage,
   messageToCoreMessage,
 } from "../../messages/message.js"
-import { calculateContextWindowUsage, getModel } from "../../helpers/model.js"
 import type { RunSnapshot } from "../machine.js"
-import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 
 export async function generatingRunResultLogic({
   setting,

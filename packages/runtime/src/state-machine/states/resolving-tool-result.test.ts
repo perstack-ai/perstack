@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2"
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
-import { StateMachineLogics } from "../index.js"
 import { createEmptyUsage } from "../../helpers/usage.js"
+import { StateMachineLogics } from "../index.js"
 
 describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
   it("processes tool result correctly", async () => {

@@ -1,12 +1,12 @@
 import { z } from "zod"
 import type { ApiV1Client } from "../client.js"
+import { type ApiWorkspace, apiWorkspaceSchema } from "../schemas/workspace.js"
 import {
   type ApiWorkspaceItem,
   apiWorkspaceItemLifecycleSchema,
   apiWorkspaceItemPermissionSchema,
   apiWorkspaceItemSchema,
 } from "../schemas/workspace-item.js"
-import { type ApiWorkspace, apiWorkspaceSchema } from "../schemas/workspace.js"
 
 /**
  * Retrieve the workspace
@@ -115,8 +115,12 @@ export async function getWorkspaceItem(
  * Retrieve multiple workspace items
  */
 const getWorkspaceItemsInput = z.object({
-  take: z.union([z.number(), z.string().transform((value) => Number.parseInt(value))]).optional(),
-  skip: z.union([z.number(), z.string().transform((value) => Number.parseInt(value))]).optional(),
+  take: z
+    .union([z.number(), z.string().transform((value) => Number.parseInt(value, 10))])
+    .optional(),
+  skip: z
+    .union([z.number(), z.string().transform((value) => Number.parseInt(value, 10))])
+    .optional(),
 })
 const getWorkspaceItemsResponseSchema = z.object({
   data: z.object({

@@ -1,4 +1,4 @@
-import { type Options, defineConfig } from "tsup"
+import { defineConfig, type Options } from "tsup"
 import { baseConfig } from "../../tsup.config.js"
 
 export const apiClientConfig: Options = {

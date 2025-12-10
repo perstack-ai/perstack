@@ -52,4 +52,3 @@ describe("@perstack/api-client: ApiError", () => {
     expect(error.stack).toBeDefined()
   })
 })
-

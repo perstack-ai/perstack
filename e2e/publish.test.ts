@@ -17,13 +17,7 @@ describe("CLI publish", () => {
   })
 
   it("should fail for nonexistent expert", async () => {
-    const result = await runCli([
-      "publish",
-      "nonexistent",
-      "--dry-run",
-      "--config",
-      CONFIG_PATH,
-    ])
+    const result = await runCli(["publish", "nonexistent", "--dry-run", "--config", CONFIG_PATH])
     expect(result.exitCode).toBe(1)
   })
 
@@ -43,4 +37,3 @@ describe("CLI publish", () => {
     expect(result.exitCode).toBe(1)
   })
 })
-

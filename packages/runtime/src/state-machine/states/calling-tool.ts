@@ -9,10 +9,10 @@ import {
   type ToolCall,
   type ToolResult,
 } from "@perstack/core"
-import type { RunSnapshot } from "../machine.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { getSkillManagerByToolName } from "../../skill-manager/index.js"
 import type { McpSkillManager } from "../../skill-manager/mcp.js"
+import type { RunSnapshot } from "../machine.js"
 
 function hasRemainingTodos(toolResult: ToolResult): boolean {
   const firstPart = toolResult.result[0]

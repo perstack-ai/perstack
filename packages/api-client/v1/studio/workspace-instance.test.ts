@@ -4,14 +4,14 @@ import { assertExpertJob, expertJob } from "../../test/test-data.js"
 import { ApiV1Client } from "../client.js"
 import {
   type ContinueExpertJobInput,
+  continueExpertJob,
   type GetExpertJobInput,
   type GetExpertJobsInput,
-  type ResumeExpertJobFromCheckpointInput,
-  type StartExpertJobInput,
-  continueExpertJob,
   getExpertJob,
   getExpertJobs,
+  type ResumeExpertJobFromCheckpointInput,
   resumeExpertJobFromCheckpoint,
+  type StartExpertJobInput,
   startExpertJob,
 } from "./expert-jobs.js"
 

@@ -157,6 +157,8 @@ function userContentsToCoreContent(contents: UserMessage["contents"]): UserModel
         return fileInlinePartToCoreFilePart(part)
       case "fileBinaryPart":
         return fileBinaryPartToCoreFilePart(part)
+      default:
+        throw new Error(`Unknown user content type: ${(part as { type: string }).type}`)
     }
   })
 }
@@ -169,6 +171,8 @@ function expertContentsToCoreContent(
         return textPartToCoreTextPart(part)
       case "toolCallPart":
         return toolCallPartToCoreToolCallPart(part)
+      default:
+        throw new Error(`Unknown expert content type: ${(part as { type: string }).type}`)
     }
   })
 }
@@ -177,6 +181,8 @@ function toolContentsToCoreContent(contents: ToolMessage["contents"]): ToolModel
     switch (part.type) {
       case "toolResultPart":
         return toolResultPartToCoreToolResultPart(part)
+      default:
+        throw new Error(`Unknown tool content type: ${(part as { type: string }).type}`)
     }
   })
 }
