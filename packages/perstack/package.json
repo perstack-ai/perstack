@@ -22,6 +22,7 @@
   "dependencies": {
     "@perstack/api-client": "workspace:*",
     "@perstack/core": "workspace:*",
+    "@perstack/runner": "workspace:*",
     "@perstack/runtime": "workspace:*",
     "@perstack/tui": "workspace:*",
     "commander": "^14.0.2",

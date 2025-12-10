@@ -40,3 +40,34 @@ describe("Parallel Delegation", () => {
     ).toBe(true)
   })
 })
+
+describe("Parallel Delegation with Continue", () => {
+  it("should continue after parallel delegation and complete with new query result", async () => {
+    const initialResult = await runExpert(
+      "e2e-parallel-delegate",
+      "Test parallel delegation: call both math and text experts simultaneously",
+      { configPath: "./e2e/experts/parallel-delegate.toml", timeout: 180000 },
+    )
+    expect(initialResult.jobId).not.toBeNull()
+    const initialCompleteCount = getEventSequence(initialResult.events).filter(
+      (e) => e === "completeRun",
+    ).length
+    expect(initialCompleteCount).toBeGreaterThanOrEqual(1)
+    const continueResult = await runExpert(
+      "e2e-parallel-delegate",
+      "Now summarize the previous results in one sentence",
+      {
+        configPath: "./e2e/experts/parallel-delegate.toml",
+        continueJobId: initialResult.jobId!,
+        timeout: 180000,
+      },
+    )
+    expect(
+      assertEventSequenceContains(continueResult.events, ["startRun", "completeRun"]).passed,
+    ).toBe(true)
+    const continueCompleteEvents = continueResult.events.filter((e) => e.type === "completeRun")
+    expect(continueCompleteEvents.length).toBeGreaterThanOrEqual(1)
+    const lastCompleteEvent = continueCompleteEvents[continueCompleteEvents.length - 1]
+    expect((lastCompleteEvent as { text?: string }).text).toBeDefined()
+  }, 400000)
+})
