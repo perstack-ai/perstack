@@ -1,6 +1,8 @@
 import { z } from "zod"
 import type { Message } from "./message.js"
 import { messageSchema } from "./message.js"
+import type { RuntimeName } from "./runtime-name.js"
+import { runtimeNameSchema } from "./runtime-name.js"
 import type { ToolCall } from "./tool-call.js"
 import { toolCallSchema } from "./tool-call.js"
 import type { ToolResult } from "./tool-result.js"
@@ -93,6 +95,15 @@ export interface Checkpoint {
   pendingToolCalls?: ToolCall[]
   /** Partial tool results collected before stopping (for resume) */
   partialToolResults?: ToolResult[]
+  /** Optional metadata for runtime-specific information */
+  metadata?: {
+    /** Runtime that executed this checkpoint */
+    runtime?: RuntimeName
+    /** Whether this was executed by an external runtime */
+    externalExecution?: boolean
+    /** Additional runtime-specific data */
+    [key: string]: unknown
+  }
 }
 
 export const delegationTargetSchema = z.object({
@@ -137,5 +148,12 @@ export const checkpointSchema = z.object({
   contextWindowUsage: z.number().optional(),
   pendingToolCalls: z.array(toolCallSchema).optional(),
   partialToolResults: z.array(toolResultSchema).optional(),
+  metadata: z
+    .object({
+      runtime: runtimeNameSchema.optional(),
+      externalExecution: z.boolean().optional(),
+    })
+    .passthrough()
+    .optional(),
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>

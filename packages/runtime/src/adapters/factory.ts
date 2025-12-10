@@ -1,9 +1,15 @@
 import type { RuntimeName } from "@perstack/core"
+import { ClaudeCodeAdapter } from "./claude-code-adapter.js"
+import { CursorAdapter } from "./cursor-adapter.js"
+import { GeminiAdapter } from "./gemini-adapter.js"
 import { PerstackAdapter } from "./perstack-adapter.js"
 import type { RuntimeAdapter } from "./types.js"
 
-const adapters: Partial<Record<RuntimeName, () => RuntimeAdapter>> = {
+const adapters: Record<RuntimeName, () => RuntimeAdapter> = {
   perstack: () => new PerstackAdapter(),
+  cursor: () => new CursorAdapter(),
+  "claude-code": () => new ClaudeCodeAdapter(),
+  gemini: () => new GeminiAdapter(),
 }
 
 export function getAdapter(runtime: RuntimeName): RuntimeAdapter {
