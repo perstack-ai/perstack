@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { ClaudeCodeAdapter } from "./claude-code-adapter.js"
-import { CursorAdapter } from "./cursor-adapter.js"
-import { getAdapter, isAdapterAvailable } from "./factory.js"
-import { GeminiAdapter } from "./gemini-adapter.js"
+import {
+  getAdapter,
+  getRegisteredRuntimes,
+  isAdapterAvailable,
+  registerAdapter,
+} from "./factory.js"
 import { PerstackAdapter } from "./perstack-adapter.js"
 
 describe("@perstack/runtime: adapter factory", () => {
@@ -13,31 +15,40 @@ describe("@perstack/runtime: adapter factory", () => {
       expect(adapter.name).toBe("perstack")
     })
 
-    it("returns CursorAdapter for cursor", () => {
-      const adapter = getAdapter("cursor")
-      expect(adapter).toBeInstanceOf(CursorAdapter)
-      expect(adapter.name).toBe("cursor")
-    })
-
-    it("returns ClaudeCodeAdapter for claude-code", () => {
-      const adapter = getAdapter("claude-code")
-      expect(adapter).toBeInstanceOf(ClaudeCodeAdapter)
-      expect(adapter.name).toBe("claude-code")
-    })
-
-    it("returns GeminiAdapter for gemini", () => {
-      const adapter = getAdapter("gemini")
-      expect(adapter).toBeInstanceOf(GeminiAdapter)
-      expect(adapter.name).toBe("gemini")
+    it("throws for unregistered runtime", () => {
+      expect(() => getAdapter("cursor")).toThrow('Runtime "cursor" is not registered')
     })
   })
 
   describe("isAdapterAvailable", () => {
-    it("returns true for all supported runtimes", () => {
+    it("returns true for perstack", () => {
       expect(isAdapterAvailable("perstack")).toBe(true)
+    })
+
+    it("returns false for unregistered runtimes", () => {
+      expect(isAdapterAvailable("cursor")).toBe(false)
+    })
+  })
+
+  describe("registerAdapter", () => {
+    it("registers a new adapter", () => {
+      const mockAdapter = {
+        name: "cursor",
+        checkPrerequisites: async () => ({ ok: true as const }),
+        convertExpert: (expert: { instruction: string }) => ({ instruction: expert.instruction }),
+        run: async () => ({ checkpoint: {} as never, events: [] }),
+      }
+      registerAdapter("cursor", () => mockAdapter)
       expect(isAdapterAvailable("cursor")).toBe(true)
-      expect(isAdapterAvailable("claude-code")).toBe(true)
-      expect(isAdapterAvailable("gemini")).toBe(true)
+      const adapter = getAdapter("cursor")
+      expect(adapter.name).toBe("cursor")
+    })
+  })
+
+  describe("getRegisteredRuntimes", () => {
+    it("returns list of registered runtimes", () => {
+      const runtimes = getRegisteredRuntimes()
+      expect(runtimes).toContain("perstack")
     })
   })
 })

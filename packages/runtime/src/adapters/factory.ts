@@ -1,27 +1,28 @@
-import type { RuntimeName } from "@perstack/core"
-import { ClaudeCodeAdapter } from "./claude-code-adapter.js"
-import { CursorAdapter } from "./cursor-adapter.js"
-import { GeminiAdapter } from "./gemini-adapter.js"
+import type { RuntimeAdapter, RuntimeName } from "@perstack/core"
 import { PerstackAdapter } from "./perstack-adapter.js"
-import type { RuntimeAdapter } from "./types.js"
 
-const adapters: Record<RuntimeName, () => RuntimeAdapter> = {
-  perstack: () => new PerstackAdapter(),
-  cursor: () => new CursorAdapter(),
-  "claude-code": () => new ClaudeCodeAdapter(),
-  gemini: () => new GeminiAdapter(),
+const adapters: Map<RuntimeName, () => RuntimeAdapter> = new Map([
+  ["perstack", () => new PerstackAdapter()],
+])
+
+export function registerAdapter(runtime: RuntimeName, factory: () => RuntimeAdapter): void {
+  adapters.set(runtime, factory)
 }
 
 export function getAdapter(runtime: RuntimeName): RuntimeAdapter {
-  const factory = adapters[runtime]
+  const factory = adapters.get(runtime)
   if (!factory) {
     throw new Error(
-      `Runtime "${runtime}" is not supported. Available runtimes: ${Object.keys(adapters).join(", ")}`,
+      `Runtime "${runtime}" is not registered. Available runtimes: ${Array.from(adapters.keys()).join(", ")}`,
     )
   }
   return factory()
 }
 
 export function isAdapterAvailable(runtime: RuntimeName): boolean {
-  return runtime in adapters
+  return adapters.has(runtime)
+}
+
+export function getRegisteredRuntimes(): RuntimeName[] {
+  return Array.from(adapters.keys())
 }

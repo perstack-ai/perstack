@@ -1,12 +1,14 @@
-import type { Expert, RunEvent, RuntimeEvent } from "@perstack/core"
-import { run as perstackRun } from "../runtime.js"
 import type {
   AdapterRunParams,
   AdapterRunResult,
+  Expert,
   PrerequisiteResult,
+  RunEvent,
   RuntimeAdapter,
+  RuntimeEvent,
   RuntimeExpertConfig,
-} from "./types.js"
+} from "@perstack/core"
+import { run as perstackRun } from "../runtime.js"
 
 export class PerstackAdapter implements RuntimeAdapter {
   readonly name = "perstack"
