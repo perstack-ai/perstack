@@ -1,3 +1,4 @@
+export { type ProgressHandle, renderProgress } from "../apps/progress/render.js"
 export { renderPublish } from "../apps/publish/render.js"
 export { renderStart } from "../apps/start/render.js"
 export { renderStatus, type StatusWizardResult } from "../apps/status/render.js"

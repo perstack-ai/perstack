@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { type PerstackEvent, renderProgress } from "@perstack/tui"
 import { Command } from "commander"
 import { config } from "dotenv"
 import { render } from "ink"
@@ -26,6 +28,23 @@ function getEnvVarName(provider: LLMProvider): string {
     case "google":
       return "GOOGLE_GENERATIVE_AI_API_KEY"
   }
+}
+
+function parseJsonLines(buffer: string, onEvent: (event: Record<string, unknown>) => void): string {
+  const lines = buffer.split("\n")
+  const remaining = lines.pop() || ""
+  for (const line of lines) {
+    if (!line.trim()) continue
+    try {
+      const parsed = JSON.parse(line)
+      if (parsed && typeof parsed === "object") {
+        onEvent(parsed)
+      }
+    } catch {
+      // Not JSON, ignore
+    }
+  }
+  return remaining
 }
 
 const program = new Command()
@@ -79,10 +98,12 @@ const program = new Command()
       process.env[envVarName] = wizardResult.apiKey
     }
     const isDefaultRuntime = wizardResult.runtime === "default"
+    let model = "claude-sonnet-4-5"
+    let provider: LLMProvider = "anthropic"
     if (!isImprovement) {
       if (isDefaultRuntime) {
-        const provider = wizardResult.provider || "anthropic"
-        const model = wizardResult.model || getDefaultModel(provider)
+        provider = wizardResult.provider || "anthropic"
+        model = wizardResult.model || getDefaultModel(provider)
         const agentsMd = generateAgentsMd({ provider, model })
         writeFileSync(agentsMdPath, agentsMd)
         console.log("✓ Created AGENTS.md")
@@ -112,14 +133,28 @@ const program = new Command()
     console.log("\n🚀 Starting Expert creation...\n")
     const runtimeArg = isDefaultRuntime ? [] : ["--runtime", wizardResult.runtime]
     const args = ["perstack", "run", "create-expert", query, ...runtimeArg]
-    console.log(`Running: npx ${args.join(" ")}\n`)
-    const { spawn } = await import("node:child_process")
-    const perstackProcess = spawn("npx", args, {
-      cwd,
-      stdio: "inherit",
-      env: process.env,
+    const progressHandle = renderProgress({
+      title: "🚀 Expert Creation Progress",
     })
-    perstackProcess.on("exit", (code) => {
+    const proc = spawn("npx", args, {
+      cwd,
+      env: process.env,
+      stdio: ["pipe", "pipe", "pipe"],
+    })
+    let buffer = ""
+    proc.stdout?.on("data", (data: Buffer) => {
+      buffer = parseJsonLines(buffer + data.toString(), (event) => {
+        progressHandle.emit(event as unknown as PerstackEvent)
+      })
+    })
+    proc.stderr?.on("data", (data: Buffer) => {
+      const text = data.toString().trim()
+      if (text) {
+        console.error(text)
+      }
+    })
+    proc.on("exit", async (code) => {
+      await progressHandle.waitUntilExit()
       if (code === 0) {
         console.log("\n✓ Expert creation complete!")
         console.log("\nTo run your Expert:")
