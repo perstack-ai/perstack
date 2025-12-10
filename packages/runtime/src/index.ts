@@ -1,14 +1,15 @@
 import pkg from "../package.json" with { type: "json" }
 
-export { getAdapter, isAdapterAvailable } from "./adapters/index.js"
 export type {
   AdapterRunParams,
   AdapterRunResult,
+  MockAdapterOptions,
   PrerequisiteError,
   PrerequisiteResult,
   RuntimeAdapter,
   RuntimeExpertConfig,
 } from "./adapters/index.js"
+export { getAdapter, isAdapterAvailable, MockAdapter } from "./adapters/index.js"
 export {
   getCheckpointDir,
   getCheckpointPath,

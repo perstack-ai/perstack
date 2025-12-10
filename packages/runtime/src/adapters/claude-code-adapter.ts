@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process"
-import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 import { BaseExternalAdapter } from "./base-external-adapter.js"
 import {
   createCompleteRunEvent,
@@ -7,6 +6,7 @@ import {
   createRuntimeInitEvent,
   parseExternalOutput,
 } from "./output-parser.js"
+import type { AdapterRunParams, AdapterRunResult, PrerequisiteResult } from "./types.js"
 
 export class ClaudeCodeAdapter extends BaseExternalAdapter {
   readonly name = "claude-code"
@@ -49,7 +49,13 @@ export class ClaudeCodeAdapter extends BaseExternalAdapter {
     const prompt = setting.input.text ?? ""
     const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, "claude-code")
     eventListener?.(initEvent)
+    const startedAt = Date.now()
     const result = await this.executeClaudeCli(expert.instruction, prompt, setting.timeout ?? 60000)
+    if (result.exitCode !== 0) {
+      throw new Error(
+        `Claude Code CLI failed with exit code ${result.exitCode}: ${result.stderr || result.stdout}`,
+      )
+    }
     const { events: parsedEvents, finalOutput } = parseExternalOutput(result.stdout, "claude-code")
     for (const event of parsedEvents) {
       eventListener?.(event)
@@ -62,12 +68,19 @@ export class ClaudeCodeAdapter extends BaseExternalAdapter {
       output: finalOutput,
       runtime: "claude-code",
     })
-    const completeEvent = createCompleteRunEvent(jobId, runId, setting.expertKey, checkpoint, finalOutput)
+    const completeEvent = createCompleteRunEvent(
+      jobId,
+      runId,
+      setting.expertKey,
+      checkpoint,
+      finalOutput,
+      startedAt,
+    )
     eventListener?.(completeEvent)
     return { checkpoint, events: [initEvent, ...parsedEvents, completeEvent] }
   }
 
-  private async executeClaudeCli(
+  protected async executeClaudeCli(
     systemPrompt: string,
     prompt: string,
     timeout: number,

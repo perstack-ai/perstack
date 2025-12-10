@@ -37,10 +37,18 @@ function parseClaudeCodeOutput(stdout: string): ParsedOutput {
       const parsed = JSON.parse(trimmed)
       if (parsed.type === "result" || parsed.type === "output") {
         finalOutput = parsed.content || parsed.text || ""
+      } else if (parsed.content || parsed.text) {
+        const content = parsed.content || parsed.text
+        if (finalOutput) {
+          finalOutput += `\n${content}`
+        } else {
+          finalOutput = content
+        }
       }
     } catch {
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) continue
       if (finalOutput) {
-        finalOutput += "\n" + trimmed
+        finalOutput += `\n${trimmed}`
       } else {
         finalOutput = trimmed
       }
@@ -117,7 +125,9 @@ export function createCompleteRunEvent(
   expertKey: string,
   checkpoint: Checkpoint,
   output: string,
+  startedAt?: number,
 ): RunEvent {
+  const lastMessage = checkpoint.messages[checkpoint.messages.length - 1]
   return {
     type: "completeRun",
     id: createId(),
@@ -129,9 +139,9 @@ export function createCompleteRunEvent(
     checkpoint,
     step: {
       stepNumber: 1,
-      newMessages: [],
+      newMessages: lastMessage ? [lastMessage] : [],
       usage: createEmptyUsage(),
-      startedAt: Date.now(),
+      startedAt: startedAt ?? Date.now(),
     },
     text: output,
     usage: createEmptyUsage(),

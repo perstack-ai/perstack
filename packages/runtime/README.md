@@ -261,8 +261,61 @@ The `status` field in a Checkpoint indicates the current state:
 
 For stop reasons and error handling, see [Error Handling](https://docs.perstack.ai/using-experts/error-handling).
 
+## Runtime Adapters
+
+The runtime supports multiple execution backends through the adapter pattern:
+
+| Adapter             | Runtime Name  | Description                |
+| ------------------- | ------------- | -------------------------- |
+| `PerstackAdapter`   | `perstack`    | Built-in runtime (default) |
+| `CursorAdapter`     | `cursor`      | Cursor IDE headless mode   |
+| `ClaudeCodeAdapter` | `claude-code` | Claude Code CLI            |
+| `GeminiAdapter`     | `gemini`      | Gemini CLI                 |
+| `MockAdapter`       | (any)         | For testing purposes       |
+
+### Usage
+
+```typescript
+import { getAdapter, isAdapterAvailable } from "@perstack/runtime"
+
+// Check availability
+if (isAdapterAvailable("cursor")) {
+  const adapter = getAdapter("cursor")
+  const result = await adapter.checkPrerequisites()
+  if (result.ok) {
+    await adapter.run({ setting, eventListener })
+  }
+}
+```
+
+### Creating Custom Adapters
+
+Extend `BaseExternalAdapter` for external CLI-based runtimes:
+
+```typescript
+import { BaseExternalAdapter } from "@perstack/runtime"
+
+class MyAdapter extends BaseExternalAdapter {
+  readonly name = "my-runtime"
+  
+  async checkPrerequisites() {
+    const result = await this.execCommand("my-cli", ["--version"])
+    return result.exitCode === 0
+      ? { ok: true }
+      : { ok: false, error: { type: "cli-not-found", message: "..." } }
+  }
+  
+  async run(params) {
+    // Implementation
+  }
+}
+```
+
+See [Multi-Runtime Support](https://docs.perstack.ai/using-experts/multi-runtime) for details.
+
 ## Related Documentation
 
 - [Runtime](https://docs.perstack.ai/understanding-perstack/runtime) — Full execution model
 - [State Management](https://docs.perstack.ai/using-experts/state-management) — Jobs, Runs, and Checkpoints
 - [Running Experts](https://docs.perstack.ai/using-experts/running-experts) — CLI usage
+- [Multi-Runtime](https://docs.perstack.ai/using-experts/multi-runtime) — External runtime support

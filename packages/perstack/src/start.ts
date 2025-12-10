@@ -105,6 +105,7 @@ export const startCommand = new Command()
           maxRetries,
           timeout,
           contextWindowUsage: checkpoint?.contextWindowUsage ?? 0,
+          runtime,
         },
         configuredExperts,
         recentExperts,

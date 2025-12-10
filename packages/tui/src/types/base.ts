@@ -29,6 +29,7 @@ export type RuntimeInfo = {
   statusChangedAt?: number
   activeSkills: string[]
   contextWindowUsage: number
+  runtime?: string
 }
 export type InitialRuntimeConfig = {
   runtimeVersion: string
@@ -38,6 +39,7 @@ export type InitialRuntimeConfig = {
   maxRetries: number
   timeout: number
   contextWindowUsage: number
+  runtime?: string
 }
 export type ExpertOption = {
   key: string

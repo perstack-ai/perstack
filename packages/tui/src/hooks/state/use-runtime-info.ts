@@ -18,6 +18,7 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
     timeout: options.initialConfig.timeout,
     activeSkills: [],
     contextWindowUsage: options.initialConfig.contextWindowUsage,
+    runtime: options.initialConfig.runtime,
   })
   const handleEvent = useCallback((event: PerstackEvent) => {
     if (event.type === "initializeRuntime") {
@@ -35,6 +36,7 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
         statusChangedAt: Date.now(),
         activeSkills: [],
         contextWindowUsage: prev.contextWindowUsage,
+        runtime: prev.runtime,
       }))
       return { initialized: true }
     }

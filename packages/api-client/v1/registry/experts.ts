@@ -19,6 +19,7 @@ const createRegistryExpertInput = z.object({
   skills: apiRegistryExpertSchema.shape.skills,
   delegates: apiRegistryExpertSchema.shape.delegates,
   tags: apiRegistryExpertSchema.shape.tags,
+  runtime: apiRegistryExpertSchema.shape.runtime,
 })
 const createRegistryExpertResponseSchema = z.object({
   data: z.object({
@@ -33,8 +34,17 @@ export async function createRegistryExpert(
 ): Promise<{
   expert: ApiRegistryExpert
 }> {
-  const { name, version, minRuntimeVersion, description, instruction, skills, delegates, tags } =
-    createRegistryExpertInput.parse(input)
+  const {
+    name,
+    version,
+    minRuntimeVersion,
+    description,
+    instruction,
+    skills,
+    delegates,
+    tags,
+    runtime,
+  } = createRegistryExpertInput.parse(input)
   const endpoint = "/api/registry/v1/experts"
   const json = await client.requestAuthenticated(endpoint, {
     method: "POST",
@@ -50,6 +60,7 @@ export async function createRegistryExpert(
       skills,
       delegates,
       tags,
+      runtime,
     }),
   })
   const { data } = createRegistryExpertResponseSchema.parse(json)
