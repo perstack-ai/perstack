@@ -13,6 +13,13 @@ const createMockExpert = (): Expert => ({
   runtime: ["perstack"],
 })
 
+const createBaseSetting = () => ({
+  model: "test-model",
+  providerConfig: { providerName: "anthropic" as const, apiKey: "test-key" },
+  expertKey: "test-expert",
+  input: { text: "test" },
+})
+
 describe("@perstack/runtime: MockAdapter", () => {
   it("has correct name from options", () => {
     const adapter = new MockAdapter({ name: "cursor" })
@@ -64,7 +71,7 @@ describe("@perstack/runtime: MockAdapter", () => {
       const adapter = new MockAdapter({ name: "perstack" })
       await expect(
         adapter.run({
-          setting: { expertKey: "nonexistent", input: { text: "test" } },
+          setting: { ...createBaseSetting(), expertKey: "nonexistent" },
         }),
       ).rejects.toThrow('Expert "nonexistent" not found')
     })
@@ -74,9 +81,8 @@ describe("@perstack/runtime: MockAdapter", () => {
       const events: (RunEvent | RuntimeEvent)[] = []
       const result = await adapter.run({
         setting: {
-          expertKey: "test-expert",
+          ...createBaseSetting(),
           experts: { "test-expert": createMockExpert() },
-          input: { text: "test query" },
         },
         eventListener: (e) => events.push(e),
       })
@@ -91,9 +97,8 @@ describe("@perstack/runtime: MockAdapter", () => {
       const adapter = new MockAdapter({ name: "perstack", mockOutput: "Custom output" })
       const result = await adapter.run({
         setting: {
-          expertKey: "test-expert",
+          ...createBaseSetting(),
           experts: { "test-expert": createMockExpert() },
-          input: { text: "test" },
         },
       })
       expect(result.checkpoint.messages[0].contents[0]).toMatchObject({
@@ -106,9 +111,8 @@ describe("@perstack/runtime: MockAdapter", () => {
       const adapter = new MockAdapter({ name: "gemini" })
       const result = await adapter.run({
         setting: {
-          expertKey: "test-expert",
+          ...createBaseSetting(),
           experts: { "test-expert": createMockExpert() },
-          input: { text: "test" },
         },
       })
       expect(result.checkpoint.messages[0].contents[0]).toMatchObject({
@@ -121,11 +125,10 @@ describe("@perstack/runtime: MockAdapter", () => {
       const adapter = new MockAdapter({ name: "perstack" })
       const result = await adapter.run({
         setting: {
+          ...createBaseSetting(),
           jobId: "custom-job",
           runId: "custom-run",
-          expertKey: "test-expert",
           experts: { "test-expert": createMockExpert() },
-          input: { text: "test" },
         },
       })
       expect(result.checkpoint.jobId).toBe("custom-job")
@@ -137,9 +140,8 @@ describe("@perstack/runtime: MockAdapter", () => {
       const start = Date.now()
       await adapter.run({
         setting: {
-          expertKey: "test-expert",
+          ...createBaseSetting(),
           experts: { "test-expert": createMockExpert() },
-          input: { text: "test" },
         },
       })
       const elapsed = Date.now() - start
