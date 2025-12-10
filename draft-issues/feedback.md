@@ -367,3 +367,163 @@ The Phase 1 design provides a solid foundation for multi-runtime support. The CL
 3. **Consistency fixes**: Minor fixes to dependency graphs and affected files tables
 
 With these issues addressed, the design is ready for Phase 2 implementation.
+
+---
+
+## Responses to Feedback
+
+**Date**: 2025-12-09
+**Responder**: Design author
+
+### Critical Issues
+
+#### #1 Parallel Multi-Runtime Execution
+
+**Resolution**: ✅ Design clarified
+
+The `runtime` field is a **compatibility declaration**, not parallel execution. This is analogous to `engines` in `package.json`:
+
+```toml
+runtime = ["cursor", "claude-code"]  # Compatible with both, runs on ONE at a time
+```
+
+- Execution is always single-runtime
+- User selects runtime via `--runtime` CLI option
+- If not specified, first compatible runtime from Expert's list is used
+- `dispatchToMultipleRuntimes()` removed from design
+
+#### #3 Delegation Across Runtimes
+
+**Resolution**: ✅ Technical constraint documented
+
+External runtimes (Cursor, Claude Code, Gemini) do not expose skill/tool registration via their CLIs. Perstack cannot inject the `delegate` tool into these runtimes.
+
+| Caller Runtime | Delegate Behavior |
+| -------------- | ----------------- |
+| `perstack`     | Full delegation via tool call (existing behavior) |
+| External       | Instruction-based only (delegate info embedded in prompt) |
+
+**Note**: After further discussion, delegate info embedding was also removed since external runtimes cannot act on it anyway. Only `instruction + query` is passed to external CLI.
+
+#### #4 RuntimeName Type Placement
+
+**Resolution**: ✅ Separate file created
+
+`RuntimeName` type will be in `packages/core/src/schemas/runtime-name.ts` (new file) to avoid confusion with `RuntimeEvent` in `runtime.ts`.
+
+#### #5 External Runtime Events Not Real-Time
+
+**Resolution**: ✅ Known limitation
+
+This is acknowledged as a technical limitation. External runtimes execute as subprocesses and buffer output. TUI will show simplified status for external runtimes.
+
+### Design Inconsistencies
+
+#### #6 Dependency Graph vs. Wave Mismatch
+
+**Resolution**: ✅ Fixed
+
+#08 Event Normalization moved to Wave 2 (depends on #01).
+
+#### #7 Checkpoint Metadata Missing from Affected Files
+
+**Resolution**: ✅ Fixed
+
+Added `packages/core/src/schemas/checkpoint.ts` to Affected Files with backward compatibility note (`.optional()` ensures old checkpoints parse correctly).
+
+#### #8 Missing Export Updates
+
+**Resolution**: ✅ Verified
+
+All issues now explicitly list `index.ts` updates in Affected Files tables.
+
+### Missing Considerations
+
+#### #9 Skills Ignored for External Runtimes
+
+**Resolution**: ✅ Already documented
+
+`multi-runtime.mdx` already contains detailed warnings for each runtime:
+- "skills → ⚠️ Not supported"
+- Callouts explaining that custom skills won't work
+
+No additional warnings needed in code.
+
+#### #10 Working Directory Not Specified
+
+**Resolution**: ✅ Fixed
+
+Added `cwd: process.cwd()` to all `spawn()` calls in adapter designs.
+
+#### #11 Error Recovery Incomplete
+
+**Resolution**: ✅ Keep simple
+
+Existing error handling design is sufficient. Delegate experts report errors to coordinators, and coordinators handle them per existing `error-handling.mdx` documentation. External runtimes follow "fail → error" pattern without special retry logic.
+
+#### #12 Usage Tracking Lost
+
+**Resolution**: ✅ Documented as limitation
+
+Added "Known Limitations" section to #08 explaining that external runtimes do not expose token usage. Checkpoints will have `usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }`.
+
+#### #13 No Global Runtime Default
+
+**Resolution**: ✅ Not needed
+
+Global default is always `"perstack"`. No configuration option needed.
+
+#### #14 Test Mocking Strategy Undefined
+
+**Resolution**: ✅ MockAdapter added
+
+Added `MockAdapter` class to #11 E2E tests design. Enables testing without external CLI dependencies.
+
+#### #15 Registry API Backward Compatibility
+
+**Resolution**: ✅ Backend handles
+
+Backend team will handle. Schema defaults to `["perstack"]` which is correct.
+
+### Minor Issues
+
+#### #16 Duplicate Code Across Adapters
+
+**Resolution**: ✅ BaseExternalAdapter added
+
+Added `BaseExternalAdapter` abstract class to #03 with shared `execCommand()` and `executeWithTimeout()` methods.
+
+#### #17 Output Parser Future Comments
+
+**Resolution**: ✅ Removed
+
+Speculative comments removed. Parsers now return simple trimmed output.
+
+### Questions for Clarification
+
+1. **Parallel Execution**: Not a requirement. Single-runtime execution only.
+2. **Delegation Semantics**: Informational context is NOT passed. Only instruction + query.
+3. **Registry API**: Backend team handles. Default `["perstack"]` is correct.
+
+---
+
+## Summary of Changes Made
+
+| Issue | Change |
+|-------|--------|
+| #1 | Clarified runtime as compatibility declaration |
+| #3 | Documented technical constraint, removed delegate embedding |
+| #4 | Changed to `runtime-name.ts` new file |
+| #5 | Acknowledged as known limitation |
+| #6 | Moved #08 to Wave 2 |
+| #7 | Added checkpoint.ts to Affected Files |
+| #8 | Verified exports in all issues |
+| #9 | Existing docs sufficient |
+| #10 | Added `cwd: process.cwd()` |
+| #11 | Keep simple error handling |
+| #12 | Added Known Limitations section |
+| #13 | Default is always perstack |
+| #14 | Added MockAdapter |
+| #15 | Backend handles |
+| #16 | Added BaseExternalAdapter |
+| #17 | Removed speculative comments |
