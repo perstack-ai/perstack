@@ -1,0 +1,121 @@
+#!/usr/bin/env node
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+import { Command } from "commander"
+import { config } from "dotenv"
+import { render } from "ink"
+import React from "react"
+import type { LLMProvider, WizardResult } from "../src/index.js"
+import {
+  detectAllLLMs,
+  detectAllRuntimes,
+  generateAgentsMd,
+  generateCreateExpertToml,
+  getDefaultModel,
+  Wizard,
+} from "../src/index.js"
+
+config()
+
+function getEnvVarName(provider: LLMProvider): string {
+  switch (provider) {
+    case "anthropic":
+      return "ANTHROPIC_API_KEY"
+    case "openai":
+      return "OPENAI_API_KEY"
+    case "google":
+      return "GOOGLE_GENERATIVE_AI_API_KEY"
+  }
+}
+
+const program = new Command()
+  .name("create-expert")
+  .description("Create Perstack Experts interactively")
+  .version("0.0.1")
+  .argument("[expertName]", "Expert name to improve (for improvement mode)")
+  .argument("[improvements]", "Improvement description (for improvement mode)")
+  .option("--cwd <path>", "Working directory", process.cwd())
+  .action(async (expertName?: string, improvements?: string, options?: { cwd: string }) => {
+    const cwd = options?.cwd || process.cwd()
+    const isImprovement = Boolean(expertName)
+    const improvementTarget = improvements || ""
+    const perstackTomlPath = join(cwd, "perstack.toml")
+    const agentsMdPath = join(cwd, "AGENTS.md")
+    const envPath = join(cwd, ".env")
+    const llms = detectAllLLMs()
+    const runtimes = detectAllRuntimes()
+    let wizardResult: WizardResult | undefined
+    await new Promise<void>((resolve) => {
+      const { waitUntilExit } = render(
+        React.createElement(Wizard, {
+          llms,
+          runtimes,
+          isImprovement,
+          improvementTarget,
+          onComplete: (result: WizardResult) => {
+            wizardResult = result
+          },
+        }),
+      )
+      waitUntilExit().then(() => resolve())
+    })
+    if (!wizardResult) {
+      console.log("Wizard cancelled.")
+      process.exit(0)
+    }
+    if (wizardResult.apiKey && wizardResult.provider) {
+      const envVarName = getEnvVarName(wizardResult.provider)
+      const envContent = `${envVarName}=${wizardResult.apiKey}\n`
+      if (existsSync(envPath)) {
+        const existing = readFileSync(envPath, "utf-8")
+        if (!existing.includes(envVarName)) {
+          writeFileSync(envPath, `${existing}\n${envContent}`)
+          console.log(`✓ Added ${envVarName} to .env`)
+        }
+      } else {
+        writeFileSync(envPath, envContent)
+        console.log(`✓ Created .env with ${envVarName}`)
+      }
+      process.env[envVarName] = wizardResult.apiKey
+    }
+    if (!isImprovement) {
+      const provider = wizardResult.provider || "anthropic"
+      const model = wizardResult.model || getDefaultModel(provider)
+      const agentsMd = generateAgentsMd({
+        provider,
+        model,
+        runtime: wizardResult.runtime,
+      })
+      writeFileSync(agentsMdPath, agentsMd)
+      console.log("✓ Created AGENTS.md")
+      const createExpertToml = generateCreateExpertToml({ provider, model })
+      writeFileSync(perstackTomlPath, createExpertToml)
+      console.log("✓ Created perstack.toml with create-expert Expert")
+    }
+    const expertDescription = wizardResult.expertDescription || ""
+    const query = isImprovement
+      ? `Improve the Expert "${expertName}": ${expertDescription}`
+      : `Create a new Expert based on these requirements: ${expertDescription}`
+    console.log("\n🚀 Starting Expert creation...\n")
+    console.log(`Running: perstack run create-expert "${query}"\n`)
+    const { spawn } = await import("node:child_process")
+    const perstackProcess = spawn("npx", ["perstack", "run", "create-expert", query], {
+      cwd,
+      stdio: "inherit",
+      env: process.env,
+    })
+    perstackProcess.on("exit", (code) => {
+      if (code === 0) {
+        console.log("\n✓ Expert creation complete!")
+        console.log("\nTo run your Expert:")
+        console.log("  perstack start")
+        console.log("\nTo run in headless mode:")
+        console.log('  perstack run <expert-name> "<query>"')
+      } else {
+        console.error(`\nExpert creation failed with code ${code}`)
+        process.exit(code || 1)
+      }
+    })
+  })
+
+program.parse()
