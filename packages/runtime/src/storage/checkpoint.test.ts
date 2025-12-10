@@ -3,9 +3,9 @@ import path from "node:path"
 import { createId } from "@paralleldrive/cuid2"
 import type { Checkpoint, RunEvent } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { createEmptyUsage } from "../helpers/usage.js"
 import { defaultRetrieveCheckpoint, defaultStoreCheckpoint } from "./checkpoint.js"
 import { defaultStoreEvent } from "./event.js"
-import { createEmptyUsage } from "../helpers/usage.js"
 
 function createTestCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {

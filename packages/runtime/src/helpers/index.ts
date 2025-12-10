@@ -1,8 +1,8 @@
 export {
   buildDelegateToState,
   buildDelegationReturnState,
-  createInitialCheckpoint,
   type CreateInitialCheckpointParams,
+  createInitialCheckpoint,
   createNextStepCheckpoint,
   type DelegationStateResult,
 } from "./checkpoint.js"
@@ -10,7 +10,7 @@ export { calculateContextWindowUsage, getContextWindow, getModel } from "./model
 export { resolveExpertToRun } from "./resolve-expert.js"
 export {
   type ResolveExpertToRunFn,
-  setupExperts,
   type SetupExpertsResult,
+  setupExperts,
 } from "./setup-experts.js"
 export { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "./usage.js"

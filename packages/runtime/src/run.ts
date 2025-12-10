@@ -21,9 +21,9 @@ import { RunEventEmitter } from "./events/event-emitter.js"
 import {
   buildDelegateToState,
   buildDelegationReturnState,
+  createEmptyUsage,
   createInitialCheckpoint,
   createNextStepCheckpoint,
-  createEmptyUsage,
   getContextWindow,
   type ResolveExpertToRunFn,
   setupExperts,

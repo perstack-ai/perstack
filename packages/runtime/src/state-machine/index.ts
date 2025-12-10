@@ -1,7 +1,7 @@
-export { executeStateMachine, type ExecuteStateMachineParams } from "./executor.js"
+export { type ExecuteStateMachineParams, executeStateMachine } from "./executor.js"
 export {
-  runtimeStateMachine,
   type RunActor,
   type RunSnapshot,
+  runtimeStateMachine,
   StateMachineLogics,
 } from "./machine.js"
