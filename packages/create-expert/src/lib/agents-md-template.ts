@@ -4,12 +4,13 @@ import type { RuntimeType } from "./detect-runtime.js"
 interface AgentsMdOptions {
   provider: LLMProvider
   model: string
-  runtime?: RuntimeType
+  runtime?: RuntimeType | "default"
 }
 
 export function generateAgentsMd(options: AgentsMdOptions): string {
   const { provider, model, runtime } = options
-  const runtimeSection = runtime ? `runtime = "${runtime}"` : ""
+  const isNonDefaultRuntime = runtime && runtime !== "default"
+  const runtimeSection = isNonDefaultRuntime ? `runtime = "${runtime}"` : ""
   return `# AGENTS.md
 
 ## What is Perstack
@@ -26,7 +27,7 @@ Key concepts:
 This project uses:
 - Provider: ${provider}
 - Model: ${model}
-${runtime ? `- Runtime: ${runtime}` : "- Runtime: perstack (built-in)"}
+${isNonDefaultRuntime ? `- Runtime: ${runtime}` : "- Runtime: perstack (built-in)"}
 
 ## CLI Reference
 

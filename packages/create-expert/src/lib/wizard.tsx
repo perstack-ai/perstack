@@ -5,20 +5,18 @@ import type { RuntimeInfo, RuntimeType } from "./detect-runtime.js"
 
 type WizardStep =
   | "detecting"
-  | "select-mode"
-  | "select-llm"
-  | "input-api-key"
   | "select-runtime"
-  | "confirm"
+  | "select-llm"
+  | "select-provider"
+  | "input-api-key"
   | "input-expert-description"
   | "done"
 
 export interface WizardResult {
-  mode: "perstack" | "runtime"
+  runtime: "default" | RuntimeType
   provider?: LLMProvider
   model?: string
   apiKey?: string
-  runtime?: RuntimeType
   expertDescription?: string
 }
 
@@ -28,6 +26,13 @@ interface WizardProps {
   onComplete: (result: WizardResult) => void
   isImprovement?: boolean
   improvementTarget?: string
+}
+
+interface RuntimeOption {
+  key: string
+  type: "default" | RuntimeType
+  label: string
+  version?: string
 }
 
 function SelectableList({
@@ -94,6 +99,17 @@ function TextInputComponent({
   )
 }
 
+function getRuntimeDisplayName(type: RuntimeType): string {
+  switch (type) {
+    case "cursor":
+      return "Cursor"
+    case "claude-code":
+      return "Claude Code"
+    case "gemini":
+      return "Gemini CLI"
+  }
+}
+
 export function Wizard({
   llms,
   runtimes,
@@ -109,6 +125,24 @@ export function Wizard({
   const [expertDescInput, setExpertDescInput] = useState(improvementTarget || "")
   const availableLLMs = llms.filter((l) => l.available)
   const availableRuntimes = runtimes.filter((r) => r.available)
+  const runtimeOptions: RuntimeOption[] = [
+    { key: "default", type: "default", label: "Default (built-in)" },
+    ...availableRuntimes.map((r) => ({
+      key: r.type,
+      type: r.type,
+      label: `${getRuntimeDisplayName(r.type)}${r.version ? ` (${r.version})` : ""}`,
+      version: r.version,
+    })),
+  ]
+  const llmOptionsWithOther = [
+    ...llms.map((l) => ({
+      key: l.provider,
+      label: `${l.displayName}${l.available ? " ✓" : ""}`,
+      provider: l.provider,
+      available: l.available,
+    })),
+    { key: "other", label: "Other (configure new provider)", provider: null, available: false },
+  ]
   useEffect(() => {
     if (step === "detecting") {
       const timer = setTimeout(() => {
@@ -116,16 +150,16 @@ export function Wizard({
           const llm = availableLLMs[0]
           if (llm) {
             setResult({
-              mode: "perstack",
+              runtime: "default",
               provider: llm.provider,
               model: getDefaultModel(llm.provider),
             })
             setStep("input-expert-description")
           } else {
-            setStep("select-mode")
+            setStep("select-runtime")
           }
         } else {
-          setStep("select-mode")
+          setStep("select-runtime")
         }
       }, 500)
       return () => clearTimeout(timer)
@@ -153,74 +187,62 @@ export function Wizard({
   })
   function getMaxIndex(): number {
     switch (step) {
-      case "select-mode":
-        return 1
-      case "select-llm":
-        return llms.length - 1
       case "select-runtime":
-        return runtimes.length - 1
-      case "confirm":
-        return 1
+        return runtimeOptions.length - 1
+      case "select-llm":
+        return llmOptionsWithOther.length - 1
+      case "select-provider":
+        return llms.length - 1
       default:
         return 0
     }
   }
   function handleSelect() {
     switch (step) {
-      case "select-mode":
-        if (selectedIndex === 0) {
-          setResult({ mode: "perstack" })
+      case "select-runtime": {
+        const selected = runtimeOptions[selectedIndex]
+        if (!selected) break
+        if (selected.type === "default") {
+          setResult({ runtime: "default" })
           if (availableLLMs.length > 0) {
             setStep("select-llm")
           } else {
-            setStep("input-api-key")
+            setStep("select-provider")
           }
         } else {
-          setResult({ mode: "runtime" })
-          if (availableRuntimes.length > 0) {
-            setStep("select-runtime")
-          } else {
-            exit()
-          }
+          setResult({ runtime: selected.type })
+          setStep("input-expert-description")
         }
         setSelectedIndex(0)
         break
+      }
       case "select-llm": {
-        const selectedLLM = llms[selectedIndex]
-        if (!selectedLLM) break
-        if (selectedLLM.available) {
+        const selected = llmOptionsWithOther[selectedIndex]
+        if (!selected) break
+        if (selected.key === "other") {
+          setStep("select-provider")
+        } else if (selected.available && selected.provider) {
           setResult((prev) => ({
             ...prev,
-            provider: selectedLLM.provider,
-            model: getDefaultModel(selectedLLM.provider),
+            provider: selected.provider,
+            model: getDefaultModel(selected.provider),
           }))
-          setStep("confirm")
-        } else {
-          setResult((prev) => ({ ...prev, provider: selectedLLM.provider }))
+          setStep("input-expert-description")
+        } else if (selected.provider) {
+          setResult((prev) => ({ ...prev, provider: selected.provider }))
           setStep("input-api-key")
         }
         setSelectedIndex(0)
         break
       }
-      case "select-runtime": {
-        const selectedRuntime = runtimes[selectedIndex]
-        if (!selectedRuntime) break
-        if (selectedRuntime.available) {
-          setResult((prev) => ({ ...prev, runtime: selectedRuntime.type }))
-          setStep("confirm")
-        }
+      case "select-provider": {
+        const selected = llms[selectedIndex]
+        if (!selected) break
+        setResult((prev) => ({ ...prev, provider: selected.provider }))
+        setStep("input-api-key")
         setSelectedIndex(0)
         break
       }
-      case "confirm":
-        if (selectedIndex === 0) {
-          setStep("input-expert-description")
-        } else {
-          setStep("select-mode")
-          setResult({})
-        }
-        setSelectedIndex(0)
-        break
     }
   }
   function handleApiKeySubmit() {
@@ -232,17 +254,16 @@ export function Wizard({
         model: getDefaultModel(provider),
         apiKey: apiKeyInput.trim(),
       }))
-      setStep("confirm")
+      setStep("input-expert-description")
     }
   }
   function handleExpertDescSubmit() {
     if (expertDescInput.trim()) {
       const finalResult: WizardResult = {
-        mode: result.mode || "perstack",
+        runtime: result.runtime || "default",
         provider: result.provider,
         model: result.model,
         apiKey: result.apiKey,
-        runtime: result.runtime,
         expertDescription: expertDescInput.trim(),
       }
       onComplete(finalResult)
@@ -258,31 +279,16 @@ export function Wizard({
       </Box>
       {step === "detecting" && (
         <Box>
-          <Text color="yellow">Detecting available LLMs and runtimes...</Text>
+          <Text color="yellow">Detecting available runtimes...</Text>
         </Box>
       )}
-      {step === "select-mode" && (
+      {step === "select-runtime" && (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text>How would you like to run your Expert?</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">
-              Available: {availableLLMs.length} LLM(s), {availableRuntimes.length} runtime(s)
-            </Text>
+            <Text>Select a runtime:</Text>
           </Box>
           <SelectableList
-            items={[
-              {
-                key: "perstack",
-                label: `Perstack Runtime (built-in)${availableLLMs.length > 0 ? ` - ${availableLLMs.map((l) => l.displayName).join(", ")} available` : " - needs API key"}`,
-              },
-              {
-                key: "runtime",
-                label: `External Runtime${availableRuntimes.length > 0 ? ` - ${availableRuntimes.map((r) => r.type).join(", ")} available` : " - none available"}`,
-                disabled: availableRuntimes.length === 0,
-              },
-            ]}
+            items={runtimeOptions.map((r) => ({ key: r.key, label: r.label }))}
             selectedIndex={selectedIndex}
           />
           <Box marginTop={1}>
@@ -296,11 +302,34 @@ export function Wizard({
             <Text>Select an LLM provider:</Text>
           </Box>
           <SelectableList
-            items={llms.map((l) => ({
-              key: l.provider,
-              label: `${l.displayName}${l.available ? " ✓" : ""}`,
-              disabled: false,
-            }))}
+            items={llmOptionsWithOther.map((l) => ({ key: l.key, label: l.label }))}
+            selectedIndex={selectedIndex}
+          />
+          <Box marginTop={1}>
+            <Text color="gray">↑↓ to move, Enter to select</Text>
+          </Box>
+        </Box>
+      )}
+      {step === "select-provider" && (
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="yellow">⚠ No LLM API keys found.</Text>
+          </Box>
+          <Box marginBottom={1}>
+            <Text>Perstack requires an API key from one of these providers:</Text>
+          </Box>
+          <Box flexDirection="column" marginBottom={1}>
+            {llms.map((l) => (
+              <Text key={l.provider} color="gray">
+                • {l.displayName} ({l.envVar})
+              </Text>
+            ))}
+          </Box>
+          <Box marginBottom={1}>
+            <Text>Select a provider to configure:</Text>
+          </Box>
+          <SelectableList
+            items={llms.map((l) => ({ key: l.provider, label: l.displayName }))}
             selectedIndex={selectedIndex}
           />
           <Box marginTop={1}>
@@ -311,7 +340,10 @@ export function Wizard({
       {step === "input-api-key" && (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text>Enter your {result.provider || "Anthropic"} API key:</Text>
+            <Text>
+              Enter your {llms.find((l) => l.provider === result.provider)?.displayName || "API"}{" "}
+              key:
+            </Text>
           </Box>
           <TextInputComponent
             value={apiKeyInput}
@@ -323,58 +355,6 @@ export function Wizard({
           <Box marginTop={1}>
             <Text color="gray">Type your API key and press Enter</Text>
           </Box>
-        </Box>
-      )}
-      {step === "select-runtime" && (
-        <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text>Select a runtime:</Text>
-          </Box>
-          <SelectableList
-            items={runtimes.map((r) => ({
-              key: r.type,
-              label: `${r.type}${r.available ? ` ✓ (${r.version || "installed"})` : ""}`,
-              disabled: !r.available,
-            }))}
-            selectedIndex={selectedIndex}
-          />
-          <Box marginTop={1}>
-            <Text color="gray">↑↓ to move, Enter to select</Text>
-          </Box>
-        </Box>
-      )}
-      {step === "confirm" && (
-        <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text bold>Configuration Summary:</Text>
-          </Box>
-          <Box flexDirection="column" marginBottom={1}>
-            <Text>
-              • Mode: <Text color="cyan">{result.mode}</Text>
-            </Text>
-            {result.provider && (
-              <Text>
-                • Provider: <Text color="cyan">{result.provider}</Text>
-              </Text>
-            )}
-            {result.model && (
-              <Text>
-                • Model: <Text color="cyan">{result.model}</Text>
-              </Text>
-            )}
-            {result.runtime && (
-              <Text>
-                • Runtime: <Text color="cyan">{result.runtime}</Text>
-              </Text>
-            )}
-          </Box>
-          <SelectableList
-            items={[
-              { key: "continue", label: "Continue" },
-              { key: "back", label: "Start over" },
-            ]}
-            selectedIndex={selectedIndex}
-          />
         </Box>
       )}
       {step === "input-expert-description" && (

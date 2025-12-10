@@ -78,28 +78,43 @@ const program = new Command()
       }
       process.env[envVarName] = wizardResult.apiKey
     }
+    const isDefaultRuntime = wizardResult.runtime === "default"
     if (!isImprovement) {
-      const provider = wizardResult.provider || "anthropic"
-      const model = wizardResult.model || getDefaultModel(provider)
-      const agentsMd = generateAgentsMd({
-        provider,
-        model,
-        runtime: wizardResult.runtime,
-      })
-      writeFileSync(agentsMdPath, agentsMd)
-      console.log("✓ Created AGENTS.md")
-      const createExpertToml = generateCreateExpertToml({ provider, model })
-      writeFileSync(perstackTomlPath, createExpertToml)
-      console.log("✓ Created perstack.toml with create-expert Expert")
+      if (isDefaultRuntime) {
+        const provider = wizardResult.provider || "anthropic"
+        const model = wizardResult.model || getDefaultModel(provider)
+        const agentsMd = generateAgentsMd({ provider, model })
+        writeFileSync(agentsMdPath, agentsMd)
+        console.log("✓ Created AGENTS.md")
+        const createExpertToml = generateCreateExpertToml({ provider, model })
+        writeFileSync(perstackTomlPath, createExpertToml)
+        console.log("✓ Created perstack.toml with create-expert Expert")
+      } else {
+        const agentsMd = generateAgentsMd({
+          provider: "anthropic",
+          model: "claude-sonnet-4-5",
+          runtime: wizardResult.runtime,
+        })
+        writeFileSync(agentsMdPath, agentsMd)
+        console.log("✓ Created AGENTS.md")
+        const createExpertToml = generateCreateExpertToml({
+          provider: "anthropic",
+          model: "claude-sonnet-4-5",
+        })
+        writeFileSync(perstackTomlPath, createExpertToml)
+        console.log("✓ Created perstack.toml with create-expert Expert")
+      }
     }
     const expertDescription = wizardResult.expertDescription || ""
     const query = isImprovement
       ? `Improve the Expert "${expertName}": ${expertDescription}`
       : `Create a new Expert based on these requirements: ${expertDescription}`
     console.log("\n🚀 Starting Expert creation...\n")
-    console.log(`Running: perstack run create-expert "${query}"\n`)
+    const runtimeArg = isDefaultRuntime ? [] : ["--runtime", wizardResult.runtime]
+    const args = ["perstack", "run", "create-expert", query, ...runtimeArg]
+    console.log(`Running: npx ${args.join(" ")}\n`)
     const { spawn } = await import("node:child_process")
-    const perstackProcess = spawn("npx", ["perstack", "run", "create-expert", query], {
+    const perstackProcess = spawn("npx", args, {
       cwd,
       stdio: "inherit",
       env: process.env,
