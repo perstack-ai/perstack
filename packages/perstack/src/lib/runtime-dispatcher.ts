@@ -1,3 +1,4 @@
+import { ClaudeCodeAdapter } from "@perstack/claude-code"
 import type {
   Checkpoint,
   RunEvent,
@@ -5,7 +6,19 @@ import type {
   RuntimeEvent,
   RuntimeName,
 } from "@perstack/core"
-import { defaultStoreCheckpoint, getAdapter, isAdapterAvailable } from "@perstack/runtime"
+import { CursorAdapter } from "@perstack/cursor"
+import { GeminiAdapter } from "@perstack/gemini"
+import {
+  defaultStoreCheckpoint,
+  getAdapter,
+  getRegisteredRuntimes,
+  isAdapterAvailable,
+  registerAdapter,
+} from "@perstack/runtime"
+
+registerAdapter("cursor", () => new CursorAdapter())
+registerAdapter("claude-code", () => new ClaudeCodeAdapter())
+registerAdapter("gemini", () => new GeminiAdapter())
 
 export type DispatchParams = {
   setting: RunParamsInput["setting"]
@@ -22,10 +35,8 @@ export type DispatchResult = {
 export async function dispatchToRuntime(params: DispatchParams): Promise<DispatchResult> {
   const { setting, checkpoint, runtime, eventListener, storeCheckpoint } = params
   if (!isAdapterAvailable(runtime)) {
-    throw new Error(
-      `Runtime "${runtime}" is not available. ` +
-        `Available runtimes: perstack, cursor, claude-code, gemini.`,
-    )
+    const available = getRegisteredRuntimes().join(", ")
+    throw new Error(`Runtime "${runtime}" is not available. Available runtimes: ${available}.`)
   }
   const adapter = getAdapter(runtime)
   const prereqResult = await adapter.checkPrerequisites()

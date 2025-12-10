@@ -21,7 +21,10 @@
   },
   "dependencies": {
     "@perstack/api-client": "workspace:*",
+    "@perstack/claude-code": "workspace:*",
     "@perstack/core": "workspace:*",
+    "@perstack/cursor": "workspace:*",
+    "@perstack/gemini": "workspace:*",
     "@perstack/runtime": "workspace:*",
     "@perstack/tui": "workspace:*",
     "commander": "^14.0.2",
