@@ -36,6 +36,7 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
         statusChangedAt: Date.now(),
         activeSkills: [],
         contextWindowUsage: prev.contextWindowUsage,
+        runtime: prev.runtime,
       }))
       return { initialized: true }
     }
