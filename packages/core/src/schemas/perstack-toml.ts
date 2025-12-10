@@ -1,5 +1,7 @@
 import { z } from "zod"
 import { headersSchema } from "./provider-config.js"
+import type { RuntimeName } from "./runtime-name.js"
+import { runtimeNameSchema } from "./runtime-name.js"
 
 const anthropicSettingSchema = z.object({
   baseUrl: z.string().optional(),
@@ -138,6 +140,8 @@ export interface PerstackConfigExpert {
   delegates?: string[]
   /** Tags for categorization */
   tags?: string[]
+  /** Compatible runtimes */
+  runtime?: RuntimeName | RuntimeName[]
 }
 
 /**
@@ -222,6 +226,7 @@ export const perstackConfigSchema = z.object({
           .optional(),
         delegates: z.array(z.string()).optional(),
         tags: z.array(z.string()).optional(),
+        runtime: z.union([runtimeNameSchema, z.array(runtimeNameSchema)]).optional(),
       }),
     )
     .optional(),

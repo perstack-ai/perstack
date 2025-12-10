@@ -68,6 +68,7 @@ export const registryExpert: z.input<typeof apiRegistryExpertSchema> = {
   skills: {},
   delegates: [],
   tags: [],
+  runtime: ["perstack"],
   owner: {
     organizationId: organization.id,
     createdAt: nowISO,
@@ -99,6 +100,7 @@ export const studioExpert: z.input<typeof apiStudioExpertSchema> = {
   instruction: "test",
   skills: {},
   delegates: [],
+  runtime: ["perstack"],
   forkFrom: "@test/test@1.0.0",
   application,
   owner: {
@@ -130,6 +132,7 @@ export const expertDigest: z.input<typeof apiExpertDigestSchema> = {
   minRuntimeVersion: "v1.0",
   description: "test",
   tags: [],
+  runtime: ["perstack"],
   owner: {
     organizationId: organization.id,
     createdAt: nowISO,

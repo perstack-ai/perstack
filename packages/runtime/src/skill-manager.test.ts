@@ -60,6 +60,7 @@ function createDelegateExpert(overrides: Partial<Expert> = {}): Expert {
     skills: {},
     delegates: [],
     tags: [],
+    runtime: ["perstack"],
     ...overrides,
   }
 }
