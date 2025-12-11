@@ -76,9 +76,9 @@ For each Expert you create:
    - Missing required data
    - Skill failures
 
-Use \`perstack run\` to execute tests:
+Use \`npx -y perstack run\` to execute tests:
 \`\`\`bash
-perstack run expert-name "test query"
+npx -y perstack run expert-name "test query"
 \`\`\`
 
 ## Iteration Process
