@@ -258,9 +258,6 @@ importers:
 
   packages/docker:
     dependencies:
-      '@paralleldrive/cuid2':
-        specifier: ^3.0.4
-        version: 3.0.4
       '@perstack/core':
         specifier: workspace:*
         version: link:../core

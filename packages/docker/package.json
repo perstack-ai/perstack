@@ -27,7 +27,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@paralleldrive/cuid2": "^3.0.4",
     "@perstack/core": "workspace:*"
   },
   "devDependencies": {
