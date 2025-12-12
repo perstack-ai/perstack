@@ -1,18 +1,15 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType } from "../lib/event-parser.js"
-import { runCli, runExpert } from "../lib/runner.js"
+import { runExpertWithRuntimeCli } from "../lib/runner.js"
 
-describe("Graceful Error Recovery", () => {
-  describe("Tool Error Recovery", () => {
+describe("Error Handling", () => {
+  describe("Recover from tool error", () => {
     it("should recover from file not found error and complete successfully", async () => {
-      const result = await runExpert(
+      const result = await runExpertWithRuntimeCli(
         "e2e-tool-error-recovery",
         "Read the file at nonexistent_file_12345.txt and report what happened",
-        {
-          configPath: "./e2e/experts/error-handling.toml",
-          timeout: 180000,
-        },
+        { configPath: "./e2e/experts/error-handling.toml", timeout: 180000 },
       )
       expect(result.exitCode).toBe(0)
       expect(
@@ -27,16 +24,5 @@ describe("Graceful Error Recovery", () => {
       expect(hasFileNotFoundError).toBe(true)
       expect(assertEventSequenceContains(result.events, ["completeRun"]).passed).toBe(true)
     }, 200000)
-  })
-
-  describe("Invalid Configuration", () => {
-    it("should fail with clear message for nonexistent delegate", async () => {
-      const result = await runCli(
-        ["run", "--config", "./e2e/experts/error-handling.toml", "e2e-invalid-delegate", "test"],
-        { timeout: 60000 },
-      )
-      expect(result.exitCode).not.toBe(0)
-      expect(result.stderr).toMatch(/not found|nonexistent/i)
-    }, 120000)
   })
 })

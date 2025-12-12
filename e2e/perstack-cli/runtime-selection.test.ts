@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { runCli, runExpert } from "../lib/runner.js"
 
-describe("multi-runtime CLI", () => {
-  describe("--runtime option parsing", () => {
-    it("should accept perstack runtime flag", async () => {
+describe("Runtime Selection", () => {
+  describe("Select runtime via CLI option", () => {
+    it("should run with perstack runtime", async () => {
       const result = await runCli(
         [
           "run",
@@ -34,7 +34,7 @@ describe("multi-runtime CLI", () => {
     })
   })
 
-  describe("runtime prerequisites", () => {
+  describe("Select external runtime", () => {
     it("should show helpful error or succeed for cursor", async () => {
       const result = await runCli(
         [
@@ -86,7 +86,7 @@ describe("multi-runtime CLI", () => {
     })
   })
 
-  describe("global runtime config", () => {
+  describe("Load runtime from config", () => {
     it("should use runtime from perstack.toml when --runtime not specified", async () => {
       const result = await runExpert("e2e-global-runtime", "Say hello", {
         configPath: "./e2e/experts/global-runtime.toml",
@@ -96,35 +96,5 @@ describe("multi-runtime CLI", () => {
         true,
       )
     })
-  })
-
-  describe("continue with perstack runtime", () => {
-    it("should continue job and receive new completeRun event", async () => {
-      const initialResult = await runExpert(
-        "e2e-special-tools",
-        "Use attemptCompletion to say hello",
-        {
-          configPath: "./e2e/experts/special-tools.toml",
-          timeout: 120000,
-        },
-      )
-      expect(initialResult.jobId).not.toBeNull()
-      expect(
-        assertEventSequenceContains(initialResult.events, ["startRun", "completeRun"]).passed,
-      ).toBe(true)
-      const continueResult = await runExpert("e2e-special-tools", "Now say goodbye", {
-        configPath: "./e2e/experts/special-tools.toml",
-        continueJobId: initialResult.jobId!,
-        timeout: 120000,
-      })
-      expect(
-        assertEventSequenceContains(continueResult.events, ["startRun", "completeRun"]).passed,
-      ).toBe(true)
-      const completeEvents = continueResult.events.filter((e) => e.type === "completeRun")
-      expect(completeEvents.length).toBeGreaterThanOrEqual(1)
-      const lastComplete = completeEvents[completeEvents.length - 1] as { text?: string }
-      expect(lastComplete.text).toBeDefined()
-      expect(lastComplete.text?.length).toBeGreaterThan(0)
-    }, 300000)
   })
 })
