@@ -1,3 +1,8 @@
+export {
+  type ComposeGeneratorOptions,
+  generateBuildContext,
+  generateComposeFile,
+} from "./compose-generator.js"
 export { DockerAdapter } from "./docker-adapter.js"
 export {
   detectRequiredRuntimes,
