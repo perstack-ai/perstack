@@ -36,15 +36,6 @@ export class DelegateSkillManager extends BaseSkillManager {
           type: "object",
           properties: {
             query: { type: "string" },
-            runtime: {
-              oneOf: [
-                { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
-                {
-                  type: "array",
-                  items: { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
-                },
-              ],
-            },
           },
           required: ["query"],
         },

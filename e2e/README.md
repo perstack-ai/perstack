@@ -11,131 +11,98 @@ pnpm build
 ## Running Tests
 
 ```bash
-# Run all E2E tests (parallel execution)
+# Run all E2E tests (sequential, fail-fast)
 pnpm test:e2e
 
 # Run specific test file
 pnpm test:e2e -- run.test.ts
 
 # Run tests matching pattern
-pnpm test:e2e -- --testNamePattern "publish"
+pnpm test:e2e -- --testNamePattern "delegate"
 ```
 
 ## Test Structure
 
 ```
 e2e/
-├── lib/                      # Test utilities
-│   ├── runner.ts             # CLI and Expert execution
-│   ├── event-parser.ts       # Runtime event parsing
-│   └── assertions.ts         # Custom assertions
-├── experts/                  # Expert definitions for tests
-│   ├── cli-commands.toml     # CLI command tests (publish, etc.)
-│   ├── mixed-tools.toml      # MCP + Delegate + Interactive
-│   ├── parallel-mcp.toml     # Parallel MCP calls
-│   ├── delegate-chain.toml   # Delegation chain
-│   ├── continue-resume.toml  # Continue/resume functionality
-│   ├── special-tools.toml    # Special tools parallel execution
-│   └── multi-modal.toml      # PDF and image reading
-├── fixtures/                 # Test fixtures
-│   ├── test.pdf              # PDF file for multi-modal tests
-│   └── test.gif              # GIF image for multi-modal tests
-├── run.test.ts               # CLI run command
-├── publish.test.ts           # CLI publish command
-├── unpublish.test.ts         # CLI unpublish command
-├── tag.test.ts               # CLI tag command
-├── status.test.ts            # CLI status command
-├── mixed-tools.test.ts       # Mixed tool calls (MCP + Delegate + Interactive)
-├── parallel-mcp.test.ts      # Parallel MCP tool execution
-├── special-tools.test.ts     # Special tools (think, readPdfFile, readImageFile)
-├── multi-modal.test.ts       # PDF and image content verification
-├── delegate-chain.test.ts    # Expert delegation chain
-└── continue-resume.test.ts   # --continue-run and --resume-from
+├── perstack-cli/                  # perstack CLI tests
+│   ├── continue.test.ts           # Continue job, resume from checkpoint
+│   ├── delegate.test.ts           # Delegate to expert
+│   ├── interactive.test.ts        # Interactive input (with delegation)
+│   ├── runtime-selection.test.ts  # Select runtime
+│   ├── publish.test.ts            # Publish expert
+│   ├── registry.test.ts           # Remote expert resolution
+│   └── validation.test.ts         # CLI validation
+├── perstack-runtime/              # perstack-runtime CLI tests
+│   ├── run.test.ts                # Run expert
+│   ├── options.test.ts            # CLI options
+│   ├── limits.test.ts             # Execution limits
+│   ├── skills.test.ts             # Skill configuration
+│   ├── interactive.test.ts        # Interactive input
+│   ├── error-handling.test.ts     # Error handling
+│   ├── storage-behavior.test.ts   # Storage behavior
+│   └── validation.test.ts         # CLI validation
+├── lib/                           # Test utilities
+│   ├── runner.ts                  # CLI and Expert execution
+│   ├── event-parser.ts            # Runtime event parsing
+│   └── assertions.ts              # Custom assertions
+├── experts/                       # Expert definitions for tests
+└── fixtures/                      # Test fixtures
 ```
 
-## Test Categories
+## Test Categories by Use Case
 
-### CLI Commands
+### perstack-cli/
 
-Tests for CLI argument validation and error handling.
+| Use Case               | File                      | Tests                                                             |
+| ---------------------- | ------------------------- | ----------------------------------------------------------------- |
+| **Continue job**       | continue.test.ts          | Continue from interactive/delegation stop, resume from checkpoint |
+| **Delegate to expert** | delegate.test.ts          | Chain delegation, parallel delegation                             |
+| **Interactive input**  | interactive.test.ts       | Mixed tools with interactive (MCP + delegate + askUser)           |
+| **Select runtime**     | runtime-selection.test.ts | CLI option, external runtimes, config file                        |
+| **Publish expert**     | publish.test.ts           | Preview, unpublish, tag, status                                   |
+| **Registry**           | registry.test.ts          | Remote expert resolution, remote delegation                       |
+| **CLI validation**     | validation.test.ts        | Argument validation, config validation                            |
 
-| File              | Tests | Coverage                                           |
-| ----------------- | ----- | -------------------------------------------------- |
-| run.test.ts       | 4     | Missing args, nonexistent expert, invalid config   |
-| publish.test.ts   | 4     | dry-run success, nonexistent expert, config errors |
-| unpublish.test.ts | 2     | Missing version, missing --force                   |
-| tag.test.ts       | 2     | Missing version, missing tags                      |
-| status.test.ts    | 3     | Missing version/status, invalid status             |
+### perstack-runtime/
 
-### Runtime Features
+| Use Case              | File                     | Tests                                        |
+| --------------------- | ------------------------ | -------------------------------------------- |
+| **Run expert**        | run.test.ts              | Answer question, use tools, read PDF/image   |
+| **CLI options**       | options.test.ts          | Model, limits, job-id, env-path, verbose     |
+| **Execution limits**  | limits.test.ts           | Max steps, max retries                       |
+| **Skills**            | skills.test.ts           | Pick/omit tools, multiple skills             |
+| **Interactive input** | interactive.test.ts      | Stop at interactive tool                     |
+| **Error handling**    | error-handling.test.ts   | Tool error, MCP error, invalid provider      |
+| **Storage behavior**  | storage-behavior.test.ts | Verify storage is not created by runtime CLI |
+| **CLI validation**    | validation.test.ts       | Version, help, argument validation           |
 
-Tests for parallel tool calls, delegation, and state management.
+## Architecture Notes
 
-| File                    | Tests | Coverage                                             |
-| ----------------------- | ----- | ---------------------------------------------------- |
-| mixed-tools.test.ts     | 4     | MCP + Delegate + Interactive in single response      |
-| parallel-mcp.test.ts    | 3     | Parallel MCP tool execution                          |
-| special-tools.test.ts   | 6     | think, readPdfFile, readImageFile parallel execution |
-| multi-modal.test.ts     | 2     | PDF and image content reading verification           |
-| delegate-chain.test.ts  | 3     | Multi-level delegation                               |
-| continue-resume.test.ts | 4     | --continue-run, --resume-from                        |
+### Two CLIs
 
-## Writing Tests
+| CLI                | Package             | Storage                           | Use Case                     |
+| ------------------ | ------------------- | --------------------------------- | ---------------------------- |
+| `perstack`         | `packages/perstack` | Creates files in `perstack/jobs/` | Primary user-facing CLI      |
+| `perstack-runtime` | `packages/runtime`  | No storage (JSON events only)     | Standalone runtime execution |
 
-### CLI Command Tests
+### Key Differences
 
-```typescript
-import { describe, expect, it } from "vitest"
-import { runCli } from "./lib/runner.js"
+- **perstack CLI**: Uses `@perstack/runner` to dispatch to adapters. Manages storage, delegation resumption, and runtime selection.
+- **perstack-runtime CLI**: Lightweight wrapper that executes experts and outputs JSON events. Does not handle delegation resumption or storage.
 
-describe("CLI command", () => {
-  it("should fail with invalid args", async () => {
-    const result = await runCli(["command", "invalid-arg"])
-    expect(result.exitCode).toBe(1)
-  })
-})
-```
+### Runtime Adapters
 
-### Runtime Tests
+All runtimes (perstack, cursor, claude-code, gemini) are treated equally via the adapter pattern:
 
-```typescript
-import { beforeAll, describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { type RunResult, runExpert } from "./lib/runner.js"
-
-describe("Runtime feature", () => {
-  let result: RunResult
-
-  beforeAll(async () => {
-    result = await runExpert("expert-key", "query", {
-      configPath: "./e2e/experts/your-expert.toml",
-      timeout: 180000,
-    })
-  }, 200000)
-
-  it("should emit expected events", () => {
-    expect(
-      assertEventSequenceContains(result.events, ["startRun", "completeRun"]).passed,
-    ).toBe(true)
-  })
-})
-```
+- Each adapter implements `RuntimeAdapter` interface
+- `@perstack/runner` dispatches to adapters uniformly
+- Storage is handled by runner, not by adapters
 
 ## Notes
 
-- Tests run in parallel via vitest
+- Tests run sequentially with `fileParallelism: false` to reduce CPU load
+- `--bail=1` stops on first failure for faster feedback
 - Runtime tests require API keys (set in `.env.local`)
 - TUI-based commands (`start`) are excluded from E2E tests
-- API-calling tests (actual publish, unpublish) require registry access and are not included
-
-## Multi-Modal Test Verification (IMPORTANT)
-
-**Every time E2E tests are run, manually verify the multi-modal test output.**
-
-The `multi-modal.test.ts` outputs the LLM's summary of PDF and image files. Check the console output to ensure:
-
-1. **PDF Summary**: Should describe perstack GitHub README content (features, license, etc.)
-2. **Image Description**: Should describe terminal/CLI interface content
-
-These logs confirm that `readPdfFile` and `readImageFile` tools are correctly reading file contents. Automated assertions check for keywords, but human review ensures the content is actually understood.
-
+- External runtime tests (cursor, claude-code, gemini) pass regardless of CLI availability

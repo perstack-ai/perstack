@@ -5,7 +5,7 @@ import {
   parseWithFriendlyError,
   startCommandInputSchema,
 } from "@perstack/core"
-import { runtimeVersion } from "@perstack/runtime"
+import { getRuntimeVersion } from "@perstack/runner"
 import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "@perstack/tui"
 import { renderStart } from "@perstack/tui"
 import { Command } from "commander"
@@ -55,7 +55,6 @@ export const startCommand = new Command()
   .option("--runtime <runtime>", "Execution runtime (perstack, cursor, claude-code, gemini)")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
-    const runtime = input.options.runtime ?? "perstack"
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
@@ -68,6 +67,7 @@ export const startCommand = new Command()
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
+      const runtime = input.options.runtime ?? perstackConfig.runtime ?? "perstack"
       const showHistory = !input.expertKey && !input.query && !checkpoint
       const needsQueryInput = !input.query && !checkpoint
       const configuredExperts = Object.keys(perstackConfig.experts ?? {}).map((key) => ({
@@ -98,7 +98,7 @@ export const startCommand = new Command()
         initialExpertName: input.expertKey,
         initialQuery: input.query,
         initialConfig: {
-          runtimeVersion,
+          runtimeVersion: getRuntimeVersion(),
           model,
           temperature,
           maxSteps,

@@ -140,8 +140,6 @@ export interface PerstackConfigExpert {
   delegates?: string[]
   /** Tags for categorization */
   tags?: string[]
-  /** Compatible runtimes */
-  runtime?: RuntimeName | RuntimeName[]
 }
 
 /**
@@ -155,6 +153,8 @@ export interface PerstackConfig {
   model?: string
   /** Default temperature (0-1) */
   temperature?: number
+  /** Default execution runtime */
+  runtime?: RuntimeName
   /** Maximum steps per run */
   maxSteps?: number
   /** Maximum retries on generation failure */
@@ -175,6 +175,7 @@ export const perstackConfigSchema = z.object({
   provider: providerTableSchema.optional(),
   model: z.string().optional(),
   temperature: z.number().optional(),
+  runtime: runtimeNameSchema.optional(),
   maxSteps: z.number().optional(),
   maxRetries: z.number().optional(),
   timeout: z.number().optional(),
@@ -226,7 +227,6 @@ export const perstackConfigSchema = z.object({
           .optional(),
         delegates: z.array(z.string()).optional(),
         tags: z.array(z.string()).optional(),
-        runtime: z.union([runtimeNameSchema, z.array(runtimeNameSchema)]).optional(),
       }),
     )
     .optional(),

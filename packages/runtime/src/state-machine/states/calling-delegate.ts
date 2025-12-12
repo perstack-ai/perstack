@@ -1,9 +1,4 @@
-import {
-  type DelegationTarget,
-  type RunEvent,
-  type RuntimeName,
-  stopRunByDelegate,
-} from "@perstack/core"
+import { type DelegationTarget, type RunEvent, stopRunByDelegate } from "@perstack/core"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { getSkillManagerByToolName } from "../../skill-manager/index.js"
 import type { RunSnapshot } from "../machine.js"
@@ -49,7 +44,6 @@ export async function callingDelegateLogic({
       if (!tc.args || !tc.args.query || typeof tc.args.query !== "string") {
         throw new Error(`Delegation error: query is undefined for ${tc.toolName}`)
       }
-      const runtime = tc.args.runtime as RuntimeName | RuntimeName[] | undefined
       return {
         expert: {
           key: skillManager.expert.key,
@@ -59,7 +53,6 @@ export async function callingDelegateLogic({
         toolCallId: tc.id,
         toolName: tc.toolName,
         query: tc.args.query,
-        runtime,
       }
     }),
   )

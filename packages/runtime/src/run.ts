@@ -4,13 +4,11 @@ import {
   createRuntimeEvent,
   type DelegationTarget,
   type Expert,
-  getAdapter,
   type Job,
   type RunEvent,
   type RunParamsInput,
   type RunSetting,
   type RuntimeEvent,
-  type RuntimeName,
   runParamsSchema,
   type Step,
   type ToolResult,
@@ -31,49 +29,55 @@ import {
 } from "./helpers/index.js"
 import { getSkillManagers } from "./skill-manager/index.js"
 import { executeStateMachine } from "./state-machine/index.js"
-import {
-  createInitialJob,
-  defaultGetRunDir,
-  defaultRetrieveCheckpoint,
-  defaultStoreCheckpoint,
-  defaultStoreEvent,
-  type FileSystem,
-  type GetRunDirFn,
-  retrieveJob,
-  storeJob,
-  storeRunSetting,
-} from "./storage/index.js"
 
-export async function run(
-  runInput: RunParamsInput,
-  options?: {
-    shouldContinueRun?: (
-      setting: RunSetting,
-      checkpoint: Checkpoint,
-      step: Step,
-    ) => Promise<boolean>
-    retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
-    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
-    eventListener?: (event: RunEvent | RuntimeEvent) => void
-    resolveExpertToRun?: ResolveExpertToRunFn
-    fileSystem?: FileSystem
-    getRunDir?: GetRunDirFn
-    returnOnDelegationComplete?: boolean
-  },
-): Promise<Checkpoint> {
+export type RunOptions = {
+  shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
+  retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  storeEvent?: (event: RunEvent) => Promise<void>
+  storeJob?: (job: Job) => void
+  retrieveJob?: (jobId: string) => Job | undefined
+  createJob?: (jobId: string, expertKey: string, maxSteps?: number) => Job
+  eventListener?: (event: RunEvent | RuntimeEvent) => void
+  resolveExpertToRun?: ResolveExpertToRunFn
+  returnOnDelegationComplete?: boolean
+}
+
+const noopStoreCheckpoint = async () => {}
+const noopStoreEvent = async () => {}
+const noopStoreJob = () => {}
+const noopRetrieveJob = () => undefined
+const noopRetrieveCheckpoint = async (
+  _jobId: string,
+  _checkpointId: string,
+): Promise<Checkpoint> => {
+  throw new Error("retrieveCheckpoint not provided")
+}
+const defaultCreateJob = (jobId: string, expertKey: string, maxSteps?: number): Job => ({
+  id: jobId,
+  coordinatorExpertKey: expertKey,
+  status: "running",
+  totalSteps: 0,
+  startedAt: Date.now(),
+  maxSteps,
+  usage: createEmptyUsage(),
+})
+
+export async function run(runInput: RunParamsInput, options?: RunOptions): Promise<Checkpoint> {
   const runParams = runParamsSchema.parse(runInput)
-  const eventListener = getEventListener(options)
-  const retrieveCheckpoint = options?.retrieveCheckpoint ?? defaultRetrieveCheckpoint
-  const storeCheckpoint = options?.storeCheckpoint ?? defaultStoreCheckpoint
+  const storeCheckpoint = options?.storeCheckpoint ?? noopStoreCheckpoint
+  const storeEvent = options?.storeEvent ?? noopStoreEvent
+  const storeJob = options?.storeJob ?? noopStoreJob
+  const retrieveJob = options?.retrieveJob ?? noopRetrieveJob
+  const retrieveCheckpoint = options?.retrieveCheckpoint ?? noopRetrieveCheckpoint
+  const createJob = options?.createJob ?? defaultCreateJob
+  const eventListener = createEventListener(options?.eventListener, storeEvent)
   const eventEmitter = new RunEventEmitter()
   eventEmitter.subscribe(eventListener)
   let { setting, checkpoint } = runParams
   const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
-  const getRunDir = options?.getRunDir ?? defaultGetRunDir
-  await storeRunSetting(setting, options?.fileSystem, getRunDir)
   let job: Job =
-    retrieveJob(setting.jobId) ??
-    createInitialJob(setting.jobId, setting.expertKey, setting.maxSteps)
+    retrieveJob(setting.jobId) ?? createJob(setting.jobId, setting.expertKey, setting.maxSteps)
   if (job.status !== "running") {
     job = { ...job, status: "running", finishedAt: undefined }
   }
@@ -156,14 +160,7 @@ export async function run(
         if (!delegateTo || delegateTo.length === 0) {
           throw new Error("No delegations found in checkpoint")
         }
-        const hasNonDefaultRuntime = delegateTo.some(
-          (d) =>
-            d.runtime &&
-            (Array.isArray(d.runtime)
-              ? d.runtime.some((r) => r !== "perstack")
-              : d.runtime !== "perstack"),
-        )
-        if (delegateTo.length === 1 && !hasNonDefaultRuntime) {
+        if (delegateTo.length === 1) {
           const result = buildDelegateToState(setting, runResultCheckpoint, expertToRun)
           setting = result.setting
           checkpoint = result.checkpoint
@@ -232,12 +229,14 @@ export async function run(
   }
 }
 
-function getEventListener(options?: { eventListener?: (event: RunEvent | RuntimeEvent) => void }) {
-  const listener =
-    options?.eventListener ?? ((e: RunEvent | RuntimeEvent) => console.log(JSON.stringify(e)))
+function createEventListener(
+  userListener?: (event: RunEvent | RuntimeEvent) => void,
+  storeEvent?: (event: RunEvent) => Promise<void>,
+) {
+  const listener = userListener ?? ((e: RunEvent | RuntimeEvent) => console.log(JSON.stringify(e)))
   return async (event: RunEvent | RuntimeEvent) => {
-    if ("stepNumber" in event) {
-      await defaultStoreEvent(event)
+    if ("stepNumber" in event && storeEvent) {
+      await storeEvent(event as RunEvent)
     }
     listener(event)
   }
@@ -252,145 +251,64 @@ type DelegationResult = {
   deltaUsage: Usage
 }
 
-type RuntimeDelegationResult = DelegationResult & { runtime: RuntimeName }
-
-type DelegateOptions = {
-  shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
-  retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
-  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
-  eventListener?: (event: RunEvent | RuntimeEvent) => void
-  resolveExpertToRun?: ResolveExpertToRunFn
-  fileSystem?: FileSystem
-  getRunDir?: GetRunDirFn
-}
-
 async function runDelegate(
   delegation: DelegationTarget,
   parentSetting: RunSetting,
   parentCheckpoint: Checkpoint,
   parentExpert: Pick<Expert, "key" | "name" | "version">,
-  options?: DelegateOptions,
+  options?: RunOptions,
 ): Promise<DelegationResult> {
-  const { expert: delegateExpertInfo, toolCallId, toolName, runtime } = delegation
-  const runtimes: RuntimeName[] = runtime
-    ? Array.isArray(runtime)
-      ? runtime
-      : [runtime]
-    : ["perstack"]
-  const results = await Promise.all(
-    runtimes.map((rt) =>
-      runDelegateOnRuntime(delegation, parentSetting, parentCheckpoint, parentExpert, rt, options),
-    ),
-  )
-  const combinedText =
-    results.length === 1
-      ? results[0].text
-      : results.map((r) => `[${r.runtime}]\n${r.text}`).join("\n\n")
-  const maxStepNumber = Math.max(...results.map((r) => r.stepNumber))
-  const totalUsage = results.reduce((acc, r) => sumUsage(acc, r.deltaUsage), createEmptyUsage())
-  return {
-    toolCallId,
-    toolName,
-    expertKey: delegateExpertInfo.key,
-    text: combinedText,
-    stepNumber: maxStepNumber,
-    deltaUsage: totalUsage,
-  }
-}
-
-async function runDelegateOnRuntime(
-  delegation: DelegationTarget,
-  parentSetting: RunSetting,
-  parentCheckpoint: Checkpoint,
-  parentExpert: Pick<Expert, "key" | "name" | "version">,
-  runtime: RuntimeName,
-  options?: DelegateOptions,
-): Promise<RuntimeDelegationResult> {
   const { expert, toolCallId, toolName, query } = delegation
   const delegateRunId = createId()
-  if (runtime === "perstack") {
-    const delegateSetting: RunSetting = {
-      ...parentSetting,
-      runId: delegateRunId,
-      expertKey: expert.key,
-      input: { text: query },
-    }
-    const delegateCheckpoint: Checkpoint = {
-      id: createId(),
-      jobId: parentSetting.jobId,
-      runId: delegateRunId,
-      status: "init",
-      stepNumber: parentCheckpoint.stepNumber,
-      messages: [],
+  const delegateSetting: RunSetting = {
+    ...parentSetting,
+    runId: delegateRunId,
+    expertKey: expert.key,
+    input: { text: query },
+  }
+  const delegateCheckpoint: Checkpoint = {
+    id: createId(),
+    jobId: parentSetting.jobId,
+    runId: delegateRunId,
+    status: "init",
+    stepNumber: parentCheckpoint.stepNumber,
+    messages: [],
+    expert: {
+      key: expert.key,
+      name: expert.name,
+      version: expert.version,
+    },
+    delegatedBy: {
       expert: {
-        key: expert.key,
-        name: expert.name,
-        version: expert.version,
+        key: parentExpert.key,
+        name: parentExpert.name,
+        version: parentExpert.version,
       },
-      delegatedBy: {
-        expert: {
-          key: parentExpert.key,
-          name: parentExpert.name,
-          version: parentExpert.version,
-        },
-        toolCallId,
-        toolName,
-        checkpointId: parentCheckpoint.id,
-      },
-      usage: createEmptyUsage(),
-      contextWindow: parentCheckpoint.contextWindow,
-    }
-    const resultCheckpoint = await run(
-      { setting: delegateSetting, checkpoint: delegateCheckpoint },
-      { ...options, returnOnDelegationComplete: true },
-    )
-    const lastMessage = resultCheckpoint.messages[resultCheckpoint.messages.length - 1]
-    if (!lastMessage || lastMessage.type !== "expertMessage") {
-      throw new Error("Delegation error: delegation result message is incorrect")
-    }
-    const textPart = lastMessage.contents.find((c) => c.type === "textPart")
-    if (!textPart || textPart.type !== "textPart") {
-      throw new Error("Delegation error: delegation result message does not contain text")
-    }
-    return {
       toolCallId,
       toolName,
-      expertKey: expert.key,
-      text: textPart.text,
-      stepNumber: resultCheckpoint.stepNumber,
-      deltaUsage: resultCheckpoint.usage,
-      runtime,
-    }
-  }
-  const adapter = getAdapter(runtime)
-  const prereqResult = await adapter.checkPrerequisites()
-  if (!prereqResult.ok) {
-    throw new Error(`Runtime "${runtime}" prerequisites not met: ${prereqResult.error.message}`)
-  }
-  const result = await adapter.run({
-    setting: {
-      ...parentSetting,
-      runId: delegateRunId,
-      expertKey: expert.key,
-      input: { text: query },
+      checkpointId: parentCheckpoint.id,
     },
-    eventListener: options?.eventListener,
-    storeCheckpoint: options?.storeCheckpoint,
-  })
-  const lastMessage = result.checkpoint.messages[result.checkpoint.messages.length - 1]
-  const textPart =
-    lastMessage?.type === "expertMessage"
-      ? lastMessage.contents.find((c) => c.type === "textPart")
-      : null
+    usage: createEmptyUsage(),
+    contextWindow: parentCheckpoint.contextWindow,
+  }
+  const resultCheckpoint = await run(
+    { setting: delegateSetting, checkpoint: delegateCheckpoint },
+    { ...options, returnOnDelegationComplete: true },
+  )
+  const lastMessage = resultCheckpoint.messages[resultCheckpoint.messages.length - 1]
+  if (!lastMessage || lastMessage.type !== "expertMessage") {
+    throw new Error("Delegation error: delegation result message is incorrect")
+  }
+  const textPart = lastMessage.contents.find((c) => c.type === "textPart")
+  if (!textPart || textPart.type !== "textPart") {
+    throw new Error("Delegation error: delegation result message does not contain text")
+  }
   return {
     toolCallId,
     toolName,
     expertKey: expert.key,
-    text: textPart && textPart.type === "textPart" ? textPart.text : "",
-    stepNumber: result.checkpoint.stepNumber,
-    deltaUsage: result.checkpoint.usage,
-    runtime,
+    text: textPart.text,
+    stepNumber: resultCheckpoint.stepNumber,
+    deltaUsage: resultCheckpoint.usage,
   }
 }
-
-export { defaultGetRunDir as getRunDir }

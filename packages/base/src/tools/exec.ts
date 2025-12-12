@@ -26,6 +26,7 @@ export async function exec(input: ExecInput) {
     cwd: validatedCwd,
     env: { ...process.env, ...input.env },
     timeout: input.timeout,
+    maxBuffer: 10 * 1024 * 1024,
   })
   let output = ""
   if (input.stdout) {

@@ -1,0 +1,10 @@
+{
+  "extends": "@sindresorhus/tsconfig",
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "NodeNext",
+    "noEmit": true,
+    "resolveJsonModule": true
+  },
+  "include": ["bin", "src"]
+}

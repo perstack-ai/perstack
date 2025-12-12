@@ -30,7 +30,8 @@
     "@perstack/core": "workspace:*",
     "@perstack/cursor": "workspace:*",
     "@perstack/gemini": "workspace:*",
-    "@perstack/runtime": "workspace:*"
+    "@perstack/runtime": "workspace:*",
+    "@perstack/storage": "workspace:*"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",

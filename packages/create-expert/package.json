@@ -1,0 +1,40 @@
+{
+  "name": "create-expert",
+  "version": "0.0.1",
+  "description": "Create Perstack Experts interactively",
+  "author": "Wintermute Technologies, Inc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "create-expert": "dist/bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "bin": {
+      "create-expert": "dist/bin/cli.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && tsup --config ./tsup.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@perstack/tui": "workspace:*",
+    "commander": "^14.0.2",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@sindresorhus/tsconfig": "^8.1.0",
+    "@types/node": "^24.10.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

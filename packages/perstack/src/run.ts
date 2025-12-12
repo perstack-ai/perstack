@@ -39,7 +39,6 @@ export const runCommand = new Command()
   .option("--runtime <runtime>", "Execution runtime (perstack, cursor, claude-code, gemini)")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
-    const runtime = input.options.runtime ?? "perstack"
     try {
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
@@ -52,6 +51,7 @@ export const runCommand = new Command()
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
+      const runtime = input.options.runtime ?? perstackConfig.runtime ?? "perstack"
       await dispatchToRuntime({
         setting: {
           jobId: checkpoint?.jobId ?? input.options.jobId,

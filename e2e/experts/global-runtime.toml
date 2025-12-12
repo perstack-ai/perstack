@@ -1,0 +1,23 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+runtime = "perstack"
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-global-runtime"]
+version = "1.0.0"
+description = "E2E test expert for global runtime configuration"
+instruction = """
+You are a simple test expert.
+When asked to say hello, respond with a friendly greeting and call attemptCompletion.
+"""
+
+[experts."e2e-global-runtime".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
