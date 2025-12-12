@@ -11,6 +11,6 @@ export {
   extractRequiredEnvVars,
   generateComposeEnvSection,
   generateDockerEnvArgs,
-  getProviderEnvKey,
+  getProviderEnvKeys,
   resolveEnvValues,
 } from "./env-resolver.js"

@@ -4,29 +4,36 @@ import {
   extractRequiredEnvVars,
   generateComposeEnvSection,
   generateDockerEnvArgs,
-  getProviderEnvKey,
+  getProviderEnvKeys,
   resolveEnvValues,
 } from "./env-resolver.js"
 
-describe("getProviderEnvKey", () => {
+describe("getProviderEnvKeys", () => {
   it("should return ANTHROPIC_API_KEY for anthropic provider", () => {
-    expect(getProviderEnvKey({ providerName: "anthropic" })).toBe("ANTHROPIC_API_KEY")
+    expect(getProviderEnvKeys({ providerName: "anthropic" })).toEqual(["ANTHROPIC_API_KEY"])
   })
 
   it("should return OPENAI_API_KEY for openai provider", () => {
-    expect(getProviderEnvKey({ providerName: "openai" })).toBe("OPENAI_API_KEY")
+    expect(getProviderEnvKeys({ providerName: "openai" })).toEqual(["OPENAI_API_KEY"])
   })
 
   it("should return GOOGLE_API_KEY for google provider", () => {
-    expect(getProviderEnvKey({ providerName: "google" })).toBe("GOOGLE_API_KEY")
+    expect(getProviderEnvKeys({ providerName: "google" })).toEqual(["GOOGLE_API_KEY"])
   })
 
-  it("should return undefined for ollama provider", () => {
-    expect(getProviderEnvKey({ providerName: "ollama" })).toBeUndefined()
+  it("should return multiple keys for amazon-bedrock provider", () => {
+    const keys = getProviderEnvKeys({ providerName: "amazon-bedrock" })
+    expect(keys).toContain("AWS_ACCESS_KEY_ID")
+    expect(keys).toContain("AWS_SECRET_ACCESS_KEY")
+    expect(keys).toContain("AWS_REGION")
   })
 
-  it("should return undefined when no provider", () => {
-    expect(getProviderEnvKey(undefined)).toBeUndefined()
+  it("should return empty array for ollama provider", () => {
+    expect(getProviderEnvKeys({ providerName: "ollama" })).toEqual([])
+  })
+
+  it("should return empty array when no provider", () => {
+    expect(getProviderEnvKeys(undefined)).toEqual([])
   })
 })
 
@@ -131,6 +138,14 @@ describe("resolveEnvValues", () => {
     expect(resolved).toEqual({})
     expect(missing).toEqual([])
   })
+
+  it("should include empty string values", () => {
+    const requirements = [{ name: "EMPTY_VAR", source: "provider" as const, required: true }]
+    const env = { EMPTY_VAR: "" }
+    const { resolved, missing } = resolveEnvValues(requirements, env)
+    expect(resolved).toEqual({ EMPTY_VAR: "" })
+    expect(missing).toEqual([])
+  })
 })
 
 describe("generateDockerEnvArgs", () => {
@@ -148,15 +163,15 @@ describe("generateDockerEnvArgs", () => {
 
 describe("generateComposeEnvSection", () => {
   it("should generate environment section", () => {
-    const envVars = { API_KEY: "key123", TOKEN: "token456" }
-    const section = generateComposeEnvSection(envVars)
+    const envKeys = ["API_KEY", "TOKEN"]
+    const section = generateComposeEnvSection(envKeys)
     expect(section).toContain("environment:")
     expect(section).toContain("- API_KEY")
     expect(section).toContain("- TOKEN")
   })
 
-  it("should return empty string for no env vars", () => {
-    const section = generateComposeEnvSection({})
+  it("should return empty string for no env keys", () => {
+    const section = generateComposeEnvSection([])
     expect(section).toBe("")
   })
 })

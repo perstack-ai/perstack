@@ -6,27 +6,27 @@ export type EnvRequirement = {
   required: boolean
 }
 
-export function getProviderEnvKey(provider?: ProviderTable): string | undefined {
-  if (!provider) return undefined
+export function getProviderEnvKeys(provider?: ProviderTable): string[] {
+  if (!provider) return []
   switch (provider.providerName) {
     case "anthropic":
-      return "ANTHROPIC_API_KEY"
+      return ["ANTHROPIC_API_KEY"]
     case "openai":
-      return "OPENAI_API_KEY"
+      return ["OPENAI_API_KEY"]
     case "google":
-      return "GOOGLE_API_KEY"
+      return ["GOOGLE_API_KEY"]
     case "azure-openai":
-      return "AZURE_OPENAI_API_KEY"
+      return ["AZURE_OPENAI_API_KEY"]
     case "amazon-bedrock":
-      return "AWS_ACCESS_KEY_ID"
+      return ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
     case "google-vertex":
-      return "GOOGLE_APPLICATION_CREDENTIALS"
+      return ["GOOGLE_APPLICATION_CREDENTIALS"]
     case "deepseek":
-      return "DEEPSEEK_API_KEY"
+      return ["DEEPSEEK_API_KEY"]
     case "ollama":
-      return undefined
+      return []
     default:
-      return undefined
+      return []
   }
 }
 
@@ -35,10 +35,10 @@ export function extractRequiredEnvVars(
   expertKey: string,
 ): EnvRequirement[] {
   const requirements: EnvRequirement[] = []
-  const providerEnvKey = getProviderEnvKey(config.provider)
-  if (providerEnvKey) {
+  const providerEnvKeys = getProviderEnvKeys(config.provider)
+  for (const key of providerEnvKeys) {
     requirements.push({
-      name: providerEnvKey,
+      name: key,
       source: "provider",
       required: true,
     })
@@ -75,7 +75,7 @@ export function resolveEnvValues(
   const missing: string[] = []
   for (const req of requirements) {
     const value = env[req.name]
-    if (value) {
+    if (value !== undefined) {
       resolved[req.name] = value
     } else if (req.required) {
       missing.push(req.name)
@@ -92,12 +92,12 @@ export function generateDockerEnvArgs(envVars: Record<string, string>): string[]
   return args
 }
 
-export function generateComposeEnvSection(envVars: Record<string, string>): string {
-  if (Object.keys(envVars).length === 0) {
+export function generateComposeEnvSection(envKeys: string[]): string {
+  if (envKeys.length === 0) {
     return ""
   }
   const lines: string[] = ["    environment:"]
-  for (const key of Object.keys(envVars)) {
+  for (const key of envKeys) {
     lines.push(`      - ${key}`)
   }
   return lines.join("\n")
