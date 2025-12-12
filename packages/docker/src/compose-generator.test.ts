@@ -57,4 +57,18 @@ describe("generateComposeFile", () => {
     expect(compose).toContain("./workspace:/workspace:rw")
     expect(compose).toContain("working_dir: /workspace")
   })
+
+  it("should merge env keys with proxy env in single environment block", () => {
+    const compose = generateComposeFile({
+      expertKey: "my-expert",
+      runtimeImageName: "perstack-runtime-my-expert:latest",
+      proxyEnabled: true,
+      networkName: "perstack-net",
+      envKeys: ["ANTHROPIC_API_KEY"],
+    })
+    const envMatches = compose.match(/environment:/g)
+    expect(envMatches).toHaveLength(1)
+    expect(compose).toContain("- ANTHROPIC_API_KEY")
+    expect(compose).toContain("- HTTP_PROXY")
+  })
 })

@@ -16,9 +16,14 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("services:")
   lines.push("  runtime:")
   lines.push(`    image: ${runtimeImageName}`)
-  if (envKeys.length > 0) {
+  const allEnvKeys = [...envKeys]
+  if (proxyEnabled) {
+    allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
+    allEnvKeys.push("HTTPS_PROXY=http://proxy:3128")
+  }
+  if (allEnvKeys.length > 0) {
     lines.push("    environment:")
-    for (const key of envKeys) {
+    for (const key of allEnvKeys) {
       lines.push(`      - ${key}`)
     }
   }
@@ -32,9 +37,6 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   if (proxyEnabled) {
     lines.push("    depends_on:")
     lines.push("      - proxy")
-    lines.push("    environment:")
-    lines.push("      - HTTP_PROXY=http://proxy:3128")
-    lines.push("      - HTTPS_PROXY=http://proxy:3128")
   }
   lines.push("    networks:")
   lines.push(`      - ${networkName}`)
