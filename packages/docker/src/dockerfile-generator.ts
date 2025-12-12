@@ -1,0 +1,99 @@
+import type { McpStdioSkill, PerstackConfig } from "@perstack/core"
+
+export type RuntimeRequirement = "nodejs" | "python"
+
+export function detectRequiredRuntimes(config: PerstackConfig): Set<RuntimeRequirement> {
+  const runtimes = new Set<RuntimeRequirement>()
+  runtimes.add("nodejs")
+  if (!config.experts) {
+    return runtimes
+  }
+  for (const expert of Object.values(config.experts)) {
+    if (!expert.skills) continue
+    for (const skill of Object.values(expert.skills)) {
+      if (skill.type !== "mcpStdioSkill") continue
+      const mcpSkill = skill as McpStdioSkill
+      if (mcpSkill.command === "npx" || mcpSkill.command === "node") {
+        runtimes.add("nodejs")
+      }
+      if (
+        mcpSkill.command === "uvx" ||
+        mcpSkill.command === "python" ||
+        mcpSkill.command === "python3"
+      ) {
+        runtimes.add("python")
+      }
+    }
+  }
+  return runtimes
+}
+
+export function generateBaseImageLayers(runtimes: Set<RuntimeRequirement>): string {
+  const lines: string[] = []
+  lines.push("FROM debian:bookworm-slim")
+  lines.push("")
+  lines.push("RUN apt-get update && apt-get install -y --no-install-recommends \\")
+  lines.push("    ca-certificates \\")
+  lines.push("    curl \\")
+  lines.push("    && rm -rf /var/lib/apt/lists/*")
+  lines.push("")
+  if (runtimes.has("nodejs")) {
+    lines.push("RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \\")
+    lines.push("    && apt-get install -y --no-install-recommends nodejs \\")
+    lines.push("    && rm -rf /var/lib/apt/lists/*")
+    lines.push("")
+  }
+  if (runtimes.has("python")) {
+    lines.push("RUN apt-get update && apt-get install -y --no-install-recommends \\")
+    lines.push("    python3 \\")
+    lines.push("    python3-pip \\")
+    lines.push("    python3-venv \\")
+    lines.push("    && rm -rf /var/lib/apt/lists/* \\")
+    lines.push("    && pip3 install --break-system-packages uv")
+    lines.push("")
+  }
+  return lines.join("\n")
+}
+
+export function generateMcpInstallLayers(config: PerstackConfig, expertKey: string): string {
+  const lines: string[] = []
+  const expert = config.experts?.[expertKey]
+  if (!expert?.skills) {
+    return ""
+  }
+  const npmPackages: string[] = []
+  for (const skill of Object.values(expert.skills)) {
+    if (skill.type !== "mcpStdioSkill") continue
+    const mcpSkill = skill as McpStdioSkill
+    if (mcpSkill.command === "npx" && mcpSkill.packageName) {
+      npmPackages.push(mcpSkill.packageName)
+    }
+  }
+  if (npmPackages.length > 0) {
+    lines.push(`RUN npm install -g ${npmPackages.join(" ")}`)
+    lines.push("")
+  }
+  return lines.join("\n")
+}
+
+export function generateDockerfile(
+  config: PerstackConfig,
+  expertKey: string,
+  runtimePackagePath: string,
+): string {
+  const runtimes = detectRequiredRuntimes(config)
+  const lines: string[] = []
+  lines.push(generateBaseImageLayers(runtimes))
+  lines.push("WORKDIR /app")
+  lines.push("")
+  const mcpLayers = generateMcpInstallLayers(config, expertKey)
+  if (mcpLayers) {
+    lines.push(mcpLayers)
+  }
+  lines.push(`COPY ${runtimePackagePath} /app/perstack-runtime`)
+  lines.push("RUN chmod +x /app/perstack-runtime")
+  lines.push("")
+  lines.push(`ENTRYPOINT ["/app/perstack-runtime", "run", "${expertKey}"]`)
+  lines.push("")
+  return lines.join("\n")
+}
