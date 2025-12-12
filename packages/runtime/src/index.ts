@@ -23,5 +23,5 @@ export {
   getJobsDir,
   retrieveJob,
   storeJob,
-} from "./storage/index.js"
+} from "@perstack/storage"
 export const runtimeVersion = pkg.version

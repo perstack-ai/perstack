@@ -1,11 +1,20 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { createId } from "@paralleldrive/cuid2"
-import type { Checkpoint, RunEvent } from "@perstack/core"
+import type { Checkpoint, RunEvent, Usage } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { createEmptyUsage } from "../helpers/usage.js"
 import { defaultRetrieveCheckpoint, defaultStoreCheckpoint } from "./checkpoint.js"
 import { defaultStoreEvent } from "./event.js"
+
+function createEmptyUsage(): Usage {
+  return {
+    inputTokens: 0,
+    outputTokens: 0,
+    reasoningTokens: 0,
+    totalTokens: 0,
+    cachedInputTokens: 0,
+  }
+}
 
 function createTestCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {
@@ -40,7 +49,7 @@ function createTestEvent(overrides: Partial<RunEvent> = {}): RunEvent {
   } as RunEvent
 }
 
-describe("@perstack/runtime: default-store", () => {
+describe("@perstack/storage: default-store", () => {
   const testJobId = `test-job-${Date.now()}`
   const testRunId = `test-run-${Date.now()}`
   const testJobDir = `${process.cwd()}/perstack/jobs/${testJobId}`

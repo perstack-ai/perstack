@@ -2,7 +2,7 @@ import type { RunSetting } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import { defaultGetRunDir, type FileSystem, storeRunSetting } from "./run-setting.js"
 
-describe("@perstack/runtime: defaultGetRunDir", () => {
+describe("@perstack/storage: defaultGetRunDir", () => {
   it("returns correct run directory path", () => {
     const jobId = "test-job-123"
     const runId = "test-run-123"
@@ -26,7 +26,7 @@ describe("@perstack/runtime: defaultGetRunDir", () => {
   })
 })
 
-describe("@perstack/runtime: storeRunSetting", () => {
+describe("@perstack/storage: storeRunSetting", () => {
   const baseSetting: RunSetting = {
     jobId: "job-123",
     runId: "run-123",

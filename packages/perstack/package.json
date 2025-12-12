@@ -24,6 +24,7 @@
     "@perstack/core": "workspace:*",
     "@perstack/runner": "workspace:*",
     "@perstack/runtime": "workspace:*",
+    "@perstack/storage": "workspace:*",
     "@perstack/tui": "workspace:*",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",

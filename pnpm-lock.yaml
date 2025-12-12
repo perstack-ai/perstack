@@ -317,6 +317,9 @@ importers:
       '@perstack/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@perstack/storage':
+        specifier: workspace:*
+        version: link:../storage
       '@perstack/tui':
         specifier: workspace:*
         version: link:../tui
@@ -418,6 +421,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../core
+      '@perstack/storage':
+        specifier: workspace:*
+        version: link:../storage
       ai:
         specifier: ^5.0.104
         version: 5.0.105(zod@4.1.13)
@@ -430,6 +436,31 @@ importers:
       xstate:
         specifier: ^5.24.0
         version: 5.24.0
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.14
+        version: 4.0.14(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.3(@types/node@24.10.1)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/storage:
+    dependencies:
+      '@paralleldrive/cuid2':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5

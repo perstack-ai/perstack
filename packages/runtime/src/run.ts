@@ -40,7 +40,7 @@ import {
   retrieveJob,
   storeJob,
   storeRunSetting,
-} from "./storage/index.js"
+} from "@perstack/storage"
 
 export async function run(
   runInput: RunParamsInput,
