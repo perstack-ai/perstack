@@ -4,9 +4,9 @@ import {
   assertEventSequenceContains,
   assertPartialResultsContain,
   assertToolCallCount,
-} from "./lib/assertions.js"
-import type { ToolCallInfo } from "./lib/event-parser.js"
-import { type RunResult, runExpert } from "./lib/runner.js"
+} from "../lib/assertions.js"
+import type { ToolCallInfo } from "../lib/event-parser.js"
+import { type RunResult, runExpert } from "../lib/runner.js"
 
 describe("Mixed Tool Calls (MCP + Delegate + Interactive)", () => {
   let result: RunResult

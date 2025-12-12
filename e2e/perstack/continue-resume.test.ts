@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { filterEventsByType, getEventSequence } from "./lib/event-parser.js"
-import { runExpert } from "./lib/runner.js"
+import { assertEventSequenceContains } from "../lib/assertions.js"
+import { filterEventsByType, getEventSequence } from "../lib/event-parser.js"
+import { runExpert } from "../lib/runner.js"
 
 const CONFIG_PATH = "./e2e/experts/continue-resume.toml"
 const TIMEOUT = 180000

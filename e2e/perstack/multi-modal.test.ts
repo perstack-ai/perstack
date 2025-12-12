@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { runExpert } from "./lib/runner.js"
+import { assertEventSequenceContains } from "../lib/assertions.js"
+import { runExpert } from "../lib/runner.js"
 
 describe("Multi-Modal File Reading", () => {
   describe("PDF Reading", () => {

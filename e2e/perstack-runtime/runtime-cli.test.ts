@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { runExpertWithRuntimeCli, runRuntimeCli } from "./lib/runner.js"
+import { assertEventSequenceContains } from "../lib/assertions.js"
+import { runExpertWithRuntimeCli, runRuntimeCli } from "../lib/runner.js"
 
 describe("perstack-runtime CLI", () => {
   describe("basic commands", () => {

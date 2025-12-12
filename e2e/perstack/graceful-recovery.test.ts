@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { filterEventsByType } from "./lib/event-parser.js"
-import { runCli, runExpert } from "./lib/runner.js"
+import { assertEventSequenceContains } from "../lib/assertions.js"
+import { filterEventsByType } from "../lib/event-parser.js"
+import { runCli, runExpert } from "../lib/runner.js"
 
 describe("Graceful Error Recovery", () => {
   describe("Tool Error Recovery", () => {

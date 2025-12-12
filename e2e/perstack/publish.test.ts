@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { runCli } from "./lib/runner.js"
+import { runCli } from "../lib/runner.js"
 
 const CONFIG_PATH = "./e2e/experts/cli-commands.toml"
 

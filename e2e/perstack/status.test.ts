@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { runCli } from "./lib/runner.js"
+import { runCli } from "../lib/runner.js"
 
 describe("CLI status", () => {
   it("should fail without version", async () => {

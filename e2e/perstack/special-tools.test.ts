@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest"
-import { assertEventSequenceContains, assertToolCallCount } from "./lib/assertions.js"
-import { filterEventsByType } from "./lib/event-parser.js"
-import { type RunResult, runExpert } from "./lib/runner.js"
+import { assertEventSequenceContains, assertToolCallCount } from "../lib/assertions.js"
+import { filterEventsByType } from "../lib/event-parser.js"
+import { type RunResult, runExpert } from "../lib/runner.js"
 
 describe("Special Tools Parallel Execution", () => {
   let result: RunResult

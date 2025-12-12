@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { runCli, runExpert } from "./lib/runner.js"
+import { assertEventSequenceContains } from "../lib/assertions.js"
+import { runCli, runExpert } from "../lib/runner.js"
 
 describe("multi-runtime CLI", () => {
   describe("--runtime option parsing", () => {

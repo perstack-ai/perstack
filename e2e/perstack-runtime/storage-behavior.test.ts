@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
-import { runExpert, runExpertWithRuntimeCli } from "./lib/runner.js"
+import { runExpert, runExpertWithRuntimeCli } from "../lib/runner.js"
 
 const STORAGE_DIR = path.join(process.cwd(), "perstack", "jobs")
 

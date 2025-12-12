@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "./lib/assertions.js"
-import { getEventSequence } from "./lib/event-parser.js"
-import { type RunResult, runExpert } from "./lib/runner.js"
+import { assertEventSequenceContains } from "../lib/assertions.js"
+import { getEventSequence } from "../lib/event-parser.js"
+import { type RunResult, runExpert } from "../lib/runner.js"
 
 describe("Delegate Chain", () => {
   let result: RunResult
