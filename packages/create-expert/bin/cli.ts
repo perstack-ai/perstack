@@ -80,16 +80,18 @@ const program = new Command()
         writeFileSync(perstackTomlPath, createExpertToml)
         console.log("✓ Created perstack.toml with create-expert Expert")
       } else {
+        const provider = wizardResult.provider || "anthropic"
+        const model = wizardResult.model || getDefaultModel(provider)
         const agentsMd = generateAgentsMd({
-          provider: "anthropic",
-          model: "claude-sonnet-4-5",
+          provider,
+          model,
           runtime: wizardResult.runtime,
         })
         writeFileSync(agentsMdPath, agentsMd)
         console.log("✓ Created AGENTS.md")
         const createExpertToml = generateCreateExpertToml({
-          provider: "anthropic",
-          model: "claude-sonnet-4-5",
+          provider,
+          model,
           runtime: wizardResult.runtime,
         })
         writeFileSync(perstackTomlPath, createExpertToml)
