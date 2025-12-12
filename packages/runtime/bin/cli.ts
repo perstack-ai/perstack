@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import type { RunEvent, RuntimeEvent } from "@perstack/core"
+import type { Checkpoint, RunEvent, RuntimeEvent } from "@perstack/core"
 import { parseWithFriendlyError, runCommandInputSchema } from "@perstack/core"
 import { Command } from "commander"
 import pkg from "../package.json" with { type: "json" }
@@ -8,6 +8,18 @@ import { resolveRunContext } from "../src/cli/context.js"
 import { run } from "../src/run.js"
 
 const defaultEventListener = (event: RunEvent | RuntimeEvent) => console.log(JSON.stringify(event))
+
+const checkpointStore = new Map<string, Checkpoint>()
+const storeCheckpoint = async (checkpoint: Checkpoint) => {
+  checkpointStore.set(checkpoint.id, checkpoint)
+}
+const retrieveCheckpoint = async (_jobId: string, checkpointId: string) => {
+  const checkpoint = checkpointStore.get(checkpointId)
+  if (!checkpoint) {
+    throw new Error(`Checkpoint not found: ${checkpointId}`)
+  }
+  return checkpoint
+}
 
 const program = new Command()
   .name("perstack-runtime")
@@ -65,7 +77,7 @@ program
             env,
           },
         },
-        { eventListener: defaultEventListener },
+        { eventListener: defaultEventListener, storeCheckpoint, retrieveCheckpoint },
       )
     } catch (error) {
       if (error instanceof Error) {

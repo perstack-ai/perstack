@@ -64,6 +64,7 @@ perstack run <expertKey> <query> [options]
 \`\`\`toml
 model = "${model}"
 temperature = 0.3
+${runtimeSection}
 
 [provider]
 providerName = "${provider}"
@@ -74,7 +75,6 @@ description = "Brief description"
 instruction = """
 Detailed instructions for the expert.
 """
-${runtimeSection}
 
 [experts."my-expert".skills."@perstack/base"]
 type = "mcpStdioSkill"
