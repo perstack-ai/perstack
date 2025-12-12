@@ -1,8 +1,25 @@
-import type { Expert } from "@perstack/core"
+import { EventEmitter } from "node:events"
+import type { Expert, RunEvent } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import { PerstackAdapter } from "./perstack-adapter.js"
 
 type ExecCommandResult = { exitCode: number; stdout: string; stderr: string }
+
+function createMockProcess() {
+  const stdout = new EventEmitter()
+  const stderr = new EventEmitter()
+  const proc = new EventEmitter() as EventEmitter & {
+    stdout: EventEmitter
+    stderr: EventEmitter
+    stdin: { end: () => void }
+    kill: () => void
+  }
+  proc.stdout = stdout
+  proc.stderr = stderr
+  proc.stdin = { end: vi.fn() }
+  proc.kill = vi.fn()
+  return proc
+}
 
 describe("@perstack/runtime: PerstackAdapter", () => {
   describe("Direct execution mode (default)", () => {
@@ -146,6 +163,243 @@ describe("@perstack/runtime: PerstackAdapter", () => {
         "test-expert",
         "",
       ])
+    })
+
+    describe("runViaCli", () => {
+      it("throws error when CLI exits with non-zero code", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeRuntimeCli: () => Promise<ExecCommandResult>
+          runViaCli: (params: { setting: unknown; eventListener?: unknown }) => Promise<unknown>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        vi.spyOn(adapterAny, "executeRuntimeCli").mockResolvedValue({
+          exitCode: 1,
+          stdout: "",
+          stderr: "error",
+        })
+        const setting = {
+          expertKey: "test",
+          input: { text: "query" },
+          providerConfig: { providerName: "anthropic" },
+          model: "claude-sonnet-4-5",
+        }
+        await expect(adapterAny.runViaCli({ setting })).rejects.toThrow(
+          "perstack-runtime CLI failed with exit code 1",
+        )
+      })
+
+      it("throws error when no terminal event received", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeRuntimeCli: (
+            args: string[],
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+          runViaCli: (params: { setting: unknown; eventListener?: unknown }) => Promise<unknown>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        vi.spyOn(adapterAny, "executeRuntimeCli").mockImplementation(
+          async (_args, _timeout, listener) => {
+            listener({ type: "startRun" } as RunEvent)
+            return { exitCode: 0, stdout: "", stderr: "" }
+          },
+        )
+        const setting = {
+          expertKey: "test",
+          input: { text: "query" },
+          providerConfig: { providerName: "anthropic" },
+          model: "claude-sonnet-4-5",
+        }
+        await expect(adapterAny.runViaCli({ setting })).rejects.toThrow(
+          "No terminal event with checkpoint received from CLI",
+        )
+      })
+
+      it("returns checkpoint from completeRun event", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeRuntimeCli: (
+            args: string[],
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+          runViaCli: (params: { setting: unknown; eventListener?: unknown }) => Promise<unknown>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const mockCheckpoint = { id: "cp-123", status: "completed" }
+        vi.spyOn(adapterAny, "executeRuntimeCli").mockImplementation(
+          async (_args, _timeout, listener) => {
+            listener({ type: "startRun" } as RunEvent)
+            listener({ type: "completeRun", checkpoint: mockCheckpoint } as unknown as RunEvent)
+            return { exitCode: 0, stdout: "", stderr: "" }
+          },
+        )
+        const setting = {
+          expertKey: "test",
+          input: { text: "query" },
+          providerConfig: { providerName: "anthropic" },
+          model: "claude-sonnet-4-5",
+        }
+        const result = (await adapterAny.runViaCli({ setting })) as {
+          checkpoint: typeof mockCheckpoint
+        }
+        expect(result.checkpoint).toEqual(mockCheckpoint)
+      })
+
+      it("returns checkpoint from stopRunByDelegate event", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeRuntimeCli: (
+            args: string[],
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+          runViaCli: (params: { setting: unknown; eventListener?: unknown }) => Promise<unknown>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const mockCheckpoint = { id: "cp-456", status: "stoppedByDelegate" }
+        vi.spyOn(adapterAny, "executeRuntimeCli").mockImplementation(
+          async (_args, _timeout, listener) => {
+            listener({
+              type: "stopRunByDelegate",
+              checkpoint: mockCheckpoint,
+            } as unknown as RunEvent)
+            return { exitCode: 0, stdout: "", stderr: "" }
+          },
+        )
+        const setting = {
+          expertKey: "test",
+          input: { text: "query" },
+          providerConfig: { providerName: "anthropic" },
+          model: "claude-sonnet-4-5",
+        }
+        const result = (await adapterAny.runViaCli({ setting })) as {
+          checkpoint: typeof mockCheckpoint
+        }
+        expect(result.checkpoint).toEqual(mockCheckpoint)
+      })
+    })
+
+    describe("executeWithStreaming", () => {
+      it("parses JSON events from stdout", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeWithStreaming: (
+            proc: ReturnType<typeof createMockProcess>,
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const proc = createMockProcess()
+        const events: RunEvent[] = []
+        const promise = adapterAny.executeWithStreaming(proc, 60000, (e) => events.push(e))
+        proc.stdout.emit("data", '{"type":"startRun"}\n{"type":"callTools"}\n')
+        proc.emit("close", 0)
+        const result = await promise
+        expect(result.exitCode).toBe(0)
+        expect(events).toHaveLength(2)
+        expect(events[0].type).toBe("startRun")
+        expect(events[1].type).toBe("callTools")
+      })
+
+      it("handles buffered partial lines", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeWithStreaming: (
+            proc: ReturnType<typeof createMockProcess>,
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const proc = createMockProcess()
+        const events: RunEvent[] = []
+        const promise = adapterAny.executeWithStreaming(proc, 60000, (e) => events.push(e))
+        proc.stdout.emit("data", '{"type":"sta')
+        proc.stdout.emit("data", 'rtRun"}\n')
+        proc.emit("close", 0)
+        const result = await promise
+        expect(result.exitCode).toBe(0)
+        expect(events).toHaveLength(1)
+        expect(events[0].type).toBe("startRun")
+      })
+
+      it("ignores non-JSON lines", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeWithStreaming: (
+            proc: ReturnType<typeof createMockProcess>,
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const proc = createMockProcess()
+        const events: RunEvent[] = []
+        const promise = adapterAny.executeWithStreaming(proc, 60000, (e) => events.push(e))
+        proc.stdout.emit("data", 'not json\n{"type":"startRun"}\nalso not json\n')
+        proc.emit("close", 0)
+        await promise
+        expect(events).toHaveLength(1)
+        expect(events[0].type).toBe("startRun")
+      })
+
+      it("captures stderr output", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeWithStreaming: (
+            proc: ReturnType<typeof createMockProcess>,
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const proc = createMockProcess()
+        const promise = adapterAny.executeWithStreaming(proc, 60000, () => {})
+        proc.stderr.emit("data", "error message")
+        proc.emit("close", 1)
+        const result = await promise
+        expect(result.stderr).toBe("error message")
+        expect(result.exitCode).toBe(1)
+      })
+
+      it("rejects on process error", async () => {
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeWithStreaming: (
+            proc: ReturnType<typeof createMockProcess>,
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const proc = createMockProcess()
+        const promise = adapterAny.executeWithStreaming(proc, 60000, () => {})
+        proc.emit("error", new Error("spawn failed"))
+        await expect(promise).rejects.toThrow("spawn failed")
+      })
+
+      it("rejects on timeout", async () => {
+        vi.useFakeTimers()
+        const adapter = new PerstackAdapter({ useDirectExecution: false })
+        type AdapterAny = {
+          executeWithStreaming: (
+            proc: ReturnType<typeof createMockProcess>,
+            timeout: number,
+            listener: (e: RunEvent) => void,
+          ) => Promise<ExecCommandResult>
+        }
+        const adapterAny = adapter as unknown as AdapterAny
+        const proc = createMockProcess()
+        const promise = adapterAny.executeWithStreaming(proc, 1000, () => {})
+        vi.advanceTimersByTime(1001)
+        await expect(promise).rejects.toThrow("perstack-runtime timed out after 1000ms")
+        expect(proc.kill).toHaveBeenCalled()
+        vi.useRealTimers()
+      })
     })
   })
 })
