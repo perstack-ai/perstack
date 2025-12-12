@@ -10,7 +10,40 @@ This package serves as the engine of Perstack. It orchestrates the lifecycle of 
 npm install @perstack/runtime
 ```
 
-## Usage
+## CLI Usage
+
+The runtime can be executed as a standalone CLI:
+
+```bash
+perstack-runtime run <expertKey> <query> [options]
+```
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `--config <path>` | Path to perstack.toml |
+| `--provider <provider>` | LLM provider |
+| `--model <model>` | Model name |
+| `--temperature <temp>` | Temperature (0.0-1.0) |
+| `--max-steps <n>` | Maximum steps |
+| `--max-retries <n>` | Maximum retries |
+| `--timeout <ms>` | Timeout in milliseconds |
+| `--job-id <id>` | Job ID |
+| `--run-id <id>` | Run ID |
+| `--env-path <path...>` | Environment file paths |
+| `--continue-job <jobId>` | Continue a job |
+| `--resume-from <checkpointId>` | Resume from checkpoint |
+
+### Example
+
+```bash
+perstack-runtime run my-expert "What is the weather?" --config ./perstack.toml
+```
+
+Output is JSON events (one per line) to stdout.
+
+## Programmatic Usage
 
 The primary entry point is the `run` function. It takes a `JobSetting` object and an optional `RunOptions` object.
 
