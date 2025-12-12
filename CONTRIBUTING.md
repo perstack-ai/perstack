@@ -104,10 +104,13 @@ major.minor.patch
 ```
 @perstack/core (schemas, types)
     │
-    ├─→ @perstack/runtime (execution)
+    ├─→ @perstack/storage (persistence)
     ├─→ @perstack/api-client (API layer)
     ├─→ @perstack/tui (terminal UI)
-    └─→ @perstack/perstack (CLI orchestrator)
+    │
+    └─→ @perstack/runtime (execution)
+            │
+            └─→ @perstack/storage
     
 @perstack/base (tool schemas defined inline, not exported)
 ```
