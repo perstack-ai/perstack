@@ -13,7 +13,7 @@ export type RunContext = {
   env: Record<string, string>
   providerConfig: ProviderConfig
   model: string
-  experts: Record<string, ExpertConfig & { name: string; version: string }>
+  experts: Record<string, ExpertConfig & { key: string; name: string; version: string }>
 }
 
 export type ResolveRunContextInput = {
@@ -36,6 +36,7 @@ export async function resolveRunContext(input: ResolveRunContextInput): Promise<
       return [
         name,
         {
+          key: name,
           name,
           version: expert.version ?? "1.0.0",
           description: expert.description,
