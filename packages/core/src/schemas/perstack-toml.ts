@@ -3,6 +3,19 @@ import { headersSchema } from "./provider-config.js"
 import type { RuntimeName } from "./runtime-name.js"
 import { runtimeNameSchema } from "./runtime-name.js"
 
+const domainPatternRegex = /^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/
+const domainPatternSchema = z.string().regex(domainPatternRegex, {
+  message: "Invalid domain pattern. Use exact domain (example.com) or wildcard prefix (*.example.com)",
+})
+
+export interface NetworkConfig {
+  allowedDomains?: string[]
+}
+
+export const networkConfigSchema = z.object({
+  allowedDomains: z.array(domainPatternSchema).optional(),
+})
+
 const anthropicSettingSchema = z.object({
   baseUrl: z.string().optional(),
   headers: headersSchema,
@@ -140,6 +153,8 @@ export interface PerstackConfigExpert {
   delegates?: string[]
   /** Tags for categorization */
   tags?: string[]
+  /** Network configuration (merged with global) */
+  network?: NetworkConfig
 }
 
 /**
@@ -169,6 +184,8 @@ export interface PerstackConfig {
   perstackBaseSkillCommand?: string[]
   /** Paths to .env files */
   envPath?: string[]
+  /** Global network configuration for docker runtime */
+  network?: NetworkConfig
 }
 
 export const perstackConfigSchema = z.object({
@@ -227,10 +244,12 @@ export const perstackConfigSchema = z.object({
           .optional(),
         delegates: z.array(z.string()).optional(),
         tags: z.array(z.string()).optional(),
+        network: networkConfigSchema.optional(),
       }),
     )
     .optional(),
   perstackApiBaseUrl: z.url().optional(),
   perstackBaseSkillCommand: z.array(z.string()).optional(),
   envPath: z.array(z.string()).optional(),
+  network: networkConfigSchema.optional(),
 })
