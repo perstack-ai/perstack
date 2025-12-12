@@ -96,11 +96,21 @@ describe("generateSquidConf", () => {
 
 describe("generateProxyDockerfile", () => {
   it("should generate Dockerfile with squid", () => {
-    const dockerfile = generateProxyDockerfile()
+    const dockerfile = generateProxyDockerfile(true)
     expect(dockerfile).toContain("FROM debian:bookworm-slim")
     expect(dockerfile).toContain("squid")
     expect(dockerfile).toContain("EXPOSE 3128")
     expect(dockerfile).toContain('CMD ["squid", "-N", "-d", "1"]')
+  })
+
+  it("should include allowlist copy when hasAllowlist is true", () => {
+    const dockerfile = generateProxyDockerfile(true)
+    expect(dockerfile).toContain("COPY allowed_domains.txt")
+  })
+
+  it("should not include allowlist copy when hasAllowlist is false", () => {
+    const dockerfile = generateProxyDockerfile(false)
+    expect(dockerfile).not.toContain("COPY allowed_domains.txt")
   })
 })
 

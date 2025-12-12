@@ -61,7 +61,7 @@ export function generateSquidConf(allowedDomains?: string[]): string {
   return lines.join("\n")
 }
 
-export function generateProxyDockerfile(): string {
+export function generateProxyDockerfile(hasAllowlist: boolean): string {
   const lines: string[] = []
   lines.push("FROM debian:bookworm-slim")
   lines.push("")
@@ -70,7 +70,9 @@ export function generateProxyDockerfile(): string {
   lines.push("    && rm -rf /var/lib/apt/lists/*")
   lines.push("")
   lines.push("COPY squid.conf /etc/squid/squid.conf")
-  lines.push("COPY allowed_domains.txt /etc/squid/allowed_domains.txt")
+  if (hasAllowlist) {
+    lines.push("COPY allowed_domains.txt /etc/squid/allowed_domains.txt")
+  }
   lines.push("")
   lines.push("EXPOSE 3128")
   lines.push("")
