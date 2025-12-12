@@ -113,6 +113,10 @@ describe("@perstack/runtime: PerstackAdapter", () => {
       expect(args).toContain("30000")
       expect(args).toContain("--temperature")
       expect(args).toContain("0.5")
+      expect(args).toContain("--model")
+      expect(args).toContain("claude-sonnet-4-5")
+      expect(args).toContain("--provider")
+      expect(args).toContain("anthropic")
       expect(args).toContain("test-expert")
       expect(args).toContain("test query")
     })
@@ -133,7 +137,15 @@ describe("@perstack/runtime: PerstackAdapter", () => {
         model: "claude-sonnet-4-5",
       }
       const args = adapterAny.buildCliArgs(setting)
-      expect(args).toEqual(["run", "test-expert", ""])
+      expect(args).toEqual([
+        "run",
+        "--model",
+        "claude-sonnet-4-5",
+        "--provider",
+        "anthropic",
+        "test-expert",
+        "",
+      ])
     })
   })
 })

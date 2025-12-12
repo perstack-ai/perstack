@@ -88,20 +88,28 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
     const { setting, eventListener } = params
     const events: (RunEvent | RuntimeEvent)[] = []
     const args = this.buildCliArgs(setting)
-    const result = await this.executeRuntimeCli(args, setting.timeout ?? 60000, (event) => {
+    const maxSteps = setting.maxSteps ?? 100
+    const processTimeout = (setting.timeout ?? 60000) * maxSteps
+    const result = await this.executeRuntimeCli(args, processTimeout, (event) => {
       events.push(event)
       eventListener?.(event)
     })
     if (result.exitCode !== 0) {
       throw new Error(`perstack-runtime CLI failed with exit code ${result.exitCode}`)
     }
-    const completeEvent = events.find((e) => e.type === "completeRun") as
-      | (RunEvent & { type: "completeRun"; checkpoint: Checkpoint })
+    const terminalEventTypes = [
+      "completeRun",
+      "stopRunByInteractiveTool",
+      "stopRunByDelegate",
+      "stopRunByExceededMaxSteps",
+    ]
+    const terminalEvent = events.find((e) => terminalEventTypes.includes(e.type)) as
+      | (RunEvent & { checkpoint: Checkpoint })
       | undefined
-    if (!completeEvent?.checkpoint) {
-      throw new Error("No completeRun event received from CLI")
+    if (!terminalEvent?.checkpoint) {
+      throw new Error("No terminal event with checkpoint received from CLI")
     }
-    return { checkpoint: completeEvent.checkpoint, events }
+    return { checkpoint: terminalEvent.checkpoint, events }
   }
 
   private buildCliArgs(setting: AdapterRunParams["setting"]): string[] {
@@ -123,6 +131,12 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
     }
     if (setting.temperature !== undefined) {
       args.push("--temperature", String(setting.temperature))
+    }
+    if (setting.model) {
+      args.push("--model", setting.model)
+    }
+    if (setting.providerConfig?.providerName) {
+      args.push("--provider", setting.providerConfig.providerName)
     }
     args.push(setting.expertKey, setting.input.text ?? "")
     return args
