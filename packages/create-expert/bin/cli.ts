@@ -58,7 +58,8 @@ const program = new Command()
       const envContent = `${envVarName}=${wizardResult.apiKey}\n`
       if (existsSync(envPath)) {
         const existing = readFileSync(envPath, "utf-8")
-        if (!existing.includes(envVarName)) {
+        const hasEnvVar = new RegExp(`^${envVarName}=`, "m").test(existing)
+        if (!hasEnvVar) {
           writeFileSync(envPath, `${existing}\n${envContent}`)
           console.log(`✓ Added ${envVarName} to .env`)
         }
