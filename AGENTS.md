@@ -51,6 +51,7 @@ npx create-expert my-expert "Add X"  # Improve existing
 ### Available Runtimes
 
 - `perstack` — Built-in runtime (default)
+- `docker` — Containerized runtime with network isolation
 - `cursor` — Cursor CLI (experimental)
 - `claude-code` — Claude Code CLI (experimental)
 - `gemini` — Gemini CLI (experimental)
