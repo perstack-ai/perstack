@@ -1,16 +1,9 @@
-export type LLMProvider = "anthropic" | "openai" | "google"
+import type { LLMInfo, LLMProvider } from "@perstack/tui"
 
-export interface LLMInfo {
-  provider: LLMProvider
-  envVar: string
-  available: boolean
-  displayName: string
-}
-
-const LLM_CONFIGS: Record<LLMProvider, { envVar: string; displayName: string }> = {
-  anthropic: { envVar: "ANTHROPIC_API_KEY", displayName: "Anthropic (Claude)" },
-  openai: { envVar: "OPENAI_API_KEY", displayName: "OpenAI" },
-  google: { envVar: "GOOGLE_GENERATIVE_AI_API_KEY", displayName: "Google (Gemini)" },
+const LLM_CONFIGS: Record<LLMProvider, { envVar: string; displayName: string; defaultModel: string }> = {
+  anthropic: { envVar: "ANTHROPIC_API_KEY", displayName: "Anthropic (Claude)", defaultModel: "claude-sonnet-4-5" },
+  openai: { envVar: "OPENAI_API_KEY", displayName: "OpenAI", defaultModel: "gpt-4o" },
+  google: { envVar: "GOOGLE_GENERATIVE_AI_API_KEY", displayName: "Google (Gemini)", defaultModel: "gemini-2.5-pro" },
 }
 
 export function detectLLM(provider: LLMProvider): LLMInfo {
@@ -20,6 +13,7 @@ export function detectLLM(provider: LLMProvider): LLMInfo {
     envVar: config.envVar,
     available: Boolean(process.env[config.envVar]),
     displayName: config.displayName,
+    defaultModel: config.defaultModel,
   }
 }
 
@@ -32,12 +26,5 @@ export function getAvailableLLMs(): LLMInfo[] {
 }
 
 export function getDefaultModel(provider: LLMProvider): string {
-  switch (provider) {
-    case "anthropic":
-      return "claude-sonnet-4-5"
-    case "openai":
-      return "gpt-4o"
-    case "google":
-      return "gemini-2.5-pro"
-  }
+  return LLM_CONFIGS[provider].defaultModel
 }

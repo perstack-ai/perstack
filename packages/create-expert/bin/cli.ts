@@ -2,18 +2,16 @@
 import { spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import type { LLMProvider } from "@perstack/tui"
+import { renderWizard } from "@perstack/tui"
 import { Command } from "commander"
 import { config } from "dotenv"
-import { render } from "ink"
-import React from "react"
-import type { LLMProvider, WizardResult } from "../src/index.js"
 import {
   detectAllLLMs,
   detectAllRuntimes,
   generateAgentsMd,
   generateCreateExpertToml,
   getDefaultModel,
-  Wizard,
 } from "../src/index.js"
 
 config()
@@ -45,20 +43,11 @@ const program = new Command()
     const envPath = join(cwd, ".env")
     const llms = detectAllLLMs()
     const runtimes = detectAllRuntimes()
-    let wizardResult: WizardResult | undefined
-    await new Promise<void>((resolve) => {
-      const { waitUntilExit } = render(
-        React.createElement(Wizard, {
-          llms,
-          runtimes,
-          isImprovement,
-          improvementTarget,
-          onComplete: (result: WizardResult) => {
-            wizardResult = result
-          },
-        }),
-      )
-      waitUntilExit().then(() => resolve())
+    const wizardResult = await renderWizard({
+      llms,
+      runtimes,
+      isImprovement,
+      improvementTarget,
     })
     if (!wizardResult) {
       console.log("Wizard cancelled.")

@@ -1,4 +1,4 @@
-import type { LLMProvider } from "./detect-llm.js"
+import type { LLMProvider } from "@perstack/tui"
 
 interface CreateExpertTomlOptions {
   provider: LLMProvider

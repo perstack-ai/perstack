@@ -1,12 +1,5 @@
 import { execSync } from "node:child_process"
-
-export type RuntimeType = "cursor" | "claude-code" | "gemini"
-
-export interface RuntimeInfo {
-  type: RuntimeType
-  available: boolean
-  version?: string
-}
+import type { RuntimeInfo } from "@perstack/tui"
 
 function checkCommand(command: string): { available: boolean; version?: string } {
   try {

@@ -1,7 +1,6 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { type ReactNode, useEffect, useState } from "react"
-import { getDefaultModel, type LLMInfo, type LLMProvider } from "./detect-llm.js"
-import type { RuntimeInfo, RuntimeType } from "./detect-runtime.js"
+import type { LLMInfo, LLMProvider, RuntimeInfo, RuntimeType, WizardResult } from "./types.js"
 
 type WizardStep =
   | "detecting"
@@ -11,14 +10,6 @@ type WizardStep =
   | "input-api-key"
   | "input-expert-description"
   | "done"
-
-export interface WizardResult {
-  runtime: "default" | RuntimeType
-  provider?: LLMProvider
-  model?: string
-  apiKey?: string
-  expertDescription?: string
-}
 
 interface WizardProps {
   llms: LLMInfo[]
@@ -42,10 +33,7 @@ function SelectableList({
 }: {
   items: { key: string; label: string; disabled?: boolean }[]
   selectedIndex: number
-  renderItem?: (
-    item: { key: string; label: string; disabled?: boolean },
-    selected: boolean,
-  ) => ReactNode
+  renderItem?: (item: { key: string; label: string; disabled?: boolean }, selected: boolean) => ReactNode
 }) {
   return (
     <Box flexDirection="column">
@@ -110,13 +98,7 @@ function getRuntimeDisplayName(type: RuntimeType): string {
   }
 }
 
-export function Wizard({
-  llms,
-  runtimes,
-  onComplete,
-  isImprovement,
-  improvementTarget,
-}: WizardProps) {
+export function App({ llms, runtimes, onComplete, isImprovement, improvementTarget }: WizardProps) {
   const { exit } = useApp()
   const [step, setStep] = useState<WizardStep>("detecting")
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -140,8 +122,9 @@ export function Wizard({
       label: `${l.displayName}${l.available ? " ✓" : ""}`,
       provider: l.provider,
       available: l.available,
+      defaultModel: l.defaultModel,
     })),
-    { key: "other", label: "Other (configure new provider)", provider: null, available: false },
+    { key: "other", label: "Other (configure new provider)", provider: null, available: false, defaultModel: "" },
   ]
   useEffect(() => {
     if (step === "detecting") {
@@ -152,7 +135,7 @@ export function Wizard({
             setResult({
               runtime: "default",
               provider: llm.provider,
-              model: getDefaultModel(llm.provider),
+              model: llm.defaultModel,
             })
             setStep("input-expert-description")
           } else {
@@ -224,12 +207,12 @@ export function Wizard({
         } else if (selected.available && selected.provider) {
           setResult((prev) => ({
             ...prev,
-            provider: selected.provider,
-            model: getDefaultModel(selected.provider),
+            provider: selected.provider as LLMProvider,
+            model: selected.defaultModel,
           }))
           setStep("input-expert-description")
         } else if (selected.provider) {
-          setResult((prev) => ({ ...prev, provider: selected.provider }))
+          setResult((prev) => ({ ...prev, provider: selected.provider as LLMProvider }))
           setStep("input-api-key")
         }
         setSelectedIndex(0)
@@ -247,11 +230,12 @@ export function Wizard({
   }
   function handleApiKeySubmit() {
     if (apiKeyInput.trim()) {
-      const provider = result.provider || "anthropic"
+      const selectedLlm = llms.find((l) => l.provider === result.provider) ?? llms[0]
+      if (!selectedLlm) return
       setResult((prev) => ({
         ...prev,
-        provider,
-        model: getDefaultModel(provider),
+        provider: selectedLlm.provider,
+        model: selectedLlm.defaultModel,
         apiKey: apiKeyInput.trim(),
       }))
       setStep("input-expert-description")
@@ -288,10 +272,7 @@ export function Wizard({
           <Box marginBottom={1}>
             <Text>Select a runtime:</Text>
           </Box>
-          <SelectableList
-            items={runtimeOptions.map((r) => ({ key: r.key, label: r.label }))}
-            selectedIndex={selectedIndex}
-          />
+          <SelectableList items={runtimeOptions.map((r) => ({ key: r.key, label: r.label }))} selectedIndex={selectedIndex} />
           <Box marginTop={1}>
             <Text color="gray">↑↓ to move, Enter to select, Esc to exit</Text>
           </Box>
@@ -302,10 +283,7 @@ export function Wizard({
           <Box marginBottom={1}>
             <Text>Select an LLM provider:</Text>
           </Box>
-          <SelectableList
-            items={llmOptionsWithOther.map((l) => ({ key: l.key, label: l.label }))}
-            selectedIndex={selectedIndex}
-          />
+          <SelectableList items={llmOptionsWithOther.map((l) => ({ key: l.key, label: l.label }))} selectedIndex={selectedIndex} />
           <Box marginTop={1}>
             <Text color="gray">↑↓ to move, Enter to select</Text>
           </Box>
@@ -329,10 +307,7 @@ export function Wizard({
           <Box marginBottom={1}>
             <Text>Select a provider to configure:</Text>
           </Box>
-          <SelectableList
-            items={llms.map((l) => ({ key: l.provider, label: l.displayName }))}
-            selectedIndex={selectedIndex}
-          />
+          <SelectableList items={llms.map((l) => ({ key: l.provider, label: l.displayName }))} selectedIndex={selectedIndex} />
           <Box marginTop={1}>
             <Text color="gray">↑↓ to move, Enter to select</Text>
           </Box>
@@ -341,18 +316,9 @@ export function Wizard({
       {step === "input-api-key" && (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text>
-              Enter your {llms.find((l) => l.provider === result.provider)?.displayName || "API"}{" "}
-              key:
-            </Text>
+            <Text>Enter your {llms.find((l) => l.provider === result.provider)?.displayName || "API"} key:</Text>
           </Box>
-          <TextInputComponent
-            value={apiKeyInput}
-            onChange={setApiKeyInput}
-            onSubmit={handleApiKeySubmit}
-            placeholder="sk-..."
-            isSecret={true}
-          />
+          <TextInputComponent value={apiKeyInput} onChange={setApiKeyInput} onSubmit={handleApiKeySubmit} placeholder="sk-..." isSecret={true} />
           <Box marginTop={1}>
             <Text color="gray">Type your API key and press Enter</Text>
           </Box>
@@ -361,16 +327,10 @@ export function Wizard({
       {step === "input-expert-description" && (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text bold>
-              {isImprovement
-                ? "What improvements do you want?"
-                : "What kind of Expert do you want to create?"}
-            </Text>
+            <Text bold>{isImprovement ? "What improvements do you want?" : "What kind of Expert do you want to create?"}</Text>
           </Box>
           <Box marginBottom={1}>
-            <Text color="gray">
-              Describe the Expert's purpose, capabilities, or domain knowledge.
-            </Text>
+            <Text color="gray">Describe the Expert's purpose, capabilities, or domain knowledge.</Text>
           </Box>
           <TextInputComponent
             value={expertDescInput}

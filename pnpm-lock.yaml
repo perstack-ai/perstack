@@ -205,18 +205,15 @@ importers:
 
   packages/create-expert:
     dependencies:
+      '@perstack/tui':
+        specifier: workspace:*
+        version: link:../tui
       commander:
         specifier: ^14.0.2
         version: 14.0.2
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
-      ink:
-        specifier: ^6.5.1
-        version: 6.5.1(@types/react@19.2.7)(react@19.2.1)
-      react:
-        specifier: ^19.2.0
-        version: 19.2.1
     devDependencies:
       '@sindresorhus/tsconfig':
         specifier: ^8.1.0
@@ -224,9 +221,6 @@ importers:
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.1
-      '@types/react':
-        specifier: ^19.2.7
-        version: 19.2.7
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -3699,6 +3693,7 @@ packages:
   next@16.0.7:
     resolution: {integrity: sha512-3mBRJyPxT4LOxAJI6IsXeFtKfiJUbjCLgvXO02fV8Wy/lIhPvP94Fe7dGhUgHXcQy4sSuYwQNcOLhIfOm0rL0A==}
     engines: {node: '>=20.9.0'}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0

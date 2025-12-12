@@ -23,15 +23,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@perstack/tui": "workspace:*",
     "commander": "^14.0.2",
-    "dotenv": "^17.2.3",
-    "ink": "^6.5.1",
-    "react": "^19.2.0"
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@sindresorhus/tsconfig": "^8.1.0",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.7",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.14"
