@@ -14,10 +14,19 @@ import type {
 import { BaseAdapter, checkpointSchema } from "@perstack/core"
 import { run as perstackRun } from "./run.js"
 
+export type PerstackAdapterOptions = {
+  useDirectExecution?: boolean
+}
+
 export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "perstack"
   protected version = "unknown"
-  private useDirectExecution = true
+  private useDirectExecution: boolean
+
+  constructor(options?: PerstackAdapterOptions) {
+    super()
+    this.useDirectExecution = options?.useDirectExecution ?? true
+  }
 
   async checkPrerequisites(): Promise<PrerequisiteResult> {
     if (this.useDirectExecution) {
