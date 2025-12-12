@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType } from "../lib/event-parser.js"
-import { runExpertWithRuntimeCli } from "../lib/runner.js"
+import { runExpertWithRuntimeCli, runRuntimeCli } from "../lib/runner.js"
 
 describe("Error Handling", () => {
   describe("Recover from tool error", () => {
@@ -25,4 +25,34 @@ describe("Error Handling", () => {
       expect(assertEventSequenceContains(result.events, ["completeRun"]).passed).toBe(true)
     }, 200000)
   })
+
+  describe("MCP connection error", () => {
+    it("should fail gracefully when MCP skill command is invalid", async () => {
+      const result = await runRuntimeCli([
+        "run",
+        "--config",
+        "./e2e/experts/errors.toml",
+        "e2e-mcp-error",
+        "Say hello",
+      ])
+      expect(result.exitCode).toBe(1)
+      expect(result.stderr).toMatch(/failed|error|spawn|ENOENT/i)
+    }, 60000)
+  })
+
+  describe("Invalid provider", () => {
+    it("should fail with invalid provider name", async () => {
+      const result = await runRuntimeCli([
+        "run",
+        "--config",
+        "./e2e/experts/global-runtime.toml",
+        "--provider",
+        "invalid-provider-xyz",
+        "e2e-global-runtime",
+        "Say hello",
+      ])
+      expect(result.exitCode).toBe(1)
+    }, 60000)
+  })
+
 })

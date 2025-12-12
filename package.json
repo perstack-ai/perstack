@@ -12,7 +12,7 @@
     "release": "pnpm run clean && pnpm run build && changeset publish",
     "test": "vitest run --project unit --coverage --coverage.reporter=lcov --coverage.reporter=text",
     "test:watch": "vitest watch --project unit",
-    "test:e2e": "vitest run --project e2e",
+    "test:e2e": "vitest run --project e2e --bail=1",
     "format-and-lint": "biome check .",
     "format-and-lint:fix": "biome check . --write",
     "typecheck": "turbo run typecheck --continue",

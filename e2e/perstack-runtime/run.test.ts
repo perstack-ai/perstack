@@ -24,11 +24,10 @@ describe("Run Expert", () => {
     let result: RunResult
 
     beforeAll(async () => {
-      result = await runExpertWithRuntimeCli(
-        "e2e-special-tools",
-        "Test all special tools: think, read the PDF, read the GIF image, and search",
-        { configPath: "./e2e/experts/special-tools.toml", timeout: 180000 },
-      )
+      result = await runExpertWithRuntimeCli("e2e-special-tools", "echo test", {
+        configPath: "./e2e/experts/special-tools.toml",
+        timeout: 180000,
+      })
     }, 200000)
 
     it("should execute multiple tools in parallel", () => {

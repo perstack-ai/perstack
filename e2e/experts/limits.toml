@@ -1,0 +1,42 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-max-steps"]
+version = "1.0.0"
+description = "E2E test expert for maxSteps limit testing"
+instruction = """
+You are an E2E test expert that generates many steps to test maxSteps limit.
+
+When given any query:
+1. First use the think tool to think about the query
+2. Then use the think tool again to think more
+3. Keep using think tool multiple times
+4. After 5+ think calls, call attemptCompletion
+
+IMPORTANT: Make at least 5 separate tool calls before completing.
+"""
+
+[experts."e2e-max-steps".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."e2e-slow-task"]
+version = "1.0.0"
+description = "E2E test expert for timeout testing"
+instruction = """
+You are an E2E test expert.
+Simply respond with a greeting and call attemptCompletion.
+"""
+
+[experts."e2e-slow-task".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]

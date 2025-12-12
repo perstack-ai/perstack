@@ -1,0 +1,38 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-mcp-error"]
+version = "1.0.0"
+description = "E2E test expert with broken MCP skill"
+instruction = """
+You are a test expert. Say hello and complete.
+"""
+
+[experts."e2e-mcp-error".skills."broken-skill"]
+type = "mcpStdioSkill"
+command = "nonexistent-command-12345"
+args = []
+
+[experts."e2e-mcp-error".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-invalid-provider"]
+version = "1.0.0"
+description = "E2E test expert for invalid provider testing"
+instruction = """
+You are a test expert. Say hello.
+"""
+
+[experts."e2e-invalid-provider".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]

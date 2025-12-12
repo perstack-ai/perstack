@@ -151,12 +151,16 @@ export async function runExpertWithRuntimeCli(
   options?: {
     configPath?: string
     timeout?: number
+    extraArgs?: string[]
   },
 ): Promise<RunResult> {
   const timeout = options?.timeout ?? 120000
   const args = ["run"]
   if (options?.configPath) {
     args.push("--config", options.configPath)
+  }
+  if (options?.extraArgs) {
+    args.push(...options.extraArgs)
   }
   args.push(expertKey, query)
   return new Promise((resolve, reject) => {

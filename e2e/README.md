@@ -26,15 +26,18 @@ pnpm test:e2e -- --testNamePattern "delegate"
 ```
 e2e/
 ├── perstack-cli/                  # perstack CLI tests
-│   ├── continue.test.ts           # Continue job
+│   ├── continue.test.ts           # Continue job, resume from checkpoint
 │   ├── delegate.test.ts           # Delegate to expert
 │   ├── interactive.test.ts        # Interactive input (with delegation)
 │   ├── runtime-selection.test.ts  # Select runtime
 │   ├── publish.test.ts            # Publish expert
+│   ├── registry.test.ts           # Remote expert resolution
 │   └── validation.test.ts         # CLI validation
 ├── perstack-runtime/              # perstack-runtime CLI tests
 │   ├── run.test.ts                # Run expert
-│   ├── delegate.test.ts           # Delegate (removed - needs runner)
+│   ├── options.test.ts            # CLI options
+│   ├── limits.test.ts             # Execution limits
+│   ├── skills.test.ts             # Skill configuration
 │   ├── interactive.test.ts        # Interactive input (simple)
 │   ├── error-handling.test.ts     # Error handling
 │   ├── storage-behavior.test.ts   # Storage behavior
@@ -51,32 +54,38 @@ e2e/
 
 ### perstack-cli/
 
-| Use Case | File | Tests |
-|----------|------|-------|
-| **Continue job** | continue.test.ts | Continue from interactive stop, continue from delegation stop |
-| **Delegate to expert** | delegate.test.ts | Chain delegation, parallel delegation |
-| **Interactive input** | interactive.test.ts | Mixed tools with interactive (MCP + delegate + askUser) |
-| **Select runtime** | runtime-selection.test.ts | CLI option, external runtimes, config file |
-| **Publish expert** | publish.test.ts | Preview, unpublish, tag, status |
-| **CLI validation** | validation.test.ts | Argument validation, config validation |
+| Use Case               | File                      | Tests                                                             |
+| ---------------------- | ------------------------- | ----------------------------------------------------------------- |
+| **Continue job**       | continue.test.ts          | Continue from interactive/delegation stop, resume from checkpoint |
+| **Delegate to expert** | delegate.test.ts          | Chain delegation, parallel delegation                             |
+| **Interactive input**  | interactive.test.ts       | Mixed tools with interactive (MCP + delegate + askUser)           |
+| **Select runtime**     | runtime-selection.test.ts | CLI option, external runtimes, config file                        |
+| **Publish expert**     | publish.test.ts           | Preview, unpublish, tag, status                                   |
+| **Registry**           | registry.test.ts          | Remote expert resolution, remote delegation                       |
+| **CLI validation**     | validation.test.ts        | Argument validation, config validation                            |
 
 ### perstack-runtime/
 
-| Use Case | File | Tests |
-|----------|------|-------|
-| **Run expert** | run.test.ts | Answer question, use tools, read PDF/image |
-| **Interactive input** | interactive.test.ts | Stop at interactive tool |
-| **Error handling** | error-handling.test.ts | Recover from tool error |
-| **Storage behavior** | storage-behavior.test.ts | Verify no storage files created |
-| **CLI validation** | validation.test.ts | Version, help, argument validation |
+| Use Case              | File                     | Tests                                          |
+| --------------------- | ------------------------ | ---------------------------------------------- |
+| **Run expert**        | run.test.ts              | Answer question, use tools, read PDF/image     |
+| **CLI options**       | options.test.ts          | Model, limits, job-id, env-path, verbose       |
+| **Execution limits**  | limits.test.ts           | Max steps, max retries                         |
+| **Skills**            | skills.test.ts           | Pick/omit tools, multiple skills               |
+| **Interactive input** | interactive.test.ts      | Stop at interactive tool                       |
+| **Error handling**    | error-handling.test.ts   | Tool error, MCP error, invalid provider, timeout |
+| **Storage behavior**  | storage-behavior.test.ts | Verify no storage files created                |
+| **CLI validation**    | validation.test.ts       | Version, help, argument validation             |
 
 ## Complete Test List
 
-### perstack-cli/continue.test.ts (3 tests)
+### perstack-cli/continue.test.ts (5 tests)
 
 1. should continue job with --continue-job
 2. should complete after continue
 3. should continue after parallel delegation and complete
+4. should capture checkpoint ID for resume-from
+5. should fail when --resume-from is used without --continue-job
 
 ### perstack-cli/delegate.test.ts (6 tests)
 
@@ -94,7 +103,7 @@ e2e/
 3. should resume and stop at interactive tool
 4. should have all partial results when stopped
 
-### perstack-cli/runtime-selection.test.ts (5 tests)
+### perstack-cli/runtime-selection.test.ts (6 tests)
 
 1. should run with perstack runtime
 2. should reject invalid runtime names
@@ -103,7 +112,7 @@ e2e/
 5. should show helpful error for gemini when unavailable
 6. should use runtime from perstack.toml when --runtime not specified
 
-### perstack-cli/publish.test.ts (9 tests)
+### perstack-cli/publish.test.ts (11 tests)
 
 1. should output JSON payload for valid expert with --dry-run
 2. should fail for nonexistent expert
@@ -116,6 +125,12 @@ e2e/
 9. should fail without version (status)
 10. should fail without status value
 11. should fail with invalid status value
+
+### perstack-cli/registry.test.ts (3 tests)
+
+1. should fail gracefully for nonexistent remote expert
+2. should fail gracefully for invalid expert key format
+3. should fail gracefully when delegating to nonexistent remote expert
 
 ### perstack-cli/validation.test.ts (7 tests)
 
@@ -139,13 +154,42 @@ e2e/
 8. should read and summarize PDF content
 9. should read and describe image content
 
+### perstack-runtime/options.test.ts (10 tests)
+
+1. should accept --provider option
+2. should accept --model option
+3. should accept --temperature option
+4. should accept --max-steps option
+5. should accept --max-retries option
+6. should accept --timeout option
+7. should accept --job-id option
+8. should accept --run-id option
+9. should accept --env-path option
+10. should accept --verbose option
+
+### perstack-runtime/limits.test.ts (3 tests)
+
+1. should stop execution when max-steps is reached
+2. should complete normally when steps are within limit
+3. should respect max-retries setting
+
+### perstack-runtime/skills.test.ts (4 tests)
+
+1. should only have access to picked tools
+2. should be able to use picked tools
+3. should not have access to omitted tools
+4. should have access to tools from multiple skills
+
 ### perstack-runtime/interactive.test.ts (1 test)
 
 1. should stop at interactive tool and emit checkpoint
 
-### perstack-runtime/error-handling.test.ts (1 test)
+### perstack-runtime/error-handling.test.ts (4 tests)
 
 1. should recover from file not found error and complete successfully
+2. should fail gracefully when MCP skill command is invalid
+3. should fail with invalid provider name
+4. should terminate when timeout is exceeded
 
 ### perstack-runtime/storage-behavior.test.ts (2 tests)
 
@@ -161,6 +205,14 @@ e2e/
 5. should fail with only expert key
 6. should fail for nonexistent expert
 7. should fail with nonexistent config file
+
+## Test Summary
+
+| Category        | Files | Tests |
+| --------------- | ----- | ----- |
+| perstack-cli    | 7     | 42    |
+| perstack-runtime| 8     | 40    |
+| **Total**       | **15**| **82**|
 
 ## Architecture Notes
 

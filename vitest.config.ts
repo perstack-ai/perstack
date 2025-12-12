@@ -26,6 +26,7 @@ export default defineConfig({
               singleFork: true,
             },
           },
+          fileParallelism: false,
           teardownTimeout: 10000,
         },
       },

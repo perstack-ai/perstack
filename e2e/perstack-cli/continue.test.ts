@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
-import { getEventSequence } from "../lib/event-parser.js"
-import { runExpert } from "../lib/runner.js"
+import { filterEventsByType, getEventSequence } from "../lib/event-parser.js"
+import { runCli, runExpert } from "../lib/runner.js"
 
 describe("Continue Job", () => {
   describe("Continue from interactive stop", () => {
@@ -73,5 +73,33 @@ describe("Continue Job", () => {
       const lastCompleteEvent = continueCompleteEvents[continueCompleteEvents.length - 1]
       expect((lastCompleteEvent as { text?: string }).text).toBeDefined()
     }, 400000)
+  })
+
+  describe("Resume from checkpoint", () => {
+    it("should capture checkpoint ID for resume-from", async () => {
+      const result = await runExpert("e2e-continue", "Test continue/resume functionality", {
+        configPath: "./e2e/experts/continue-resume.toml",
+        timeout: 180000,
+      })
+      const stopEvents = filterEventsByType(result.events, "stopRunByInteractiveTool")
+      expect(stopEvents.length).toBeGreaterThan(0)
+      const checkpoint = (stopEvents[0] as { checkpoint?: { id?: string } }).checkpoint
+      expect(checkpoint?.id).toBeDefined()
+      expect(typeof checkpoint?.id).toBe("string")
+    }, 200000)
+
+    it("should fail when --resume-from is used without --continue-job", async () => {
+      const result = await runCli([
+        "run",
+        "--config",
+        "./e2e/experts/continue-resume.toml",
+        "--resume-from",
+        "checkpoint-123",
+        "e2e-continue",
+        "test",
+      ])
+      expect(result.exitCode).toBe(1)
+      expect(result.stderr).toContain("--resume-from requires --continue-job")
+    }, 60000)
   })
 })
