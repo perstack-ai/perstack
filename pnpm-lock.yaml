@@ -427,9 +427,18 @@ importers:
       ai:
         specifier: ^5.0.104
         version: 5.0.105(zod@4.1.13)
+      commander:
+        specifier: ^14.0.2
+        version: 14.0.2
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       ollama-ai-provider-v2:
         specifier: ^1.5.5
         version: 1.5.5(zod@4.1.13)
+      smol-toml:
+        specifier: ^1.5.2
+        version: 1.5.2
       ts-dedent:
         specifier: ^2.2.0
         version: 2.2.0

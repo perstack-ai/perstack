@@ -5,11 +5,17 @@
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
+  "bin": {
+    "perstack-runtime": "./bin/cli.ts"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
   "publishConfig": {
     "access": "public",
+    "bin": {
+      "perstack-runtime": "dist/bin/cli.js"
+    },
     "exports": {
       ".": "./dist/src/index.js"
     },
@@ -22,10 +28,13 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
+    "build": "pnpm run clean && tsup --config ./tsup.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "commander": "^14.0.2",
+    "dotenv": "^17.2.3",
+    "smol-toml": "^1.5.2",
     "@ai-sdk/amazon-bedrock": "^3.0.62",
     "@ai-sdk/anthropic": "^2.0.50",
     "@ai-sdk/azure": "^2.0.77",
