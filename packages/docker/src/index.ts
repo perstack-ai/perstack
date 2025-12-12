@@ -14,3 +14,11 @@ export {
   getProviderEnvKeys,
   resolveEnvValues,
 } from "./env-resolver.js"
+export {
+  generateProxyComposeService,
+  generateProxyDockerfile,
+  generateSquidAllowlistAcl,
+  generateSquidConf,
+  getEffectiveNetworkConfig,
+  mergeNetworkConfig,
+} from "./proxy-generator.js"
