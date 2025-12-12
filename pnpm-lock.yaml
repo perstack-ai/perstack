@@ -314,9 +314,6 @@ importers:
       '@perstack/runner':
         specifier: workspace:*
         version: link:../runner
-      '@perstack/runtime':
-        specifier: workspace:*
-        version: link:../runtime
       '@perstack/storage':
         specifier: workspace:*
         version: link:../storage
@@ -369,6 +366,9 @@ importers:
       '@perstack/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@perstack/storage':
+        specifier: workspace:*
+        version: link:../storage
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5

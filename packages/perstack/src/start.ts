@@ -5,7 +5,7 @@ import {
   parseWithFriendlyError,
   startCommandInputSchema,
 } from "@perstack/core"
-import { runtimeVersion } from "@perstack/runtime"
+import { getRuntimeVersion } from "@perstack/runner"
 import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "@perstack/tui"
 import { renderStart } from "@perstack/tui"
 import { Command } from "commander"
@@ -98,7 +98,7 @@ export const startCommand = new Command()
         initialExpertName: input.expertKey,
         initialQuery: input.query,
         initialConfig: {
-          runtimeVersion,
+          runtimeVersion: getRuntimeVersion(),
           model,
           temperature,
           maxSteps,

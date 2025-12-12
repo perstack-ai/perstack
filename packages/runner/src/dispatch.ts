@@ -5,7 +5,7 @@ import type {
   RuntimeEvent,
   RuntimeName,
 } from "@perstack/core"
-import { defaultStoreCheckpoint } from "@perstack/runtime"
+import { defaultStoreCheckpoint } from "@perstack/storage"
 import { getAdapter, getRegisteredRuntimes, isAdapterAvailable } from "./registry.js"
 
 export type DispatchParams = {
