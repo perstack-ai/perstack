@@ -41,9 +41,9 @@ export async function resolveRunContext(input: ResolveRunContextInput): Promise<
           version: expert.version ?? "1.0.0",
           description: expert.description,
           instruction: expert.instruction,
-          skills: expert.skills,
-          delegates: expert.delegates,
-          tags: expert.tags,
+          skills: expert.skills ?? {},
+          delegates: expert.delegates ?? [],
+          tags: expert.tags ?? [],
         },
       ]
     }),
