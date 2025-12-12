@@ -45,11 +45,10 @@ describe("Skills", () => {
 
   describe("Omit tools", () => {
     it("should not have access to omitted tools", async () => {
-      const result = await runExpertWithRuntimeCli(
-        "e2e-omit-tools",
-        "Say hello",
-        { configPath: "./e2e/experts/skills.toml", timeout: 180000 },
-      )
+      const result = await runExpertWithRuntimeCli("e2e-omit-tools", "Say hello", {
+        configPath: "./e2e/experts/skills.toml",
+        timeout: 180000,
+      })
       expect(result.exitCode).toBe(0)
       const callToolsEvents = filterEventsByType(result.events, "callTools")
       const hasThink = callToolsEvents.some((e) => {

@@ -54,5 +54,4 @@ describe("Error Handling", () => {
       expect(result.exitCode).toBe(1)
     }, 60000)
   })
-
 })

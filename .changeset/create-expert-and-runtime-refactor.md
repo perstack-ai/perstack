@@ -1,5 +1,5 @@
 ---
-"@perstack/create-expert": patch
+"create-expert": patch
 "@perstack/storage": patch
 "@perstack/runtime": patch
 "@perstack/tui": patch
@@ -11,7 +11,7 @@
 
 Add create-expert package and refactor runtime architecture
 
-- Add `@perstack/create-expert`: Interactive Expert creation wizard with TUI
+- Add `create-expert`: Interactive Expert creation wizard with TUI
 - Add `@perstack/storage`: Extract storage layer from runtime for better modularity
 - Add CLI entry point to `@perstack/runtime` for standalone execution
 - Add wizard and progress TUI components to `@perstack/tui`

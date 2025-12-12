@@ -17,8 +17,11 @@ describe("Delegate to Expert", () => {
 
     it("should delegate to another expert", () => {
       expect(
-        assertEventSequenceContains(result.events, ["startRun", "callDelegate", "stopRunByDelegate"])
-          .passed,
+        assertEventSequenceContains(result.events, [
+          "startRun",
+          "callDelegate",
+          "stopRunByDelegate",
+        ]).passed,
       ).toBe(true)
     })
 

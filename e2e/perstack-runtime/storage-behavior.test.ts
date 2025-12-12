@@ -9,9 +9,11 @@ function getJobIds(): Set<string> {
   if (!existsSync(STORAGE_DIR)) {
     return new Set()
   }
-  return new Set(readdirSync(STORAGE_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name))
+  return new Set(
+    readdirSync(STORAGE_DIR, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name),
+  )
 }
 
 describe("Storage Behavior", () => {
