@@ -1,0 +1,104 @@
+import type { PerstackConfig, ProviderTable } from "@perstack/core"
+
+export type EnvRequirement = {
+  name: string
+  source: "provider" | "skill" | "runtime"
+  required: boolean
+}
+
+export function getProviderEnvKey(provider?: ProviderTable): string | undefined {
+  if (!provider) return undefined
+  switch (provider.providerName) {
+    case "anthropic":
+      return "ANTHROPIC_API_KEY"
+    case "openai":
+      return "OPENAI_API_KEY"
+    case "google":
+      return "GOOGLE_API_KEY"
+    case "azure-openai":
+      return "AZURE_OPENAI_API_KEY"
+    case "amazon-bedrock":
+      return "AWS_ACCESS_KEY_ID"
+    case "google-vertex":
+      return "GOOGLE_APPLICATION_CREDENTIALS"
+    case "deepseek":
+      return "DEEPSEEK_API_KEY"
+    case "ollama":
+      return undefined
+    default:
+      return undefined
+  }
+}
+
+export function extractRequiredEnvVars(
+  config: PerstackConfig,
+  expertKey: string,
+): EnvRequirement[] {
+  const requirements: EnvRequirement[] = []
+  const providerEnvKey = getProviderEnvKey(config.provider)
+  if (providerEnvKey) {
+    requirements.push({
+      name: providerEnvKey,
+      source: "provider",
+      required: true,
+    })
+  }
+  const expert = config.experts?.[expertKey]
+  if (expert?.skills) {
+    for (const skill of Object.values(expert.skills)) {
+      if (skill.type !== "mcpStdioSkill") continue
+      const requiredEnv = (skill as { requiredEnv?: string[] }).requiredEnv ?? []
+      for (const envName of requiredEnv) {
+        if (!requirements.some((r) => r.name === envName)) {
+          requirements.push({
+            name: envName,
+            source: "skill",
+            required: true,
+          })
+        }
+      }
+    }
+  }
+  requirements.push({
+    name: "PERSTACK_API_KEY",
+    source: "runtime",
+    required: false,
+  })
+  return requirements
+}
+
+export function resolveEnvValues(
+  requirements: EnvRequirement[],
+  env: Record<string, string | undefined>,
+): { resolved: Record<string, string>; missing: string[] } {
+  const resolved: Record<string, string> = {}
+  const missing: string[] = []
+  for (const req of requirements) {
+    const value = env[req.name]
+    if (value) {
+      resolved[req.name] = value
+    } else if (req.required) {
+      missing.push(req.name)
+    }
+  }
+  return { resolved, missing }
+}
+
+export function generateDockerEnvArgs(envVars: Record<string, string>): string[] {
+  const args: string[] = []
+  for (const [key, value] of Object.entries(envVars)) {
+    args.push("-e", `${key}=${value}`)
+  }
+  return args
+}
+
+export function generateComposeEnvSection(envVars: Record<string, string>): string {
+  if (Object.keys(envVars).length === 0) {
+    return ""
+  }
+  const lines: string[] = ["    environment:"]
+  for (const key of Object.keys(envVars)) {
+    lines.push(`      - ${key}`)
+  }
+  return lines.join("\n")
+}
