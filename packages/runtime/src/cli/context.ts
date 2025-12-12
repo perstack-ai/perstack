@@ -53,6 +53,6 @@ export async function resolveRunContext(input: ResolveRunContextInput): Promise<
     env,
     providerConfig,
     model,
-    experts: experts as Record<string, ExpertConfig & { name: string; version: string }>,
+    experts: experts as Record<string, ExpertConfig & { key: string; name: string; version: string }>,
   }
 }

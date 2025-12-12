@@ -2,6 +2,8 @@ import type { Expert } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import { PerstackAdapter } from "./perstack-adapter.js"
 
+type ExecCommandResult = { exitCode: number; stdout: string; stderr: string }
+
 describe("@perstack/runtime: PerstackAdapter", () => {
   describe("Direct execution mode (default)", () => {
     it("has correct name", () => {
@@ -34,7 +36,8 @@ describe("@perstack/runtime: PerstackAdapter", () => {
   describe("CLI execution mode", () => {
     it("prerequisites fail when CLI is not available", async () => {
       const adapter = new PerstackAdapter({ useDirectExecution: false })
-      vi.spyOn(adapter as never, "execCommand").mockResolvedValue({
+      const adapterAny = adapter as unknown as { execCommand: () => Promise<ExecCommandResult> }
+      vi.spyOn(adapterAny, "execCommand").mockResolvedValue({
         exitCode: 127,
         stdout: "",
         stderr: "command not found",
@@ -48,7 +51,8 @@ describe("@perstack/runtime: PerstackAdapter", () => {
 
     it("prerequisites pass when CLI is available", async () => {
       const adapter = new PerstackAdapter({ useDirectExecution: false })
-      vi.spyOn(adapter as never, "execCommand").mockResolvedValue({
+      const adapterAny = adapter as unknown as { execCommand: () => Promise<ExecCommandResult> }
+      vi.spyOn(adapterAny, "execCommand").mockResolvedValue({
         exitCode: 0,
         stdout: "1.0.0\n",
         stderr: "",
@@ -59,7 +63,8 @@ describe("@perstack/runtime: PerstackAdapter", () => {
 
     it("prerequisites fail when execCommand throws", async () => {
       const adapter = new PerstackAdapter({ useDirectExecution: false })
-      vi.spyOn(adapter as never, "execCommand").mockRejectedValue(new Error("spawn failed"))
+      const adapterAny = adapter as unknown as { execCommand: () => Promise<ExecCommandResult> }
+      vi.spyOn(adapterAny, "execCommand").mockRejectedValue(new Error("spawn failed"))
       const result = await adapter.checkPrerequisites()
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -69,7 +74,20 @@ describe("@perstack/runtime: PerstackAdapter", () => {
 
     it("buildCliArgs constructs correct arguments", () => {
       const adapter = new PerstackAdapter({ useDirectExecution: false })
-      const setting = {
+      type SettingArg = {
+        jobId?: string
+        runId?: string
+        expertKey: string
+        maxSteps?: number
+        maxRetries?: number
+        timeout?: number
+        temperature?: number
+        input: { text?: string }
+        providerConfig: { providerName: "anthropic" }
+        model: string
+      }
+      const adapterAny = adapter as unknown as { buildCliArgs: (s: SettingArg) => string[] }
+      const setting: SettingArg = {
         jobId: "job-123",
         runId: "run-456",
         expertKey: "test-expert",
@@ -78,10 +96,10 @@ describe("@perstack/runtime: PerstackAdapter", () => {
         timeout: 30000,
         temperature: 0.5,
         input: { text: "test query" },
-        providerConfig: { providerName: "anthropic" as const },
+        providerConfig: { providerName: "anthropic" },
         model: "claude-sonnet-4-5",
       }
-      const args = (adapter as never)["buildCliArgs"](setting) as string[]
+      const args = adapterAny.buildCliArgs(setting)
       expect(args).toContain("run")
       expect(args).toContain("--job-id")
       expect(args).toContain("job-123")
@@ -101,13 +119,20 @@ describe("@perstack/runtime: PerstackAdapter", () => {
 
     it("buildCliArgs handles minimal settings", () => {
       const adapter = new PerstackAdapter({ useDirectExecution: false })
-      const setting = {
+      type SettingArg = {
+        expertKey: string
+        input: { text?: string }
+        providerConfig: { providerName: "anthropic" }
+        model: string
+      }
+      const adapterAny = adapter as unknown as { buildCliArgs: (s: SettingArg) => string[] }
+      const setting: SettingArg = {
         expertKey: "test-expert",
         input: {},
-        providerConfig: { providerName: "anthropic" as const },
+        providerConfig: { providerName: "anthropic" },
         model: "claude-sonnet-4-5",
       }
-      const args = (adapter as never)["buildCliArgs"](setting) as string[]
+      const args = adapterAny.buildCliArgs(setting)
       expect(args).toEqual(["run", "test-expert", ""])
     })
   })
