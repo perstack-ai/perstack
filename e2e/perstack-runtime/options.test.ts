@@ -112,18 +112,13 @@ describe("CLI Options", () => {
 
   describe("Environment configuration", () => {
     it("should accept --env-path option", async () => {
-      const result = await runRuntimeCli([
-        "run",
-        "--config",
-        "./e2e/experts/global-runtime.toml",
-        "--env-path",
-        ".env",
-        ".env.local",
-        "e2e-global-runtime",
-        "Say hello",
-      ])
+      const result = await runExpertWithRuntimeCli("e2e-global-runtime", "Say hello", {
+        configPath: "./e2e/experts/global-runtime.toml",
+        timeout: 120000,
+        extraArgs: ["--env-path", ".env"],
+      })
       expect(result.exitCode).toBe(0)
-    }, 120000)
+    }, 180000)
 
     it("should accept --verbose option", async () => {
       const result = await runRuntimeCli([

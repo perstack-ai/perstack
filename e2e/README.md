@@ -11,7 +11,7 @@ pnpm build
 ## Running Tests
 
 ```bash
-# Run all E2E tests (parallel execution)
+# Run all E2E tests (sequential, fail-fast)
 pnpm test:e2e
 
 # Run specific test file
@@ -38,7 +38,7 @@ e2e/
 │   ├── options.test.ts            # CLI options
 │   ├── limits.test.ts             # Execution limits
 │   ├── skills.test.ts             # Skill configuration
-│   ├── interactive.test.ts        # Interactive input (simple)
+│   ├── interactive.test.ts        # Interactive input
 │   ├── error-handling.test.ts     # Error handling
 │   ├── storage-behavior.test.ts   # Storage behavior
 │   └── validation.test.ts         # CLI validation
@@ -66,153 +66,16 @@ e2e/
 
 ### perstack-runtime/
 
-| Use Case              | File                     | Tests                                          |
-| --------------------- | ------------------------ | ---------------------------------------------- |
-| **Run expert**        | run.test.ts              | Answer question, use tools, read PDF/image     |
-| **CLI options**       | options.test.ts          | Model, limits, job-id, env-path, verbose       |
-| **Execution limits**  | limits.test.ts           | Max steps, max retries                         |
-| **Skills**            | skills.test.ts           | Pick/omit tools, multiple skills               |
-| **Interactive input** | interactive.test.ts      | Stop at interactive tool                       |
-| **Error handling**    | error-handling.test.ts   | Tool error, MCP error, invalid provider, timeout |
-| **Storage behavior**  | storage-behavior.test.ts | Verify no storage files created                |
-| **CLI validation**    | validation.test.ts       | Version, help, argument validation             |
-
-## Complete Test List
-
-### perstack-cli/continue.test.ts (5 tests)
-
-1. should continue job with --continue-job
-2. should complete after continue
-3. should continue after parallel delegation and complete
-4. should capture checkpoint ID for resume-from
-5. should fail when --resume-from is used without --continue-job
-
-### perstack-cli/delegate.test.ts (6 tests)
-
-1. should delegate to another expert
-2. should chain through multiple experts
-3. should return through chain and complete all runs
-4. should delegate to multiple experts in parallel
-5. should complete all parallel delegations
-6. should resume coordinator after delegations complete
-
-### perstack-cli/interactive.test.ts (4 tests)
-
-1. should execute MCP tool before delegate
-2. should collect partial results before stopping
-3. should resume and stop at interactive tool
-4. should have all partial results when stopped
-
-### perstack-cli/runtime-selection.test.ts (6 tests)
-
-1. should run with perstack runtime
-2. should reject invalid runtime names
-3. should show helpful error or succeed for cursor
-4. should show helpful error for claude-code when unavailable
-5. should show helpful error for gemini when unavailable
-6. should use runtime from perstack.toml when --runtime not specified
-
-### perstack-cli/publish.test.ts (11 tests)
-
-1. should output JSON payload for valid expert with --dry-run
-2. should fail for nonexistent expert
-3. should fail with nonexistent config file
-4. should fail when no config in directory
-5. should fail without version (unpublish)
-6. should fail without --force when version provided
-7. should fail without version (tag)
-8. should fail without tags
-9. should fail without version (status)
-10. should fail without status value
-11. should fail with invalid status value
-
-### perstack-cli/registry.test.ts (3 tests)
-
-1. should fail gracefully for nonexistent remote expert
-2. should fail gracefully for invalid expert key format
-3. should fail gracefully when delegating to nonexistent remote expert
-
-### perstack-cli/validation.test.ts (7 tests)
-
-1. should fail without arguments
-2. should fail with only expert key
-3. should fail for nonexistent expert
-4. should fail with nonexistent config file
-5. should fail when --resume-from is used without --continue-job
-6. should reject invalid runtime name
-7. should fail with clear message for nonexistent delegate
-
-### perstack-runtime/run.test.ts (9 tests)
-
-1. should answer a simple question and complete
-2. should execute multiple tools in parallel
-3. should use think tool
-4. should read PDF file
-5. should read image file
-6. should search the web
-7. should complete run successfully
-8. should read and summarize PDF content
-9. should read and describe image content
-
-### perstack-runtime/options.test.ts (10 tests)
-
-1. should accept --provider option
-2. should accept --model option
-3. should accept --temperature option
-4. should accept --max-steps option
-5. should accept --max-retries option
-6. should accept --timeout option
-7. should accept --job-id option
-8. should accept --run-id option
-9. should accept --env-path option
-10. should accept --verbose option
-
-### perstack-runtime/limits.test.ts (3 tests)
-
-1. should stop execution when max-steps is reached
-2. should complete normally when steps are within limit
-3. should respect max-retries setting
-
-### perstack-runtime/skills.test.ts (4 tests)
-
-1. should only have access to picked tools
-2. should be able to use picked tools
-3. should not have access to omitted tools
-4. should have access to tools from multiple skills
-
-### perstack-runtime/interactive.test.ts (1 test)
-
-1. should stop at interactive tool and emit checkpoint
-
-### perstack-runtime/error-handling.test.ts (4 tests)
-
-1. should recover from file not found error and complete successfully
-2. should fail gracefully when MCP skill command is invalid
-3. should fail with invalid provider name
-4. should terminate when timeout is exceeded
-
-### perstack-runtime/storage-behavior.test.ts (2 tests)
-
-1. should create storage files when running expert
-2. should NOT create new storage files when running expert
-
-### perstack-runtime/validation.test.ts (7 tests)
-
-1. should show version
-2. should show help
-3. should show run command help
-4. should fail without arguments
-5. should fail with only expert key
-6. should fail for nonexistent expert
-7. should fail with nonexistent config file
-
-## Test Summary
-
-| Category        | Files | Tests |
-| --------------- | ----- | ----- |
-| perstack-cli    | 7     | 42    |
-| perstack-runtime| 8     | 40    |
-| **Total**       | **15**| **82**|
+| Use Case              | File                     | Tests                                              |
+| --------------------- | ------------------------ | -------------------------------------------------- |
+| **Run expert**        | run.test.ts              | Answer question, use tools, read PDF/image         |
+| **CLI options**       | options.test.ts          | Model, limits, job-id, env-path, verbose           |
+| **Execution limits**  | limits.test.ts           | Max steps, max retries                             |
+| **Skills**            | skills.test.ts           | Pick/omit tools, multiple skills                   |
+| **Interactive input** | interactive.test.ts      | Stop at interactive tool                           |
+| **Error handling**    | error-handling.test.ts   | Tool error, MCP error, invalid provider            |
+| **Storage behavior**  | storage-behavior.test.ts | Verify storage is not created by runtime CLI       |
+| **CLI validation**    | validation.test.ts       | Version, help, argument validation                 |
 
 ## Architecture Notes
 
@@ -238,8 +101,8 @@ All runtimes (perstack, cursor, claude-code, gemini) are treated equally via the
 
 ## Notes
 
-- Tests run in parallel via vitest
+- Tests run sequentially with `fileParallelism: false` to reduce CPU load
+- `--bail=1` stops on first failure for faster feedback
 - Runtime tests require API keys (set in `.env.local`)
 - TUI-based commands (`start`) are excluded from E2E tests
 - External runtime tests (cursor, claude-code, gemini) pass regardless of CLI availability
-- `storage-behavior.test.ts` may fail in parallel execution due to race conditions (passes in isolation)
