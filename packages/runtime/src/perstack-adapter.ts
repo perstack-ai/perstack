@@ -66,7 +66,11 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
     }
     const checkpoint = await perstackRun(
       { setting: params.setting, checkpoint: params.checkpoint },
-      { eventListener, storeCheckpoint: params.storeCheckpoint },
+      {
+        eventListener,
+        storeCheckpoint: params.storeCheckpoint,
+        retrieveCheckpoint: params.retrieveCheckpoint,
+      },
     )
     return { checkpoint, events }
   }

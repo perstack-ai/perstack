@@ -14,18 +14,6 @@ import {
   type ToolResult,
   type Usage,
 } from "@perstack/core"
-import {
-  createInitialJob,
-  defaultGetRunDir,
-  defaultRetrieveCheckpoint,
-  defaultStoreCheckpoint,
-  defaultStoreEvent,
-  type FileSystem,
-  type GetRunDirFn,
-  retrieveJob,
-  storeJob,
-  storeRunSetting,
-} from "@perstack/storage"
 import pkg from "../package.json" with { type: "json" }
 import { RunEventEmitter } from "./events/event-emitter.js"
 import {
@@ -42,36 +30,54 @@ import {
 import { getSkillManagers } from "./skill-manager/index.js"
 import { executeStateMachine } from "./state-machine/index.js"
 
-export async function run(
-  runInput: RunParamsInput,
-  options?: {
-    shouldContinueRun?: (
-      setting: RunSetting,
-      checkpoint: Checkpoint,
-      step: Step,
-    ) => Promise<boolean>
-    retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
-    storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
-    eventListener?: (event: RunEvent | RuntimeEvent) => void
-    resolveExpertToRun?: ResolveExpertToRunFn
-    fileSystem?: FileSystem
-    getRunDir?: GetRunDirFn
-    returnOnDelegationComplete?: boolean
-  },
-): Promise<Checkpoint> {
+export type RunOptions = {
+  shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
+  retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  storeEvent?: (event: RunEvent) => Promise<void>
+  storeJob?: (job: Job) => void
+  retrieveJob?: (jobId: string) => Job | undefined
+  createJob?: (jobId: string, expertKey: string, maxSteps?: number) => Job
+  eventListener?: (event: RunEvent | RuntimeEvent) => void
+  resolveExpertToRun?: ResolveExpertToRunFn
+  returnOnDelegationComplete?: boolean
+}
+
+const noopStoreCheckpoint = async () => {}
+const noopStoreEvent = async () => {}
+const noopStoreJob = () => {}
+const noopRetrieveJob = () => undefined
+const noopRetrieveCheckpoint = async (
+  _jobId: string,
+  _checkpointId: string,
+): Promise<Checkpoint> => {
+  throw new Error("retrieveCheckpoint not provided")
+}
+const defaultCreateJob = (jobId: string, expertKey: string, maxSteps?: number): Job => ({
+  id: jobId,
+  coordinatorExpertKey: expertKey,
+  status: "running",
+  totalSteps: 0,
+  startedAt: Date.now(),
+  maxSteps,
+  usage: createEmptyUsage(),
+})
+
+export async function run(runInput: RunParamsInput, options?: RunOptions): Promise<Checkpoint> {
   const runParams = runParamsSchema.parse(runInput)
-  const eventListener = getEventListener(options)
-  const retrieveCheckpoint = options?.retrieveCheckpoint ?? defaultRetrieveCheckpoint
-  const storeCheckpoint = options?.storeCheckpoint ?? defaultStoreCheckpoint
+  const storeCheckpoint = options?.storeCheckpoint ?? noopStoreCheckpoint
+  const storeEvent = options?.storeEvent ?? noopStoreEvent
+  const storeJob = options?.storeJob ?? noopStoreJob
+  const retrieveJob = options?.retrieveJob ?? noopRetrieveJob
+  const retrieveCheckpoint = options?.retrieveCheckpoint ?? noopRetrieveCheckpoint
+  const createJob = options?.createJob ?? defaultCreateJob
+  const eventListener = createEventListener(options?.eventListener, storeEvent)
   const eventEmitter = new RunEventEmitter()
   eventEmitter.subscribe(eventListener)
   let { setting, checkpoint } = runParams
   const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
-  const getRunDir = options?.getRunDir ?? defaultGetRunDir
-  await storeRunSetting(setting, options?.fileSystem, getRunDir)
   let job: Job =
-    retrieveJob(setting.jobId) ??
-    createInitialJob(setting.jobId, setting.expertKey, setting.maxSteps)
+    retrieveJob(setting.jobId) ?? createJob(setting.jobId, setting.expertKey, setting.maxSteps)
   if (job.status !== "running") {
     job = { ...job, status: "running", finishedAt: undefined }
   }
@@ -223,12 +229,14 @@ export async function run(
   }
 }
 
-function getEventListener(options?: { eventListener?: (event: RunEvent | RuntimeEvent) => void }) {
-  const listener =
-    options?.eventListener ?? ((e: RunEvent | RuntimeEvent) => console.log(JSON.stringify(e)))
+function createEventListener(
+  userListener?: (event: RunEvent | RuntimeEvent) => void,
+  storeEvent?: (event: RunEvent) => Promise<void>,
+) {
+  const listener = userListener ?? ((e: RunEvent | RuntimeEvent) => console.log(JSON.stringify(e)))
   return async (event: RunEvent | RuntimeEvent) => {
-    if ("stepNumber" in event) {
-      await defaultStoreEvent(event)
+    if ("stepNumber" in event && storeEvent) {
+      await storeEvent(event as RunEvent)
     }
     listener(event)
   }
@@ -243,22 +251,12 @@ type DelegationResult = {
   deltaUsage: Usage
 }
 
-type DelegateOptions = {
-  shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
-  retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
-  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
-  eventListener?: (event: RunEvent | RuntimeEvent) => void
-  resolveExpertToRun?: ResolveExpertToRunFn
-  fileSystem?: FileSystem
-  getRunDir?: GetRunDirFn
-}
-
 async function runDelegate(
   delegation: DelegationTarget,
   parentSetting: RunSetting,
   parentCheckpoint: Checkpoint,
   parentExpert: Pick<Expert, "key" | "name" | "version">,
-  options?: DelegateOptions,
+  options?: RunOptions,
 ): Promise<DelegationResult> {
   const { expert, toolCallId, toolName, query } = delegation
   const delegateRunId = createId()
@@ -314,5 +312,3 @@ async function runDelegate(
     deltaUsage: resultCheckpoint.usage,
   }
 }
-
-export { defaultGetRunDir as getRunDir }

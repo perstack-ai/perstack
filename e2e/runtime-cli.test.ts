@@ -45,18 +45,6 @@ describe("perstack-runtime CLI", () => {
       expect(result.exitCode).toBe(1)
       expect(result.stderr).toContain("nonexistent.toml")
     })
-
-    it("should fail when --resume-from is used without --continue-job", async () => {
-      const result = await runRuntimeCli([
-        "run",
-        "test-expert",
-        "test query",
-        "--resume-from",
-        "checkpoint-123",
-      ])
-      expect(result.exitCode).toBe(1)
-      expect(result.stderr).toContain("--resume-from requires --continue-job")
-    })
   })
 
   describe("expert execution", () => {

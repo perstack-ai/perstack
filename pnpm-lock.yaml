@@ -421,9 +421,6 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../core
-      '@perstack/storage':
-        specifier: workspace:*
-        version: link:../storage
       ai:
         specifier: ^5.0.104
         version: 5.0.105(zod@4.1.13)

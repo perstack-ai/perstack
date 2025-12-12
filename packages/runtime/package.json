@@ -46,7 +46,6 @@
     "@paralleldrive/cuid2": "^3.0.4",
     "@perstack/api-client": "workspace:*",
     "@perstack/core": "workspace:*",
-    "@perstack/storage": "workspace:*",
     "ai": "^5.0.104",
     "ollama-ai-provider-v2": "^1.5.5",
     "ts-dedent": "^2.2.0",

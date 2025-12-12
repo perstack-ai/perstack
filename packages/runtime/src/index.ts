@@ -4,24 +4,8 @@ import { PerstackAdapter } from "./perstack-adapter.js"
 
 registerAdapter("perstack", () => new PerstackAdapter())
 
-export {
-  createInitialJob,
-  defaultGetRunDir as getRunDir,
-  defaultStoreCheckpoint,
-  getAllJobs,
-  getAllRuns,
-  getCheckpointDir,
-  getCheckpointPath,
-  getCheckpointsByJobId,
-  getEventContents,
-  getEventsByRun,
-  getJobDir,
-  getJobsDir,
-  retrieveJob,
-  storeJob,
-} from "@perstack/storage"
 export { getModel } from "./helpers/model.js"
 export { PerstackAdapter } from "./perstack-adapter.js"
-export { run } from "./run.js"
+export { type RunOptions, run } from "./run.js"
 export { type RunActor, type RunSnapshot, runtimeStateMachine } from "./state-machine/index.js"
 export const runtimeVersion = pkg.version

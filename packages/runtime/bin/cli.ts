@@ -36,29 +36,20 @@ program
   .option("--run-id <runId>", "Run ID for identifying the run")
   .option("--env-path <envPath...>", "Path to the environment file, default is .env and .env.local")
   .option("--verbose", "Enable verbose logging")
-  .option("--continue-job <jobId>", "Continue the specified job with new query")
-  .option(
-    "--resume-from <checkpointId>",
-    "Resume from a specific checkpoint (requires --continue-job)",
-  )
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
     try {
-      const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
-        await resolveRunContext({
-          configPath: input.options.config,
-          provider: input.options.provider,
-          model: input.options.model,
-          envPath: input.options.envPath,
-          continueJob: input.options.continueJob,
-          resumeFrom: input.options.resumeFrom,
-          expertKey: input.expertKey,
-        })
+      const { perstackConfig, env, providerConfig, model, experts } = await resolveRunContext({
+        configPath: input.options.config,
+        provider: input.options.provider,
+        model: input.options.model,
+        envPath: input.options.envPath,
+      })
       await run(
         {
           setting: {
-            jobId: checkpoint?.jobId ?? input.options.jobId,
-            runId: checkpoint?.runId ?? input.options.runId,
+            jobId: input.options.jobId,
+            runId: input.options.runId,
             expertKey: input.expertKey,
             input: { text: input.query },
             experts,
@@ -73,7 +64,6 @@ program
             perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
             env,
           },
-          checkpoint,
         },
         { eventListener: defaultEventListener },
       )

@@ -5,7 +5,7 @@ import type {
   RuntimeEvent,
   RuntimeName,
 } from "@perstack/core"
-import { defaultStoreCheckpoint } from "@perstack/storage"
+import { defaultRetrieveCheckpoint, defaultStoreCheckpoint } from "@perstack/storage"
 import { getAdapter, getRegisteredRuntimes, isAdapterAvailable } from "./registry.js"
 
 export type DispatchParams = {
@@ -14,6 +14,7 @@ export type DispatchParams = {
   runtime: RuntimeName
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
 }
 
 export type DispatchResult = {
@@ -21,7 +22,8 @@ export type DispatchResult = {
 }
 
 export async function dispatchToRuntime(params: DispatchParams): Promise<DispatchResult> {
-  const { setting, checkpoint, runtime, eventListener, storeCheckpoint } = params
+  const { setting, checkpoint, runtime, eventListener, storeCheckpoint, retrieveCheckpoint } =
+    params
   if (!isAdapterAvailable(runtime)) {
     const available = getRegisteredRuntimes().join(", ")
     throw new Error(`Runtime "${runtime}" is not available. Available runtimes: ${available}.`)
@@ -41,6 +43,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     checkpoint,
     eventListener,
     storeCheckpoint: storeCheckpoint ?? defaultStoreCheckpoint,
+    retrieveCheckpoint: retrieveCheckpoint ?? defaultRetrieveCheckpoint,
   })
   return { checkpoint: result.checkpoint }
 }

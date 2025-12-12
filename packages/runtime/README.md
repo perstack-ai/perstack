@@ -20,20 +20,18 @@ perstack-runtime run <expertKey> <query> [options]
 
 ### Options
 
-| Option                         | Description             |
-| ------------------------------ | ----------------------- |
-| `--config <path>`              | Path to perstack.toml   |
-| `--provider <provider>`        | LLM provider            |
-| `--model <model>`              | Model name              |
-| `--temperature <temp>`         | Temperature (0.0-1.0)   |
-| `--max-steps <n>`              | Maximum steps           |
-| `--max-retries <n>`            | Maximum retries         |
-| `--timeout <ms>`               | Timeout in milliseconds |
-| `--job-id <id>`                | Job ID                  |
-| `--run-id <id>`                | Run ID                  |
-| `--env-path <path...>`         | Environment file paths  |
-| `--continue-job <jobId>`       | Continue a job          |
-| `--resume-from <checkpointId>` | Resume from checkpoint  |
+| Option                 | Description             |
+| ---------------------- | ----------------------- |
+| `--config <path>`      | Path to perstack.toml   |
+| `--provider <provider>`| LLM provider            |
+| `--model <model>`      | Model name              |
+| `--temperature <temp>` | Temperature (0.0-1.0)   |
+| `--max-steps <n>`      | Maximum steps           |
+| `--max-retries <n>`    | Maximum retries         |
+| `--timeout <ms>`       | Timeout in milliseconds |
+| `--job-id <id>`        | Job ID                  |
+| `--run-id <id>`        | Run ID                  |
+| `--env-path <path...>` | Environment file paths  |
 
 ### Example
 
