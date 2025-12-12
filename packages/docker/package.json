@@ -1,7 +1,7 @@
 {
-  "name": "@perstack/runner",
+  "name": "@perstack/docker",
   "version": "0.0.1",
-  "description": "Perstack Runner - Multi-runtime adapter orchestration",
+  "description": "Perstack Docker Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,16 +23,11 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@perstack/claude-code": "workspace:*",
-    "@perstack/core": "workspace:*",
-    "@perstack/cursor": "workspace:*",
-    "@perstack/docker": "workspace:*",
-    "@perstack/gemini": "workspace:*",
-    "@perstack/runtime": "workspace:*",
-    "@perstack/storage": "workspace:*"
+    "@perstack/core": "workspace:*"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",
