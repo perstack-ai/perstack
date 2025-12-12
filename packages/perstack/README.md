@@ -47,10 +47,11 @@ perstack run <expert> <query>
 | `--max-steps <n>`                    | Maximum steps             | unlimited            |
 | `--max-retries <n>`                  | Max retry attempts        | `5`                  |
 | `--timeout <ms>`                     | Timeout per generation    | `60000`              |
+| `--job-id <id>`                      | Custom job ID             | auto-generated       |
 | `--run-id <id>`                      | Custom run ID             | auto-generated       |
 | `--env-path <path...>`               | Environment file paths    | `.env`, `.env.local` |
-| `--continue`                         | Continue latest run       | -                    |
-| `--continue-run <id>`                | Continue specific run     | -                    |
+| `--continue`                         | Continue latest job       | -                    |
+| `--continue-job <id>`                | Continue specific job     | -                    |
 | `--resume-from <id>`                 | Resume from checkpoint    | -                    |
 | `-i, --interactive-tool-call-result` | Query is tool call result | -                    |
 | `--verbose`                          | Enable verbose logging    | -                    |

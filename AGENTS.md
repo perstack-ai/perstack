@@ -30,15 +30,23 @@ perstack start [expertKey] [query]
 perstack run <expertKey> <query> [options]
 ```
 
+### Creating Experts
+
+**`npx create-expert`** - Interactive wizard to create and improve Experts
+```bash
+npx create-expert                    # New project
+npx create-expert my-expert "Add X"  # Improve existing
+```
+
 ### Common Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--provider <provider>` | LLM provider | `anthropic` |
-| `--model <model>` | Model name | `claude-sonnet-4-5` |
-| `--temperature <temp>` | Temperature (0.0-1.0) | `0.3` |
-| `--max-steps <n>` | Maximum steps | unlimited |
-| `--runtime <runtime>` | Execution runtime | `perstack` |
+| Option                  | Description           | Default             |
+| ----------------------- | --------------------- | ------------------- |
+| `--provider <provider>` | LLM provider          | `anthropic`         |
+| `--model <model>`       | Model name            | `claude-sonnet-4-5` |
+| `--temperature <temp>`  | Temperature (0.0-1.0) | `0.3`               |
+| `--max-steps <n>`       | Maximum steps         | unlimited           |
+| `--runtime <runtime>`   | Execution runtime     | `perstack`          |
 
 ### Available Runtimes
 

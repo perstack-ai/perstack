@@ -186,6 +186,13 @@ providerName = "anthropic"  # Required: anthropic, google, openai, ollama, azure
 | `baseUrl` | string | Custom API endpoint |
 | `headers` | object | Custom HTTP headers |
 
+**DeepSeek** (`providerName = "deepseek"`)
+
+| Setting | Type | Description |
+|---------|------|-------------|
+| `baseUrl` | string | Custom API endpoint |
+| `headers` | object | Custom HTTP headers |
+
 <Callout type="info">
 See [Providers and Models](/references/providers-and-models) for available models and environment variables.
 </Callout>
@@ -212,6 +219,7 @@ delegates = ["other-expert", "@org/another-expert"]
 | `description` | string | No | Brief description (max 2048 chars) |
 | `instruction` | string | **Yes** | Behavior instructions (max 20KB) |
 | `delegates` | string[] | No | Experts this Expert can delegate to |
+| `tags` | string[] | No | Tags for categorization |
 
 ## Skill Definition
 

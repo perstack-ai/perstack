@@ -263,3 +263,23 @@ perstack status my-expert@1.0.0 deprecated
 | `available` | Normal, visible in registry |
 | `deprecated` | Still usable but discouraged |
 | `disabled` | Cannot be executed |
+
+## Project Setup
+
+### `npx create-expert`
+
+Interactive wizard to create Perstack Experts.
+
+```bash
+npx create-expert                           # New project setup
+npx create-expert my-expert "Add X"         # Improve existing Expert
+```
+
+**New Project Mode:**
+- Detects available LLMs (Anthropic, OpenAI, Google)
+- Detects available runtimes (Cursor, Claude Code, Gemini)
+- Creates `.env`, `AGENTS.md`, `perstack.toml`
+- Runs Expert creation flow
+
+**Improvement Mode:**
+When called with Expert name, skips setup and improves existing Expert.
