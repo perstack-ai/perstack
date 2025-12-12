@@ -60,7 +60,6 @@ function createDelegateExpert(overrides: Partial<Expert> = {}): Expert {
     skills: {},
     delegates: [],
     tags: [],
-    runtime: ["perstack"],
     ...overrides,
   }
 }
@@ -307,15 +306,6 @@ describe("@perstack/runtime: DelegateSkillManager", () => {
       type: "object",
       properties: {
         query: { type: "string" },
-        runtime: {
-          oneOf: [
-            { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
-            {
-              type: "array",
-              items: { type: "string", enum: ["perstack", "cursor", "claude-code", "gemini"] },
-            },
-          ],
-        },
       },
       required: ["query"],
     })

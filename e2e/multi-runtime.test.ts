@@ -86,6 +86,18 @@ describe("multi-runtime CLI", () => {
     })
   })
 
+  describe("global runtime config", () => {
+    it("should use runtime from perstack.toml when --runtime not specified", async () => {
+      const result = await runExpert("e2e-global-runtime", "Say hello", {
+        configPath: "./e2e/experts/global-runtime.toml",
+        timeout: 120000,
+      })
+      expect(assertEventSequenceContains(result.events, ["startRun", "completeRun"]).passed).toBe(
+        true,
+      )
+    })
+  })
+
   describe("continue with perstack runtime", () => {
     it("should continue job and receive new completeRun event", async () => {
       const initialResult = await runExpert(

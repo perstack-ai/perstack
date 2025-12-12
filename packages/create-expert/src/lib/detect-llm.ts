@@ -1,9 +1,20 @@
 import type { LLMInfo, LLMProvider } from "@perstack/tui"
 
-const LLM_CONFIGS: Record<LLMProvider, { envVar: string; displayName: string; defaultModel: string }> = {
-  anthropic: { envVar: "ANTHROPIC_API_KEY", displayName: "Anthropic (Claude)", defaultModel: "claude-sonnet-4-5" },
+const LLM_CONFIGS: Record<
+  LLMProvider,
+  { envVar: string; displayName: string; defaultModel: string }
+> = {
+  anthropic: {
+    envVar: "ANTHROPIC_API_KEY",
+    displayName: "Anthropic (Claude)",
+    defaultModel: "claude-sonnet-4-5",
+  },
   openai: { envVar: "OPENAI_API_KEY", displayName: "OpenAI", defaultModel: "gpt-4o" },
-  google: { envVar: "GOOGLE_GENERATIVE_AI_API_KEY", displayName: "Google (Gemini)", defaultModel: "gemini-2.5-pro" },
+  google: {
+    envVar: "GOOGLE_GENERATIVE_AI_API_KEY",
+    displayName: "Google (Gemini)",
+    defaultModel: "gemini-2.5-pro",
+  },
 }
 
 export function detectLLM(provider: LLMProvider): LLMInfo {

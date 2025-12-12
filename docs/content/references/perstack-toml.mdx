@@ -15,6 +15,7 @@ import { Callout, Cards } from 'nextra/components'
 # Runtime configuration
 model = "claude-sonnet-4-5"
 temperature = 0.3
+runtime = "perstack"
 maxSteps = 50
 maxRetries = 3
 timeout = 60000
@@ -28,7 +29,6 @@ headers = { "X-Custom-Header" = "value" }
 # Expert definition
 [experts."my-expert"]
 version = "1.0.0"
-minRuntimeVersion = "v1.0"
 description = "TypeScript and React code reviewer with security analysis"
 instruction = """
 You are a code reviewer specializing in TypeScript and React.
@@ -91,6 +91,7 @@ Top-level settings that apply to all Experts in the file.
 ```toml
 model = "claude-sonnet-4-5"
 temperature = 0.3
+runtime = "perstack"
 maxSteps = 100
 maxRetries = 10
 timeout = 60000
@@ -106,6 +107,7 @@ headers = { "X-Custom-Header" = "value" }
 |-------|------|-------------|
 | `model` | string | Model name |
 | `temperature` | number | Temperature (0.0-1.0) |
+| `runtime` | string | Execution runtime (`perstack`, `cursor`, `claude-code`, `gemini`) |
 | `maxSteps` | number | Maximum steps per run |
 | `maxRetries` | number | Maximum retry attempts |
 | `timeout` | number | Timeout per generation (ms) |
@@ -210,7 +212,6 @@ delegates = ["other-expert", "@org/another-expert"]
 | `description` | string | No | Brief description (max 2048 chars) |
 | `instruction` | string | **Yes** | Behavior instructions (max 20KB) |
 | `delegates` | string[] | No | Experts this Expert can delegate to |
-| `runtime` | string or string[] | No | Compatible runtimes (`perstack`, `cursor`, `claude-code`, `gemini`) |
 
 ## Skill Definition
 

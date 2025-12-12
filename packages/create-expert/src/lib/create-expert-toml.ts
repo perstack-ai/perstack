@@ -1,14 +1,17 @@
-import type { LLMProvider } from "@perstack/tui"
+import type { LLMProvider, RuntimeType } from "@perstack/tui"
 
 interface CreateExpertTomlOptions {
   provider: LLMProvider
   model: string
+  runtime?: "default" | RuntimeType
 }
 
 export function generateCreateExpertToml(options: CreateExpertTomlOptions): string {
+  const runtimeLine =
+    options.runtime && options.runtime !== "default" ? `runtime = "${options.runtime}"\n` : ""
   return `model = "${options.model}"
 temperature = 0.3
-
+${runtimeLine}
 [provider]
 providerName = "${options.provider}"
 

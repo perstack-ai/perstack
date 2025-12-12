@@ -90,6 +90,7 @@ const program = new Command()
         const createExpertToml = generateCreateExpertToml({
           provider: "anthropic",
           model: "claude-sonnet-4-5",
+          runtime: wizardResult.runtime,
         })
         writeFileSync(perstackTomlPath, createExpertToml)
         console.log("✓ Created perstack.toml with create-expert Expert")

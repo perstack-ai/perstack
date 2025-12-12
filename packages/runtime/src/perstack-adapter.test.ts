@@ -24,7 +24,6 @@ describe("@perstack/runtime: PerstackAdapter", () => {
       skills: {},
       delegates: [],
       tags: [],
-      runtime: ["perstack"],
     }
     const config = adapter.convertExpert(expert)
     expect(config.instruction).toBe("Test instruction")

@@ -57,13 +57,15 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--runtime <runtime>` | Execution runtime | `perstack` |
+| `--runtime <runtime>` | Execution runtime | From config or `perstack` |
 
 Available runtimes:
 - `perstack` — Built-in runtime (default)
 - `cursor` — Cursor CLI (experimental)
 - `claude-code` — Claude Code CLI (experimental)
 - `gemini` — Gemini CLI (experimental)
+
+If `--runtime` is not specified, the runtime is determined by `runtime` field in `perstack.toml`. If neither is set, `perstack` is used.
 
 See [Multi-Runtime Support](/using-experts/multi-runtime) for setup and limitations.
 
