@@ -66,16 +66,16 @@ e2e/
 
 ### perstack-runtime/
 
-| Use Case              | File                     | Tests                                              |
-| --------------------- | ------------------------ | -------------------------------------------------- |
-| **Run expert**        | run.test.ts              | Answer question, use tools, read PDF/image         |
-| **CLI options**       | options.test.ts          | Model, limits, job-id, env-path, verbose           |
-| **Execution limits**  | limits.test.ts           | Max steps, max retries                             |
-| **Skills**            | skills.test.ts           | Pick/omit tools, multiple skills                   |
-| **Interactive input** | interactive.test.ts      | Stop at interactive tool                           |
-| **Error handling**    | error-handling.test.ts   | Tool error, MCP error, invalid provider            |
-| **Storage behavior**  | storage-behavior.test.ts | Verify storage is not created by runtime CLI       |
-| **CLI validation**    | validation.test.ts       | Version, help, argument validation                 |
+| Use Case              | File                     | Tests                                        |
+| --------------------- | ------------------------ | -------------------------------------------- |
+| **Run expert**        | run.test.ts              | Answer question, use tools, read PDF/image   |
+| **CLI options**       | options.test.ts          | Model, limits, job-id, env-path, verbose     |
+| **Execution limits**  | limits.test.ts           | Max steps, max retries                       |
+| **Skills**            | skills.test.ts           | Pick/omit tools, multiple skills             |
+| **Interactive input** | interactive.test.ts      | Stop at interactive tool                     |
+| **Error handling**    | error-handling.test.ts   | Tool error, MCP error, invalid provider      |
+| **Storage behavior**  | storage-behavior.test.ts | Verify storage is not created by runtime CLI |
+| **CLI validation**    | validation.test.ts       | Version, help, argument validation           |
 
 ## Architecture Notes
 
