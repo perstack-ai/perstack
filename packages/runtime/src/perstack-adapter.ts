@@ -180,7 +180,13 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
           if (!trimmed) continue
           try {
             const parsed = JSON.parse(trimmed) as RunEvent | RuntimeEvent
-            if (parsed.type === "completeRun" && "checkpoint" in parsed) {
+            const terminalEventTypes = [
+              "completeRun",
+              "stopRunByInteractiveTool",
+              "stopRunByDelegate",
+              "stopRunByExceededMaxSteps",
+            ]
+            if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
               const checkpointData = parsed.checkpoint
               parsed.checkpoint = checkpointSchema.parse(checkpointData)
             }
