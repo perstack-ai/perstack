@@ -3,9 +3,11 @@ import { headersSchema } from "./provider-config.js"
 import type { RuntimeName } from "./runtime-name.js"
 import { runtimeNameSchema } from "./runtime-name.js"
 
-const domainPatternRegex = /^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/
+const domainPatternRegex =
+  /^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/
 const domainPatternSchema = z.string().regex(domainPatternRegex, {
-  message: "Invalid domain pattern. Use exact domain (example.com) or wildcard prefix (*.example.com)",
+  message:
+    "Invalid domain pattern. Use exact domain (example.com) or wildcard prefix (*.example.com)",
 })
 
 export interface NetworkConfig {
