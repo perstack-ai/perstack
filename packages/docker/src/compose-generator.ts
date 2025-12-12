@@ -11,7 +11,7 @@ export interface ComposeGeneratorOptions {
 }
 
 export function generateComposeFile(options: ComposeGeneratorOptions): string {
-  const { expertKey, runtimeImageName, proxyEnabled, networkName, envKeys, workspacePath } = options
+  const { runtimeImageName, proxyEnabled, networkName, envKeys, workspacePath } = options
   const lines: string[] = []
   lines.push("services:")
   lines.push("  runtime:")
@@ -60,7 +60,7 @@ export function generateBuildContext(
   proxyAllowlist: string | null
   composeFile: string
 } {
-  const { generateDockerfile, detectRequiredRuntimes } = require("./dockerfile-generator.js")
+  const { generateDockerfile } = require("./dockerfile-generator.js")
   const {
     generateSquidConf,
     generateSquidAllowlistAcl,
