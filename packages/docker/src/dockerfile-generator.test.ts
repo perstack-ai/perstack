@@ -10,7 +10,7 @@ import {
 describe("detectRequiredRuntimes", () => {
   it("should always include nodejs", () => {
     const config: PerstackConfig = {}
-    const runtimes = detectRequiredRuntimes(config)
+    const runtimes = detectRequiredRuntimes(config, "non-existent")
     expect(runtimes.has("nodejs")).toBe(true)
   })
 
@@ -29,7 +29,7 @@ describe("detectRequiredRuntimes", () => {
         },
       },
     }
-    const runtimes = detectRequiredRuntimes(config)
+    const runtimes = detectRequiredRuntimes(config, "test-expert")
     expect(runtimes.has("nodejs")).toBe(true)
   })
 
@@ -48,11 +48,11 @@ describe("detectRequiredRuntimes", () => {
         },
       },
     }
-    const runtimes = detectRequiredRuntimes(config)
+    const runtimes = detectRequiredRuntimes(config, "test-expert")
     expect(runtimes.has("python")).toBe(true)
   })
 
-  it("should detect both runtimes when mixed", () => {
+  it("should detect both runtimes when mixed in same expert", () => {
     const config: PerstackConfig = {
       experts: {
         "test-expert": {
@@ -72,9 +72,42 @@ describe("detectRequiredRuntimes", () => {
         },
       },
     }
-    const runtimes = detectRequiredRuntimes(config)
+    const runtimes = detectRequiredRuntimes(config, "test-expert")
     expect(runtimes.has("nodejs")).toBe(true)
     expect(runtimes.has("python")).toBe(true)
+  })
+
+  it("should only detect runtimes for the specified expert", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "node-only-expert": {
+          instruction: "test",
+          skills: {
+            "node-skill": {
+              type: "mcpStdioSkill",
+              command: "npx",
+              packageName: "node-package",
+            },
+          },
+        },
+        "python-expert": {
+          instruction: "test",
+          skills: {
+            "python-skill": {
+              type: "mcpStdioSkill",
+              command: "uvx",
+              packageName: "python-package",
+            },
+          },
+        },
+      },
+    }
+    const nodeOnlyRuntimes = detectRequiredRuntimes(config, "node-only-expert")
+    expect(nodeOnlyRuntimes.has("nodejs")).toBe(true)
+    expect(nodeOnlyRuntimes.has("python")).toBe(false)
+    const pythonRuntimes = detectRequiredRuntimes(config, "python-expert")
+    expect(pythonRuntimes.has("nodejs")).toBe(true)
+    expect(pythonRuntimes.has("python")).toBe(true)
   })
 })
 

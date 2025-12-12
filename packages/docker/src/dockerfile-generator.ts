@@ -2,27 +2,28 @@ import type { McpStdioSkill, PerstackConfig } from "@perstack/core"
 
 export type RuntimeRequirement = "nodejs" | "python"
 
-export function detectRequiredRuntimes(config: PerstackConfig): Set<RuntimeRequirement> {
+export function detectRequiredRuntimes(
+  config: PerstackConfig,
+  expertKey: string,
+): Set<RuntimeRequirement> {
   const runtimes = new Set<RuntimeRequirement>()
   runtimes.add("nodejs")
-  if (!config.experts) {
+  const expert = config.experts?.[expertKey]
+  if (!expert?.skills) {
     return runtimes
   }
-  for (const expert of Object.values(config.experts)) {
-    if (!expert.skills) continue
-    for (const skill of Object.values(expert.skills)) {
-      if (skill.type !== "mcpStdioSkill") continue
-      const mcpSkill = skill as McpStdioSkill
-      if (mcpSkill.command === "npx" || mcpSkill.command === "node") {
-        runtimes.add("nodejs")
-      }
-      if (
-        mcpSkill.command === "uvx" ||
-        mcpSkill.command === "python" ||
-        mcpSkill.command === "python3"
-      ) {
-        runtimes.add("python")
-      }
+  for (const skill of Object.values(expert.skills)) {
+    if (skill.type !== "mcpStdioSkill") continue
+    const mcpSkill = skill as McpStdioSkill
+    if (mcpSkill.command === "npx" || mcpSkill.command === "node") {
+      runtimes.add("nodejs")
+    }
+    if (
+      mcpSkill.command === "uvx" ||
+      mcpSkill.command === "python" ||
+      mcpSkill.command === "python3"
+    ) {
+      runtimes.add("python")
     }
   }
   return runtimes
@@ -81,7 +82,7 @@ export function generateDockerfile(
   expertKey: string,
   runtimePackagePath: string,
 ): string {
-  const runtimes = detectRequiredRuntimes(config)
+  const runtimes = detectRequiredRuntimes(config, expertKey)
   const lines: string[] = []
   lines.push(generateBaseImageLayers(runtimes))
   lines.push("WORKDIR /app")
