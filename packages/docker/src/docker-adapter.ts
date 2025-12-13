@@ -197,9 +197,8 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     if (setting.model !== undefined) {
       args.push("--model", setting.model)
     }
-    if (setting.maxSteps !== undefined) {
-      args.push("--max-steps", String(setting.maxSteps))
-    }
+    const maxSteps = setting.maxSteps ?? 100
+    args.push("--max-steps", String(maxSteps))
     if (setting.maxRetries !== undefined) {
       args.push("--max-retries", String(setting.maxRetries))
     }
