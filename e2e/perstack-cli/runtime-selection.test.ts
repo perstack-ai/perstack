@@ -84,6 +84,21 @@ describe("Runtime Selection", () => {
         expect(result.stderr).toMatch(/not installed|prerequisites|API_KEY/i)
       }
     })
+
+    it("should show helpful error for docker when unavailable", async () => {
+      const result = await runCli([
+        "run",
+        "--config",
+        "./e2e/experts/special-tools.toml",
+        "--runtime",
+        "docker",
+        "e2e-special-tools",
+        "echo test",
+      ])
+      if (result.exitCode !== 0) {
+        expect(result.stderr).toMatch(/not installed|prerequisites|not found|docker/i)
+      }
+    })
   })
 
   describe("Load runtime from config", () => {
