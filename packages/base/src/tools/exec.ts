@@ -20,11 +20,36 @@ type ExecInput = {
   stderr: boolean
   timeout?: number
 }
+const SAFE_ENV_VARS = [
+  "PATH",
+  "HOME",
+  "SHELL",
+  "TERM",
+  "NODE_PATH",
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "NO_PROXY",
+  "no_proxy",
+  "PERSTACK_PROXY_URL",
+  "NPM_CONFIG_PROXY",
+  "NPM_CONFIG_HTTPS_PROXY",
+]
+function getFilteredEnv(): Record<string, string> {
+  const filtered: Record<string, string> = {}
+  for (const key of SAFE_ENV_VARS) {
+    if (process.env[key]) {
+      filtered[key] = process.env[key]
+    }
+  }
+  return filtered
+}
 export async function exec(input: ExecInput) {
   const validatedCwd = await validatePath(input.cwd)
   const { stdout, stderr } = await execFileAsync(input.command, input.args, {
     cwd: validatedCwd,
-    env: { ...process.env, ...input.env },
+    env: { ...getFilteredEnv(), ...input.env },
     timeout: input.timeout,
     maxBuffer: 10 * 1024 * 1024,
   })

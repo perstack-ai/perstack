@@ -42,7 +42,7 @@
     "@ai-sdk/google": "^2.0.44",
     "@ai-sdk/google-vertex": "^3.0.24",
     "@ai-sdk/openai": "^2.0.75",
-    "@modelcontextprotocol/sdk": "^1.23.0",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "@paralleldrive/cuid2": "^3.0.4",
     "@perstack/api-client": "workspace:*",
     "@perstack/core": "workspace:*",

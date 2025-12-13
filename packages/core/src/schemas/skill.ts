@@ -1,5 +1,42 @@
 import { z } from "zod"
 
+function isPrivateOrLocalIP(hostname: string): boolean {
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "0.0.0.0"
+  ) {
+    return true
+  }
+  const ipv4Match = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+  if (ipv4Match) {
+    const [, a, b] = ipv4Match.map(Number)
+    if (a === 10) return true
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    if (a === 169 && b === 254) return true
+    if (a === 127) return true
+  }
+  return false
+}
+const sseEndpointSchema = z
+  .string()
+  .url()
+  .refine(
+    (url) => {
+      try {
+        const parsed = new URL(url)
+        if (parsed.protocol !== "https:") return false
+        if (isPrivateOrLocalIP(parsed.hostname)) return false
+        return true
+      } catch {
+        return false
+      }
+    },
+    { message: "Endpoint must be a public HTTPS URL" },
+  )
+
 /** MCP skill using stdio transport */
 export interface McpStdioSkill {
   type: "mcpStdioSkill"
@@ -64,7 +101,7 @@ export const mcpSseSkillSchema = z.object({
   rule: z.string().optional(),
   pick: z.array(z.string()).optional().default([]),
   omit: z.array(z.string()).optional().default([]),
-  endpoint: z.string(),
+  endpoint: sseEndpointSchema,
 })
 mcpSseSkillSchema satisfies z.ZodType<McpSseSkill>
 

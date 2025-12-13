@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
   defaultMaxRetries,
+  defaultMaxSteps,
   defaultPerstackApiBaseUrl,
   defaultTemperature,
   defaultTimeout,
@@ -212,7 +213,7 @@ export const runParamsSchema = z.object({
         ),
       ),
     temperature: z.number().min(0).max(1).optional().default(defaultTemperature),
-    maxSteps: z.number().min(1).optional(),
+    maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
     maxRetries: z.number().min(0).optional().default(defaultMaxRetries),
     timeout: z.number().min(0).optional().default(defaultTimeout),
     startedAt: z.number().optional().default(Date.now()),
