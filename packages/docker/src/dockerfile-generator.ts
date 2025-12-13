@@ -116,9 +116,9 @@ export function generateDockerfile(
   lines.push("COPY perstack.toml /app/perstack.toml")
   lines.push("")
   if (options?.proxyEnabled) {
-    lines.push("ENV PERSTACK_PROXY_URL=http://proxy:3128")
-    lines.push("ENV NPM_CONFIG_PROXY=http://proxy:3128")
-    lines.push("ENV NPM_CONFIG_HTTPS_PROXY=http://proxy:3128")
+    lines.push("ENV PERSTACK_PROXY_URL=http://172.28.0.2:3128")
+    lines.push("ENV NPM_CONFIG_PROXY=http://172.28.0.2:3128")
+    lines.push("ENV NPM_CONFIG_HTTPS_PROXY=http://172.28.0.2:3128")
     lines.push("")
   }
   lines.push(

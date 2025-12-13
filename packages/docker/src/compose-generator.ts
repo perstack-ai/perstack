@@ -28,10 +28,10 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("      dockerfile: Dockerfile")
   const allEnvKeys = [...envKeys]
   if (proxyEnabled) {
-    allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
-    allEnvKeys.push("HTTPS_PROXY=http://proxy:3128")
-    allEnvKeys.push("http_proxy=http://proxy:3128")
-    allEnvKeys.push("https_proxy=http://proxy:3128")
+    allEnvKeys.push("HTTP_PROXY=http://172.28.0.2:3128")
+    allEnvKeys.push("HTTPS_PROXY=http://172.28.0.2:3128")
+    allEnvKeys.push("http_proxy=http://172.28.0.2:3128")
+    allEnvKeys.push("https_proxy=http://172.28.0.2:3128")
     allEnvKeys.push("NO_PROXY=localhost,127.0.0.1")
     allEnvKeys.push("no_proxy=localhost,127.0.0.1")
   }

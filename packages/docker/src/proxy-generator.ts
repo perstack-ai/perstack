@@ -54,12 +54,21 @@ export function collectAllowedDomains(config: PerstackConfig, expertKey: string)
 }
 
 export function generateSquidAllowlistAcl(domains: string[]): string {
+  const wildcards = new Set<string>()
+  for (const domain of domains) {
+    if (domain.startsWith("*.")) {
+      wildcards.add(domain.slice(2))
+    }
+  }
   const lines: string[] = []
   for (const domain of domains) {
     if (domain.startsWith("*.")) {
       lines.push(`.${domain.slice(2)}`)
     } else {
-      lines.push(domain)
+      const isSubdomainOfWildcard = Array.from(wildcards).some((w) => domain.endsWith(`.${w}`))
+      if (!isSubdomainOfWildcard) {
+        lines.push(domain)
+      }
     }
   }
   return lines.join("\n")
