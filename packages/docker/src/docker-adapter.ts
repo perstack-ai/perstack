@@ -253,8 +253,13 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
             "stopRunByExceededMaxSteps",
           ]
           if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
-            const checkpointData = parsed.checkpoint
-            parsed.checkpoint = checkpointSchema.parse(checkpointData)
+            try {
+              const checkpointData = parsed.checkpoint
+              parsed.checkpoint = checkpointSchema.parse(checkpointData)
+            } catch {
+              // Skip invalid checkpoint data
+              continue
+            }
           }
           eventListener(parsed)
         }
@@ -279,10 +284,16 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
               "stopRunByExceededMaxSteps",
             ]
             if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
-              const checkpointData = parsed.checkpoint
-              parsed.checkpoint = checkpointSchema.parse(checkpointData)
+              try {
+                const checkpointData = parsed.checkpoint
+                parsed.checkpoint = checkpointSchema.parse(checkpointData)
+              } catch {
+                parsed = null
+              }
             }
-            eventListener(parsed)
+            if (parsed) {
+              eventListener(parsed)
+            }
           }
         }
         resolve({ stdout, stderr, exitCode: code ?? 127 })
