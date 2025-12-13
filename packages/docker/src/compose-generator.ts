@@ -1,5 +1,5 @@
 import type { PerstackConfig } from "@perstack/core"
-import { generateProxyComposeService, getEffectiveNetworkConfig } from "./proxy-generator.js"
+import { collectAllowedDomains, generateProxyComposeService } from "./proxy-generator.js"
 
 export interface ComposeGeneratorOptions {
   expertKey: string
@@ -68,16 +68,16 @@ export function generateBuildContext(
     generateSquidAllowlistAcl,
     generateProxyDockerfile,
   } = require("./proxy-generator.js")
-  const networkConfig = getEffectiveNetworkConfig(config, expertKey)
-  const hasAllowlist = !!(networkConfig.allowedDomains && networkConfig.allowedDomains.length > 0)
+  const allowedDomains = collectAllowedDomains(config, expertKey)
+  const hasAllowlist = allowedDomains.length > 0
   const dockerfile = generateDockerfile(config, expertKey, "/app/runtime")
   let proxyDockerfile: string | null = null
   let proxySquidConf: string | null = null
   let proxyAllowlist: string | null = null
   if (hasAllowlist) {
     proxyDockerfile = generateProxyDockerfile(true)
-    proxySquidConf = generateSquidConf(networkConfig.allowedDomains)
-    proxyAllowlist = generateSquidAllowlistAcl(networkConfig.allowedDomains!)
+    proxySquidConf = generateSquidConf(allowedDomains)
+    proxyAllowlist = generateSquidAllowlistAcl(allowedDomains)
   }
   const composeFile = generateComposeFile({
     expertKey,

@@ -177,6 +177,7 @@ command = "npx"
 packageName = "exa-mcp-server"
 requiredEnv = ["EXA_API_KEY"]
 pick = ["web_search_exa"]  # Optional: whitelist tools
+allowedDomains = ["api.exa.ai"]  # Required for docker runtime
 ```
 
 **Remote servers (SSE):**

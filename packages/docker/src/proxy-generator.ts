@@ -1,31 +1,55 @@
-import type { NetworkConfig, PerstackConfig } from "@perstack/core"
+import type { PerstackConfig, ProviderTable } from "@perstack/core"
 
-export function mergeNetworkConfig(
-  globalConfig?: NetworkConfig,
-  expertConfig?: NetworkConfig,
-): NetworkConfig {
-  const allowedDomains = new Set<string>()
-  if (globalConfig?.allowedDomains) {
-    for (const domain of globalConfig.allowedDomains) {
-      allowedDomains.add(domain)
-    }
-  }
-  if (expertConfig?.allowedDomains) {
-    for (const domain of expertConfig.allowedDomains) {
-      allowedDomains.add(domain)
-    }
-  }
-  return {
-    allowedDomains: allowedDomains.size > 0 ? Array.from(allowedDomains) : undefined,
+export function getProviderApiDomains(provider?: ProviderTable): string[] {
+  if (!provider) return []
+  switch (provider.providerName) {
+    case "anthropic":
+      return ["api.anthropic.com"]
+    case "openai":
+      return ["api.openai.com"]
+    case "google":
+      return ["generativelanguage.googleapis.com"]
+    case "azure-openai":
+      return ["*.openai.azure.com"]
+    case "amazon-bedrock":
+      return ["*.amazonaws.com"]
+    case "google-vertex":
+      return ["*.googleapis.com"]
+    case "deepseek":
+      return ["api.deepseek.com"]
+    case "ollama":
+      return []
+    default:
+      return []
   }
 }
 
-export function getEffectiveNetworkConfig(
-  config: PerstackConfig,
-  expertKey: string,
-): NetworkConfig {
+export function collectSkillAllowedDomains(config: PerstackConfig, expertKey: string): string[] {
+  const domains: string[] = []
   const expert = config.experts?.[expertKey]
-  return mergeNetworkConfig(config.network, expert?.network)
+  if (!expert?.skills) return domains
+  for (const skill of Object.values(expert.skills)) {
+    if (skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill") {
+      const skillDomains = (skill as { allowedDomains?: string[] }).allowedDomains
+      if (skillDomains) {
+        domains.push(...skillDomains)
+      }
+    }
+  }
+  return domains
+}
+
+export function collectAllowedDomains(config: PerstackConfig, expertKey: string): string[] {
+  const domains = new Set<string>()
+  const skillDomains = collectSkillAllowedDomains(config, expertKey)
+  for (const domain of skillDomains) {
+    domains.add(domain)
+  }
+  const providerDomains = getProviderApiDomains(config.provider)
+  for (const domain of providerDomains) {
+    domains.add(domain)
+  }
+  return Array.from(domains)
 }
 
 export function generateSquidAllowlistAcl(domains: string[]): string {
