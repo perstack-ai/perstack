@@ -3,6 +3,13 @@ import { headersSchema } from "./provider-config.js"
 import type { RuntimeName } from "./runtime-name.js"
 import { runtimeNameSchema } from "./runtime-name.js"
 
+const domainPatternRegex =
+  /^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/
+export const domainPatternSchema = z.string().regex(domainPatternRegex, {
+  message:
+    "Invalid domain pattern. Use exact domain (example.com) or wildcard prefix (*.example.com)",
+})
+
 const anthropicSettingSchema = z.object({
   baseUrl: z.string().optional(),
   headers: headersSchema,
@@ -108,6 +115,7 @@ export type PerstackConfigSkill =
       packageName?: string
       args?: string[]
       requiredEnv?: string[]
+      allowedDomains?: string[]
     }
   | {
       type: "mcpSseSkill"
@@ -116,6 +124,7 @@ export type PerstackConfigSkill =
       pick?: string[]
       omit?: string[]
       endpoint: string
+      allowedDomains?: string[]
     }
   | {
       type: "interactiveSkill"
@@ -201,6 +210,7 @@ export const perstackConfigSchema = z.object({
                 packageName: z.string().optional(),
                 args: z.array(z.string()).optional(),
                 requiredEnv: z.array(z.string()).optional(),
+                allowedDomains: z.array(domainPatternSchema).optional(),
               }),
               z.object({
                 type: z.literal("mcpSseSkill"),
@@ -209,6 +219,7 @@ export const perstackConfigSchema = z.object({
                 pick: z.array(z.string()).optional(),
                 omit: z.array(z.string()).optional(),
                 endpoint: z.string(),
+                allowedDomains: z.array(domainPatternSchema).optional(),
               }),
               z.object({
                 type: z.literal("interactiveSkill"),

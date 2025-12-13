@@ -1,9 +1,11 @@
 import type { Checkpoint } from "../schemas/checkpoint.js"
 import type { Expert } from "../schemas/expert.js"
+import type { PerstackConfig } from "../schemas/perstack-toml.js"
 import type { RunEvent, RunParamsInput, RuntimeEvent } from "../schemas/runtime.js"
 
 export type AdapterRunParams = {
   setting: RunParamsInput["setting"]
+  config?: PerstackConfig
   checkpoint?: Checkpoint
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>

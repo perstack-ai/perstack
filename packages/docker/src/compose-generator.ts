@@ -1,0 +1,104 @@
+import type { PerstackConfig } from "@perstack/core"
+import TOML from "smol-toml"
+import { generateDockerfile } from "./dockerfile-generator.js"
+import { extractRequiredEnvVars } from "./env-resolver.js"
+import {
+  collectAllowedDomains,
+  generateProxyComposeService,
+  generateProxyDockerfile,
+  generateSquidAllowlistAcl,
+  generateSquidConf,
+} from "./proxy-generator.js"
+export interface ComposeGeneratorOptions {
+  expertKey: string
+  proxyEnabled: boolean
+  networkName: string
+  envKeys: string[]
+  workspacePath?: string
+}
+export function generateComposeFile(options: ComposeGeneratorOptions): string {
+  const { proxyEnabled, networkName, envKeys, workspacePath } = options
+  const lines: string[] = []
+  lines.push("services:")
+  lines.push("  runtime:")
+  lines.push("    build:")
+  lines.push("      context: .")
+  lines.push("      dockerfile: Dockerfile")
+  const allEnvKeys = [...envKeys]
+  if (proxyEnabled) {
+    allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
+    allEnvKeys.push("HTTPS_PROXY=http://proxy:3128")
+  }
+  if (allEnvKeys.length > 0) {
+    lines.push("    environment:")
+    for (const key of allEnvKeys) {
+      lines.push(`      - ${key}`)
+    }
+  }
+  if (workspacePath) {
+    lines.push("    volumes:")
+    lines.push(`      - ${workspacePath}:/workspace:rw`)
+    lines.push("    working_dir: /workspace")
+  }
+  lines.push("    stdin_open: true")
+  lines.push("    tty: true")
+  if (proxyEnabled) {
+    lines.push("    depends_on:")
+    lines.push("      - proxy")
+  }
+  lines.push("    networks:")
+  lines.push(`      - ${networkName}`)
+  lines.push("")
+  if (proxyEnabled) {
+    lines.push(generateProxyComposeService(networkName))
+    lines.push("")
+  }
+  lines.push("networks:")
+  lines.push(`  ${networkName}:`)
+  lines.push("    driver: bridge")
+  lines.push("")
+  return lines.join("\n")
+}
+
+export function generateBuildContext(
+  config: PerstackConfig,
+  expertKey: string,
+): {
+  dockerfile: string
+  configToml: string
+  proxyDockerfile: string | null
+  proxySquidConf: string | null
+  proxyAllowlist: string | null
+  composeFile: string
+} {
+  const allowedDomains = collectAllowedDomains(config, expertKey)
+  const hasAllowlist = allowedDomains.length > 0
+  const dockerfile = generateDockerfile(config, expertKey)
+  const containerConfig = { ...config, runtime: "perstack" }
+  const configToml = TOML.stringify(containerConfig as Record<string, unknown>)
+  let proxyDockerfileContent: string | null = null
+  let proxySquidConf: string | null = null
+  let proxyAllowlist: string | null = null
+  if (hasAllowlist) {
+    proxyDockerfileContent = generateProxyDockerfile(true)
+    proxySquidConf = generateSquidConf(allowedDomains)
+    proxyAllowlist = generateSquidAllowlistAcl(allowedDomains)
+  }
+  const envRequirements = extractRequiredEnvVars(config, expertKey)
+  const envKeys = envRequirements.map((r) => r.name)
+  const composeFile = generateComposeFile({
+    expertKey,
+    proxyEnabled: hasAllowlist,
+    networkName: "perstack-net",
+    envKeys,
+    workspacePath: "./workspace",
+  })
+  return {
+    dockerfile,
+    configToml,
+    proxyDockerfile: proxyDockerfileContent,
+    proxySquidConf,
+    proxyAllowlist,
+    composeFile,
+  }
+}

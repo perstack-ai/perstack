@@ -8,12 +8,14 @@ import {
   registerAdapter,
 } from "@perstack/core"
 import { CursorAdapter } from "@perstack/cursor"
+import { DockerAdapter } from "@perstack/docker"
 import { GeminiAdapter } from "@perstack/gemini"
 import "@perstack/runtime"
 
 registerAdapter("cursor", () => new CursorAdapter())
 registerAdapter("claude-code", () => new ClaudeCodeAdapter())
 registerAdapter("gemini", () => new GeminiAdapter())
+registerAdapter("docker", () => new DockerAdapter())
 
 export function getAdapter(runtime: RuntimeName): RuntimeAdapter {
   return coreGetAdapter(runtime)

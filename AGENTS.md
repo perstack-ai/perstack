@@ -51,6 +51,7 @@ npx create-expert my-expert "Add X"  # Improve existing
 ### Available Runtimes
 
 - `perstack` — Built-in runtime (default)
+- `docker` — Containerized runtime with network isolation
 - `cursor` — Cursor CLI (experimental)
 - `claude-code` — Claude Code CLI (experimental)
 - `gemini` — Gemini CLI (experimental)
@@ -176,6 +177,7 @@ command = "npx"
 packageName = "exa-mcp-server"
 requiredEnv = ["EXA_API_KEY"]
 pick = ["web_search_exa"]  # Optional: whitelist tools
+allowedDomains = ["api.exa.ai"]  # Required for docker runtime
 ```
 
 **Remote servers (SSE):**

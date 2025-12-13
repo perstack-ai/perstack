@@ -180,6 +180,7 @@ export const startCommand = new Command()
           },
           checkpoint: currentCheckpoint,
           runtime,
+          config: perstackConfig,
           eventListener: result.eventListener,
         })
         if (

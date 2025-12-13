@@ -1,15 +1,16 @@
 import type { Checkpoint } from "@perstack/core"
 
+type InteractiveToolCallResult = {
+  toolCallId: string
+  toolName: string
+  skillName: string
+  text: string
+}
 export function parseInteractiveToolCallResult(
   query: string,
   checkpoint: Checkpoint,
 ): {
-  interactiveToolCallResult: {
-    toolCallId: string
-    toolName: string
-    skillName: string
-    text: string
-  }
+  interactiveToolCallResult: InteractiveToolCallResult
 } {
   const lastMessage = checkpoint.messages[checkpoint.messages.length - 1]
   if (lastMessage.type !== "expertMessage") {
@@ -30,5 +31,27 @@ export function parseInteractiveToolCallResult(
       skillName,
       text: query,
     },
+  }
+}
+export function parseInteractiveToolCallResultJson(
+  query: string,
+): { interactiveToolCallResult: InteractiveToolCallResult } | null {
+  try {
+    const parsed = JSON.parse(query) as unknown
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "toolCallId" in parsed &&
+      "toolName" in parsed &&
+      "skillName" in parsed &&
+      "text" in parsed
+    ) {
+      return {
+        interactiveToolCallResult: parsed as InteractiveToolCallResult,
+      }
+    }
+    return null
+  } catch {
+    return null
   }
 }
