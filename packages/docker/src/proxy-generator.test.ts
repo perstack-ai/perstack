@@ -303,10 +303,11 @@ describe("generateProxyDockerfile", () => {
 })
 
 describe("generateProxyComposeService", () => {
-  it("should generate compose service", () => {
-    const service = generateProxyComposeService("perstack-net")
+  it("should generate compose service with internal and external networks", () => {
+    const service = generateProxyComposeService("perstack-net-internal", "perstack-net")
     expect(service).toContain("proxy:")
     expect(service).toContain("build:")
+    expect(service).toContain("perstack-net-internal")
     expect(service).toContain("perstack-net")
   })
 })

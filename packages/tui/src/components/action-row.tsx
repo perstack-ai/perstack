@@ -1,5 +1,5 @@
 import { Box, Text } from "ink"
-import React from "react"
+import type React from "react"
 import { INDICATOR } from "../constants.js"
 export type StatusColor = "green" | "red" | "yellow" | "white" | "gray"
 

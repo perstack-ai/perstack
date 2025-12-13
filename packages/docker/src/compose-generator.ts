@@ -18,6 +18,7 @@ export interface ComposeGeneratorOptions {
 }
 export function generateComposeFile(options: ComposeGeneratorOptions): string {
   const { proxyEnabled, networkName, envKeys, workspacePath } = options
+  const internalNetworkName = `${networkName}-internal`
   const lines: string[] = []
   lines.push("services:")
   lines.push("  runtime:")
@@ -49,17 +50,28 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   if (proxyEnabled) {
     lines.push("    depends_on:")
     lines.push("      - proxy")
+    lines.push("    networks:")
+    lines.push(`      - ${internalNetworkName}`)
+  } else {
+    lines.push("    networks:")
+    lines.push(`      - ${networkName}`)
   }
-  lines.push("    networks:")
-  lines.push(`      - ${networkName}`)
   lines.push("")
   if (proxyEnabled) {
-    lines.push(generateProxyComposeService(networkName))
+    lines.push(generateProxyComposeService(internalNetworkName, networkName))
     lines.push("")
   }
   lines.push("networks:")
-  lines.push(`  ${networkName}:`)
-  lines.push("    driver: bridge")
+  if (proxyEnabled) {
+    lines.push(`  ${internalNetworkName}:`)
+    lines.push("    driver: bridge")
+    lines.push("    internal: true")
+    lines.push(`  ${networkName}:`)
+    lines.push("    driver: bridge")
+  } else {
+    lines.push(`  ${networkName}:`)
+    lines.push("    driver: bridge")
+  }
   lines.push("")
   return lines.join("\n")
 }
