@@ -61,11 +61,11 @@ export const runCommand = new Command()
           runId: checkpoint?.runId ?? input.options.runId,
           expertKey: input.expertKey,
           input: input.options.interactiveToolCallResult
-          ? (parseInteractiveToolCallResultJson(input.query) ??
-            (checkpoint
-              ? parseInteractiveToolCallResult(input.query, checkpoint)
-              : { text: input.query }))
-          : { text: input.query },
+            ? (parseInteractiveToolCallResultJson(input.query) ??
+              (checkpoint
+                ? parseInteractiveToolCallResult(input.query, checkpoint)
+                : { text: input.query }))
+            : { text: input.query },
           experts,
           model,
           providerConfig,
