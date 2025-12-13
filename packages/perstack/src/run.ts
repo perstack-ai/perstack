@@ -75,6 +75,7 @@ export const runCommand = new Command()
         },
         checkpoint,
         runtime,
+        config: perstackConfig,
         eventListener: defaultEventListener,
       })
     } catch (error) {

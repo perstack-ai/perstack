@@ -182,10 +182,11 @@ describe("generateDockerfile", () => {
         },
       },
     }
-    const dockerfile = generateDockerfile(config, "my-expert", "./dist/runtime")
+    const dockerfile = generateDockerfile(config, "my-expert")
     expect(dockerfile).toContain("FROM debian:bookworm-slim")
     expect(dockerfile).toContain("nodejs")
     expect(dockerfile).toContain("npm install -g @perstack/base")
-    expect(dockerfile).toContain('ENTRYPOINT ["/app/perstack-runtime", "run", "my-expert"]')
+    expect(dockerfile).toContain("npm install -g perstack")
+    expect(dockerfile).toContain('ENTRYPOINT ["perstack", "run", "my-expert"]')
   })
 })

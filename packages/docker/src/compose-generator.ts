@@ -1,21 +1,28 @@
 import type { PerstackConfig } from "@perstack/core"
-import { collectAllowedDomains, generateProxyComposeService } from "./proxy-generator.js"
-
+import { generateDockerfile } from "./dockerfile-generator.js"
+import { extractRequiredEnvVars } from "./env-resolver.js"
+import {
+  collectAllowedDomains,
+  generateProxyComposeService,
+  generateProxyDockerfile,
+  generateSquidAllowlistAcl,
+  generateSquidConf,
+} from "./proxy-generator.js"
 export interface ComposeGeneratorOptions {
   expertKey: string
-  runtimeImageName: string
   proxyEnabled: boolean
   networkName: string
   envKeys: string[]
   workspacePath?: string
 }
-
 export function generateComposeFile(options: ComposeGeneratorOptions): string {
-  const { runtimeImageName, proxyEnabled, networkName, envKeys, workspacePath } = options
+  const { proxyEnabled, networkName, envKeys, workspacePath } = options
   const lines: string[] = []
   lines.push("services:")
   lines.push("  runtime:")
-  lines.push(`    image: ${runtimeImageName}`)
+  lines.push("    build:")
+  lines.push("      context: .")
+  lines.push("      dockerfile: Dockerfile")
   const allEnvKeys = [...envKeys]
   if (proxyEnabled) {
     allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
@@ -62,34 +69,29 @@ export function generateBuildContext(
   proxyAllowlist: string | null
   composeFile: string
 } {
-  const { generateDockerfile } = require("./dockerfile-generator.js")
-  const {
-    generateSquidConf,
-    generateSquidAllowlistAcl,
-    generateProxyDockerfile,
-  } = require("./proxy-generator.js")
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
-  const dockerfile = generateDockerfile(config, expertKey, "/app/runtime")
-  let proxyDockerfile: string | null = null
+  const dockerfile = generateDockerfile(config, expertKey)
+  let proxyDockerfileContent: string | null = null
   let proxySquidConf: string | null = null
   let proxyAllowlist: string | null = null
   if (hasAllowlist) {
-    proxyDockerfile = generateProxyDockerfile(true)
+    proxyDockerfileContent = generateProxyDockerfile(true)
     proxySquidConf = generateSquidConf(allowedDomains)
     proxyAllowlist = generateSquidAllowlistAcl(allowedDomains)
   }
+  const envRequirements = extractRequiredEnvVars(config, expertKey)
+  const envKeys = envRequirements.map((r) => r.name)
   const composeFile = generateComposeFile({
     expertKey,
-    runtimeImageName: `perstack-runtime-${expertKey}:latest`,
     proxyEnabled: hasAllowlist,
     networkName: "perstack-net",
-    envKeys: [],
+    envKeys,
     workspacePath: "./workspace",
   })
   return {
     dockerfile,
-    proxyDockerfile,
+    proxyDockerfile: proxyDockerfileContent,
     proxySquidConf,
     proxyAllowlist,
     composeFile,

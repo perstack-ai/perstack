@@ -5,22 +5,20 @@ describe("generateComposeFile", () => {
   it("should generate basic compose file", () => {
     const compose = generateComposeFile({
       expertKey: "my-expert",
-      runtimeImageName: "perstack-runtime-my-expert:latest",
       proxyEnabled: false,
       networkName: "perstack-net",
       envKeys: [],
     })
     expect(compose).toContain("services:")
     expect(compose).toContain("runtime:")
-    expect(compose).toContain("perstack-runtime-my-expert:latest")
+    expect(compose).toContain("build:")
+    expect(compose).toContain("dockerfile: Dockerfile")
     expect(compose).toContain("networks:")
     expect(compose).toContain("perstack-net:")
   })
-
   it("should include environment variables", () => {
     const compose = generateComposeFile({
       expertKey: "my-expert",
-      runtimeImageName: "perstack-runtime-my-expert:latest",
       proxyEnabled: false,
       networkName: "perstack-net",
       envKeys: ["ANTHROPIC_API_KEY", "GH_TOKEN"],
@@ -29,11 +27,9 @@ describe("generateComposeFile", () => {
     expect(compose).toContain("- ANTHROPIC_API_KEY")
     expect(compose).toContain("- GH_TOKEN")
   })
-
   it("should include proxy service when enabled", () => {
     const compose = generateComposeFile({
       expertKey: "my-expert",
-      runtimeImageName: "perstack-runtime-my-expert:latest",
       proxyEnabled: true,
       networkName: "perstack-net",
       envKeys: [],
@@ -43,11 +39,9 @@ describe("generateComposeFile", () => {
     expect(compose).toContain("HTTP_PROXY")
     expect(compose).toContain("HTTPS_PROXY")
   })
-
   it("should include workspace volume when specified", () => {
     const compose = generateComposeFile({
       expertKey: "my-expert",
-      runtimeImageName: "perstack-runtime-my-expert:latest",
       proxyEnabled: false,
       networkName: "perstack-net",
       envKeys: [],
@@ -57,11 +51,9 @@ describe("generateComposeFile", () => {
     expect(compose).toContain("./workspace:/workspace:rw")
     expect(compose).toContain("working_dir: /workspace")
   })
-
   it("should merge env keys with proxy env in single environment block", () => {
     const compose = generateComposeFile({
       expertKey: "my-expert",
-      runtimeImageName: "perstack-runtime-my-expert:latest",
       proxyEnabled: true,
       networkName: "perstack-net",
       envKeys: ["ANTHROPIC_API_KEY"],

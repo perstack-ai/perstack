@@ -77,11 +77,7 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
   return lines.join("\n")
 }
 
-export function generateDockerfile(
-  config: PerstackConfig,
-  expertKey: string,
-  runtimePackagePath: string,
-): string {
+export function generateDockerfile(config: PerstackConfig, expertKey: string): string {
   const runtimes = detectRequiredRuntimes(config, expertKey)
   const lines: string[] = []
   lines.push(generateBaseImageLayers(runtimes))
@@ -91,10 +87,9 @@ export function generateDockerfile(
   if (mcpLayers) {
     lines.push(mcpLayers)
   }
-  lines.push(`COPY ${runtimePackagePath} /app/perstack-runtime`)
-  lines.push("RUN chmod +x /app/perstack-runtime")
+  lines.push("RUN npm install -g perstack")
   lines.push("")
-  lines.push(`ENTRYPOINT ["/app/perstack-runtime", "run", "${expertKey}"]`)
+  lines.push(`ENTRYPOINT ["perstack", "run", "${expertKey}"]`)
   lines.push("")
   return lines.join("\n")
 }
