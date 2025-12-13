@@ -123,6 +123,7 @@ export type PerstackConfigSkill =
       packageName?: string
       args?: string[]
       requiredEnv?: string[]
+      allowedDomains?: string[]
     }
   | {
       type: "mcpSseSkill"
@@ -131,6 +132,7 @@ export type PerstackConfigSkill =
       pick?: string[]
       omit?: string[]
       endpoint: string
+      allowedDomains?: string[]
     }
   | {
       type: "interactiveSkill"
@@ -220,6 +222,7 @@ export const perstackConfigSchema = z.object({
                 packageName: z.string().optional(),
                 args: z.array(z.string()).optional(),
                 requiredEnv: z.array(z.string()).optional(),
+                allowedDomains: z.array(domainPatternSchema).optional(),
               }),
               z.object({
                 type: z.literal("mcpSseSkill"),
@@ -228,6 +231,7 @@ export const perstackConfigSchema = z.object({
                 pick: z.array(z.string()).optional(),
                 omit: z.array(z.string()).optional(),
                 endpoint: z.string(),
+                allowedDomains: z.array(domainPatternSchema).optional(),
               }),
               z.object({
                 type: z.literal("interactiveSkill"),

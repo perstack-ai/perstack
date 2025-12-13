@@ -106,4 +106,58 @@ describe("perstackConfigSchema with network", () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it("should accept skill-level allowedDomains for mcpStdioSkill", () => {
+    const result = perstackConfigSchema.safeParse({
+      experts: {
+        "my-expert": {
+          instruction: "Test instruction",
+          skills: {
+            exa: {
+              type: "mcpStdioSkill",
+              command: "npx",
+              allowedDomains: ["api.exa.ai", "*.exa.ai"],
+            },
+          },
+        },
+      },
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("should accept skill-level allowedDomains for mcpSseSkill", () => {
+    const result = perstackConfigSchema.safeParse({
+      experts: {
+        "my-expert": {
+          instruction: "Test instruction",
+          skills: {
+            remote: {
+              type: "mcpSseSkill",
+              endpoint: "https://api.example.com/mcp",
+              allowedDomains: ["api.example.com"],
+            },
+          },
+        },
+      },
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("should reject invalid domain pattern in skill allowedDomains", () => {
+    const result = perstackConfigSchema.safeParse({
+      experts: {
+        "my-expert": {
+          instruction: "Test instruction",
+          skills: {
+            exa: {
+              type: "mcpStdioSkill",
+              command: "npx",
+              allowedDomains: ["https://api.exa.ai"],
+            },
+          },
+        },
+      },
+    })
+    expect(result.success).toBe(false)
+  })
 })

@@ -20,10 +20,12 @@ export {
   resolveEnvValues,
 } from "./env-resolver.js"
 export {
+  collectSkillAllowedDomains,
   generateProxyComposeService,
   generateProxyDockerfile,
   generateSquidAllowlistAcl,
   generateSquidConf,
   getEffectiveNetworkConfig,
+  getProviderApiDomains,
   mergeNetworkConfig,
 } from "./proxy-generator.js"
