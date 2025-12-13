@@ -66,7 +66,7 @@ export class McpSkillManager extends BaseSkillManager {
     if (!skill.command) {
       throw new Error(`Skill ${skill.name} has no command`)
     }
-    const env: Record<string, string> = {}
+    const env: Record<string, string> = { ...process.env } as Record<string, string>
     for (const envName of skill.requiredEnv) {
       if (!this._env[envName]) {
         throw new Error(`Skill ${skill.name} requires environment variable ${envName}`)

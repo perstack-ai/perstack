@@ -117,7 +117,7 @@ export function generateProxyStartScript(): string {
   const lines: string[] = []
   lines.push("#!/bin/sh")
   lines.push("dnsmasq --no-daemon --server=8.8.8.8 --server=8.8.4.4 &")
-  lines.push('exec squid -N -d 1')
+  lines.push("exec squid -N -d 1")
   lines.push("")
   return lines.join("\n")
 }
