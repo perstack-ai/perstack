@@ -97,7 +97,11 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
   return lines.join("\n")
 }
 
-export function generateDockerfile(config: PerstackConfig, expertKey: string): string {
+export function generateDockerfile(
+  config: PerstackConfig,
+  expertKey: string,
+  options?: { proxyEnabled?: boolean },
+): string {
   const runtimes = detectRequiredRuntimes(config, expertKey)
   const lines: string[] = []
   lines.push(generateBaseImageLayers(runtimes))
@@ -107,10 +111,20 @@ export function generateDockerfile(config: PerstackConfig, expertKey: string): s
   if (mcpLayers) {
     lines.push(mcpLayers)
   }
-  lines.push("RUN npm install -g perstack")
+  if (options?.proxyEnabled) {
+    lines.push("RUN npm install -g global-agent perstack")
+  } else {
+    lines.push("RUN npm install -g perstack")
+  }
   lines.push("")
   lines.push("COPY perstack.toml /app/perstack.toml")
   lines.push("")
+  if (options?.proxyEnabled) {
+    lines.push("ENV NODE_PATH=/usr/lib/node_modules")
+    lines.push('ENV NODE_OPTIONS="-r global-agent/bootstrap"')
+    lines.push("ENV GLOBAL_AGENT_FORCE_GLOBAL_AGENT=true")
+    lines.push("")
+  }
   lines.push(
     `ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`,
   )

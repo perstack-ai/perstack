@@ -5,6 +5,7 @@ import {
   collectSkillAllowedDomains,
   generateProxyComposeService,
   generateProxyDockerfile,
+  generateProxyStartScript,
   generateSquidAllowlistAcl,
   generateSquidConf,
   getProviderApiDomains,
@@ -283,12 +284,13 @@ describe("generateSquidConf", () => {
 })
 
 describe("generateProxyDockerfile", () => {
-  it("should generate Dockerfile with squid", () => {
+  it("should generate Dockerfile with squid and dnsmasq", () => {
     const dockerfile = generateProxyDockerfile(true)
     expect(dockerfile).toContain("FROM debian:bookworm-slim")
     expect(dockerfile).toContain("squid")
-    expect(dockerfile).toContain("EXPOSE 3128")
-    expect(dockerfile).toContain('CMD ["squid", "-N", "-d", "1"]')
+    expect(dockerfile).toContain("dnsmasq")
+    expect(dockerfile).toContain("EXPOSE 3128 53/udp")
+    expect(dockerfile).toContain('CMD ["/start.sh"]')
   })
 
   it("should include allowlist copy when hasAllowlist is true", () => {
@@ -299,6 +301,16 @@ describe("generateProxyDockerfile", () => {
   it("should not include allowlist copy when hasAllowlist is false", () => {
     const dockerfile = generateProxyDockerfile(false)
     expect(dockerfile).not.toContain("COPY allowed_domains.txt")
+  })
+})
+
+describe("generateProxyStartScript", () => {
+  it("should generate start script with dnsmasq and squid", () => {
+    const script = generateProxyStartScript()
+    expect(script).toContain("#!/bin/sh")
+    expect(script).toContain("dnsmasq")
+    expect(script).toContain("8.8.8.8")
+    expect(script).toContain("squid")
   })
 })
 

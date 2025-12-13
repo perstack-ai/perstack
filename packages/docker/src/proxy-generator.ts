@@ -97,16 +97,27 @@ export function generateProxyDockerfile(hasAllowlist: boolean): string {
   lines.push("")
   lines.push("RUN apt-get update && apt-get install -y --no-install-recommends \\")
   lines.push("    squid \\")
+  lines.push("    dnsmasq \\")
   lines.push("    && rm -rf /var/lib/apt/lists/*")
   lines.push("")
   lines.push("COPY squid.conf /etc/squid/squid.conf")
   if (hasAllowlist) {
     lines.push("COPY allowed_domains.txt /etc/squid/allowed_domains.txt")
   }
+  lines.push("COPY start.sh /start.sh")
+  lines.push("RUN chmod +x /start.sh")
   lines.push("")
-  lines.push("EXPOSE 3128")
+  lines.push("EXPOSE 3128 53/udp")
   lines.push("")
-  lines.push('CMD ["squid", "-N", "-d", "1"]')
+  lines.push('CMD ["/start.sh"]')
+  lines.push("")
+  return lines.join("\n")
+}
+export function generateProxyStartScript(): string {
+  const lines: string[] = []
+  lines.push("#!/bin/sh")
+  lines.push("dnsmasq --no-daemon --server=8.8.8.8 --server=8.8.4.4 &")
+  lines.push('exec squid -N -d 1')
   lines.push("")
   return lines.join("\n")
 }

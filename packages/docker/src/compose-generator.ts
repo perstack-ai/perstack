@@ -6,6 +6,7 @@ import {
   collectAllowedDomains,
   generateProxyComposeService,
   generateProxyDockerfile,
+  generateProxyStartScript,
   generateSquidAllowlistAcl,
   generateSquidConf,
 } from "./proxy-generator.js"
@@ -50,6 +51,8 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   if (proxyEnabled) {
     lines.push("    depends_on:")
     lines.push("      - proxy")
+    lines.push("    dns:")
+    lines.push("      - proxy")
     lines.push("    networks:")
     lines.push(`      - ${internalNetworkName}`)
   } else {
@@ -85,20 +88,23 @@ export function generateBuildContext(
   proxyDockerfile: string | null
   proxySquidConf: string | null
   proxyAllowlist: string | null
+  proxyStartScript: string | null
   composeFile: string
 } {
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
-  const dockerfile = generateDockerfile(config, expertKey)
+  const dockerfile = generateDockerfile(config, expertKey, { proxyEnabled: hasAllowlist })
   const containerConfig = { ...config, runtime: "perstack" }
   const configToml = TOML.stringify(containerConfig as Record<string, unknown>)
   let proxyDockerfileContent: string | null = null
   let proxySquidConf: string | null = null
   let proxyAllowlist: string | null = null
+  let proxyStartScript: string | null = null
   if (hasAllowlist) {
     proxyDockerfileContent = generateProxyDockerfile(true)
     proxySquidConf = generateSquidConf(allowedDomains)
     proxyAllowlist = generateSquidAllowlistAcl(allowedDomains)
+    proxyStartScript = generateProxyStartScript()
   }
   const envRequirements = extractRequiredEnvVars(config, expertKey)
   const envKeys = envRequirements.map((r) => r.name)
@@ -115,6 +121,7 @@ export function generateBuildContext(
     proxyDockerfile: proxyDockerfileContent,
     proxySquidConf,
     proxyAllowlist,
+    proxyStartScript,
     composeFile,
   }
 }

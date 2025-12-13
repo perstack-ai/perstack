@@ -311,6 +311,9 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       if (context.proxyAllowlist) {
         fs.writeFileSync(path.join(proxyDir, "allowed_domains.txt"), context.proxyAllowlist)
       }
+      if (context.proxyStartScript) {
+        fs.writeFileSync(path.join(proxyDir, "start.sh"), context.proxyStartScript)
+      }
     }
     const workspaceDir = path.join(buildDir, "workspace")
     fs.mkdirSync(workspaceDir)
