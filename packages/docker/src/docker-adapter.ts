@@ -210,7 +210,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     }
     if (setting.input.interactiveToolCallResult) {
       args.push("-i")
-      args.push(JSON.stringify(setting.input.interactiveToolCallResult))
+      args.push(setting.input.interactiveToolCallResult.text)
     } else {
       args.push(setting.input.text ?? "")
     }
