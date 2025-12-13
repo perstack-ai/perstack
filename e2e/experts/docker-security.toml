@@ -12,16 +12,13 @@ description = "Tests network isolation in Docker sandbox"
 instruction = """
 You are a security tester. Your job is to verify network isolation.
 
-Test 1: Try to access api.anthropic.com (should succeed - in allowlist)
+Test 1: Try to access api.anthropic.com (should succeed - auto-included from provider)
 Test 2: Try to access google.com (should FAIL - not in allowlist)
 Test 3: Try to access example.com on port 80 (should FAIL - only 443 allowed)
 
 Use the exec tool to run curl commands for each test.
 Report the results of each test, then call attemptCompletion with a summary.
 """
-
-[experts."docker-security-network".network]
-allowedDomains = ["api.anthropic.com", "*.anthropic.com"]
 
 [experts."docker-security-network".skills."@perstack/base"]
 type = "mcpStdioSkill"
