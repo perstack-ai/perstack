@@ -2,7 +2,10 @@ import type { RunEvent, RuntimeEvent } from "@perstack/core"
 import { parseWithFriendlyError, runCommandInputSchema } from "@perstack/core"
 import { Command } from "commander"
 import { resolveRunContext } from "./lib/context.js"
-import { parseInteractiveToolCallResult } from "./lib/interactive.js"
+import {
+  parseInteractiveToolCallResult,
+  parseInteractiveToolCallResultJson,
+} from "./lib/interactive.js"
 import { dispatchToRuntime } from "./lib/runtime-dispatcher.js"
 
 const defaultEventListener = (event: RunEvent | RuntimeEvent) => console.log(JSON.stringify(event))
@@ -57,10 +60,12 @@ export const runCommand = new Command()
           jobId: checkpoint?.jobId ?? input.options.jobId,
           runId: checkpoint?.runId ?? input.options.runId,
           expertKey: input.expertKey,
-          input:
-            input.options.interactiveToolCallResult && checkpoint
+          input: input.options.interactiveToolCallResult
+          ? (parseInteractiveToolCallResultJson(input.query) ??
+            (checkpoint
               ? parseInteractiveToolCallResult(input.query, checkpoint)
-              : { text: input.query },
+              : { text: input.query }))
+          : { text: input.query },
           experts,
           model,
           providerConfig,
