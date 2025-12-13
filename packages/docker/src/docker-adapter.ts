@@ -88,7 +88,8 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     try {
       await this.buildImages(buildDir)
       const envRequirements = extractRequiredEnvVars(config, expertKey)
-      const { resolved: envVars, missing } = resolveEnvValues(envRequirements, process.env)
+      const envSource = { ...process.env, ...setting.env }
+      const { resolved: envVars, missing } = resolveEnvValues(envRequirements, envSource)
       if (missing.length > 0) {
         throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
       }

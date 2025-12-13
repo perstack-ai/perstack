@@ -43,6 +43,7 @@ export function parseInteractiveToolCallResultJson(
       parsed !== null &&
       "toolCallId" in parsed &&
       "toolName" in parsed &&
+      "skillName" in parsed &&
       "text" in parsed
     ) {
       return {
