@@ -197,10 +197,12 @@ describe("collectAllowedDomains", () => {
       },
     }
     const domains = collectAllowedDomains(config, "test-expert")
-    expect(domains).toEqual(["api.openai.com"])
+    expect(domains).toContain("registry.npmjs.org")
+    expect(domains).toContain("api.openai.com")
+    expect(domains).toHaveLength(2)
   })
 
-  it("should return empty when no provider and no skill domains", () => {
+  it("should return npm registry when no provider and no skill domains", () => {
     const config: PerstackConfig = {
       experts: {
         "test-expert": {
@@ -209,7 +211,7 @@ describe("collectAllowedDomains", () => {
       },
     }
     const domains = collectAllowedDomains(config, "test-expert")
-    expect(domains).toHaveLength(0)
+    expect(domains).toEqual(["registry.npmjs.org"])
   })
 
   it("should collect from multiple skills", () => {

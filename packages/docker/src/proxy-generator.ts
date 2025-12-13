@@ -41,6 +41,7 @@ export function collectSkillAllowedDomains(config: PerstackConfig, expertKey: st
 
 export function collectAllowedDomains(config: PerstackConfig, expertKey: string): string[] {
   const domains = new Set<string>()
+  domains.add("registry.npmjs.org")
   const skillDomains = collectSkillAllowedDomains(config, expertKey)
   for (const domain of skillDomains) {
     domains.add(domain)
@@ -69,18 +70,23 @@ export function generateSquidConf(allowedDomains?: string[]): string {
   lines.push("http_port 3128")
   lines.push("")
   lines.push("acl SSL_ports port 443")
+  lines.push("acl Safe_ports port 80")
+  lines.push("acl Safe_ports port 443")
   lines.push("acl CONNECT method CONNECT")
   lines.push("")
   if (allowedDomains && allowedDomains.length > 0) {
     lines.push('acl allowed_domains dstdomain "/etc/squid/allowed_domains.txt"')
     lines.push("")
     lines.push("http_access allow CONNECT SSL_ports allowed_domains")
+    lines.push("http_access allow Safe_ports allowed_domains")
   } else {
     lines.push("http_access allow CONNECT SSL_ports")
+    lines.push("http_access allow Safe_ports")
   }
   lines.push("http_access deny all")
   lines.push("")
-  lines.push("access_log stdio:/dev/stdout logformat=squid")
+  lines.push("access_log none")
+  lines.push("cache_log /dev/null")
   lines.push("")
   return lines.join("\n")
 }

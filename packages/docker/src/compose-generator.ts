@@ -28,6 +28,10 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   if (proxyEnabled) {
     allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
     allEnvKeys.push("HTTPS_PROXY=http://proxy:3128")
+    allEnvKeys.push("http_proxy=http://proxy:3128")
+    allEnvKeys.push("https_proxy=http://proxy:3128")
+    allEnvKeys.push("NO_PROXY=localhost,127.0.0.1")
+    allEnvKeys.push("no_proxy=localhost,127.0.0.1")
   }
   if (allEnvKeys.length > 0) {
     lines.push("    environment:")
