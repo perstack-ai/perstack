@@ -63,15 +63,25 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
     return ""
   }
   const npmPackages: string[] = []
+  const uvxPackages: string[] = []
   for (const skill of Object.values(expert.skills)) {
     if (skill.type !== "mcpStdioSkill") continue
     const mcpSkill = skill as McpStdioSkill
     if (mcpSkill.command === "npx" && mcpSkill.packageName) {
       npmPackages.push(mcpSkill.packageName)
     }
+    if (mcpSkill.command === "uvx" && mcpSkill.packageName) {
+      uvxPackages.push(mcpSkill.packageName)
+    }
   }
   if (npmPackages.length > 0) {
     lines.push(`RUN npm install -g ${npmPackages.join(" ")}`)
+    lines.push("")
+  }
+  if (uvxPackages.length > 0) {
+    for (const pkg of uvxPackages) {
+      lines.push(`RUN uvx --help > /dev/null && uv tool install ${pkg}`)
+    }
     lines.push("")
   }
   return lines.join("\n")

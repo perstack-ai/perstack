@@ -236,22 +236,23 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         for (const line of lines) {
           const trimmed = line.trim()
           if (!trimmed) continue
+          let parsed: RunEvent | RuntimeEvent
           try {
-            const parsed = JSON.parse(trimmed) as RunEvent | RuntimeEvent
-            const terminalEventTypes = [
-              "completeRun",
-              "stopRunByInteractiveTool",
-              "stopRunByDelegate",
-              "stopRunByExceededMaxSteps",
-            ]
-            if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
-              const checkpointData = parsed.checkpoint
-              parsed.checkpoint = checkpointSchema.parse(checkpointData)
-            }
-            eventListener(parsed)
+            parsed = JSON.parse(trimmed) as RunEvent | RuntimeEvent
           } catch {
-            // ignore non-JSON lines
+            continue
           }
+          const terminalEventTypes = [
+            "completeRun",
+            "stopRunByInteractiveTool",
+            "stopRunByDelegate",
+            "stopRunByExceededMaxSteps",
+          ]
+          if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
+            const checkpointData = parsed.checkpoint
+            parsed.checkpoint = checkpointSchema.parse(checkpointData)
+          }
+          eventListener(parsed)
         }
       })
       proc.stderr?.on("data", (data) => {
@@ -260,8 +261,13 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       proc.on("close", (code) => {
         clearTimeout(timer)
         if (buffer.trim()) {
+          let parsed: RunEvent | RuntimeEvent | null = null
           try {
-            const parsed = JSON.parse(buffer.trim()) as RunEvent | RuntimeEvent
+            parsed = JSON.parse(buffer.trim()) as RunEvent | RuntimeEvent
+          } catch {
+            // ignore non-JSON content
+          }
+          if (parsed) {
             const terminalEventTypes = [
               "completeRun",
               "stopRunByInteractiveTool",
@@ -273,8 +279,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
               parsed.checkpoint = checkpointSchema.parse(checkpointData)
             }
             eventListener(parsed)
-          } catch {
-            // ignore non-JSON content
           }
         }
         resolve({ stdout, stderr, exitCode: code ?? 127 })
