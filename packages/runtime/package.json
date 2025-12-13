@@ -49,7 +49,8 @@
     "ai": "^5.0.104",
     "ollama-ai-provider-v2": "^1.5.5",
     "ts-dedent": "^2.2.0",
-    "xstate": "^5.24.0"
+    "xstate": "^5.24.0",
+    "undici": "^7.9.0"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",

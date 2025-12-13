@@ -186,10 +186,10 @@ describe("generateDockerfile", () => {
     expect(dockerfile).toContain("FROM debian:bookworm-slim")
     expect(dockerfile).toContain("nodejs")
     expect(dockerfile).toContain("npm install -g @perstack/base")
-    expect(dockerfile).toContain("npm install -g perstack")
+    expect(dockerfile).toContain("npm install -g @perstack/runtime")
     expect(dockerfile).toContain("COPY perstack.toml /app/perstack.toml")
     expect(dockerfile).toContain(
-      'ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml", "my-expert"]',
+      'ENTRYPOINT ["perstack-runtime", "run", "--config", "/app/perstack.toml", "my-expert"]',
     )
   })
 })

@@ -111,22 +111,18 @@ export function generateDockerfile(
   if (mcpLayers) {
     lines.push(mcpLayers)
   }
-  if (options?.proxyEnabled) {
-    lines.push("RUN npm install -g global-agent perstack")
-  } else {
-    lines.push("RUN npm install -g perstack")
-  }
+  lines.push("RUN npm install -g @perstack/runtime")
   lines.push("")
   lines.push("COPY perstack.toml /app/perstack.toml")
   lines.push("")
   if (options?.proxyEnabled) {
-    lines.push("ENV NODE_PATH=/usr/lib/node_modules")
-    lines.push('ENV NODE_OPTIONS="-r global-agent/bootstrap"')
-    lines.push("ENV GLOBAL_AGENT_FORCE_GLOBAL_AGENT=true")
+    lines.push("ENV PERSTACK_PROXY_URL=http://proxy:3128")
+    lines.push("ENV NPM_CONFIG_PROXY=http://proxy:3128")
+    lines.push("ENV NPM_CONFIG_HTTPS_PROXY=http://proxy:3128")
     lines.push("")
   }
   lines.push(
-    `ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`,
+    `ENTRYPOINT ["perstack-runtime", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`,
   )
   lines.push("")
   return lines.join("\n")

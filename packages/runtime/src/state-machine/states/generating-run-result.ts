@@ -33,7 +33,7 @@ export async function generatingRunResultLogic({
     }
   })
   const toolMessage = createToolMessage(toolResultParts)
-  const model = getModel(setting.model, setting.providerConfig)
+  const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
   const { messages } = checkpoint
   let generationResult: GenerateTextResult<ToolSet, never>
   try {

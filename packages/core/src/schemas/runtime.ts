@@ -93,6 +93,8 @@ export interface RunSetting {
   perstackBaseSkillCommand?: string[]
   /** Environment variables to pass to skills */
   env: Record<string, string>
+  /** HTTP proxy URL for API requests */
+  proxyUrl?: string
 }
 
 /** Parameters for starting a run */
@@ -134,6 +136,7 @@ export type RunParamsInput = {
     perstackApiKey?: string
     perstackBaseSkillCommand?: string[]
     env?: Record<string, string>
+    proxyUrl?: string
   }
   checkpoint?: Checkpoint
 }
@@ -166,6 +169,7 @@ export const runSettingSchema = z.object({
   perstackApiKey: z.string().optional(),
   perstackBaseSkillCommand: z.array(z.string()).optional(),
   env: z.record(z.string(), z.string()),
+  proxyUrl: z.string().optional(),
 })
 
 export const runParamsSchema = z.object({
@@ -217,6 +221,7 @@ export const runParamsSchema = z.object({
     perstackApiKey: z.string().optional(),
     perstackBaseSkillCommand: z.array(z.string()).optional(),
     env: z.record(z.string(), z.string()).optional().default({}),
+    proxyUrl: z.string().optional(),
   }),
   checkpoint: checkpointSchema.optional(),
 })

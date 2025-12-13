@@ -132,8 +132,9 @@ export function generateProxyComposeService(
   lines.push("      context: ./proxy")
   lines.push("      dockerfile: Dockerfile")
   lines.push("    networks:")
-  lines.push(`      - ${internalNetworkName}`)
-  lines.push(`      - ${externalNetworkName}`)
+  lines.push(`      ${internalNetworkName}:`)
+  lines.push("        ipv4_address: 172.28.0.2")
+  lines.push(`      ${externalNetworkName}:`)
   lines.push("    restart: unless-stopped")
   return lines.join("\n")
 }

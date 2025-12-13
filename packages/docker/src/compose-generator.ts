@@ -52,9 +52,9 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
     lines.push("    depends_on:")
     lines.push("      - proxy")
     lines.push("    dns:")
-    lines.push("      - proxy")
+    lines.push("      - 172.28.0.2")
     lines.push("    networks:")
-    lines.push(`      - ${internalNetworkName}`)
+    lines.push(`      ${internalNetworkName}:`)
   } else {
     lines.push("    networks:")
     lines.push(`      - ${networkName}`)
@@ -69,6 +69,9 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
     lines.push(`  ${internalNetworkName}:`)
     lines.push("    driver: bridge")
     lines.push("    internal: true")
+    lines.push("    ipam:")
+    lines.push("      config:")
+    lines.push("        - subnet: 172.28.0.0/16")
     lines.push(`  ${networkName}:`)
     lines.push("    driver: bridge")
   } else {

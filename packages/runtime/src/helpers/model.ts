@@ -8,14 +8,32 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { knownModels, type ProviderConfig, type ProviderName, type Usage } from "@perstack/core"
 import type { LanguageModel } from "ai"
 import { createOllama } from "ollama-ai-provider-v2"
+import { ProxyAgent, fetch as undiciFetch } from "undici"
 
-export function getModel(modelId: string, providerConfig: ProviderConfig): LanguageModel {
+function createProxyFetch(proxyUrl: string): typeof globalThis.fetch {
+  const agent = new ProxyAgent(proxyUrl)
+  return (input, init) => {
+    return undiciFetch(input, { ...init, dispatcher: agent }) as Promise<Response>
+  }
+}
+
+export interface GetModelOptions {
+  proxyUrl?: string
+}
+
+export function getModel(
+  modelId: string,
+  providerConfig: ProviderConfig,
+  options?: GetModelOptions,
+): LanguageModel {
+  const customFetch = options?.proxyUrl ? createProxyFetch(options.proxyUrl) : undefined
   switch (providerConfig.providerName) {
     case "anthropic": {
       const anthropic = createAnthropic({
         apiKey: providerConfig.apiKey,
         baseURL: providerConfig.baseUrl,
         headers: providerConfig.headers,
+        fetch: customFetch,
       })
       return anthropic(modelId)
     }
@@ -24,6 +42,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         apiKey: providerConfig.apiKey,
         baseURL: providerConfig.baseUrl,
         headers: providerConfig.headers,
+        fetch: customFetch,
       })
       return google(modelId)
     }
@@ -35,6 +54,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         project: providerConfig.project,
         name: providerConfig.name,
         headers: providerConfig.headers,
+        fetch: customFetch,
       })
       return openai(modelId)
     }
@@ -42,6 +62,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
       const ollama = createOllama({
         baseURL: providerConfig.baseUrl,
         headers: providerConfig.headers,
+        fetch: customFetch,
       })
       return ollama(modelId)
     }
@@ -53,6 +74,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         baseURL: providerConfig.baseUrl,
         headers: providerConfig.headers,
         useDeploymentBasedUrls: providerConfig.useDeploymentBasedUrls,
+        fetch: customFetch,
       })
       return azure(modelId)
     }
@@ -62,6 +84,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         secretAccessKey: providerConfig.secretAccessKey,
         region: providerConfig.region,
         sessionToken: providerConfig.sessionToken,
+        fetch: customFetch,
       })
       return amazonBedrock(modelId)
     }
@@ -71,6 +94,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         location: providerConfig.location,
         baseURL: providerConfig.baseUrl,
         headers: providerConfig.headers,
+        fetch: customFetch,
       })
       return vertex(modelId)
     }
@@ -79,6 +103,7 @@ export function getModel(modelId: string, providerConfig: ProviderConfig): Langu
         apiKey: providerConfig.apiKey,
         baseURL: providerConfig.baseUrl,
         headers: providerConfig.headers,
+        fetch: customFetch,
       })
       return deepseek(modelId)
     }

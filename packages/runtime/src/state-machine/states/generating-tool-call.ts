@@ -75,7 +75,7 @@ export async function generatingToolCallLogic({
   skillManagers,
 }: RunSnapshot["context"]): Promise<RunEvent> {
   const { messages } = checkpoint
-  const model = getModel(setting.model, setting.providerConfig)
+  const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
   let result: GenerateTextResult<ToolSet, never>
   try {
     result = await generateText({
