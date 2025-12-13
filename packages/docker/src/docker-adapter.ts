@@ -187,6 +187,15 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
 
   protected buildCliArgs(setting: AdapterRunParams["setting"]): string[] {
     const args: string[] = []
+    if (setting.jobId !== undefined) {
+      args.push("--job-id", setting.jobId)
+    }
+    if (setting.runId !== undefined) {
+      args.push("--run-id", setting.runId)
+    }
+    if (setting.model !== undefined) {
+      args.push("--model", setting.model)
+    }
     if (setting.maxSteps !== undefined) {
       args.push("--max-steps", String(setting.maxSteps))
     }
@@ -196,7 +205,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     if (setting.temperature !== undefined) {
       args.push("--temperature", String(setting.temperature))
     }
-    args.push(setting.input.text ?? "")
+    if (setting.input.interactiveToolCallResult) {
+      args.push("-i")
+      args.push(JSON.stringify(setting.input.interactiveToolCallResult))
+    } else {
+      args.push(setting.input.text ?? "")
+    }
     return args
   }
 
@@ -245,6 +259,24 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       })
       proc.on("close", (code) => {
         clearTimeout(timer)
+        if (buffer.trim()) {
+          try {
+            const parsed = JSON.parse(buffer.trim()) as RunEvent | RuntimeEvent
+            const terminalEventTypes = [
+              "completeRun",
+              "stopRunByInteractiveTool",
+              "stopRunByDelegate",
+              "stopRunByExceededMaxSteps",
+            ]
+            if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
+              const checkpointData = parsed.checkpoint
+              parsed.checkpoint = checkpointSchema.parse(checkpointData)
+            }
+            eventListener(parsed)
+          } catch {
+            // ignore non-JSON content
+          }
+        }
         resolve({ stdout, stderr, exitCode: code ?? 127 })
       })
       proc.on("error", (err) => {
