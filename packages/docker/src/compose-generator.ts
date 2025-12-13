@@ -1,4 +1,5 @@
 import type { PerstackConfig } from "@perstack/core"
+import TOML from "smol-toml"
 import { generateDockerfile } from "./dockerfile-generator.js"
 import { extractRequiredEnvVars } from "./env-resolver.js"
 import {
@@ -64,6 +65,7 @@ export function generateBuildContext(
   expertKey: string,
 ): {
   dockerfile: string
+  configToml: string
   proxyDockerfile: string | null
   proxySquidConf: string | null
   proxyAllowlist: string | null
@@ -72,6 +74,7 @@ export function generateBuildContext(
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
   const dockerfile = generateDockerfile(config, expertKey)
+  const configToml = TOML.stringify(config as Record<string, unknown>)
   let proxyDockerfileContent: string | null = null
   let proxySquidConf: string | null = null
   let proxyAllowlist: string | null = null
@@ -91,6 +94,7 @@ export function generateBuildContext(
   })
   return {
     dockerfile,
+    configToml,
     proxyDockerfile: proxyDockerfileContent,
     proxySquidConf,
     proxyAllowlist,

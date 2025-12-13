@@ -132,6 +132,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
     const context = generateBuildContext(config, expertKey)
     fs.writeFileSync(path.join(buildDir, "Dockerfile"), context.dockerfile)
+    fs.writeFileSync(path.join(buildDir, "perstack.toml"), context.configToml)
     fs.writeFileSync(path.join(buildDir, "docker-compose.yml"), context.composeFile)
     if (context.proxyDockerfile) {
       const proxyDir = path.join(buildDir, "proxy")
