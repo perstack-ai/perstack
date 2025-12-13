@@ -42,6 +42,7 @@ Agent definitions should not be trapped in vendor silos. With multi-runtime supp
 | Runtime | Model Support | Domain | Skill Definition |
 |---------|---------------|--------|------------------|
 | `perstack` | Multi-vendor | General purpose | Via `perstack.toml` |
+| `docker` | Multi-vendor | Isolated execution | Via `perstack.toml` |
 | `cursor` | Multi-vendor | Coding-focused | Via Cursor settings |
 | `claude-code` | Claude only | Coding-focused | Via `claude mcp` |
 | `gemini` | Gemini only | General purpose | Via Gemini config |
@@ -165,6 +166,47 @@ perstack run --runtime <runtime>
 ```
 
 ## Runtime-specific setup
+
+### Docker
+
+**Prerequisites:**
+- Docker installed and daemon running
+- Docker Compose available
+
+**How it works:**
+The docker runtime provides containerized execution with security isolation:
+
+1. **Dockerfile generation**: Creates a container with required runtimes (Node.js, Python)
+2. **MCP server installation**: Installs skill packages inside the container
+3. **Network isolation**: Squid proxy enforces domain allowlist
+4. **Environment isolation**: Only required environment variables are passed
+
+**Network configuration:**
+
+```toml
+[experts."secure-expert"]
+instruction = "..."
+
+[experts."secure-expert".network]
+allowedDomains = ["api.github.com"]
+
+[experts."secure-expert".skills."web-search"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "exa-mcp-server"
+requiredEnv = ["EXA_API_KEY"]
+allowedDomains = ["api.exa.ai"]
+```
+
+The final allowlist merges:
+- Global `network.allowedDomains`
+- Expert-level `network.allowedDomains`
+- Skill-level `allowedDomains`
+- Provider API domains (auto-included)
+
+<Callout type="info">
+Provider API domains (e.g., `api.anthropic.com` for Anthropic) are automatically included based on your `provider.providerName` setting.
+</Callout>
 
 ### Cursor
 

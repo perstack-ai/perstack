@@ -69,6 +69,18 @@ Perstack runtime is built for production-grade safety:
 - Emits JSON events for every execution change
 - Can be embedded in your app to add stricter policies and isolation
 
+**Docker runtime with network isolation:**
+
+```bash
+$ npx perstack run my-expert "query" --runtime docker
+```
+
+The `docker` runtime provides built-in security:
+- Container isolation for file system access
+- Squid proxy for domain-based network allowlist
+- Environment variable isolation (only required keys passed)
+- Provider API domains auto-included
+
 
 ## Why Perstack?
 

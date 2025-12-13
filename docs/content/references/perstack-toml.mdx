@@ -107,7 +107,7 @@ headers = { "X-Custom-Header" = "value" }
 |-------|------|-------------|
 | `model` | string | Model name |
 | `temperature` | number | Temperature (0.0-1.0) |
-| `runtime` | string | Execution runtime (`perstack`, `cursor`, `claude-code`, `gemini`) |
+| `runtime` | string | Execution runtime (`perstack`, `docker`, `cursor`, `claude-code`, `gemini`) |
 | `maxSteps` | number | Maximum steps per run |
 | `maxRetries` | number | Maximum retry attempts |
 | `timeout` | number | Timeout per generation (ms) |
@@ -220,6 +220,28 @@ delegates = ["other-expert", "@org/another-expert"]
 | `instruction` | string | **Yes** | Behavior instructions (max 20KB) |
 | `delegates` | string[] | No | Experts this Expert can delegate to |
 | `tags` | string[] | No | Tags for categorization |
+| `network` | object | No | Network configuration for docker runtime |
+
+### Network Configuration (Docker Runtime)
+
+Configure network access restrictions for the docker runtime:
+
+```toml
+[experts."my-expert".network]
+allowedDomains = ["api.github.com", "*.example.com"]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `allowedDomains` | string[] | Domains the Expert can access (supports wildcards like `*.example.com`) |
+
+<Callout type="info">
+Network restrictions only apply when using `--runtime docker`. The final allowlist is merged from:
+1. Global `network.allowedDomains`
+2. Expert-level `network.allowedDomains`
+3. Skill-level `allowedDomains`
+4. Provider API domains (auto-included based on provider)
+</Callout>
 
 ## Skill Definition
 
@@ -238,6 +260,7 @@ args = ["-y", "additional-args"]
 pick = ["tool1", "tool2"]
 omit = ["tool3"]
 requiredEnv = ["API_KEY"]
+allowedDomains = ["api.example.com", "*.example.com"]
 ```
 
 | Field | Type | Required | Description |
@@ -251,6 +274,7 @@ requiredEnv = ["API_KEY"]
 | `pick` | string[] | No | Tools to include (whitelist) |
 | `omit` | string[] | No | Tools to exclude (blacklist) |
 | `requiredEnv` | string[] | No | Required environment variables |
+| `allowedDomains` | string[] | No | Allowed domains for network access (docker runtime) |
 
 ### MCP SSE Skill
 
@@ -261,6 +285,7 @@ description = "Remote MCP server"
 endpoint = "https://api.example.com/mcp"
 pick = ["tool1"]
 omit = ["tool2"]
+allowedDomains = ["api.example.com"]
 ```
 
 | Field | Type | Required | Description |
@@ -271,6 +296,7 @@ omit = ["tool2"]
 | `endpoint` | string | **Yes** | MCP server URL |
 | `pick` | string[] | No | Tools to include |
 | `omit` | string[] | No | Tools to exclude |
+| `allowedDomains` | string[] | No | Allowed domains for network access (docker runtime) |
 
 ### Interactive Skill
 
