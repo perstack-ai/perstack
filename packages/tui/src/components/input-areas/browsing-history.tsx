@@ -1,4 +1,5 @@
 import { Text } from "ink"
+import React from "react"
 import { KEY_HINTS } from "../../constants.js"
 import { formatTimestamp } from "../../helpers.js"
 import type { JobHistoryItem } from "../../types/index.js"

@@ -1,4 +1,5 @@
 import { render } from "ink"
+import React from "react"
 import { App } from "./app.js"
 import type { WizardOptions, WizardResult } from "./types.js"
 

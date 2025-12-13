@@ -1,4 +1,5 @@
 import { Box, Text } from "ink"
+import React from "react"
 import type { ExpertOption } from "../types/index.js"
 
 export type ExpertListProps = {

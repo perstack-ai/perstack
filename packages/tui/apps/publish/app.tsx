@@ -1,4 +1,5 @@
 import { useApp } from "ink"
+import React from "react"
 import { WizardExpertSelector } from "../../src/components/index.js"
 import type { WizardExpertChoice } from "../../src/types/wizard.js"
 

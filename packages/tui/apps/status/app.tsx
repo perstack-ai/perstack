@@ -1,5 +1,5 @@
 import { Box, Text, useApp, useInput } from "ink"
-import { useState } from "react"
+import React, { useState } from "react"
 import { ErrorStep, VersionSelector, WizardExpertSelector } from "../../src/components/index.js"
 import { KEY_HINTS } from "../../src/constants.js"
 import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"

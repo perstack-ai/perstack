@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import React, { useCallback } from "react"
 import { useInputAreaContext } from "../context/index.js"
 import { assertNever } from "../helpers.js"
 import type { EventHistoryItem, InputState } from "../types/index.js"

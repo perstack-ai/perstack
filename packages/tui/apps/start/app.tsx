@@ -1,4 +1,5 @@
 import { Box, Static, Text } from "ink"
+import React from "react"
 import { BrowserRouter, LogEntryRow, RunSetting } from "../../src/components/index.js"
 import { InputAreaProvider } from "../../src/context/index.js"
 import { useAppState } from "../../src/hooks/index.js"

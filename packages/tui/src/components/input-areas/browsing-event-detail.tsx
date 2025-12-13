@@ -1,4 +1,5 @@
 import { Box, Text, useInput } from "ink"
+import React from "react"
 import { KEY_HINTS } from "../../constants.js"
 import { formatTimestamp } from "../../helpers.js"
 import type { EventHistoryItem } from "../../types/index.js"

@@ -1,4 +1,5 @@
 import { render } from "ink"
+import React from "react"
 import type { PerstackEvent } from "../../src/types/index.js"
 import { EventQueue } from "../../src/utils/event-queue.js"
 import { ProgressApp } from "./app.js"

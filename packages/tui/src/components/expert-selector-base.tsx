@@ -1,5 +1,6 @@
 import type { Key } from "ink"
 import { Box, Text, useInput } from "ink"
+import React from "react"
 import { UI_CONSTANTS } from "../constants.js"
 import { useExpertSelector } from "../hooks/index.js"
 import type { ExpertOption } from "../types/index.js"
