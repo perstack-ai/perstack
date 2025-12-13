@@ -1,3 +1,5 @@
+import { Callout } from 'nextra/components'
+
 # Isolation by Design
 
 Perstack is designed to run inside isolated environments. The runtime itself doesn't enforce security boundaries — your infrastructure does.
@@ -109,9 +111,6 @@ pick = ["query"]                    # Only these tools allowed
 When using `--runtime docker`, Perstack provides built-in network isolation via Squid proxy:
 
 ```toml
-[experts."secure-expert".network]
-allowedDomains = ["api.github.com", "*.example.com"]
-
 [experts."secure-expert".skills."web-search"]
 type = "mcpStdioSkill"
 command = "npx"
@@ -122,16 +121,18 @@ allowedDomains = ["api.exa.ai"]
 **How it works:**
 1. All outbound traffic routes through a Squid proxy container
 2. Only HTTPS (port 443) is allowed
-3. Only domains in the merged allowlist are permitted
+3. Only domains in the allowlist are permitted
 4. Provider API domains are auto-included (e.g., `api.anthropic.com`)
 
-**Merged allowlist sources:**
-| Source | Example |
-|--------|---------|
-| Global `network.allowedDomains` | Top-level config |
-| Expert `network.allowedDomains` | Per-expert config |
-| Skill `allowedDomains` | Per-skill config |
+**Allowlist sources:**
+| Source | Description |
+|--------|-------------|
+| Skill `allowedDomains` | Per-skill network access |
 | Provider API | Auto-included based on provider |
+
+<Callout type="info">
+Network access is controlled at the **skill level** because all network operations are performed through MCP skills. The Expert itself does not directly access the network.
+</Callout>
 
 ### Default runtime (infrastructure-controlled)
 

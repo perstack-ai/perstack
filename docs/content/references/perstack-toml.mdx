@@ -220,28 +220,6 @@ delegates = ["other-expert", "@org/another-expert"]
 | `instruction` | string | **Yes** | Behavior instructions (max 20KB) |
 | `delegates` | string[] | No | Experts this Expert can delegate to |
 | `tags` | string[] | No | Tags for categorization |
-| `network` | object | No | Network configuration for docker runtime |
-
-### Network Configuration (Docker Runtime)
-
-Configure network access restrictions for the docker runtime:
-
-```toml
-[experts."my-expert".network]
-allowedDomains = ["api.github.com", "*.example.com"]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `allowedDomains` | string[] | Domains the Expert can access (supports wildcards like `*.example.com`) |
-
-<Callout type="info">
-Network restrictions only apply when using `--runtime docker`. The final allowlist is merged from:
-1. Global `network.allowedDomains`
-2. Expert-level `network.allowedDomains`
-3. Skill-level `allowedDomains`
-4. Provider API domains (auto-included based on provider)
-</Callout>
 
 ## Skill Definition
 

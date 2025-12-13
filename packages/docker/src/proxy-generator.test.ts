@@ -1,14 +1,13 @@
 import type { PerstackConfig } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import {
+  collectAllowedDomains,
   collectSkillAllowedDomains,
   generateProxyComposeService,
   generateProxyDockerfile,
   generateSquidAllowlistAcl,
   generateSquidConf,
-  getEffectiveNetworkConfig,
   getProviderApiDomains,
-  mergeNetworkConfig,
 } from "./proxy-generator.js"
 
 describe("getProviderApiDomains", () => {
@@ -145,131 +144,99 @@ describe("collectSkillAllowedDomains", () => {
   })
 })
 
-describe("mergeNetworkConfig", () => {
-  it("should merge global and expert domains", () => {
-    const global = { allowedDomains: ["api.anthropic.com"] }
-    const expert = { allowedDomains: ["api.github.com"] }
-    const merged = mergeNetworkConfig(global, expert)
-    expect(merged.allowedDomains).toContain("api.anthropic.com")
-    expect(merged.allowedDomains).toContain("api.github.com")
+describe("collectAllowedDomains", () => {
+  it("should collect skill domains and provider domains", () => {
+    const config: PerstackConfig = {
+      provider: { providerName: "anthropic" },
+      experts: {
+        "test-expert": {
+          instruction: "test",
+          skills: {
+            exa: {
+              type: "mcpStdioSkill",
+              command: "npx",
+              allowedDomains: ["api.exa.ai"],
+            },
+          },
+        },
+      },
+    }
+    const domains = collectAllowedDomains(config, "test-expert")
+    expect(domains).toContain("api.exa.ai")
+    expect(domains).toContain("api.anthropic.com")
   })
 
   it("should deduplicate domains", () => {
-    const global = { allowedDomains: ["api.example.com"] }
-    const expert = { allowedDomains: ["api.example.com"] }
-    const merged = mergeNetworkConfig(global, expert)
-    expect(merged.allowedDomains).toHaveLength(1)
-  })
-
-  it("should handle undefined configs", () => {
-    const merged = mergeNetworkConfig(undefined, undefined)
-    expect(merged.allowedDomains).toBeUndefined()
-  })
-
-  it("should handle only global config", () => {
-    const global = { allowedDomains: ["api.anthropic.com"] }
-    const merged = mergeNetworkConfig(global, undefined)
-    expect(merged.allowedDomains).toEqual(["api.anthropic.com"])
-  })
-
-  it("should merge skill domains", () => {
-    const global = { allowedDomains: ["api.anthropic.com"] }
-    const skillDomains = ["api.exa.ai"]
-    const merged = mergeNetworkConfig(global, undefined, skillDomains)
-    expect(merged.allowedDomains).toContain("api.anthropic.com")
-    expect(merged.allowedDomains).toContain("api.exa.ai")
-  })
-
-  it("should merge provider domains", () => {
-    const providerDomains = ["api.anthropic.com"]
-    const merged = mergeNetworkConfig(undefined, undefined, undefined, providerDomains)
-    expect(merged.allowedDomains).toContain("api.anthropic.com")
-  })
-
-  it("should merge all sources", () => {
-    const global = { allowedDomains: ["global.example.com"] }
-    const expert = { allowedDomains: ["expert.example.com"] }
-    const skillDomains = ["skill.example.com"]
-    const providerDomains = ["provider.example.com"]
-    const merged = mergeNetworkConfig(global, expert, skillDomains, providerDomains)
-    expect(merged.allowedDomains).toContain("global.example.com")
-    expect(merged.allowedDomains).toContain("expert.example.com")
-    expect(merged.allowedDomains).toContain("skill.example.com")
-    expect(merged.allowedDomains).toContain("provider.example.com")
-  })
-})
-
-describe("getEffectiveNetworkConfig", () => {
-  it("should get merged config for expert", () => {
-    const config: PerstackConfig = {
-      network: { allowedDomains: ["global.example.com"] },
-      experts: {
-        "test-expert": {
-          instruction: "test",
-          network: { allowedDomains: ["expert.example.com"] },
-        },
-      },
-    }
-    const effective = getEffectiveNetworkConfig(config, "test-expert")
-    expect(effective.allowedDomains).toContain("global.example.com")
-    expect(effective.allowedDomains).toContain("expert.example.com")
-  })
-
-  it("should include skill allowedDomains", () => {
-    const config: PerstackConfig = {
-      experts: {
-        "test-expert": {
-          instruction: "test",
-          skills: {
-            exa: {
-              type: "mcpStdioSkill",
-              command: "npx",
-              allowedDomains: ["api.exa.ai"],
-            },
-          },
-        },
-      },
-    }
-    const effective = getEffectiveNetworkConfig(config, "test-expert")
-    expect(effective.allowedDomains).toContain("api.exa.ai")
-  })
-
-  it("should include provider API domains", () => {
     const config: PerstackConfig = {
       provider: { providerName: "anthropic" },
       experts: {
         "test-expert": {
           instruction: "test",
-        },
-      },
-    }
-    const effective = getEffectiveNetworkConfig(config, "test-expert")
-    expect(effective.allowedDomains).toContain("api.anthropic.com")
-  })
-
-  it("should merge all sources", () => {
-    const config: PerstackConfig = {
-      provider: { providerName: "anthropic" },
-      network: { allowedDomains: ["global.example.com"] },
-      experts: {
-        "test-expert": {
-          instruction: "test",
-          network: { allowedDomains: ["expert.example.com"] },
           skills: {
-            exa: {
+            skill1: {
               type: "mcpStdioSkill",
               command: "npx",
-              allowedDomains: ["api.exa.ai"],
+              allowedDomains: ["api.anthropic.com"],
             },
           },
         },
       },
     }
-    const effective = getEffectiveNetworkConfig(config, "test-expert")
-    expect(effective.allowedDomains).toContain("global.example.com")
-    expect(effective.allowedDomains).toContain("expert.example.com")
-    expect(effective.allowedDomains).toContain("api.exa.ai")
-    expect(effective.allowedDomains).toContain("api.anthropic.com")
+    const domains = collectAllowedDomains(config, "test-expert")
+    const anthropicCount = domains.filter((d) => d === "api.anthropic.com").length
+    expect(anthropicCount).toBe(1)
+  })
+
+  it("should return only provider domains when no skill domains", () => {
+    const config: PerstackConfig = {
+      provider: { providerName: "openai" },
+      experts: {
+        "test-expert": {
+          instruction: "test",
+        },
+      },
+    }
+    const domains = collectAllowedDomains(config, "test-expert")
+    expect(domains).toEqual(["api.openai.com"])
+  })
+
+  it("should return empty when no provider and no skill domains", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "test-expert": {
+          instruction: "test",
+        },
+      },
+    }
+    const domains = collectAllowedDomains(config, "test-expert")
+    expect(domains).toHaveLength(0)
+  })
+
+  it("should collect from multiple skills", () => {
+    const config: PerstackConfig = {
+      provider: { providerName: "anthropic" },
+      experts: {
+        "test-expert": {
+          instruction: "test",
+          skills: {
+            skill1: {
+              type: "mcpStdioSkill",
+              command: "npx",
+              allowedDomains: ["api.github.com"],
+            },
+            skill2: {
+              type: "mcpStdioSkill",
+              command: "npx",
+              allowedDomains: ["httpbin.org"],
+            },
+          },
+        },
+      },
+    }
+    const domains = collectAllowedDomains(config, "test-expert")
+    expect(domains).toContain("api.github.com")
+    expect(domains).toContain("httpbin.org")
+    expect(domains).toContain("api.anthropic.com")
   })
 })
 

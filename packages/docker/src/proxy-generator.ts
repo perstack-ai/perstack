@@ -1,4 +1,4 @@
-import type { NetworkConfig, PerstackConfig, ProviderTable } from "@perstack/core"
+import type { PerstackConfig, ProviderTable } from "@perstack/core"
 
 export function getProviderApiDomains(provider?: ProviderTable): string[] {
   if (!provider) return []
@@ -39,46 +39,17 @@ export function collectSkillAllowedDomains(config: PerstackConfig, expertKey: st
   return domains
 }
 
-export function mergeNetworkConfig(
-  globalConfig?: NetworkConfig,
-  expertConfig?: NetworkConfig,
-  skillDomains?: string[],
-  providerDomains?: string[],
-): NetworkConfig {
-  const allowedDomains = new Set<string>()
-  if (globalConfig?.allowedDomains) {
-    for (const domain of globalConfig.allowedDomains) {
-      allowedDomains.add(domain)
-    }
-  }
-  if (expertConfig?.allowedDomains) {
-    for (const domain of expertConfig.allowedDomains) {
-      allowedDomains.add(domain)
-    }
-  }
-  if (skillDomains) {
-    for (const domain of skillDomains) {
-      allowedDomains.add(domain)
-    }
-  }
-  if (providerDomains) {
-    for (const domain of providerDomains) {
-      allowedDomains.add(domain)
-    }
-  }
-  return {
-    allowedDomains: allowedDomains.size > 0 ? Array.from(allowedDomains) : undefined,
-  }
-}
-
-export function getEffectiveNetworkConfig(
-  config: PerstackConfig,
-  expertKey: string,
-): NetworkConfig {
-  const expert = config.experts?.[expertKey]
+export function collectAllowedDomains(config: PerstackConfig, expertKey: string): string[] {
+  const domains = new Set<string>()
   const skillDomains = collectSkillAllowedDomains(config, expertKey)
+  for (const domain of skillDomains) {
+    domains.add(domain)
+  }
   const providerDomains = getProviderApiDomains(config.provider)
-  return mergeNetworkConfig(config.network, expert?.network, skillDomains, providerDomains)
+  for (const domain of providerDomains) {
+    domains.add(domain)
+  }
+  return Array.from(domains)
 }
 
 export function generateSquidAllowlistAcl(domains: string[]): string {

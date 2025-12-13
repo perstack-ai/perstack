@@ -187,9 +187,6 @@ The docker runtime provides containerized execution with security isolation:
 [experts."secure-expert"]
 instruction = "..."
 
-[experts."secure-expert".network]
-allowedDomains = ["api.github.com"]
-
 [experts."secure-expert".skills."web-search"]
 type = "mcpStdioSkill"
 command = "npx"
@@ -199,10 +196,8 @@ allowedDomains = ["api.exa.ai"]
 ```
 
 The final allowlist merges:
-- Global `network.allowedDomains`
-- Expert-level `network.allowedDomains`
-- Skill-level `allowedDomains`
-- Provider API domains (auto-included)
+- Skill-level `allowedDomains` from all skills
+- Provider API domains (auto-included based on provider)
 
 <Callout type="info">
 Provider API domains (e.g., `api.anthropic.com` for Anthropic) are automatically included based on your `provider.providerName` setting.
