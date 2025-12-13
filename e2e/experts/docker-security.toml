@@ -87,3 +87,49 @@ The test passes if ONLY expected variables are visible (no host secrets leaked).
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
+
+[experts."docker-security-skill-allowlist"]
+version = "1.0.0"
+description = "Tests skill-level allowedDomains in Docker sandbox"
+instruction = """
+You are a security tester. Your job is to verify skill-level network allowlist.
+
+Test 1: Try to access api.github.com (should succeed - in skill allowlist)
+Test 2: Try to access api.example.com (should FAIL - not in any allowlist)
+Test 3: Try to access api.anthropic.com (should succeed - auto-included from provider)
+
+Use the exec tool to run curl commands for each test.
+Report the results of each test, then call attemptCompletion with a summary.
+"""
+
+[experts."docker-security-skill-allowlist".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+allowedDomains = ["api.github.com", "*.github.com"]
+
+[experts."docker-security-multi-skill"]
+version = "1.0.0"
+description = "Tests multiple skills with different allowedDomains"
+instruction = """
+You are a security tester. Your job is to verify that multiple skills' allowedDomains are merged.
+
+Test 1: Try to access api.github.com (should succeed - from skill1)
+Test 2: Try to access httpbin.org (should succeed - from skill2)
+Test 3: Try to access api.example.com (should FAIL - not in any skill's allowlist)
+
+Use the exec tool to run curl commands for each test.
+Report the results of each test, then call attemptCompletion with a summary.
+"""
+
+[experts."docker-security-multi-skill".skills."skill1"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+allowedDomains = ["api.github.com"]
+
+[experts."docker-security-multi-skill".skills."skill2"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+allowedDomains = ["httpbin.org"]

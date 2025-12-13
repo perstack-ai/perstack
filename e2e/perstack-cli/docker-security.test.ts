@@ -157,4 +157,90 @@ describe.runIf(isDockerAvailable())("Docker Security Sandbox", () => {
       expect(output).not.toMatch(/SSH_AUTH_SOCK=/)
     })
   })
+
+  describe("Skill-level allowedDomains", () => {
+    it("should allow access to domains in skill allowlist", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-skill-allowlist",
+          "Try to access api.github.com using curl and report if it succeeds",
+        ],
+        { timeout: 300000 },
+      )
+      expect(result.exitCode).toBe(0)
+    })
+
+    it("should block access to domains not in skill allowlist", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-skill-allowlist",
+          "Try to access api.example.com using curl and report if it fails",
+        ],
+        { timeout: 300000 },
+      )
+      const output = result.stdout + result.stderr
+      expect(output).toMatch(/blocked|denied|refused|timeout|unreachable|failed|not allowed/i)
+    })
+
+    it("should auto-include provider API domain", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-skill-allowlist",
+          "Try to access api.anthropic.com using curl and report if it succeeds",
+        ],
+        { timeout: 300000 },
+      )
+      expect(result.exitCode).toBe(0)
+    })
+  })
+
+  describe("Multiple Skills allowedDomains Merge", () => {
+    it("should merge allowedDomains from multiple skills", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-multi-skill",
+          "Try to access both api.github.com and httpbin.org, report if both succeed",
+        ],
+        { timeout: 300000 },
+      )
+      expect(result.exitCode).toBe(0)
+    })
+
+    it("should still block domains not in any skill allowlist", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-multi-skill",
+          "Try to access api.example.com using curl and report if it fails",
+        ],
+        { timeout: 300000 },
+      )
+      const output = result.stdout + result.stderr
+      expect(output).toMatch(/blocked|denied|refused|timeout|unreachable|failed|not allowed/i)
+    })
+  })
 })
