@@ -113,14 +113,19 @@ export function generateDockerfile(
   }
   lines.push("RUN npm install -g @perstack/runtime")
   lines.push("")
-  lines.push("COPY perstack.toml /app/perstack.toml")
+  lines.push("RUN groupadd -r perstack && useradd -r -g perstack -d /home/perstack -m perstack")
+  lines.push("RUN mkdir -p /workspace && chown -R perstack:perstack /workspace /app")
+  lines.push("")
+  lines.push("COPY --chown=perstack:perstack perstack.toml /app/perstack.toml")
   lines.push("")
   if (options?.proxyEnabled) {
-    lines.push("ENV PERSTACK_PROXY_URL=http://172.28.0.2:3128")
-    lines.push("ENV NPM_CONFIG_PROXY=http://172.28.0.2:3128")
-    lines.push("ENV NPM_CONFIG_HTTPS_PROXY=http://172.28.0.2:3128")
+    lines.push("ENV PERSTACK_PROXY_URL=http://proxy:3128")
+    lines.push("ENV NPM_CONFIG_PROXY=http://proxy:3128")
+    lines.push("ENV NPM_CONFIG_HTTPS_PROXY=http://proxy:3128")
     lines.push("")
   }
+  lines.push("USER perstack")
+  lines.push("")
   lines.push(
     `ENTRYPOINT ["perstack-runtime", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`,
   )

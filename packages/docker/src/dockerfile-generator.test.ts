@@ -187,7 +187,8 @@ describe("generateDockerfile", () => {
     expect(dockerfile).toContain("nodejs")
     expect(dockerfile).toContain("npm install -g @perstack/base")
     expect(dockerfile).toContain("npm install -g @perstack/runtime")
-    expect(dockerfile).toContain("COPY perstack.toml /app/perstack.toml")
+    expect(dockerfile).toContain("COPY --chown=perstack:perstack perstack.toml /app/perstack.toml")
+    expect(dockerfile).toContain("USER perstack")
     expect(dockerfile).toContain(
       'ENTRYPOINT ["perstack-runtime", "run", "--config", "/app/perstack.toml", "my-expert"]',
     )

@@ -28,10 +28,10 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("      dockerfile: Dockerfile")
   const allEnvKeys = [...envKeys]
   if (proxyEnabled) {
-    allEnvKeys.push("HTTP_PROXY=http://172.28.0.2:3128")
-    allEnvKeys.push("HTTPS_PROXY=http://172.28.0.2:3128")
-    allEnvKeys.push("http_proxy=http://172.28.0.2:3128")
-    allEnvKeys.push("https_proxy=http://172.28.0.2:3128")
+    allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
+    allEnvKeys.push("HTTPS_PROXY=http://proxy:3128")
+    allEnvKeys.push("http_proxy=http://proxy:3128")
+    allEnvKeys.push("https_proxy=http://proxy:3128")
     allEnvKeys.push("NO_PROXY=localhost,127.0.0.1")
     allEnvKeys.push("no_proxy=localhost,127.0.0.1")
   }
@@ -48,13 +48,20 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   }
   lines.push("    stdin_open: true")
   lines.push("    tty: true")
+  lines.push("    cap_drop:")
+  lines.push("      - ALL")
+  lines.push("    security_opt:")
+  lines.push("      - no-new-privileges:true")
+  lines.push("    read_only: true")
+  lines.push("    tmpfs:")
+  lines.push("      - /tmp:size=100M,mode=1777")
+  lines.push("      - /home/perstack/.npm:size=50M,uid=999,gid=999,mode=0755")
   if (proxyEnabled) {
     lines.push("    depends_on:")
-    lines.push("      - proxy")
-    lines.push("    dns:")
-    lines.push("      - 172.28.0.2")
+    lines.push("      proxy:")
+    lines.push("        condition: service_healthy")
     lines.push("    networks:")
-    lines.push(`      ${internalNetworkName}:`)
+    lines.push(`      - ${internalNetworkName}`)
   } else {
     lines.push("    networks:")
     lines.push(`      - ${networkName}`)
@@ -69,9 +76,6 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
     lines.push(`  ${internalNetworkName}:`)
     lines.push("    driver: bridge")
     lines.push("    internal: true")
-    lines.push("    ipam:")
-    lines.push("      config:")
-    lines.push("        - subnet: 172.28.0.0/16")
     lines.push(`  ${networkName}:`)
     lines.push("    driver: bridge")
   } else {

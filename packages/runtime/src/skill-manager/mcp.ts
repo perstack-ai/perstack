@@ -66,12 +66,33 @@ export class McpSkillManager extends BaseSkillManager {
     if (!skill.command) {
       throw new Error(`Skill ${skill.name} has no command`)
     }
-    const env: Record<string, string> = { ...process.env } as Record<string, string>
+    const env: Record<string, string> = {}
     for (const envName of skill.requiredEnv) {
       if (!this._env[envName]) {
         throw new Error(`Skill ${skill.name} requires environment variable ${envName}`)
       }
       env[envName] = this._env[envName]
+    }
+    const safeEnvVars = [
+      "PATH",
+      "HOME",
+      "SHELL",
+      "TERM",
+      "NODE_PATH",
+      "HTTP_PROXY",
+      "HTTPS_PROXY",
+      "http_proxy",
+      "https_proxy",
+      "NO_PROXY",
+      "no_proxy",
+      "PERSTACK_PROXY_URL",
+      "NPM_CONFIG_PROXY",
+      "NPM_CONFIG_HTTPS_PROXY",
+    ]
+    for (const envName of safeEnvVars) {
+      if (process.env[envName]) {
+        env[envName] = process.env[envName]
+      }
     }
     const startTime = Date.now()
     const { command, args } = this._getCommandArgs(skill)

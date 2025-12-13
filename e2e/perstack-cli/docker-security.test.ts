@@ -156,6 +156,23 @@ describe.runIf(isDockerAvailable())("Docker Security Sandbox", () => {
       expect(output).not.toMatch(/GITHUB_TOKEN=/)
       expect(output).not.toMatch(/SSH_AUTH_SOCK=/)
     })
+
+    it("should not expose ANTHROPIC_API_KEY to exec tool", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-env",
+          "Run 'printenv ANTHROPIC_API_KEY' and report the result",
+        ],
+        { timeout: 300000 },
+      )
+      const output = result.stdout + result.stderr
+      expect(output).not.toMatch(/sk-ant-/)
+    })
   })
 
   describe("Skill-level allowedDomains", () => {

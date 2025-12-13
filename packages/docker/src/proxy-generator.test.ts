@@ -281,6 +281,13 @@ describe("generateSquidConf", () => {
     expect(conf).toContain("http_access allow CONNECT SSL_ports")
     expect(conf).not.toContain("allowed_domains")
   })
+
+  it("should only allow HTTPS (port 443), not HTTP (port 80)", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("acl SSL_ports port 443")
+    expect(conf).not.toContain("port 80")
+    expect(conf).not.toContain("Safe_ports")
+  })
 })
 
 describe("generateProxyDockerfile", () => {
@@ -321,5 +328,11 @@ describe("generateProxyComposeService", () => {
     expect(service).toContain("build:")
     expect(service).toContain("perstack-net-internal")
     expect(service).toContain("perstack-net")
+  })
+
+  it("should include healthcheck configuration", () => {
+    const service = generateProxyComposeService("perstack-net-internal", "perstack-net")
+    expect(service).toContain("healthcheck:")
+    expect(service).toContain("nc -z localhost 3128")
   })
 })
