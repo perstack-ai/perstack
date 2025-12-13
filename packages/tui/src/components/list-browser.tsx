@@ -1,6 +1,6 @@
 import type { Key } from "ink"
 import { Box, Text, useInput } from "ink"
-import type React from "react"
+import React from "react"
 import { useMemo } from "react"
 import { INDICATOR, UI_CONSTANTS } from "../constants.js"
 import { useListNavigation } from "../hooks/index.js"
