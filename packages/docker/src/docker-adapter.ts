@@ -199,6 +199,9 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     if (setting.maxSteps !== undefined) {
       args.push("--max-steps", String(setting.maxSteps))
     }
+    if (setting.maxRetries !== undefined) {
+      args.push("--max-retries", String(setting.maxRetries))
+    }
     if (setting.timeout !== undefined) {
       args.push("--timeout", String(setting.timeout))
     }

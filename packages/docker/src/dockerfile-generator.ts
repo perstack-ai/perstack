@@ -1,5 +1,9 @@
 import type { McpStdioSkill, PerstackConfig } from "@perstack/core"
 
+const VALID_PACKAGE_NAME_PATTERN = /^[@a-zA-Z0-9][@a-zA-Z0-9._\-/]*$/
+function isValidPackageName(name: string): boolean {
+  return VALID_PACKAGE_NAME_PATTERN.test(name) && !name.includes("..")
+}
 export type RuntimeRequirement = "nodejs" | "python"
 
 export function detectRequiredRuntimes(
@@ -68,9 +72,15 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
     if (skill.type !== "mcpStdioSkill") continue
     const mcpSkill = skill as McpStdioSkill
     if (mcpSkill.command === "npx" && mcpSkill.packageName) {
+      if (!isValidPackageName(mcpSkill.packageName)) {
+        throw new Error(`Invalid npm package name: ${mcpSkill.packageName}`)
+      }
       npmPackages.push(mcpSkill.packageName)
     }
     if (mcpSkill.command === "uvx" && mcpSkill.packageName) {
+      if (!isValidPackageName(mcpSkill.packageName)) {
+        throw new Error(`Invalid Python package name: ${mcpSkill.packageName}`)
+      }
       uvxPackages.push(mcpSkill.packageName)
     }
   }
