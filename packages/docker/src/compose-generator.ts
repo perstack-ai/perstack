@@ -74,7 +74,8 @@ export function generateBuildContext(
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
   const dockerfile = generateDockerfile(config, expertKey)
-  const configToml = TOML.stringify(config as Record<string, unknown>)
+  const containerConfig = { ...config, runtime: "perstack" }
+  const configToml = TOML.stringify(containerConfig as Record<string, unknown>)
   let proxyDockerfileContent: string | null = null
   let proxySquidConf: string | null = null
   let proxyAllowlist: string | null = null
