@@ -111,7 +111,9 @@ export function generateDockerfile(config: PerstackConfig, expertKey: string): s
   lines.push("")
   lines.push("COPY perstack.toml /app/perstack.toml")
   lines.push("")
-  lines.push(`ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`)
+  lines.push(
+    `ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`,
+  )
   lines.push("")
   return lines.join("\n")
 }
