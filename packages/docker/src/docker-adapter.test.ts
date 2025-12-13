@@ -86,9 +86,17 @@ describe("DockerAdapter", () => {
   })
 
   describe("run", () => {
-    it("should throw not implemented error", async () => {
+    it("should throw error when config is not provided", async () => {
       const adapter = new DockerAdapter()
-      await expect(adapter.run({} as never)).rejects.toThrow("not yet implemented")
+      const params = {
+        setting: {
+          expertKey: "test",
+          input: { text: "hello" },
+        },
+      }
+      await expect(adapter.run(params as never)).rejects.toThrow(
+        "DockerAdapter requires config in AdapterRunParams",
+      )
     })
   })
 })
