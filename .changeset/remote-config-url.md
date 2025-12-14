@@ -1,6 +1,6 @@
 ---
-"perstack": minor
-"@perstack/runtime": minor
+"perstack": patch
+"@perstack/runtime": patch
 ---
 
 Support GitHub URL for --config option
