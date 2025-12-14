@@ -141,7 +141,7 @@ export function generateProxyComposeService(
   lines.push(`      - ${internalNetworkName}`)
   lines.push(`      - ${externalNetworkName}`)
   lines.push("    healthcheck:")
-  lines.push("      test: [\"CMD-SHELL\", \"nc -z localhost 3128 || exit 1\"]")
+  lines.push('      test: ["CMD-SHELL", "nc -z localhost 3128 || exit 1"]')
   lines.push("      interval: 2s")
   lines.push("      timeout: 5s")
   lines.push("      retries: 10")
