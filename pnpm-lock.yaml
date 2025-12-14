@@ -295,9 +295,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.24.0
         version: 1.24.3(zod@4.1.13)
-      commander:
-        specifier: ^14.0.2
-        version: 14.0.2
       zod:
         specifier: ^4.1.13
         version: 4.1.13
