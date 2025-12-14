@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import {
   defaultMaxRetries,
+  defaultMaxSteps,
   defaultPerstackApiBaseUrl,
   defaultTemperature,
   defaultTimeout,
@@ -76,7 +77,7 @@ export interface RunSetting {
   /** Temperature for generation (0-1) */
   temperature: number
   /** Maximum steps before stopping (applies to Job's totalSteps) */
-  maxSteps?: number
+  maxSteps: number
   /** Maximum retries on generation failure */
   maxRetries: number
   /** Timeout per generation in milliseconds */
@@ -93,6 +94,8 @@ export interface RunSetting {
   perstackBaseSkillCommand?: string[]
   /** Environment variables to pass to skills */
   env: Record<string, string>
+  /** HTTP proxy URL for API requests */
+  proxyUrl?: string
 }
 
 /** Parameters for starting a run */
@@ -134,6 +137,7 @@ export type RunParamsInput = {
     perstackApiKey?: string
     perstackBaseSkillCommand?: string[]
     env?: Record<string, string>
+    proxyUrl?: string
   }
   checkpoint?: Checkpoint
 }
@@ -157,7 +161,7 @@ export const runSettingSchema = z.object({
   }),
   experts: z.record(z.string(), expertSchema),
   temperature: z.number().min(0).max(1),
-  maxSteps: z.number().min(1).optional(),
+  maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
   maxRetries: z.number().min(0),
   timeout: z.number().min(0),
   startedAt: z.number(),
@@ -166,6 +170,7 @@ export const runSettingSchema = z.object({
   perstackApiKey: z.string().optional(),
   perstackBaseSkillCommand: z.array(z.string()).optional(),
   env: z.record(z.string(), z.string()),
+  proxyUrl: z.string().optional(),
 })
 
 export const runParamsSchema = z.object({
@@ -208,7 +213,7 @@ export const runParamsSchema = z.object({
         ),
       ),
     temperature: z.number().min(0).max(1).optional().default(defaultTemperature),
-    maxSteps: z.number().min(1).optional(),
+    maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
     maxRetries: z.number().min(0).optional().default(defaultMaxRetries),
     timeout: z.number().min(0).optional().default(defaultTimeout),
     startedAt: z.number().optional().default(Date.now()),
@@ -217,6 +222,7 @@ export const runParamsSchema = z.object({
     perstackApiKey: z.string().optional(),
     perstackBaseSkillCommand: z.array(z.string()).optional(),
     env: z.record(z.string(), z.string()).optional().default({}),
+    proxyUrl: z.string().optional(),
   }),
   checkpoint: checkpointSchema.optional(),
 })

@@ -1,23 +1,22 @@
-import { existsSync, statSync } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, stat } from "node:fs/promises"
 import { dirname } from "node:path"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
 import { z } from "zod/v4"
 import { validatePath } from "../lib/path.js"
+import { safeWriteFile } from "../lib/safe-file.js"
 import { errorToolResult, successToolResult } from "../lib/tool-result.js"
+
 export async function writeTextFile(input: { path: string; text: string }) {
   const { path, text } = input
   const validatedPath = await validatePath(path)
-  if (existsSync(validatedPath)) {
-    const stats = statSync(validatedPath)
-    if (!(stats.mode & 0o200)) {
-      throw new Error(`File ${path} is not writable`)
-    }
+  const stats = await stat(validatedPath).catch(() => null)
+  if (stats && !(stats.mode & 0o200)) {
+    throw new Error(`File ${path} is not writable`)
   }
   const dir = dirname(validatedPath)
   await mkdir(dir, { recursive: true })
-  await writeFile(validatedPath, text, "utf-8")
+  await safeWriteFile(validatedPath, text)
   return {
     path: validatedPath,
     text,

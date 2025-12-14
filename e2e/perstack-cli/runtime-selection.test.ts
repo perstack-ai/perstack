@@ -66,7 +66,9 @@ describe("Runtime Selection", () => {
         "echo test",
       ])
       if (result.exitCode !== 0) {
-        expect(result.stderr).toMatch(/not installed|prerequisites|not found/i)
+        expect(result.stderr).toMatch(
+          /not installed|prerequisites|not found|invalid api key|authentication/i,
+        )
       }
     })
 

@@ -12,9 +12,9 @@ export function getProviderApiDomains(provider?: ProviderTable): string[] {
     case "azure-openai":
       return ["*.openai.azure.com"]
     case "amazon-bedrock":
-      return ["*.amazonaws.com"]
+      return ["bedrock.*.amazonaws.com", "bedrock-runtime.*.amazonaws.com"]
     case "google-vertex":
-      return ["*.googleapis.com"]
+      return ["*.aiplatform.googleapis.com"]
     case "deepseek":
       return ["api.deepseek.com"]
     case "ollama":
@@ -41,6 +41,7 @@ export function collectSkillAllowedDomains(config: PerstackConfig, expertKey: st
 
 export function collectAllowedDomains(config: PerstackConfig, expertKey: string): string[] {
   const domains = new Set<string>()
+  domains.add("registry.npmjs.org")
   const skillDomains = collectSkillAllowedDomains(config, expertKey)
   for (const domain of skillDomains) {
     domains.add(domain)
@@ -53,12 +54,21 @@ export function collectAllowedDomains(config: PerstackConfig, expertKey: string)
 }
 
 export function generateSquidAllowlistAcl(domains: string[]): string {
+  const wildcards = new Set<string>()
+  for (const domain of domains) {
+    if (domain.startsWith("*.")) {
+      wildcards.add(domain.slice(2))
+    }
+  }
   const lines: string[] = []
   for (const domain of domains) {
     if (domain.startsWith("*.")) {
       lines.push(`.${domain.slice(2)}`)
     } else {
-      lines.push(domain)
+      const isSubdomainOfWildcard = Array.from(wildcards).some((w) => domain.endsWith(`.${w}`))
+      if (!isSubdomainOfWildcard) {
+        lines.push(domain)
+      }
     }
   }
   return lines.join("\n")
@@ -69,7 +79,19 @@ export function generateSquidConf(allowedDomains?: string[]): string {
   lines.push("http_port 3128")
   lines.push("")
   lines.push("acl SSL_ports port 443")
+  lines.push("acl Safe_ports port 443")
   lines.push("acl CONNECT method CONNECT")
+  lines.push("")
+  lines.push("acl internal_nets dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8")
+  lines.push("acl link_local dst 169.254.0.0/16")
+  lines.push("acl internal_nets_v6 dst ::1/128 fe80::/10 fc00::/7")
+  lines.push("http_access deny internal_nets")
+  lines.push("http_access deny link_local")
+  lines.push("http_access deny internal_nets_v6")
+  lines.push("")
+  lines.push("http_access deny !Safe_ports")
+  lines.push("http_access deny CONNECT !SSL_ports")
+  lines.push("http_access deny !CONNECT")
   lines.push("")
   if (allowedDomains && allowedDomains.length > 0) {
     lines.push('acl allowed_domains dstdomain "/etc/squid/allowed_domains.txt"')
@@ -80,7 +102,8 @@ export function generateSquidConf(allowedDomains?: string[]): string {
   }
   lines.push("http_access deny all")
   lines.push("")
-  lines.push("access_log stdio:/dev/stdout logformat=squid")
+  lines.push("access_log none")
+  lines.push("cache_log /dev/null")
   lines.push("")
   return lines.join("\n")
 }
@@ -91,28 +114,50 @@ export function generateProxyDockerfile(hasAllowlist: boolean): string {
   lines.push("")
   lines.push("RUN apt-get update && apt-get install -y --no-install-recommends \\")
   lines.push("    squid \\")
+  lines.push("    dnsmasq \\")
+  lines.push("    netcat-openbsd \\")
   lines.push("    && rm -rf /var/lib/apt/lists/*")
   lines.push("")
   lines.push("COPY squid.conf /etc/squid/squid.conf")
   if (hasAllowlist) {
     lines.push("COPY allowed_domains.txt /etc/squid/allowed_domains.txt")
   }
+  lines.push("COPY start.sh /start.sh")
+  lines.push("RUN chmod +x /start.sh")
   lines.push("")
-  lines.push("EXPOSE 3128")
+  lines.push("EXPOSE 3128 53/udp")
   lines.push("")
-  lines.push('CMD ["squid", "-N", "-d", "1"]')
+  lines.push('CMD ["/start.sh"]')
+  lines.push("")
+  return lines.join("\n")
+}
+export function generateProxyStartScript(): string {
+  const lines: string[] = []
+  lines.push("#!/bin/sh")
+  lines.push("dnsmasq --no-daemon --server=8.8.8.8 --server=8.8.4.4 &")
+  lines.push("exec squid -N -d 1")
   lines.push("")
   return lines.join("\n")
 }
 
-export function generateProxyComposeService(networkName: string): string {
+export function generateProxyComposeService(
+  internalNetworkName: string,
+  externalNetworkName: string,
+): string {
   const lines: string[] = []
   lines.push("  proxy:")
   lines.push("    build:")
   lines.push("      context: ./proxy")
   lines.push("      dockerfile: Dockerfile")
   lines.push("    networks:")
-  lines.push(`      - ${networkName}`)
+  lines.push(`      - ${internalNetworkName}`)
+  lines.push(`      - ${externalNetworkName}`)
+  lines.push("    healthcheck:")
+  lines.push('      test: ["CMD-SHELL", "nc -z localhost 3128 || exit 1"]')
+  lines.push("      interval: 2s")
+  lines.push("      timeout: 5s")
+  lines.push("      retries: 10")
+  lines.push("      start_period: 5s")
   lines.push("    restart: unless-stopped")
   return lines.join("\n")
 }

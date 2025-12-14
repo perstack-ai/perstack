@@ -1,4 +1,5 @@
 import { Box, Text } from "ink"
+import type React from "react"
 import { RENDER_CONSTANTS, UI_CONSTANTS } from "../constants.js"
 import { shortenPath, summarizeOutput, truncateText } from "../helpers.js"
 import type { LogEntry } from "../types/index.js"

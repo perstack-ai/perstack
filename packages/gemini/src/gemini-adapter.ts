@@ -20,6 +20,7 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStreamingTextEvent,
+  getFilteredEnv,
 } from "@perstack/core"
 
 type StreamingState = {
@@ -166,7 +167,7 @@ export class GeminiAdapter extends BaseAdapter {
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const proc = spawn("gemini", ["-p", prompt, "--output-format", "stream-json"], {
       cwd: process.cwd(),
-      env: { ...process.env },
+      env: getFilteredEnv(),
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()

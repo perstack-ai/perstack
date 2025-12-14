@@ -3,10 +3,12 @@ import { spawn } from "node:child_process"
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
+import { createId } from "@paralleldrive/cuid2"
 import type {
   AdapterRunParams,
   AdapterRunResult,
   Checkpoint,
+  DelegationTarget,
   Expert,
   PerstackConfig,
   PrerequisiteResult,
@@ -14,6 +16,8 @@ import type {
   RuntimeAdapter,
   RuntimeEvent,
   RuntimeExpertConfig,
+  ToolResult,
+  Usage,
 } from "@perstack/core"
 import { BaseAdapter, checkpointSchema } from "@perstack/core"
 import { generateBuildContext } from "./compose-generator.js"
@@ -79,10 +83,83 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
 
   async run(params: AdapterRunParams): Promise<AdapterRunResult> {
     const { setting, config, eventListener } = params
-    const events: (RunEvent | RuntimeEvent)[] = []
+    let allEvents: (RunEvent | RuntimeEvent)[] = []
     if (!config) {
       throw new Error("DockerAdapter requires config in AdapterRunParams")
     }
+    let currentSetting = { ...setting }
+    let currentCheckpoint: Checkpoint | undefined = params.checkpoint
+    while (true) {
+      const { checkpoint, events } = await this.runSingleExpert(
+        currentSetting,
+        currentCheckpoint,
+        config,
+        eventListener,
+      )
+      allEvents = [...allEvents, ...events]
+      if (checkpoint.status === "stoppedByDelegate") {
+        const delegateTo = checkpoint.delegateTo
+        if (!delegateTo || delegateTo.length === 0) {
+          throw new Error("No delegations found in checkpoint")
+        }
+        const delegationResults = await Promise.all(
+          delegateTo.map((delegation) =>
+            this.runDelegation(delegation, currentSetting, checkpoint, config, eventListener),
+          ),
+        )
+        for (const result of delegationResults) {
+          allEvents = [...allEvents, ...result.events]
+        }
+        const aggregatedUsage = delegationResults.reduce(
+          (acc, result) => this.sumUsage(acc, result.deltaUsage),
+          checkpoint.usage,
+        )
+        const maxStepNumber = Math.max(...delegationResults.map((r) => r.stepNumber))
+        const firstResult = delegationResults[0]
+        const restResults = delegationResults.slice(1)
+        const restToolResults: ToolResult[] = restResults.map((result) => ({
+          id: result.toolCallId,
+          skillName: `delegate/${result.expertKey}`,
+          toolName: result.toolName,
+          result: [{ type: "textPart" as const, id: createId(), text: result.text }],
+        }))
+        const processedToolCallIds = new Set(delegateTo.slice(1).map((d) => d.toolCallId))
+        const remainingToolCalls = checkpoint.pendingToolCalls?.filter(
+          (tc) => !processedToolCallIds.has(tc.id) && tc.id !== delegateTo[0].toolCallId,
+        )
+        currentSetting = {
+          ...currentSetting,
+          expertKey: checkpoint.expert.key,
+          input: {
+            interactiveToolCallResult: {
+              toolCallId: firstResult.toolCallId,
+              toolName: firstResult.toolName,
+              skillName: `delegate/${firstResult.expertKey}`,
+              text: firstResult.text,
+            },
+          },
+        }
+        currentCheckpoint = {
+          ...checkpoint,
+          status: "stoppedByDelegate",
+          delegateTo: undefined,
+          stepNumber: maxStepNumber,
+          usage: aggregatedUsage,
+          pendingToolCalls: remainingToolCalls?.length ? remainingToolCalls : undefined,
+          partialToolResults: [...(checkpoint.partialToolResults ?? []), ...restToolResults],
+        }
+        continue
+      }
+      return { checkpoint, events: allEvents }
+    }
+  }
+  protected async runSingleExpert(
+    setting: AdapterRunParams["setting"],
+    _checkpoint: Checkpoint | undefined,
+    config: PerstackConfig,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+  ): Promise<{ checkpoint: Checkpoint; events: (RunEvent | RuntimeEvent)[] }> {
+    const events: (RunEvent | RuntimeEvent)[] = []
     const expertKey = setting.expertKey
     const buildDir = await this.prepareBuildContext(config, expertKey)
     try {
@@ -128,6 +205,95 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       await this.cleanup(buildDir)
     }
   }
+  protected async runDelegation(
+    delegation: DelegationTarget,
+    parentSetting: AdapterRunParams["setting"],
+    parentCheckpoint: Checkpoint,
+    config: PerstackConfig,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+  ): Promise<{
+    toolCallId: string
+    toolName: string
+    expertKey: string
+    text: string
+    stepNumber: number
+    deltaUsage: Usage
+    events: (RunEvent | RuntimeEvent)[]
+  }> {
+    const { expert, toolCallId, toolName, query } = delegation
+    const delegateRunId = createId()
+    const delegateSetting = {
+      ...parentSetting,
+      runId: delegateRunId,
+      expertKey: expert.key,
+      input: { text: query },
+    }
+    const jobId = parentSetting.jobId ?? createId()
+    const delegateCheckpoint: Checkpoint = {
+      id: createId(),
+      jobId,
+      runId: delegateRunId,
+      status: "init",
+      stepNumber: parentCheckpoint.stepNumber,
+      messages: [],
+      expert: {
+        key: expert.key,
+        name: expert.name,
+        version: expert.version,
+      },
+      delegatedBy: {
+        expert: {
+          key: parentCheckpoint.expert.key,
+          name: parentCheckpoint.expert.name,
+          version: parentCheckpoint.expert.version,
+        },
+        toolCallId,
+        toolName,
+        checkpointId: parentCheckpoint.id,
+      },
+      usage: {
+        inputTokens: 0,
+        outputTokens: 0,
+        reasoningTokens: 0,
+        totalTokens: 0,
+        cachedInputTokens: 0,
+      },
+      contextWindow: parentCheckpoint.contextWindow,
+    }
+    const result = await this.runSingleExpert(
+      delegateSetting,
+      delegateCheckpoint,
+      config,
+      eventListener,
+    )
+    const resultCheckpoint = result.checkpoint
+    const lastMessage = resultCheckpoint.messages[resultCheckpoint.messages.length - 1]
+    if (!lastMessage || lastMessage.type !== "expertMessage") {
+      throw new Error("Delegation error: delegation result message is incorrect")
+    }
+    const textPart = lastMessage.contents.find((c) => c.type === "textPart")
+    if (!textPart || textPart.type !== "textPart") {
+      throw new Error("Delegation error: delegation result message does not contain text")
+    }
+    return {
+      toolCallId,
+      toolName,
+      expertKey: expert.key,
+      text: textPart.text,
+      stepNumber: resultCheckpoint.stepNumber,
+      deltaUsage: resultCheckpoint.usage,
+      events: result.events,
+    }
+  }
+  protected sumUsage(a: Usage, b: Usage): Usage {
+    return {
+      inputTokens: a.inputTokens + b.inputTokens,
+      outputTokens: a.outputTokens + b.outputTokens,
+      reasoningTokens: a.reasoningTokens + b.reasoningTokens,
+      totalTokens: a.totalTokens + b.totalTokens,
+      cachedInputTokens: a.cachedInputTokens + b.cachedInputTokens,
+    }
+  }
 
   protected async prepareBuildContext(config: PerstackConfig, expertKey: string): Promise<string> {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
@@ -144,6 +310,9 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       }
       if (context.proxyAllowlist) {
         fs.writeFileSync(path.join(proxyDir, "allowed_domains.txt"), context.proxyAllowlist)
+      }
+      if (context.proxyStartScript) {
+        fs.writeFileSync(path.join(proxyDir, "start.sh"), context.proxyStartScript)
       }
     }
     const workspaceDir = path.join(buildDir, "workspace")
@@ -172,6 +341,11 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     eventListener: (event: RunEvent | RuntimeEvent) => void,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const composeFile = path.join(buildDir, "docker-compose.yml")
+    const hasProxy = fs.existsSync(path.join(buildDir, "proxy"))
+    if (hasProxy) {
+      await this.execCommand(["docker", "compose", "-f", composeFile, "up", "-d", "proxy"])
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+    }
     const envArgs: string[] = []
     for (const [key, value] of Object.entries(envVars)) {
       envArgs.push("-e", `${key}=${value}`)

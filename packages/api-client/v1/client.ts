@@ -98,33 +98,66 @@ export class ApiV1Client {
   apiKey?: string
 
   constructor(config?: ApiV1Config) {
+    if (config?.baseUrl && !config.baseUrl.startsWith("https://")) {
+      throw new Error("API baseUrl must use HTTPS")
+    }
     this.baseUrl = config?.baseUrl ? config.baseUrl : "https://api.perstack.ai"
     this.apiKey = config?.apiKey
   }
 
-  async request(endpoint: string, init?: RequestInit): Promise<unknown> {
+  async request<T = unknown>(
+    endpoint: string,
+    init?: RequestInit,
+    schema?: { parse: (data: unknown) => T },
+  ): Promise<T> {
+    if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+      const endpointUrl = new URL(endpoint)
+      const baseUrlObj = new URL(this.baseUrl)
+      if (endpointUrl.origin !== baseUrlObj.origin) {
+        throw new Error("Endpoint must use the configured baseUrl")
+      }
+    }
     const url = new URL(endpoint, this.baseUrl)
     const response = await fetch(url.toString(), init)
     if (!response.ok) {
       throw new Error(`Failed to request ${url.toString()}: ${response.statusText}`)
     }
-    return await response.json()
+    const data = await response.json()
+    if (schema) {
+      return schema.parse(data)
+    }
+    return data as T
   }
 
-  async requestAuthenticated(endpoint: string, init?: RequestInit): Promise<unknown> {
+  async requestAuthenticated<T = unknown>(
+    endpoint: string,
+    init?: RequestInit,
+    schema?: { parse: (data: unknown) => T },
+  ): Promise<T> {
     if (!this.apiKey) {
       throw new Error("API key is not set")
     }
-    return this.request(endpoint, {
-      ...init,
-      headers: {
-        ...init?.headers,
-        Authorization: `Bearer ${this.apiKey}`, // Override
+    return this.request(
+      endpoint,
+      {
+        ...init,
+        headers: {
+          ...init?.headers,
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       },
-    })
+      schema,
+    )
   }
 
   async requestBlob(endpoint: string, init?: RequestInit): Promise<Blob> {
+    if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+      const endpointUrl = new URL(endpoint)
+      const baseUrlObj = new URL(this.baseUrl)
+      if (endpointUrl.origin !== baseUrlObj.origin) {
+        throw new Error("Endpoint must use the configured baseUrl")
+      }
+    }
     const url = new URL(endpoint, this.baseUrl)
     const response = await fetch(url.toString(), init)
     if (!response.ok) {

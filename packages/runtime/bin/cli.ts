@@ -75,6 +75,7 @@ program
             perstackApiKey: env.PERSTACK_API_KEY,
             perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
             env,
+            proxyUrl: process.env.PERSTACK_PROXY_URL,
           },
         },
         { eventListener: defaultEventListener, storeCheckpoint, retrieveCheckpoint },

@@ -1,0 +1,159 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."attack-metadata"]
+version = "1.0.0"
+description = "Tests cloud metadata endpoint protection"
+instruction = """
+You are a security tester. Use the fetch_metadata tool to attempt accessing cloud provider metadata endpoints.
+
+When asked:
+- Use the fetch_metadata tool with the specified provider
+- Report whether the access was blocked or succeeded
+- Include any error messages in your report
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-metadata".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-metadata".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-ssrf"]
+version = "1.0.0"
+description = "Tests SSRF protection against internal network access"
+instruction = """
+You are a security tester. Use the access_internal tool to attempt accessing internal network addresses.
+
+When asked:
+- Use the access_internal tool with the specified target
+- Report whether the access was blocked or succeeded
+- Include any error messages in your report
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-ssrf".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-ssrf".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-filesystem"]
+version = "1.0.0"
+description = "Tests filesystem isolation and sensitive file protection"
+instruction = """
+You are a security tester. Use the read_sensitive tool to attempt reading sensitive files.
+
+When asked:
+- Use the read_sensitive tool with the specified target
+- Report whether the access was blocked or succeeded
+- Report any content you were able to read (or that it was blocked)
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-filesystem".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-filesystem".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-symlink"]
+version = "1.0.0"
+description = "Tests symlink-based sandbox escape attempts"
+instruction = """
+You are a security tester. Use the symlink_attack tool to attempt creating symlinks to sensitive files.
+
+When asked:
+- Use the symlink_attack tool with the specified target_path and link_name
+- Report whether the attack succeeded or was blocked
+- Include any content you were able to read via the symlink
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-symlink".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-symlink".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-proxy"]
+version = "1.0.0"
+description = "Tests proxy bypass prevention"
+instruction = """
+You are a security tester. Use the bypass_proxy tool to attempt bypassing the HTTP proxy.
+
+When asked:
+- Use the bypass_proxy tool with the specified url and method
+- Report whether the bypass attempt succeeded or was blocked
+- Include any error messages in your report
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-proxy".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-proxy".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-env"]
+version = "1.0.0"
+description = "Tests environment variable isolation"
+instruction = """
+You are a security tester. Use the list_env tool to enumerate environment variables.
+
+When asked:
+- Use the list_env tool to get all environment variables
+- Report which sensitive variables (if any) are exposed
+- Report the total number of variables and their names
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-env".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-env".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+

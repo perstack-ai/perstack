@@ -11,7 +11,7 @@ import type {
   RuntimeEvent,
   RuntimeExpertConfig,
 } from "@perstack/core"
-import { BaseAdapter, checkpointSchema } from "@perstack/core"
+import { BaseAdapter, checkpointSchema, getFilteredEnv } from "@perstack/core"
 import { run as perstackRun } from "./run.js"
 
 export type PerstackAdapterOptions = {
@@ -149,7 +149,7 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const proc = spawn("perstack-runtime", args, {
       cwd: process.cwd(),
-      env: { ...process.env },
+      env: getFilteredEnv(),
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()

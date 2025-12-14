@@ -1,7 +1,7 @@
 {
-  "name": "@perstack/base",
-  "version": "0.0.33",
-  "description": "Perstack base skills for agents.",
+  "name": "@perstack/e2e-mcp-server",
+  "version": "0.0.2",
+  "description": "MCP server for E2E testing of Perstack security and skill features.",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
@@ -11,7 +11,7 @@
   "publishConfig": {
     "access": "public",
     "bin": {
-      "@perstack/base": "dist/bin/server.js"
+      "@perstack/e2e-mcp-server": "dist/bin/server.js"
     },
     "exports": {
       ".": "./dist/src/index.js"
@@ -30,19 +30,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.24.0",
-    "@perstack/core": "workspace:*",
-    "commander": "^14.0.2",
-    "mime-types": "^3.0.2",
-    "ts-dedent": "^2.2.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",
-    "@types/mime-types": "^3.0.1",
     "@types/node": "^24.10.1",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -23,7 +23,7 @@ export const maxExpertSkillItems = 255
 export const maxExpertDelegateItems = 255
 export const maxExpertTagItems = 8
 export const defaultTemperature = 0.0
-export const defaultMaxSteps = undefined
+export const defaultMaxSteps = 100
 export const defaultMaxRetries = 5
 export const defaultTimeout = 5 * 1000 * 60
 

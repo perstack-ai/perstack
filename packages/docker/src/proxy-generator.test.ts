@@ -5,6 +5,7 @@ import {
   collectSkillAllowedDomains,
   generateProxyComposeService,
   generateProxyDockerfile,
+  generateProxyStartScript,
   generateSquidAllowlistAcl,
   generateSquidConf,
   getProviderApiDomains,
@@ -26,9 +27,14 @@ describe("getProviderApiDomains", () => {
     expect(domains).toEqual(["generativelanguage.googleapis.com"])
   })
 
-  it("should return bedrock wildcard", () => {
+  it("should return bedrock specific domains", () => {
     const domains = getProviderApiDomains({ providerName: "amazon-bedrock" })
-    expect(domains).toEqual(["*.amazonaws.com"])
+    expect(domains).toEqual(["bedrock.*.amazonaws.com", "bedrock-runtime.*.amazonaws.com"])
+  })
+
+  it("should return vertex specific domain", () => {
+    const domains = getProviderApiDomains({ providerName: "google-vertex" })
+    expect(domains).toEqual(["*.aiplatform.googleapis.com"])
   })
 
   it("should return empty for ollama", () => {
@@ -197,10 +203,12 @@ describe("collectAllowedDomains", () => {
       },
     }
     const domains = collectAllowedDomains(config, "test-expert")
-    expect(domains).toEqual(["api.openai.com"])
+    expect(domains).toContain("registry.npmjs.org")
+    expect(domains).toContain("api.openai.com")
+    expect(domains).toHaveLength(2)
   })
 
-  it("should return empty when no provider and no skill domains", () => {
+  it("should return npm registry when no provider and no skill domains", () => {
     const config: PerstackConfig = {
       experts: {
         "test-expert": {
@@ -209,7 +217,7 @@ describe("collectAllowedDomains", () => {
       },
     }
     const domains = collectAllowedDomains(config, "test-expert")
-    expect(domains).toHaveLength(0)
+    expect(domains).toEqual(["registry.npmjs.org"])
   })
 
   it("should collect from multiple skills", () => {
@@ -278,15 +286,51 @@ describe("generateSquidConf", () => {
     expect(conf).toContain("http_access allow CONNECT SSL_ports")
     expect(conf).not.toContain("allowed_domains")
   })
+
+  it("should only allow HTTPS (port 443), not HTTP (port 80)", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("acl SSL_ports port 443")
+    expect(conf).toContain("acl Safe_ports port 443")
+    expect(conf).not.toContain("port 80")
+  })
+
+  it("should block internal IP ranges", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain(
+      "acl internal_nets dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8",
+    )
+    expect(conf).toContain("acl link_local dst 169.254.0.0/16")
+    expect(conf).toContain("http_access deny internal_nets")
+    expect(conf).toContain("http_access deny link_local")
+  })
+
+  it("should block IPv6 internal ranges", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("acl internal_nets_v6 dst ::1/128 fe80::/10 fc00::/7")
+    expect(conf).toContain("http_access deny internal_nets_v6")
+  })
+
+  it("should deny non-CONNECT requests (HTTP)", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("http_access deny !CONNECT")
+  })
+
+  it("should deny non-HTTPS ports", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("acl Safe_ports port 443")
+    expect(conf).toContain("http_access deny !Safe_ports")
+    expect(conf).toContain("http_access deny CONNECT !SSL_ports")
+  })
 })
 
 describe("generateProxyDockerfile", () => {
-  it("should generate Dockerfile with squid", () => {
+  it("should generate Dockerfile with squid and dnsmasq", () => {
     const dockerfile = generateProxyDockerfile(true)
     expect(dockerfile).toContain("FROM debian:bookworm-slim")
     expect(dockerfile).toContain("squid")
-    expect(dockerfile).toContain("EXPOSE 3128")
-    expect(dockerfile).toContain('CMD ["squid", "-N", "-d", "1"]')
+    expect(dockerfile).toContain("dnsmasq")
+    expect(dockerfile).toContain("EXPOSE 3128 53/udp")
+    expect(dockerfile).toContain('CMD ["/start.sh"]')
   })
 
   it("should include allowlist copy when hasAllowlist is true", () => {
@@ -300,11 +344,28 @@ describe("generateProxyDockerfile", () => {
   })
 })
 
+describe("generateProxyStartScript", () => {
+  it("should generate start script with dnsmasq and squid", () => {
+    const script = generateProxyStartScript()
+    expect(script).toContain("#!/bin/sh")
+    expect(script).toContain("dnsmasq")
+    expect(script).toContain("8.8.8.8")
+    expect(script).toContain("squid")
+  })
+})
+
 describe("generateProxyComposeService", () => {
-  it("should generate compose service", () => {
-    const service = generateProxyComposeService("perstack-net")
+  it("should generate compose service with internal and external networks", () => {
+    const service = generateProxyComposeService("perstack-net-internal", "perstack-net")
     expect(service).toContain("proxy:")
     expect(service).toContain("build:")
+    expect(service).toContain("perstack-net-internal")
     expect(service).toContain("perstack-net")
+  })
+
+  it("should include healthcheck configuration", () => {
+    const service = generateProxyComposeService("perstack-net-internal", "perstack-net")
+    expect(service).toContain("healthcheck:")
+    expect(service).toContain("nc -z localhost 3128")
   })
 })

@@ -1,6 +1,7 @@
 import { type ExecException, execFile } from "node:child_process"
 import { promisify } from "node:util"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { getFilteredEnv } from "@perstack/core"
 import { dedent } from "ts-dedent"
 import { z } from "zod/v4"
 import { validatePath } from "../lib/path.js"
@@ -24,7 +25,7 @@ export async function exec(input: ExecInput) {
   const validatedCwd = await validatePath(input.cwd)
   const { stdout, stderr } = await execFileAsync(input.command, input.args, {
     cwd: validatedCwd,
-    env: { ...process.env, ...input.env },
+    env: getFilteredEnv(input.env),
     timeout: input.timeout,
     maxBuffer: 10 * 1024 * 1024,
   })
@@ -80,7 +81,11 @@ export function registerExec(server: McpServer) {
         cwd: z.string().describe("The working directory to execute the command in"),
         stdout: z.boolean().describe("Whether to capture the standard output"),
         stderr: z.boolean().describe("Whether to capture the standard error"),
-        timeout: z.number().optional().describe("Timeout in milliseconds"),
+        timeout: z
+          .number()
+          .optional()
+          .default(60000)
+          .describe("Timeout in milliseconds (default: 60000)"),
       },
     },
     async (input: ExecInput) => {

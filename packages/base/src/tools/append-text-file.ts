@@ -1,21 +1,21 @@
-import { existsSync, statSync } from "node:fs"
-import { appendFile } from "node:fs/promises"
+import { stat } from "node:fs/promises"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
 import { z } from "zod/v4"
 import { validatePath } from "../lib/path.js"
+import { safeAppendFile } from "../lib/safe-file.js"
 import { errorToolResult, successToolResult } from "../lib/tool-result.js"
 
 export async function appendTextFile({ path, text }: { path: string; text: string }) {
   const validatedPath = await validatePath(path)
-  if (!existsSync(validatedPath)) {
+  const stats = await stat(validatedPath).catch(() => null)
+  if (!stats) {
     throw new Error(`File ${path} does not exist.`)
   }
-  const stats = statSync(validatedPath)
   if (!(stats.mode & 0o200)) {
     throw new Error(`File ${path} is not writable`)
   }
-  await appendFile(validatedPath, text)
+  await safeAppendFile(validatedPath, text)
   return { path: validatedPath, text }
 }
 

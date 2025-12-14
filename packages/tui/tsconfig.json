@@ -1,5 +1,8 @@
 {
   "extends": "@sindresorhus/tsconfig",
+  "compilerOptions": {
+    "noUnusedLocals": false
+  },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

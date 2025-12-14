@@ -83,6 +83,33 @@ describe("validatePath", () => {
         "Access denied - path outside allowed directories",
       )
     })
+
+    it("rejects perstack directory (case-insensitive)", async () => {
+      await expect(validatePath("perstack")).rejects.toThrow(
+        "Access denied - perstack directory is not allowed",
+      )
+      await expect(validatePath("PERSTACK")).rejects.toThrow(
+        "Access denied - perstack directory is not allowed",
+      )
+      await expect(validatePath("Perstack")).rejects.toThrow(
+        "Access denied - perstack directory is not allowed",
+      )
+    })
+
+    it("rejects sibling directories with similar prefix", async () => {
+      const cwdPart = process.cwd().split("/").pop()
+      const siblingPath = `../${cwdPart}foo/secret.txt`
+      await expect(validatePath(siblingPath)).rejects.toThrow("Access denied")
+    })
+
+    it("rejects paths inside perstack directory (case-insensitive)", async () => {
+      await expect(validatePath("perstack/jobs")).rejects.toThrow(
+        "Access denied - perstack directory is not allowed",
+      )
+      await expect(validatePath("PERSTACK/JOBS")).rejects.toThrow(
+        "Access denied - perstack directory is not allowed",
+      )
+    })
   })
 
   describe("error handling", () => {

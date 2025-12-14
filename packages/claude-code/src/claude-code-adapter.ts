@@ -20,6 +20,7 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStreamingTextEvent,
+  getFilteredEnv,
 } from "@perstack/core"
 
 type StreamingState = {
@@ -151,7 +152,7 @@ export class ClaudeCodeAdapter extends BaseAdapter {
     }
     const proc = spawn("claude", args, {
       cwd: process.cwd(),
-      env: { ...process.env },
+      env: getFilteredEnv(),
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()

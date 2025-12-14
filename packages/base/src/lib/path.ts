@@ -17,12 +17,16 @@ export async function validatePath(requestedPath: string): Promise<string> {
   const absolute = path.isAbsolute(expandedPath)
     ? path.resolve(expandedPath)
     : path.resolve(process.cwd(), expandedPath)
-  if (absolute === `${workspacePath}/perstack`) {
+  const perstackDir = `${workspacePath}/perstack`.toLowerCase()
+  if (
+    absolute.toLowerCase() === perstackDir ||
+    absolute.toLowerCase().startsWith(`${perstackDir}/`)
+  ) {
     throw new Error("Access denied - perstack directory is not allowed")
   }
   try {
     const realAbsolute = await fs.realpath(absolute)
-    if (!realAbsolute.startsWith(workspacePath)) {
+    if (!isWithinWorkspace(realAbsolute)) {
       throw new Error("Access denied - symlink target outside allowed directories")
     }
     return realAbsolute
@@ -30,12 +34,12 @@ export async function validatePath(requestedPath: string): Promise<string> {
     const parentDir = path.dirname(absolute)
     try {
       const realParentPath = await fs.realpath(parentDir)
-      if (!realParentPath.startsWith(workspacePath)) {
+      if (!isWithinWorkspace(realParentPath)) {
         throw new Error("Access denied - parent directory outside allowed directories")
       }
       return absolute
     } catch {
-      if (!absolute.startsWith(workspacePath)) {
+      if (!isWithinWorkspace(absolute)) {
         throw new Error(
           `Access denied - path outside allowed directories: ${absolute} not in ${workspacePath}`,
         )
@@ -43,4 +47,8 @@ export async function validatePath(requestedPath: string): Promise<string> {
       throw new Error(`Parent directory does not exist: ${parentDir}`)
     }
   }
+}
+
+function isWithinWorkspace(absolutePath: string): boolean {
+  return absolutePath === workspacePath || absolutePath.startsWith(`${workspacePath}/`)
 }
