@@ -20,7 +20,7 @@
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^build", "^typecheck"],
       "cache": true
     },
     "//#generate:root": {}
