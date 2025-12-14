@@ -111,7 +111,9 @@ export class ApiV1Client {
     schema?: { parse: (data: unknown) => T },
   ): Promise<T> {
     if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
-      if (!endpoint.startsWith(this.baseUrl)) {
+      const endpointUrl = new URL(endpoint)
+      const baseUrlObj = new URL(this.baseUrl)
+      if (endpointUrl.origin !== baseUrlObj.origin) {
         throw new Error("Endpoint must use the configured baseUrl")
       }
     }
@@ -150,7 +152,9 @@ export class ApiV1Client {
 
   async requestBlob(endpoint: string, init?: RequestInit): Promise<Blob> {
     if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
-      if (!endpoint.startsWith(this.baseUrl)) {
+      const endpointUrl = new URL(endpoint)
+      const baseUrlObj = new URL(this.baseUrl)
+      if (endpointUrl.origin !== baseUrlObj.origin) {
         throw new Error("Endpoint must use the configured baseUrl")
       }
     }
