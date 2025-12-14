@@ -51,4 +51,3 @@ export async function safeAppendFile(path: string, data: string): Promise<void> 
     await handle?.close()
   }
 }
-

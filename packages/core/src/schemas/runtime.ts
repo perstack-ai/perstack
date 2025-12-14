@@ -77,7 +77,7 @@ export interface RunSetting {
   /** Temperature for generation (0-1) */
   temperature: number
   /** Maximum steps before stopping (applies to Job's totalSteps) */
-  maxSteps?: number
+  maxSteps: number
   /** Maximum retries on generation failure */
   maxRetries: number
   /** Timeout per generation in milliseconds */
@@ -161,7 +161,7 @@ export const runSettingSchema = z.object({
   }),
   experts: z.record(z.string(), expertSchema),
   temperature: z.number().min(0).max(1),
-  maxSteps: z.number().min(1).optional(),
+  maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
   maxRetries: z.number().min(0),
   timeout: z.number().min(0),
   startedAt: z.number(),

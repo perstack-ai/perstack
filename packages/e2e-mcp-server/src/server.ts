@@ -341,5 +341,3 @@ export function createServer(): McpServer {
   )
   return server
 }
-
-

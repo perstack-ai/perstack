@@ -45,4 +45,3 @@ export function getFilteredEnv(additional?: Record<string, string>): Record<stri
   return filtered
 }
 export { SAFE_ENV_VARS }
-

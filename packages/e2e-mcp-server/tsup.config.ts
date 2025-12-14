@@ -8,5 +8,3 @@ export const e2eMcpServerConfig: Options = {
   },
 }
 export default defineConfig(e2eMcpServerConfig)
-
-

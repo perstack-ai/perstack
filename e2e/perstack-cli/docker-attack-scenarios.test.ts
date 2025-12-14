@@ -321,5 +321,3 @@ describe.runIf(isDockerAvailable())("Docker Attack Scenarios", () => {
     })
   })
 })
-
-
