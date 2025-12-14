@@ -9,7 +9,7 @@ describe("getPerstackConfig with remote URL", () => {
   afterEach(() => {
     global.fetch = originalFetch
   })
-  it("should fetch config from raw.githubusercontent.com", async () => {
+  it("should fetch config from raw.githubusercontent.com with redirect disabled", async () => {
     const mockToml = `
 [experts."test-expert"]
 instruction = "Test instruction"
@@ -23,6 +23,7 @@ instruction = "Test instruction"
     )
     expect(global.fetch).toHaveBeenCalledWith(
       "https://raw.githubusercontent.com/owner/repo/main/perstack.toml",
+      { redirect: "error" },
     )
     expect(config.experts?.["test-expert"]).toBeDefined()
     expect(config.experts?.["test-expert"]?.instruction).toBe("Test instruction")
@@ -32,9 +33,9 @@ instruction = "Test instruction"
       "Remote config only allowed from: raw.githubusercontent.com",
     )
   })
-  it("should reject http URLs from disallowed domains", async () => {
+  it("should treat http URLs as local paths (not remote)", async () => {
     await expect(getPerstackConfig("http://malicious.com/perstack.toml")).rejects.toThrow(
-      "Remote config only allowed from: raw.githubusercontent.com",
+      'Given config path "http://malicious.com/perstack.toml" is not found',
     )
   })
   it("should throw error when fetch fails", async () => {
