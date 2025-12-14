@@ -85,7 +85,7 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
     }
   }
   if (npmPackages.length > 0) {
-    lines.push(`RUN npm install -g ${npmPackages.join(" ")}`)
+    lines.push(`RUN npm install -g --ignore-scripts ${npmPackages.join(" ")}`)
     lines.push("")
   }
   if (uvxPackages.length > 0) {

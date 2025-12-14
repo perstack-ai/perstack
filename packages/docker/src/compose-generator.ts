@@ -17,8 +17,17 @@ export interface ComposeGeneratorOptions {
   envKeys: string[]
   workspacePath?: string
 }
+function validateWorkspacePath(path: string): void {
+  if (path.includes("..") || path.includes("\n") || path.includes(";") || path.includes("$")) {
+    throw new Error(`Invalid workspace path: ${path}`)
+  }
+}
+
 export function generateComposeFile(options: ComposeGeneratorOptions): string {
   const { proxyEnabled, networkName, envKeys, workspacePath } = options
+  if (workspacePath) {
+    validateWorkspacePath(workspacePath)
+  }
   const internalNetworkName = `${networkName}-internal`
   const lines: string[] = []
   lines.push("services:")
@@ -56,6 +65,14 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("    tmpfs:")
   lines.push("      - /tmp:size=100M,mode=1777")
   lines.push("      - /home/perstack/.npm:size=50M,uid=999,gid=999,mode=0755")
+  lines.push("    deploy:")
+  lines.push("      resources:")
+  lines.push("        limits:")
+  lines.push("          memory: 2G")
+  lines.push("          cpus: '2'")
+  lines.push("          pids: 256")
+  lines.push("        reservations:")
+  lines.push("          memory: 256M")
   if (proxyEnabled) {
     lines.push("    depends_on:")
     lines.push("      proxy:")

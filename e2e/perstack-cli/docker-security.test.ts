@@ -46,6 +46,24 @@ describe.runIf(isDockerAvailable())("Docker Security Sandbox", () => {
       )
       expect(result.exitCode).toBe(0)
     })
+
+    it("should block HTTP (unencrypted) requests even to valid domains", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/docker-security.toml",
+          "--runtime",
+          "docker",
+          "docker-security-network",
+          "Try to access http://example.com on port 80 (not HTTPS) and report if it succeeds or fails",
+        ],
+        { timeout: 300000 },
+      )
+      expect(result.stdout + result.stderr).toMatch(
+        /blocked|denied|refused|forbidden|failed|not allowed|error/i,
+      )
+    })
   })
 
   describe("Filesystem Isolation", () => {
@@ -156,7 +174,6 @@ describe.runIf(isDockerAvailable())("Docker Security Sandbox", () => {
       expect(output).not.toMatch(/GITHUB_TOKEN=/)
       expect(output).not.toMatch(/SSH_AUTH_SOCK=/)
     })
-
   })
 
   describe("Skill-level allowedDomains", () => {

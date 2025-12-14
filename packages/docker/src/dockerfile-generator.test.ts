@@ -150,7 +150,7 @@ describe("generateMcpInstallLayers", () => {
       },
     }
     const layers = generateMcpInstallLayers(config, "test-expert")
-    expect(layers).toContain("npm install -g @perstack/base")
+    expect(layers).toContain("npm install -g --ignore-scripts @perstack/base")
   })
 
   it("should return empty string when no skills", () => {
@@ -185,7 +185,7 @@ describe("generateDockerfile", () => {
     const dockerfile = generateDockerfile(config, "my-expert")
     expect(dockerfile).toContain("FROM debian:bookworm-slim")
     expect(dockerfile).toContain("nodejs")
-    expect(dockerfile).toContain("npm install -g @perstack/base")
+    expect(dockerfile).toContain("npm install -g --ignore-scripts @perstack/base")
     expect(dockerfile).toContain("npm install -g @perstack/runtime")
     expect(dockerfile).toContain("COPY --chown=perstack:perstack perstack.toml /app/perstack.toml")
     expect(dockerfile).toContain("USER perstack")

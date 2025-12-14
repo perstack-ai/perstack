@@ -98,6 +98,9 @@ export class ApiV1Client {
   apiKey?: string
 
   constructor(config?: ApiV1Config) {
+    if (config?.baseUrl && !config.baseUrl.startsWith("https://")) {
+      throw new Error("API baseUrl must use HTTPS")
+    }
     this.baseUrl = config?.baseUrl ? config.baseUrl : "https://api.perstack.ai"
     this.apiKey = config?.apiKey
   }
@@ -107,6 +110,11 @@ export class ApiV1Client {
     init?: RequestInit,
     schema?: { parse: (data: unknown) => T },
   ): Promise<T> {
+    if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+      if (!endpoint.startsWith(this.baseUrl)) {
+        throw new Error("Endpoint must use the configured baseUrl")
+      }
+    }
     const url = new URL(endpoint, this.baseUrl)
     const response = await fetch(url.toString(), init)
     if (!response.ok) {
@@ -141,6 +149,11 @@ export class ApiV1Client {
   }
 
   async requestBlob(endpoint: string, init?: RequestInit): Promise<Blob> {
+    if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+      if (!endpoint.startsWith(this.baseUrl)) {
+        throw new Error("Endpoint must use the configured baseUrl")
+      }
+    }
     const url = new URL(endpoint, this.baseUrl)
     const response = await fetch(url.toString(), init)
     if (!response.ok) {

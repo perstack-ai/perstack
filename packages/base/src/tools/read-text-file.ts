@@ -1,18 +1,19 @@
-import { existsSync } from "node:fs"
-import { readFile } from "node:fs/promises"
+import { stat } from "node:fs/promises"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
 import { z } from "zod/v4"
 import { validatePath } from "../lib/path.js"
+import { safeReadFile } from "../lib/safe-file.js"
 import { errorToolResult, successToolResult } from "../lib/tool-result.js"
+
 export async function readTextFile(input: { path: string; from?: number; to?: number }) {
   const { path, from, to } = input
   const validatedPath = await validatePath(path)
-  const isFile = existsSync(validatedPath)
-  if (!isFile) {
+  const stats = await stat(validatedPath).catch(() => null)
+  if (!stats) {
     throw new Error(`File ${path} does not exist.`)
   }
-  const fileContent = await readFile(validatedPath, "utf-8")
+  const fileContent = await safeReadFile(validatedPath)
   const lines = fileContent.split("\n")
   const fromLine = from ?? 0
   const toLine = to ?? lines.length

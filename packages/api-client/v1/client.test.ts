@@ -24,6 +24,15 @@ describe("@perstack/api-client: ApiV1Client", () => {
       expect(client.baseUrl).toBe("https://api.example.com")
       expect(client.apiKey).toBe("1234567890")
     })
+    it("should throw an error if baseUrl does not use HTTPS", () => {
+      expect(() => new ApiV1Client({ baseUrl: "http://api.example.com" })).toThrow(
+        "API baseUrl must use HTTPS",
+      )
+    })
+    it("should allow HTTPS baseUrl", () => {
+      const client = new ApiV1Client({ baseUrl: "https://secure.example.com" })
+      expect(client.baseUrl).toBe("https://secure.example.com")
+    })
   })
 
   describe("request", () => {

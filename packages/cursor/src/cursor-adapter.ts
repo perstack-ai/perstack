@@ -20,6 +20,7 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStreamingTextEvent,
+  getFilteredEnv,
 } from "@perstack/core"
 
 type StreamingState = {
@@ -204,7 +205,7 @@ export class CursorAdapter extends BaseAdapter {
     const proc = spawn(
       "cursor-agent",
       ["--print", "--output-format", "stream-json", "--stream-partial-output", "--force", prompt],
-      { cwd: process.cwd(), env: { ...process.env }, stdio: ["pipe", "pipe", "pipe"] },
+      { cwd: process.cwd(), env: getFilteredEnv(), stdio: ["pipe", "pipe", "pipe"] },
     )
     proc.stdin.end()
     return this.executeWithStreaming(proc, timeout, state, eventListener, storeCheckpoint)

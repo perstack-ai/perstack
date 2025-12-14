@@ -1,17 +1,18 @@
-import { existsSync, statSync } from "node:fs"
-import { readFile, writeFile } from "node:fs/promises"
+import { stat } from "node:fs/promises"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { dedent } from "ts-dedent"
 import { z } from "zod/v4"
 import { validatePath } from "../lib/path.js"
+import { safeReadFile, safeWriteFile } from "../lib/safe-file.js"
 import { errorToolResult, successToolResult } from "../lib/tool-result.js"
+
 export async function editTextFile(input: { path: string; newText: string; oldText: string }) {
   const { path, newText, oldText } = input
   const validatedPath = await validatePath(path)
-  if (!existsSync(validatedPath)) {
+  const stats = await stat(validatedPath).catch(() => null)
+  if (!stats) {
     throw new Error(`File ${path} does not exist.`)
   }
-  const stats = statSync(validatedPath)
   if (!(stats.mode & 0o200)) {
     throw new Error(`File ${path} is not writable`)
   }
@@ -28,14 +29,14 @@ function normalizeLineEndings(text: string): string {
 }
 
 async function applyFileEdit(filePath: string, newText: string, oldText: string) {
-  const content = normalizeLineEndings(await readFile(filePath, "utf-8"))
+  const content = normalizeLineEndings(await safeReadFile(filePath))
   const normalizedOld = normalizeLineEndings(oldText)
   const normalizedNew = normalizeLineEndings(newText)
   if (!content.includes(normalizedOld)) {
     throw new Error(`Could not find exact match for oldText in file ${filePath}`)
   }
   const modifiedContent = content.replace(normalizedOld, normalizedNew)
-  await writeFile(filePath, modifiedContent, "utf-8")
+  await safeWriteFile(filePath, modifiedContent)
 }
 
 export function registerEditTextFile(server: McpServer) {

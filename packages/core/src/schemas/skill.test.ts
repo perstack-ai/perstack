@@ -40,6 +40,76 @@ describe("@perstack/core: mcpSseSkillSchema", () => {
     expect(result.type).toBe("mcpSseSkill")
     expect(result.endpoint).toBe("https://example.com/sse")
   })
+
+  it("rejects HTTP endpoints", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "http://example.com/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
+
+  it("rejects localhost endpoints", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "https://localhost/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
+
+  it("rejects 127.0.0.1 endpoints", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "https://127.0.0.1/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
+
+  it("rejects private IP endpoints (10.x.x.x)", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "https://10.0.0.1/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
+
+  it("rejects private IP endpoints (172.16.x.x)", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "https://172.16.0.1/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
+
+  it("rejects private IP endpoints (192.168.x.x)", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "https://192.168.1.1/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
+
+  it("rejects link-local IP endpoints (169.254.x.x)", () => {
+    expect(() =>
+      mcpSseSkillSchema.parse({
+        type: "mcpSseSkill",
+        name: "sse-skill",
+        endpoint: "https://169.254.169.254/sse",
+      }),
+    ).toThrow("Endpoint must be a public HTTPS URL")
+  })
 })
 
 describe("@perstack/core: interactiveSkillSchema", () => {

@@ -111,22 +111,28 @@ description = "Tests multiple skills with different allowedDomains"
 instruction = """
 You are a security tester. Your job is to verify that multiple skills' allowedDomains are merged.
 
-Test 1: Try to access api.github.com (should succeed - from skill1)
-Test 2: Try to access httpbin.org (should succeed - from skill2)
-Test 3: Try to access api.example.com (should FAIL - not in any skill's allowlist)
+Test 1: Use the http_get tool to access https://api.github.com (should succeed - from network-github skill)
+Test 2: Use the http_get tool to access https://httpbin.org/get (should succeed - from network-httpbin skill)
+Test 3: Use the http_get tool to access https://api.example.com (should FAIL - not in any skill's allowlist)
 
-Use the exec tool to run curl commands for each test.
+Use http_get tool for each test.
 Report the results of each test, then call attemptCompletion with a summary.
 """
 
-[experts."docker-security-multi-skill".skills."skill1"]
+[experts."docker-security-multi-skill".skills."@perstack/base"]
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."docker-security-multi-skill".skills."network-github"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
 allowedDomains = ["api.github.com"]
 
-[experts."docker-security-multi-skill".skills."skill2"]
+[experts."docker-security-multi-skill".skills."network-httpbin"]
 type = "mcpStdioSkill"
 command = "npx"
-packageName = "@perstack/base"
+packageName = "@perstack/e2e-mcp-server"
 allowedDomains = ["httpbin.org"]

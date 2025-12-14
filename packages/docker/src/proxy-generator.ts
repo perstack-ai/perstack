@@ -12,9 +12,9 @@ export function getProviderApiDomains(provider?: ProviderTable): string[] {
     case "azure-openai":
       return ["*.openai.azure.com"]
     case "amazon-bedrock":
-      return ["*.amazonaws.com"]
+      return ["bedrock.*.amazonaws.com", "bedrock-runtime.*.amazonaws.com"]
     case "google-vertex":
-      return ["*.googleapis.com"]
+      return ["*.aiplatform.googleapis.com"]
     case "deepseek":
       return ["api.deepseek.com"]
     case "ollama":
@@ -79,7 +79,19 @@ export function generateSquidConf(allowedDomains?: string[]): string {
   lines.push("http_port 3128")
   lines.push("")
   lines.push("acl SSL_ports port 443")
+  lines.push("acl Safe_ports port 443")
   lines.push("acl CONNECT method CONNECT")
+  lines.push("")
+  lines.push("acl internal_nets dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8")
+  lines.push("acl link_local dst 169.254.0.0/16")
+  lines.push("acl internal_nets_v6 dst ::1/128 fe80::/10 fc00::/7")
+  lines.push("http_access deny internal_nets")
+  lines.push("http_access deny link_local")
+  lines.push("http_access deny internal_nets_v6")
+  lines.push("")
+  lines.push("http_access deny !Safe_ports")
+  lines.push("http_access deny CONNECT !SSL_ports")
+  lines.push("http_access deny !CONNECT")
   lines.push("")
   if (allowedDomains && allowedDomains.length > 0) {
     lines.push('acl allowed_domains dstdomain "/etc/squid/allowed_domains.txt"')

@@ -3,20 +3,21 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { type CallToolResult, McpError } from "@modelcontextprotocol/sdk/types.js"
 import { createId } from "@paralleldrive/cuid2"
-import type {
-  CallToolResultContent,
-  FileInlinePart,
-  ImageInlinePart,
-  McpSseSkill,
-  McpStdioSkill,
-  Resource,
-  RunEvent,
-  RuntimeEvent,
-  SkillType,
-  TextPart,
-  ToolDefinition,
+import {
+  type CallToolResultContent,
+  createRuntimeEvent,
+  type FileInlinePart,
+  getFilteredEnv,
+  type ImageInlinePart,
+  type McpSseSkill,
+  type McpStdioSkill,
+  type Resource,
+  type RunEvent,
+  type RuntimeEvent,
+  type SkillType,
+  type TextPart,
+  type ToolDefinition,
 } from "@perstack/core"
-import { createRuntimeEvent } from "@perstack/core"
 import { BaseSkillManager } from "./base.js"
 
 export class McpSkillManager extends BaseSkillManager {
@@ -66,34 +67,14 @@ export class McpSkillManager extends BaseSkillManager {
     if (!skill.command) {
       throw new Error(`Skill ${skill.name} has no command`)
     }
-    const env: Record<string, string> = {}
+    const requiredEnv: Record<string, string> = {}
     for (const envName of skill.requiredEnv) {
       if (!this._env[envName]) {
         throw new Error(`Skill ${skill.name} requires environment variable ${envName}`)
       }
-      env[envName] = this._env[envName]
+      requiredEnv[envName] = this._env[envName]
     }
-    const safeEnvVars = [
-      "PATH",
-      "HOME",
-      "SHELL",
-      "TERM",
-      "NODE_PATH",
-      "HTTP_PROXY",
-      "HTTPS_PROXY",
-      "http_proxy",
-      "https_proxy",
-      "NO_PROXY",
-      "no_proxy",
-      "PERSTACK_PROXY_URL",
-      "NPM_CONFIG_PROXY",
-      "NPM_CONFIG_HTTPS_PROXY",
-    ]
-    for (const envName of safeEnvVars) {
-      if (process.env[envName]) {
-        env[envName] = process.env[envName]
-      }
-    }
+    const env = getFilteredEnv(requiredEnv)
     const startTime = Date.now()
     const { command, args } = this._getCommandArgs(skill)
     if (this._eventListener) {
@@ -135,8 +116,41 @@ export class McpSkillManager extends BaseSkillManager {
     if (!skill.endpoint) {
       throw new Error(`Skill ${skill.name} has no endpoint`)
     }
-    const transport = new SSEClientTransport(new URL(skill.endpoint))
+    const url = new URL(skill.endpoint)
+    if (url.protocol !== "https:") {
+      throw new Error(`Skill ${skill.name} SSE endpoint must use HTTPS: ${skill.endpoint}`)
+    }
+    if (this._isPrivateOrLocalIP(url.hostname)) {
+      throw new Error(
+        `Skill ${skill.name} SSE endpoint cannot use private/local IP: ${skill.endpoint}`,
+      )
+    }
+    const transport = new SSEClientTransport(url)
     await this._mcpClient!.connect(transport)
+  }
+
+  private _isPrivateOrLocalIP(hostname: string): boolean {
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname === "0.0.0.0"
+    ) {
+      return true
+    }
+    const ipv4Match = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+    if (ipv4Match) {
+      const [, a, b] = ipv4Match.map(Number)
+      if (a === 10) return true
+      if (a === 172 && b >= 16 && b <= 31) return true
+      if (a === 192 && b === 168) return true
+      if (a === 169 && b === 254) return true
+      if (a === 127) return true
+    }
+    if (hostname.startsWith("fe80:") || hostname.startsWith("fc") || hostname.startsWith("fd")) {
+      return true
+    }
+    return false
   }
 
   private _getCommandArgs(skill: McpStdioSkill): { command: string; args: string[] } {

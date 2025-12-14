@@ -27,9 +27,14 @@ describe("getProviderApiDomains", () => {
     expect(domains).toEqual(["generativelanguage.googleapis.com"])
   })
 
-  it("should return bedrock wildcard", () => {
+  it("should return bedrock specific domains", () => {
     const domains = getProviderApiDomains({ providerName: "amazon-bedrock" })
-    expect(domains).toEqual(["*.amazonaws.com"])
+    expect(domains).toEqual(["bedrock.*.amazonaws.com", "bedrock-runtime.*.amazonaws.com"])
+  })
+
+  it("should return vertex specific domain", () => {
+    const domains = getProviderApiDomains({ providerName: "google-vertex" })
+    expect(domains).toEqual(["*.aiplatform.googleapis.com"])
   })
 
   it("should return empty for ollama", () => {
@@ -285,8 +290,36 @@ describe("generateSquidConf", () => {
   it("should only allow HTTPS (port 443), not HTTP (port 80)", () => {
     const conf = generateSquidConf(["example.com"])
     expect(conf).toContain("acl SSL_ports port 443")
+    expect(conf).toContain("acl Safe_ports port 443")
     expect(conf).not.toContain("port 80")
-    expect(conf).not.toContain("Safe_ports")
+  })
+
+  it("should block internal IP ranges", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain(
+      "acl internal_nets dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8",
+    )
+    expect(conf).toContain("acl link_local dst 169.254.0.0/16")
+    expect(conf).toContain("http_access deny internal_nets")
+    expect(conf).toContain("http_access deny link_local")
+  })
+
+  it("should block IPv6 internal ranges", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("acl internal_nets_v6 dst ::1/128 fe80::/10 fc00::/7")
+    expect(conf).toContain("http_access deny internal_nets_v6")
+  })
+
+  it("should deny non-CONNECT requests (HTTP)", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("http_access deny !CONNECT")
+  })
+
+  it("should deny non-HTTPS ports", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("acl Safe_ports port 443")
+    expect(conf).toContain("http_access deny !Safe_ports")
+    expect(conf).toContain("http_access deny CONNECT !SSL_ports")
   })
 })
 
