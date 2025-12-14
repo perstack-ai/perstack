@@ -1,27 +1,24 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { getPerstackConfig } from "./perstack-toml.js"
 
 describe("getPerstackConfig with remote URL", () => {
-  const originalFetch = global.fetch
-  beforeEach(() => {
-    vi.resetAllMocks()
-  })
   afterEach(() => {
-    global.fetch = originalFetch
+    vi.restoreAllMocks()
   })
   it("should fetch config from raw.githubusercontent.com with redirect disabled", async () => {
     const mockToml = `
 [experts."test-expert"]
 instruction = "Test instruction"
 `
-    global.fetch = vi.fn().mockResolvedValue({
+    const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(mockToml),
     })
+    vi.stubGlobal("fetch", mockFetch)
     const config = await getPerstackConfig(
       "https://raw.githubusercontent.com/owner/repo/main/perstack.toml",
     )
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(mockFetch).toHaveBeenCalledWith(
       "https://raw.githubusercontent.com/owner/repo/main/perstack.toml",
       { redirect: "error" },
     )
@@ -39,13 +36,21 @@ instruction = "Test instruction"
     )
   })
   it("should throw error when fetch fails", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 404,
       statusText: "Not Found",
     })
+    vi.stubGlobal("fetch", mockFetch)
     await expect(
       getPerstackConfig("https://raw.githubusercontent.com/owner/repo/main/perstack.toml"),
-    ).rejects.toThrow("Failed to fetch config: 404 Not Found")
+    ).rejects.toThrow("Failed to fetch remote config: 404 Not Found")
+  })
+  it("should throw friendly error for network failures", async () => {
+    const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"))
+    vi.stubGlobal("fetch", mockFetch)
+    await expect(
+      getPerstackConfig("https://raw.githubusercontent.com/owner/repo/main/perstack.toml"),
+    ).rejects.toThrow("Failed to fetch remote config: Network error")
   })
 })

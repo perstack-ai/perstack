@@ -18,18 +18,28 @@ function isRemoteUrl(configPath: string): boolean {
 }
 
 async function fetchRemoteConfig(url: string): Promise<string> {
-  const parsed = new URL(url)
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new Error(`Invalid remote config URL: ${url}`)
+  }
   if (parsed.protocol !== "https:") {
     throw new Error("Remote config requires HTTPS")
   }
   if (!ALLOWED_CONFIG_HOSTS.includes(parsed.hostname)) {
     throw new Error(`Remote config only allowed from: ${ALLOWED_CONFIG_HOSTS.join(", ")}`)
   }
-  const response = await fetch(url, { redirect: "error" })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch config: ${response.status} ${response.statusText}`)
+  try {
+    const response = await fetch(url, { redirect: "error" })
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`)
+    }
+    return await response.text()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to fetch remote config: ${message}`)
   }
-  return await response.text()
 }
 
 async function findPerstackConfigString(configPath?: string): Promise<string | null> {
