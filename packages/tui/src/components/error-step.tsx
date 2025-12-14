@@ -1,5 +1,4 @@
 import { Box, Text, useInput } from "ink"
-import React from "react"
 
 type ErrorStepProps = {
   message: string

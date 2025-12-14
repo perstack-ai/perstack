@@ -1,5 +1,5 @@
 import { Box, Text, useApp, useInput } from "ink"
-import React, { type ReactNode, useEffect, useState } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import type { LLMInfo, LLMProvider, RuntimeInfo, RuntimeType, WizardResult } from "./types.js"
 
 type WizardStep =

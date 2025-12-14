@@ -1,5 +1,5 @@
 import { Box, Static, Text, useApp } from "ink"
-import React, { useCallback, useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { LogEntryRow } from "../../src/components/index.js"
 import { useEventStore } from "../../src/hooks/state/use-event-store.js"
 import type { PerstackEvent } from "../../src/types/index.js"

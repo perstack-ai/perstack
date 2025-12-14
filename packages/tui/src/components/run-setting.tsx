@@ -1,5 +1,4 @@
 import { Box, Text, useInput } from "ink"
-import React from "react"
 import { useTextInput } from "../hooks/index.js"
 import type { RuntimeInfo } from "../types/index.js"
 export type RunSettingProps = {

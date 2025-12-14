@@ -1,5 +1,4 @@
 import { Text } from "ink"
-import React from "react"
 import { KEY_HINTS } from "../../constants.js"
 import type { CheckpointHistoryItem, JobHistoryItem } from "../../types/index.js"
 import { ListBrowser } from "../list-browser.js"

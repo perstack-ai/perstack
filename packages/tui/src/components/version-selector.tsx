@@ -1,5 +1,5 @@
 import { Box, Text, useApp, useInput } from "ink"
-import React, { useState } from "react"
+import { useState } from "react"
 import type { WizardVersionInfo } from "../types/wizard.js"
 import { getStatusColor } from "../utils/status-color.js"
 

@@ -1,5 +1,4 @@
 import { render } from "ink"
-import React from "react"
 import type { WizardExpertChoice } from "../../src/types/wizard.js"
 import { PublishApp } from "./app.js"
 

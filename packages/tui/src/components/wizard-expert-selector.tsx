@@ -1,5 +1,5 @@
 import { Box, Text, useApp, useInput } from "ink"
-import React, { useState } from "react"
+import { useState } from "react"
 import type { WizardExpertChoice } from "../types/wizard.js"
 
 export type WizardExpertSelectorProps = {

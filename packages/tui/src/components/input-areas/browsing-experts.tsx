@@ -1,4 +1,4 @@
-import React, { useCallback } from "react"
+import { useCallback } from "react"
 import { KEY_HINTS, UI_CONSTANTS } from "../../constants.js"
 import type { ExpertOption } from "../../types/index.js"
 import { ExpertSelectorBase } from "../expert-selector-base.js"
