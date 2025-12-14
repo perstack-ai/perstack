@@ -24,6 +24,12 @@ function isPrivateOrLocalIP(hostname: string): boolean {
       return true
     }
   }
+  if (hostname.startsWith("::ffff:")) {
+    const ipv4Part = hostname.slice(7)
+    if (isPrivateOrLocalIP(ipv4Part)) {
+      return true
+    }
+  }
   return false
 }
 const sseEndpointSchema = z

@@ -152,6 +152,12 @@ export class McpSkillManager extends BaseSkillManager {
         return true
       }
     }
+    if (hostname.startsWith("::ffff:")) {
+      const ipv4Part = hostname.slice(7)
+      if (this._isPrivateOrLocalIP(ipv4Part)) {
+        return true
+      }
+    }
     return false
   }
 
