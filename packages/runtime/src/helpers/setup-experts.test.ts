@@ -22,6 +22,7 @@ describe("@perstack/runtime: setupExperts", () => {
     input: { text: "hello" },
     experts: {},
     temperature: 0.7,
+    maxSteps: 100,
     maxRetries: 3,
     timeout: 30000,
     startedAt: 1000,

@@ -49,6 +49,7 @@ describe("@perstack/core: createEvent", () => {
     input: { text: "test" },
     experts: {},
     temperature: 0.7,
+    maxSteps: 100,
     maxRetries: 3,
     timeout: 30000,
     startedAt: Date.now(),
