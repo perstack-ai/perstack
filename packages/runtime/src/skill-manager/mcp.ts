@@ -147,8 +147,8 @@ export class McpSkillManager extends BaseSkillManager {
       if (a === 169 && b === 254) return true
       if (a === 127) return true
     }
-    if (hostname.startsWith("fe80:") || hostname.startsWith("fc00:") || hostname.startsWith("fd")) {
-      if (hostname.includes(":")) {
+    if (hostname.includes(":")) {
+      if (hostname.startsWith("fe80:") || hostname.startsWith("fc") || hostname.startsWith("fd")) {
         return true
       }
     }
