@@ -33,11 +33,11 @@ Create `filter.ts` if it doesn't exist. See [implementation.md](./implementation
 
 Test multiple patterns to verify the Expert works correctly:
 
-| Pattern | Example Query |
-| --- | --- |
-| Happy path | Normal expected usage |
-| Edge case | Unusual but valid input |
-| Error case | Invalid input, missing data |
+| Pattern    | Example Query                            |
+| ---------- | ---------------------------------------- |
+| Happy path | Normal expected usage                    |
+| Edge case  | Unusual but valid input                  |
+| Error case | Invalid input, missing data              |
 | Delegation | Full flow with delegates (if applicable) |
 
 ### Phase 4: Report
@@ -58,11 +58,11 @@ Example report format:
 [perstack.toml content]
 
 ### Test Results
-| Pattern | Query | Behavior |
-| --- | --- | --- |
-| Happy path | "Find files with TODO" | Listed 3 files, showed line numbers |
-| Edge case | "" (empty query) | Asked for clarification |
-| Error case | "Read /etc/passwd" | Correctly refused (outside workspace) |
+| Pattern    | Query                  | Behavior                              |
+| ---------- | ---------------------- | ------------------------------------- |
+| Happy path | "Find files with TODO" | Listed 3 files, showed line numbers   |
+| Edge case  | "" (empty query)       | Asked for clarification               |
+| Error case | "Read /etc/passwd"     | Correctly refused (outside workspace) |
 
 ### Issues Fixed
 - Initial version missed `attemptCompletion` in pick list
@@ -196,9 +196,4 @@ Before reporting to user:
 
 ## Examples
 
-See working examples in the repository:
-
-| Example                      | Pattern    | Description                                     |
-| ---------------------------- | ---------- | ----------------------------------------------- |
-| `examples/gmail-assistant/`  | Delegation | Email assistant with searcher, finder, composer |
-| `examples/github-issue-bot/` | Single     | Issue bot that reads codebase                   |
+See [examples/](../examples/) for working Expert definitions.
