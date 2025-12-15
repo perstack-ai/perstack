@@ -14,13 +14,13 @@ Human-in-the-loop (HITL) is effective for quality control, but as agents become 
 
 Our solution: **compose agents on GitHub**. Instead of one agent with one human, we use multiple specialized agents with distinct roles:
 
-| Agent Role | Prompt |
-| --- | --- |
-| Issue Writing | [issue-writing.md](./issue-writing.md) |
-| Implementation | [implementation.md](./implementation.md) |
-| QA | [qa.md](./qa.md) |
-| PR Review | [pr-review.md](./pr-review.md) |
-| Security Audit | [audit.md](./audit.md) |
+| Agent Role      | Prompt                                     |
+| --------------- | ------------------------------------------ |
+| Issue Writing   | [issue-writing.md](./issue-writing.md)     |
+| Implementation  | [implementation.md](./implementation.md)   |
+| QA              | [qa.md](./qa.md)                           |
+| PR Review       | [pr-review.md](./pr-review.md)             |
+| Security Audit  | [audit.md](./audit.md)                     |
 | Expert Creation | [creating-expert.md](./creating-expert.md) |
 
 Agents check each other's work. GitHub Issues and PRs become the coordination layer. Humans supervise the system, not individual outputs.
@@ -76,11 +76,14 @@ Prompts reference each other but remain self-contained. An agent can execute `im
 │                         GitHub                              │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
+│   Human requests issue ◄──── Entry point                    │
+│         │                                                   │
+│         ▼                                                   │
 │   Issue Writer Agent                                        │
 │         │                                                   │
 │         ▼                                                   │
 │   ┌─────────────┐                                           │
-│   │   Issue     │ ◄──── Human reviews issue quality         │
+│   │   Issue     │                                           │
 │   └─────────────┘                                           │
 │         │                                                   │
 │         ▼                                                   │
@@ -92,7 +95,7 @@ Prompts reference each other but remain self-contained. An agent can execute `im
 │   └─────────────┘       QA Agent verifies tests             │
 │         │               PR Review Agent checks standards    │
 │         ▼                                                   │
-│   Human approves merge                                      │
+│   Human approves merge ◄──── Exit point                     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
