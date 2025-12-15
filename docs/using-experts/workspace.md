@@ -1,0 +1,56 @@
+# Workspace
+
+The workspace is the isolated directory where Experts execute. All file operations are confined to this directory.
+
+## Default workspace
+
+By default, the current directory becomes the workspace:
+
+```bash
+cd /path/to/my-project
+npx perstack run my-expert "query"
+# Workspace: /path/to/my-project
+```
+
+## Security
+
+Workspace isolation prevents Experts from accessing unintended files.
+
+**Allowed:**
+- Read/write files within the workspace
+- Create/delete directories within the workspace
+- Relative and absolute paths (resolved within workspace)
+
+**Blocked:**
+- Access outside the workspace
+- Symlink escape attempts
+- Path traversal (`../../../etc/passwd`)
+- Direct access to `perstack/` directory
+
+These restrictions ensure Experts can only affect their designated environment.
+
+## Data exchange between Experts
+
+Delegated Experts don't share LLM context. They exchange data through workspace files:
+
+```toml
+[experts."coordinator"]
+instruction = """
+1. Delegate to researcher to gather information
+2. Read the report from ./reports/research.md
+3. Summarize findings
+"""
+delegates = ["researcher"]
+
+[experts."researcher"]
+instruction = "Research the topic and save to ./reports/research.md"
+```
+
+Benefits:
+- **Token efficiency** — no context duplication
+- **Independence** — each Expert runs with clean context
+- **Explicit data flow** — files make data exchange visible
+
+## Runtime data
+
+The runtime stores execution history in `perstack/jobs/` within the workspace. This directory is managed automatically — see [Runtime](../understanding-perstack/runtime.md#the-perstack-directory) for details.

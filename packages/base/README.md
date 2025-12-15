@@ -2,7 +2,7 @@
 
 Base skills (MCP tools) for Perstack agents.
 
-For detailed documentation, see [Base Skill](https://docs.perstack.ai/making-experts/base-skill).
+For detailed documentation, see [Base Skill](https://github.com/perstack-ai/perstack/blob/main/docs/making-experts/base-skill.md).
 
 ## Installation
 

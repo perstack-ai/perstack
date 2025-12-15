@@ -2,7 +2,7 @@
 
 The official TypeScript/JavaScript API client for Perstack.
 
-For API reference, see [Registry API](https://docs.perstack.ai/references/registry-api).
+For API reference, see [Registry API](https://github.com/perstack-ai/perstack/blob/main/docs/references/registry-api.md).
 
 ## Installation
 

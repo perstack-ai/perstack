@@ -116,7 +116,7 @@ All managers extend `BaseSkillManager` which provides:
 - `getToolDefinitions()` — Get available tools
 - `callTool()` — Execute a tool call
 
-**Note:** Interactive skills are only available to the Coordinator Expert. See [Experts documentation](https://docs.perstack.ai/understanding-perstack/experts#why-no-interactive-tools-for-delegates) for details.
+**Note:** Interactive skills are only available to the Coordinator Expert. See [Experts documentation](https://github.com/perstack-ai/perstack/blob/main/docs/understanding-perstack/experts.md#why-no-interactive-tools-for-delegates) for details.
 
 ### Initialization Flow
 
@@ -202,7 +202,7 @@ Job (jobId)
 | **Run**        | Single Expert execution.                     |
 | **Checkpoint** | Snapshot at step end. Enables pause/resume.  |
 
-For details on step counting, Coordinator vs. Delegated Expert differences, and the full execution model, see [Runtime](https://docs.perstack.ai/understanding-perstack/runtime).
+For details on step counting, Coordinator vs. Delegated Expert differences, and the full execution model, see [Runtime](https://github.com/perstack-ai/perstack/blob/main/docs/understanding-perstack/runtime.md).
 
 ### Events, Steps, Checkpoints
 
@@ -290,7 +290,7 @@ The `status` field in a Checkpoint indicates the current state:
 - `stoppedByInteractiveTool`, `stoppedByDelegate` — Waiting for external input
 - `stoppedByExceededMaxSteps`, `stoppedByError` — Run stopped
 
-For stop reasons and error handling, see [Error Handling](https://docs.perstack.ai/using-experts/error-handling).
+For stop reasons and error handling, see [Error Handling](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/error-handling.md).
 
 ## Runtime Adapters
 
@@ -347,11 +347,11 @@ class MyAdapter extends BaseAdapter {
 }
 ```
 
-See [Multi-Runtime Support](https://docs.perstack.ai/using-experts/multi-runtime) for details.
+See [Multi-Runtime Support](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/multi-runtime.md) for details.
 
 ## Related Documentation
 
-- [Runtime](https://docs.perstack.ai/understanding-perstack/runtime) — Full execution model
-- [State Management](https://docs.perstack.ai/using-experts/state-management) — Jobs, Runs, and Checkpoints
-- [Running Experts](https://docs.perstack.ai/using-experts/running-experts) — CLI usage
-- [Multi-Runtime](https://docs.perstack.ai/using-experts/multi-runtime) — Multi-runtime support
+- [Runtime](https://github.com/perstack-ai/perstack/blob/main/docs/understanding-perstack/runtime.md) — Full execution model
+- [State Management](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/state-management.md) — Jobs, Runs, and Checkpoints
+- [Running Experts](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/running-experts.md) — CLI usage
+- [Multi-Runtime](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/multi-runtime.md) — Multi-runtime support

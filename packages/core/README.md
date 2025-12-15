@@ -72,7 +72,7 @@ export const apiExpertSchema = expertSchema.omit({
 | `Run`        | Single Expert execution within a Job.               |
 | `Checkpoint` | Snapshot at step end within a Run.                  |
 
-For the full hierarchy and execution model, see [State Management](https://docs.perstack.ai/using-experts/state-management).
+For the full hierarchy and execution model, see [State Management](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/state-management.md).
 
 ### What Core Should NOT Contain
 

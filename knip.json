@@ -7,7 +7,7 @@
     "dist/**/*",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "docs/content/**/*",
+    "docs/**/*",
     "scripts/**/*",
     "examples/**/*",
     "e2e/**/*"

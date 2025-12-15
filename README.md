@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.perstack.ai"><strong>📚 Documentation</strong></a> •
-  <a href="https://docs.perstack.ai/getting-started"><strong>🚀 Getting Started</strong></a> •
+  <a href="./docs/"><strong>📚 Documentation</strong></a> •
+  <a href="./docs/getting-started.md"><strong>🚀 Getting Started</strong></a> •
   <a href="https://twitter.com/perstack_ai"><strong>𝕏 Twitter</strong></a>
 </p>
 
@@ -22,7 +22,7 @@ Perstack isn’t another agent framework — it’s npm/npx for agents.
 Prerequisites:
 - Node.js 22+
 - Provider API Credentials
-  - See [LLM Providers](https://docs.perstack.ai/references/providers-and-models)
+  - See [LLM Providers](./docs/references/providers-and-models.md)
 
 **Run a demo Expert:**
 
@@ -39,9 +39,9 @@ $ ANTHROPIC_API_KEY=<YOUR_API_KEY> npx perstack run tic-tac-toe "Game start!"
 ```
 
 **What's next?**
-- [Rapid Prototyping](https://docs.perstack.ai/working-with-perstack/rapid-prototyping) — build your own Expert
-- [Taming Prompt Sprawl](https://docs.perstack.ai/working-with-perstack/taming-prompt-sprawl) — fix bloated prompts with modular Experts
-- [Extending with Tools](https://docs.perstack.ai/working-with-perstack/extending-with-tools) — add MCP skills to your Experts
+- [Rapid Prototyping](./docs/working-with-perstack/rapid-prototyping.md) — build your own Expert
+- [Taming Prompt Sprawl](./docs/working-with-perstack/taming-prompt-sprawl.md) — fix bloated prompts with modular Experts
+- [Extending with Tools](./docs/working-with-perstack/extending-with-tools.md) — add MCP skills to your Experts
 
 ## Examples
 
@@ -153,12 +153,12 @@ This example shows:
 
 ## Next Steps
 
-- [Working with Perstack](https://docs.perstack.ai/working-with-perstack)
-- [Understanding Perstack](https://docs.perstack.ai/understanding-perstack/concept)
-- [Making Experts](https://docs.perstack.ai/making-experts)
-- [Using Experts](https://docs.perstack.ai/using-experts)
-- [Operating Experts](https://docs.perstack.ai/operating-experts/isolation-by-design)
-- [References](https://docs.perstack.ai/references/cli)
+- [Working with Perstack](./docs/working-with-perstack/README.md)
+- [Understanding Perstack](./docs/understanding-perstack/concept.md)
+- [Making Experts](./docs/making-experts/README.md)
+- [Using Experts](./docs/using-experts/README.md)
+- [Operating Experts](./docs/operating-experts/isolation-by-design.md)
+- [References](./docs/references/cli.md)
 
 ## Motivation
 
@@ -213,7 +213,7 @@ Perstack provides **Expert Stack**:
 > [!NOTE]
 > The name "Perstack" is a combination of the Latin word "perītus" and the English word "stack". "perītus" means "expert", so Perstack means "expert stack".
 
-**[📚 Read the full documentation →](https://docs.perstack.ai/)**
+**[📚 Read the full documentation →](./docs/)**
 
 ## FAQ
 
@@ -227,7 +227,7 @@ Perstack helps you package, share, and compose the Experts that power them.
 ### Can Experts in the Registry be used with other AI agent frameworks?
 
 Yes. Registry entries are plain text definitions, so other frameworks can consume them too.
-See the [API Reference](https://docs.perstack.ai/references/registry-api).
+See the [API Reference](./docs/references/registry-api.md).
 
 ### Can Experts created with other AI agent frameworks be used with Perstack?
 
