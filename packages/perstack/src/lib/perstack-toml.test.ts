@@ -30,9 +30,9 @@ instruction = "Test instruction"
       "Remote config only allowed from: raw.githubusercontent.com",
     )
   })
-  it("should treat http URLs as local paths (not remote)", async () => {
-    await expect(getPerstackConfig("http://malicious.com/perstack.toml")).rejects.toThrow(
-      'Given config path "http://malicious.com/perstack.toml" is not found',
+  it("should reject http URLs with clear error message", async () => {
+    await expect(getPerstackConfig("http://example.com/perstack.toml")).rejects.toThrow(
+      "Remote config requires HTTPS",
     )
   })
   it("should throw error when fetch fails", async () => {

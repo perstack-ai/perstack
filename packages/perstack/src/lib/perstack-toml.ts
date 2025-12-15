@@ -14,7 +14,7 @@ export async function getPerstackConfig(configPath?: string): Promise<PerstackCo
 }
 
 function isRemoteUrl(configPath: string): boolean {
-  return configPath.startsWith("https://")
+  return configPath.startsWith("https://") || configPath.startsWith("http://")
 }
 
 async function fetchRemoteConfig(url: string): Promise<string> {
