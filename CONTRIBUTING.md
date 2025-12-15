@@ -39,6 +39,7 @@ The rest of this document provides detailed guidelines for AI agents. Agents sho
 - [Versioning Strategy](#versioning-strategy)
 - [Development Workflow](#development-workflow)
 - [Common Scenarios](#common-scenarios)
+- [Security](#security)
 - [Troubleshooting](#troubleshooting)
 
 ## Core Philosophy
@@ -111,8 +112,14 @@ major.minor.patch
     └─→ @perstack/runtime (execution)
             │
             └─→ @perstack/storage
-    
+
 @perstack/base (tool schemas defined inline, not exported)
+
+Adapters (experimental):
+    @perstack/docker      - Docker runtime with network isolation
+    @perstack/cursor      - Cursor CLI adapter
+    @perstack/claude-code - Claude Code CLI adapter
+    @perstack/gemini      - Gemini CLI adapter
 ```
 
 ### Schema Modification Rules
@@ -398,6 +405,33 @@ This package defines tool input schemas inline rather than centralizing them in 
    - Test integration scenarios
    - Update documentation
 
+## Security
+
+### Reporting Vulnerabilities
+
+See [SECURITY.md](./SECURITY.md#reporting-vulnerabilities) for how to report security issues.
+
+**Do not** open public GitHub issues for security vulnerabilities.
+
+### Security-Related Changes
+
+When making changes that affect security:
+
+1. **Review the security model** in [SECURITY.md](./SECURITY.md)
+2. **Update Known Limitations** if new limitations are discovered
+3. **Consider impact on all runtimes** — Docker adapter has different security than default runtime
+4. **Add tests** for security-critical functionality
+
+### After Security Audits
+
+When a security audit is completed:
+
+1. Update the Audit History section in [SECURITY.md](./SECURITY.md#audit-history)
+2. Create issues for open findings using SEC-XXX format (see [agents/issue-writing.md](./agents/issue-writing.md))
+3. Reference the audit report in issue descriptions
+
+See [agents/audit.md](./agents/audit.md) for the full security audit methodology.
+
 ## CI/CD Pipeline
 
 ### CI Jobs
@@ -498,75 +532,71 @@ export const expertSchema = z.object({
 })
 ```
 
+### Comments Policy
+
+Code that requires comments to be understood is poorly written code.
+
+- Do NOT write comments by default
+- Comments are allowed ONLY when:
+  - The logic is fundamentally complex (algorithmic, mathematical)
+  - External constraints force unintuitive implementations
+  - Explaining "why" something is done unusually
+- Never write comments that explain "what" the code does
+
+### Blank Lines Policy
+
+Use blank lines to separate logical sections, not to fragment related code.
+
+**DO use blank lines:**
+- After import statements (one blank line)
+- Between functions/methods (one blank line)
+- Between major logical sections within a function
+
+**DO NOT use blank lines:**
+- Between closely related statements (consecutive variable declarations)
+- Inside control flow blocks (`if`/`else`, `switch`/`case`, `try`/`catch`)
+- Between a condition and its immediate consequence
+
+### Prohibited Patterns
+
+The following patterns are strictly prohibited:
+
+**Semicolon-prefixed expressions:**
+```typescript
+// ✗ Bad
+;(mockFn as ReturnType<typeof mock>).mockResolvedValue(value)
+
+// ✓ Good
+const mockFnTyped = mockFn as ReturnType<typeof mock>
+mockFnTyped.mockResolvedValue(value)
+```
+
+**IIFE for type casting:**
+```typescript
+// ✗ Bad
+spyOn(process, "exit").mockImplementation((() => {}) as unknown as (code: number) => never)
+
+// ✓ Good
+const mockExit: (code: number) => never = () => undefined as never
+spyOn(process, "exit").mockImplementation(mockExit)
+```
+
+**Suppression comments:**
+```typescript
+// ✗ Bad
+// @ts-ignore
+// @ts-expect-error
+// biome-ignore
+```
+
 ## Writing Good Issues
 
-### Issue Granularity
+For detailed issue writing guidelines, see [agents/issue-writing.md](./agents/issue-writing.md).
 
-Each issue should represent **one actionable unit of work** that can be completed in a single PR.
-
-**Good issue scope:**
-- Fix a specific bug in one component
-- Extract one shared utility or component
-- Add one new feature with clear boundaries
-
-**Bad issue scope:**
-- "Refactor TUI package" (too broad)
-- "Fix all bugs" (not actionable)
-- "Improve code quality" (vague)
-
-### Issue Title Guidelines
-
-Titles should describe **what to solve**, not implementation details.
-
-| Bad (implementation details)         | Good (problem/goal focused)                        |
-| ------------------------------------ | -------------------------------------------------- |
-| Fix `apps/tag/app.tsx` line 242      | Fix: Tag comparison fails when tags are reordered  |
-| Refactor `ExpertSelector` in 4 files | Refactor: Share ExpertSelector across wizards      |
-| Add `useInput` to error state        | Fix: Wizard ignores keyboard input on error screen |
-
-**Why:** File names and line numbers change. The problem statement remains stable.
-
-### Issue Structure
-
-```markdown
-## Title
-[Type]: [Problem or goal statement]
-
-## Labels
-bug | refactor | enhancement | chore, [package-name], [priority]
-
-## Description
-Brief explanation of the problem or goal.
-
-### Current Behavior (for bugs)
-What happens now.
-
-### Expected Behavior
-What should happen.
-
-### Affected Areas
-- List of components/features affected
-- File locations can go here (in description, not title)
-
-### Suggested Approach (optional)
-High-level solution direction.
-
-### Acceptance Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
-```
-
-### Breaking Down Large Changes
-
-When a change touches multiple areas, split into dependent issues:
-
-```
-Issue #1: Extract shared types for wizards
-Issue #2: Extract shared utility functions (depends on #1)
-Issue #3: Extract shared components (depends on #1, #2)
-```
-
-Link issues with "depends on #X" or "blocked by #X" in the description.
+Key points:
+- Each issue = one actionable unit of work (one PR)
+- Titles describe **what to solve**, not implementation details
+- Security issues use SEC-XXX format
 
 ## Getting Help
 
@@ -585,6 +615,8 @@ Before requesting review, ensure:
 - [ ] Documentation updated (README, JSDoc, CHANGELOG via changeset)
 - [ ] Migration guide included (for breaking changes)
 - [ ] No unintended version sync issues
+- [ ] Security impact assessed (if applicable)
+- [ ] SECURITY.md updated (if new limitations discovered)
 
 ---
 
