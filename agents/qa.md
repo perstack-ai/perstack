@@ -4,21 +4,20 @@ This document defines the quality assurance workflow for the Perstack project.
 
 ## Test Commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm test` | Run unit tests |
-| `pnpm test:e2e` | Run E2E tests |
-| `pnpm typecheck` | Type checking |
-| `pnpm lint` | Linting |
-| `pnpm format:check` | Format checking |
-| `pnpm knip` | Unused dependencies check |
+| Command               | Purpose                    |
+| --------------------- | -------------------------- |
+| `pnpm test`           | Run unit tests             |
+| `pnpm test:e2e`       | Run E2E tests              |
+| `pnpm typecheck`      | Type checking              |
+| `pnpm format-and-lint`| Linting and formatting     |
+| `pnpm check-deps`     | Unused dependencies check  |
 
 ## Full QA Suite
 
 Run all checks before creating a PR:
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm test:e2e
+pnpm typecheck && pnpm format-and-lint && pnpm test && pnpm build && pnpm test:e2e
 ```
 
 ## Unit Tests
@@ -111,16 +110,16 @@ Type errors must be fixed before merge. Common issues:
 | Type mismatch | Fix the type or the value |
 | Missing import | Import from `@perstack/core` |
 
-## Linting
+## Linting and Formatting
 
 ```bash
-pnpm lint
+pnpm format-and-lint
 ```
 
 Auto-fix available issues:
 
 ```bash
-pnpm lint:fix
+pnpm format-and-lint:fix
 ```
 
 ## Security Testing
@@ -146,7 +145,7 @@ See [audit.md](./audit.md) for comprehensive security audit methodology.
 Before creating a PR:
 
 - [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
+- [ ] `pnpm format-and-lint` passes
 - [ ] `pnpm test` passes
 - [ ] `pnpm build` succeeds
 - [ ] `pnpm test:e2e` passes
