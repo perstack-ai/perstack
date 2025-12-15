@@ -115,19 +115,14 @@ function formatEvent(event: Record<string, unknown>): string | null {
   const type = event.type as string
   const expertKey = event.expertKey as string
   switch (type) {
-    case "startRun":
-      return `[${expertKey}] 🚀 Starting...`
+    case "startRun": return `[${expertKey}] 🚀 Starting...`
     case "callTool": {
-      const toolCall = event.toolCall as Record<string, unknown>
-      const toolName = toolCall?.toolName as string
+      const toolName = (event.toolCall as Record<string, unknown>)?.toolName as string
       return `[${expertKey}] 🔧 ${toolName}`
     }
-    case "completeRun":
-      return `[${expertKey}] ✅ Done`
-    case "errorRun":
-      return `[${expertKey}] ❌ Error: ${(event as Record<string, unknown>).error}`
-    default:
-      return null
+    case "completeRun": return `[${expertKey}] ✅ Done`
+    case "errorRun": return `[${expertKey}] ❌ Error: ${event.error}`
+    default: return null
   }
 }
 const rl = readline.createInterface({ input: process.stdin, terminal: false })
