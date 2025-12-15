@@ -115,14 +115,24 @@ pnpm changeset
 Before creating PR, ensure:
 
 ```bash
-pnpm typecheck     # Must pass
-pnpm lint          # Must pass
-pnpm test          # Must pass
-pnpm build         # Must succeed
-pnpm test:e2e      # Must pass (run full suite)
+pnpm typecheck        # Type checking
+pnpm format-and-lint  # Linting and formatting
+pnpm test             # Unit tests
+pnpm build            # Build all packages
+pnpm test:e2e         # E2E tests (full suite)
 ```
 
 **All checks must pass before proceeding.**
+
+### ⚠️ Critical: Never Modify Config to Pass Checks
+
+**Forbidden actions:**
+- Modifying `tsconfig.json` to suppress type errors
+- Modifying `biome.json` to disable lint rules
+- Modifying `vitest.config.ts` to skip failing tests
+- Adding `// @ts-ignore`, `// biome-ignore`, or similar suppressions
+
+**If checks fail, fix the actual code.** Config modifications to bypass checks will be rejected in review.
 
 ## Phase 5: Pull Request
 
