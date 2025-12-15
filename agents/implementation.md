@@ -210,14 +210,15 @@ gh pr merge <number> --squash --delete-branch
 │     git fetch && git checkout -b <branch>       │
 ├─────────────────────────────────────────────────┤
 │  3. IMPLEMENTATION                              │
-│     Code → Tests → Docs → Changeset             │
+│     Docs → Tests → Code → Changeset             │
 │     (ultrathink when stuck)                     │
 ├─────────────────────────────────────────────────┤
 │  4. VALIDATION                                  │
-│     typecheck → lint → test → build → e2e      │
+│     typecheck → format-and-lint → test →        │
+│     build → e2e                                 │
 ├─────────────────────────────────────────────────┤
 │  5. PULL REQUEST                                │
-│     commit → push → gh pr create                │
+│     commit → push → gh pr create (Closes #N)    │
 ├─────────────────────────────────────────────────┤
 │  6. CI MONITORING                               │
 │     gh pr checks --watch (every 5 min)          │
