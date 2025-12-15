@@ -135,6 +135,13 @@ describe("DockerAdapter", () => {
       const result = adapter.testResolveWorkspacePath(".")
       expect(result).toBe(process.cwd())
     })
+    it("should normalize absolute path with parent directory references", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testResolveWorkspacePath(
+        path.join(tempDir, "..", path.basename(tempDir)),
+      )
+      expect(result).toBe(tempDir)
+    })
     it("should throw error when path does not exist", () => {
       const adapter = new TestableDockerAdapter()
       expect(() => adapter.testResolveWorkspacePath("/nonexistent/path")).toThrow(

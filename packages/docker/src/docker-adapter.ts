@@ -309,7 +309,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
 
   protected resolveWorkspacePath(workspace?: string): string | undefined {
     if (!workspace) return undefined
-    const resolved = path.isAbsolute(workspace) ? workspace : path.resolve(process.cwd(), workspace)
+    const resolved = path.resolve(workspace)
     if (!fs.existsSync(resolved)) {
       throw new Error(`Workspace path does not exist: ${resolved}`)
     }
