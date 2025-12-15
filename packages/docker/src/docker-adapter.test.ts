@@ -16,6 +16,13 @@ class TestableDockerAdapter extends DockerAdapter {
   public testResolveWorkspacePath(workspace?: string): string | undefined {
     return this.resolveWorkspacePath(workspace)
   }
+  public async testPrepareBuildContext(
+    config: Parameters<DockerAdapter["prepareBuildContext"]>[0],
+    expertKey: string,
+    workspace?: string,
+  ): Promise<string> {
+    return this.prepareBuildContext(config, expertKey, workspace)
+  }
 }
 
 describe("DockerAdapter", () => {
@@ -141,6 +148,65 @@ describe("DockerAdapter", () => {
       expect(() => adapter.testResolveWorkspacePath(testFile)).toThrow(
         "Workspace path is not a directory",
       )
+    })
+  })
+  describe("prepareBuildContext", () => {
+    const minimalConfig = {
+      model: "test-model",
+      provider: { providerName: "anthropic" as const },
+      experts: {
+        "test-expert": {
+          key: "test-expert",
+          name: "Test Expert",
+          version: "1.0.0",
+          description: "Test expert",
+          instruction: "You are a test expert",
+          skills: {},
+          delegates: [],
+          tags: [],
+        },
+      },
+    }
+    let buildDir: string | null = null
+    afterEach(() => {
+      if (buildDir) {
+        fs.rmSync(buildDir, { recursive: true, force: true })
+        buildDir = null
+      }
+    })
+    it("should create workspace directory when workspace is not provided", async () => {
+      const adapter = new TestableDockerAdapter()
+      buildDir = await adapter.testPrepareBuildContext(minimalConfig, "test-expert")
+      expect(fs.existsSync(path.join(buildDir, "workspace"))).toBe(true)
+    })
+    it("should not create workspace directory when workspace is provided", async () => {
+      const adapter = new TestableDockerAdapter()
+      const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "test-workspace-"))
+      try {
+        buildDir = await adapter.testPrepareBuildContext(
+          minimalConfig,
+          "test-expert",
+          tempWorkspace,
+        )
+        expect(fs.existsSync(path.join(buildDir, "workspace"))).toBe(false)
+      } finally {
+        fs.rmSync(tempWorkspace, { recursive: true, force: true })
+      }
+    })
+    it("should generate compose file with workspace path", async () => {
+      const adapter = new TestableDockerAdapter()
+      const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "test-workspace-"))
+      try {
+        buildDir = await adapter.testPrepareBuildContext(
+          minimalConfig,
+          "test-expert",
+          tempWorkspace,
+        )
+        const composeContent = fs.readFileSync(path.join(buildDir, "docker-compose.yml"), "utf-8")
+        expect(composeContent).toContain(tempWorkspace)
+      } finally {
+        fs.rmSync(tempWorkspace, { recursive: true, force: true })
+      }
     })
   })
 })
