@@ -83,8 +83,9 @@ This order ensures:
 
 ### Guidelines
 
-- Follow existing code patterns
-- Create changeset if required (see [CONTRIBUTING.md](../CONTRIBUTING.md))
+- Follow [Code Style](../CONTRIBUTING.md#code-style) in CONTRIBUTING.md
+- Follow existing code patterns in the codebase
+- Create changeset if required (see [CONTRIBUTING.md](../CONTRIBUTING.md#versioning-strategy))
 
 ### When Stuck
 
