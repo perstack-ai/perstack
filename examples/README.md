@@ -6,6 +6,7 @@ Examples of Perstack Experts demonstrating capabilities.
 
 | Example                                 | Description                                               | Registry                     |
 | --------------------------------------- | --------------------------------------------------------- | ---------------------------- |
+| [bug-finder](./bug-finder/)             | Codebase analyzer for finding potential bugs              | Local only                   |
 | [github-issue-bot](./github-issue-bot/) | Automated issue responder with real-time activity logging | `@perstack/github-issue-bot` |
 | [gmail-assistant](./gmail-assistant/)   | Email assistant with Gmail search and local knowledge     | Local only                   |
 

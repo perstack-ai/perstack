@@ -47,6 +47,7 @@ $ ANTHROPIC_API_KEY=<YOUR_API_KEY> npx perstack run tic-tac-toe "Game start!"
 
 | Example                                          | Description                                                      |
 | ------------------------------------------------ | ---------------------------------------------------------------- |
+| [bug-finder](./examples/bug-finder/)             | Codebase analyzer that finds potential bugs                      |
 | [github-issue-bot](./examples/github-issue-bot/) | Automated GitHub issue responder with real-time activity logging |
 | [gmail-assistant](./examples/gmail-assistant/)   | AI-powered email assistant with Gmail integration                |
 

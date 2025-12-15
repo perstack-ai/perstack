@@ -16,7 +16,7 @@
 "perstack": patch
 ---
 
-Multi-runtime support and security hardening
+Multi-runtime support and Docker enhancements
 
 Features:
 - Add Docker runtime adapter with container isolation
@@ -25,6 +25,8 @@ Features:
 - Add @perstack/runner for centralized adapter dispatch
 - Add @perstack/storage for modular storage layer
 - Add @perstack/e2e-mcp-server for security testing
+- Add --workspace option for Docker runtime volume mounting
+- Support GitHub URL for --config option
 
 Security:
 - Comprehensive Docker sandbox hardening
@@ -34,6 +36,6 @@ Security:
 - SSRF protection (metadata endpoints, private IPs)
 
 Improvements:
+- Switch Docker WORKDIR to /workspace for natural relative path resolution
 - Reorganize E2E tests with security audit trails
 - Add runtime field to TUI and Registry API
-- Fix various adapter and CLI issues
