@@ -111,7 +111,7 @@ export function generateDockerfile(
   if (mcpLayers) {
     lines.push(mcpLayers)
   }
-  lines.push("RUN npm install -g @perstack/runtime")
+  lines.push("RUN npm install -g @perstack/runtime @perstack/base")
   lines.push("")
   lines.push("RUN groupadd -r perstack && useradd -r -g perstack -d /home/perstack -m perstack")
   lines.push("RUN mkdir -p /workspace && chown -R perstack:perstack /workspace /app")
@@ -122,6 +122,7 @@ export function generateDockerfile(
     lines.push("ENV PERSTACK_PROXY_URL=http://proxy:3128")
     lines.push("ENV NPM_CONFIG_PROXY=http://proxy:3128")
     lines.push("ENV NPM_CONFIG_HTTPS_PROXY=http://proxy:3128")
+    lines.push("ENV NODE_OPTIONS=--use-env-proxy")
     lines.push("")
   }
   lines.push("USER perstack")
