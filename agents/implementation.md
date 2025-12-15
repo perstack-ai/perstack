@@ -147,7 +147,7 @@ gh pr create --title "<type>: <description>" --body "..."
 
 PR body should include:
 - Summary of changes
-- Related issue (`Closes #<number>`)
+- Issue reference: `Closes #<number>` (must match the issue from Phase 1)
 - Test plan
 
 ## Phase 6: CI Monitoring
