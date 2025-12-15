@@ -4,13 +4,13 @@ This document defines the quality assurance workflow for the Perstack project.
 
 ## Test Commands
 
-| Command               | Purpose                    |
-| --------------------- | -------------------------- |
-| `pnpm test`           | Run unit tests             |
-| `pnpm test:e2e`       | Run E2E tests              |
-| `pnpm typecheck`      | Type checking              |
-| `pnpm format-and-lint`| Linting and formatting     |
-| `pnpm check-deps`     | Unused dependencies check  |
+| Command                | Purpose                   |
+| ---------------------- | ------------------------- |
+| `pnpm test`            | Run unit tests            |
+| `pnpm test:e2e`        | Run E2E tests             |
+| `pnpm typecheck`       | Type checking             |
+| `pnpm format-and-lint` | Linting and formatting    |
+| `pnpm check-deps`      | Unused dependencies check |
 
 ## Full QA Suite
 
@@ -104,10 +104,10 @@ pnpm typecheck
 
 Type errors must be fixed before merge. Common issues:
 
-| Error | Solution |
-| --- | --- |
-| Missing type | Add explicit type annotation |
-| Type mismatch | Fix the type or the value |
+| Error          | Solution                     |
+| -------------- | ---------------------------- |
+| Missing type   | Add explicit type annotation |
+| Type mismatch  | Fix the type or the value    |
 | Missing import | Import from `@perstack/core` |
 
 ## Linting and Formatting
@@ -156,14 +156,14 @@ Before creating a PR:
 
 PRs are validated by CI:
 
-| Check | Description |
-| --- | --- |
-| Lint / Format / Knip | Code quality |
-| Build | Compilation |
-| Test | Unit tests |
-| CI Success | Final status gate |
-| Codecov | Coverage check |
-| Cursor Bugbot | AI code review |
+| Check                | Description       |
+| -------------------- | ----------------- |
+| Lint / Format / Knip | Code quality      |
+| Build                | Compilation       |
+| Test                 | Unit tests        |
+| CI Success           | Final status gate |
+| Codecov              | Coverage check    |
+| Cursor Bugbot        | AI code review    |
 
 All checks must pass before merge.
 
