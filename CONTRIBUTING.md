@@ -46,14 +46,15 @@ The rest of this document provides detailed guidelines for AI agents. Agents sho
 
 For AI coding agents, detailed workflows are available in the `agents/` directory:
 
-| Workflow | Document |
-| --- | --- |
-| Implementation | [agents/implementation.md](./agents/implementation.md) |
-| Issue Writing | [agents/issue-writing.md](./agents/issue-writing.md) |
-| QA | [agents/qa.md](./agents/qa.md) |
-| PR Review | [agents/pr-review.md](./agents/pr-review.md) |
-| Security Audit | [agents/audit.md](./agents/audit.md) |
-| CLI Reference | [agents/cli-reference.md](./agents/cli-reference.md) |
+| Workflow        | Document                                                 |
+| --------------- | -------------------------------------------------------- |
+| Implementation  | [agents/implementation.md](./agents/implementation.md)   |
+| Issue Writing   | [agents/issue-writing.md](./agents/issue-writing.md)     |
+| QA              | [agents/qa.md](./agents/qa.md)                           |
+| PR Review       | [agents/pr-review.md](./agents/pr-review.md)             |
+| Creating Expert | [agents/creating-expert.md](./agents/creating-expert.md) |
+| Security Audit  | [agents/audit.md](./agents/audit.md)                     |
+| CLI Reference   | [agents/cli-reference.md](./agents/cli-reference.md)     |
 
 ## Core Philosophy
 

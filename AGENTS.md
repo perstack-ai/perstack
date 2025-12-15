@@ -6,14 +6,15 @@ Perstack is a package manager and runtime for agent-first development. It enable
 
 ## Workflows
 
-| Goal                    | Document                                               |
-| ----------------------- | ------------------------------------------------------ |
-| Implement a feature/fix | [agents/implementation.md](./agents/implementation.md) |
-| Write an issue          | [agents/issue-writing.md](./agents/issue-writing.md)   |
-| Run QA                  | [agents/qa.md](./agents/qa.md)                         |
-| Review a PR             | [agents/pr-review.md](./agents/pr-review.md)           |
-| Security audit          | [agents/audit.md](./agents/audit.md)                   |
-| CLI & perstack.toml     | [agents/cli-reference.md](./agents/cli-reference.md)   |
+| Goal                    | Document                                                 |
+| ----------------------- | -------------------------------------------------------- |
+| Implement a feature/fix | [agents/implementation.md](./agents/implementation.md)   |
+| Write an issue          | [agents/issue-writing.md](./agents/issue-writing.md)     |
+| Run QA                  | [agents/qa.md](./agents/qa.md)                           |
+| Review a PR             | [agents/pr-review.md](./agents/pr-review.md)             |
+| Create an Expert        | [agents/creating-expert.md](./agents/creating-expert.md) |
+| Security audit          | [agents/audit.md](./agents/audit.md)                     |
+| CLI & perstack.toml     | [agents/cli-reference.md](./agents/cli-reference.md)     |
 
 ## References
 
