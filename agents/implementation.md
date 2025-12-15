@@ -95,6 +95,53 @@ If you encounter issues:
 2. If unresolved, **ultrathink again** — Different angles often reveal solutions
 3. Repeat as needed — Persistent thinking usually finds the answer
 
+### Autonomous Debugging
+
+**Do not ask humans for debugging help.** Debug autonomously using `perstack run`.
+
+⚠️ **Critical:** Raw `perstack run` output contains massive JSON events that will explode your context. Always pipe through a filter script.
+
+**Usage pattern:**
+
+```bash
+perstack run <expert> "<query>" 2>&1 | npx tsx filter.ts
+```
+
+**Create a filter script** (example: `filter.ts`):
+
+```typescript
+import * as readline from "node:readline"
+function formatEvent(event: Record<string, unknown>): string | null {
+  const type = event.type as string
+  const expertKey = event.expertKey as string
+  switch (type) {
+    case "startRun":
+      return `[${expertKey}] 🚀 Starting...`
+    case "callTool": {
+      const toolCall = event.toolCall as Record<string, unknown>
+      const toolName = toolCall?.toolName as string
+      return `[${expertKey}] 🔧 ${toolName}`
+    }
+    case "completeRun":
+      return `[${expertKey}] ✅ Done`
+    case "errorRun":
+      return `[${expertKey}] ❌ Error: ${(event as Record<string, unknown>).error}`
+    default:
+      return null
+  }
+}
+const rl = readline.createInterface({ input: process.stdin, terminal: false })
+rl.on("line", (line) => {
+  try {
+    const event = JSON.parse(line)
+    const formatted = formatEvent(event)
+    if (formatted) console.log(formatted)
+  } catch {}
+})
+```
+
+See `examples/gmail-assistant/filter.ts` for a comprehensive example.
+
 ### Changeset Rules
 
 When to create a changeset:
