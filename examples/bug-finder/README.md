@@ -2,13 +2,13 @@
 
 Codebase analyzer that systematically finds potential bugs through code review.
 
-|              |                                             |
-| ------------ | ------------------------------------------- |
-| **Purpose**  | Find potential bugs in codebases            |
-| **Expert**   | `bug-finder`                                |
-| **Skills**   | `@perstack/base` only                       |
-| **Sandbox**  | Docker runtime with `--workspace`           |
-| **Registry** | Local only                                  |
+|              |                                   |
+| ------------ | --------------------------------- |
+| **Purpose**  | Find potential bugs in codebases  |
+| **Expert**   | `bug-finder`                      |
+| **Skills**   | `@perstack/base` only             |
+| **Sandbox**  | Docker runtime with `--workspace` |
+| **Registry** | Local only                        |
 
 ## Quick Start
 
@@ -35,16 +35,16 @@ The `--workspace` option mounts the specified directory into the container, allo
 
 The Expert looks for these common bug patterns:
 
-| Category             | Examples                                          |
-| -------------------- | ------------------------------------------------- |
-| Logic errors         | Incorrect conditions, wrong operators             |
-| Unhandled edge cases | null/undefined, empty arrays, boundary values     |
-| Type safety issues   | Type coercion, any types, missing null checks     |
-| Resource leaks       | Unclosed connections, missing cleanup             |
-| Race conditions      | async/await issues, shared state                  |
-| Off-by-one errors    | Array indices, loop bounds                        |
-| Error handling gaps  | Swallowed errors, missing try-catch               |
-| Security issues      | Injection, path traversal, unsanitized input      |
+| Category             | Examples                                      |
+| -------------------- | --------------------------------------------- |
+| Logic errors         | Incorrect conditions, wrong operators         |
+| Unhandled edge cases | null/undefined, empty arrays, boundary values |
+| Type safety issues   | Type coercion, any types, missing null checks |
+| Resource leaks       | Unclosed connections, missing cleanup         |
+| Race conditions      | async/await issues, shared state              |
+| Off-by-one errors    | Array indices, loop bounds                    |
+| Error handling gaps  | Swallowed errors, missing try-catch           |
+| Security issues      | Injection, path traversal, unsanitized input  |
 
 ## Output Format
 
@@ -61,16 +61,16 @@ Each bug is reported with:
 
 ## Example Queries
 
-| Query                                  | What happens                              |
-| -------------------------------------- | ----------------------------------------- |
-| "Find 3 bugs in src/"                  | Finds top 3 bugs in src directory         |
-| "Find security issues in lib/"         | Focuses on security vulnerabilities       |
-| "Analyze auth.ts for bugs"             | Reviews a specific file                   |
-| "Find race conditions in async code"   | Looks for specific bug category           |
+| Query                                | What happens                        |
+| ------------------------------------ | ----------------------------------- |
+| "Find 3 bugs in src/"                | Finds top 3 bugs in src directory   |
+| "Find security issues in lib/"       | Focuses on security vulnerabilities |
+| "Analyze auth.ts for bugs"           | Reviews a specific file             |
+| "Find race conditions in async code" | Looks for specific bug category     |
 
 ## Files
 
-| File            | Purpose           |
-| --------------- | ----------------- |
-| `perstack.toml` | Expert definition |
-| `README.md`     | This documentation|
+| File            | Purpose            |
+| --------------- | ------------------ |
+| `perstack.toml` | Expert definition  |
+| `README.md`     | This documentation |

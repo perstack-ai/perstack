@@ -71,9 +71,9 @@ type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
 pick = [
-  "listDirectory",
-  "readTextFile",
-  "getFileInfo",
-  "think",
-  "attemptCompletion",
+   "listDirectory",
+   "readTextFile",
+   "getFileInfo",
+   "think",
+   "attemptCompletion",
 ]
