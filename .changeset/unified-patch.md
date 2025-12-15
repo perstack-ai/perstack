@@ -39,3 +39,4 @@ Improvements:
 - Switch Docker WORKDIR to /workspace for natural relative path resolution
 - Reorganize E2E tests with security audit trails
 - Add runtime field to TUI and Registry API
+- Add verbose output for Docker build progress with --verbose flag
