@@ -14,7 +14,7 @@ Perstack is a package manager and runtime for agent-first development. It enable
 | Review a PR             | [agents/pr-review.md](./agents/pr-review.md)             |
 | Create an Expert        | [agents/creating-expert.md](./agents/creating-expert.md) |
 | Security audit          | [agents/audit.md](./agents/audit.md)                     |
-| CLI & perstack.toml     | [agents/cli-reference.md](./agents/cli-reference.md)     |
+| CLI & perstack.toml     | [docs/](./docs/) (see references/)                       |
 
 ## References
 
