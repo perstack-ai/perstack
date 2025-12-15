@@ -96,6 +96,8 @@ export interface RunSetting {
   env: Record<string, string>
   /** HTTP proxy URL for API requests */
   proxyUrl?: string
+  /** Enable verbose output for build processes */
+  verbose?: boolean
 }
 
 /** Parameters for starting a run */
@@ -138,6 +140,7 @@ export type RunParamsInput = {
     perstackBaseSkillCommand?: string[]
     env?: Record<string, string>
     proxyUrl?: string
+    verbose?: boolean
   }
   checkpoint?: Checkpoint
 }
@@ -171,6 +174,7 @@ export const runSettingSchema = z.object({
   perstackBaseSkillCommand: z.array(z.string()).optional(),
   env: z.record(z.string(), z.string()),
   proxyUrl: z.string().optional(),
+  verbose: z.boolean().optional(),
 })
 
 export const runParamsSchema = z.object({
@@ -223,6 +227,7 @@ export const runParamsSchema = z.object({
     perstackBaseSkillCommand: z.array(z.string()).optional(),
     env: z.record(z.string(), z.string()).optional().default({}),
     proxyUrl: z.string().optional(),
+    verbose: z.boolean().optional(),
   }),
   checkpoint: checkpointSchema.optional(),
 })

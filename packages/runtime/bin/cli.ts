@@ -76,6 +76,7 @@ program
             perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
             env,
             proxyUrl: process.env.PERSTACK_PROXY_URL,
+            verbose: input.options.verbose,
           },
         },
         { eventListener: defaultEventListener, storeCheckpoint, retrieveCheckpoint },

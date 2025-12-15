@@ -7,11 +7,20 @@ import { DockerAdapter } from "./docker-adapter.js"
 
 class TestableDockerAdapter extends DockerAdapter {
   public mockExecCommand: ((args: string[]) => Promise<ExecResult>) | null = null
+  public mockExecCommandWithOutput: ((args: string[]) => Promise<number>) | null = null
+  public capturedBuildArgs: string[] = []
   protected override async execCommand(args: string[]): Promise<ExecResult> {
     if (this.mockExecCommand) {
       return this.mockExecCommand(args)
     }
     return super.execCommand(args)
+  }
+  protected override execCommandWithOutput(args: string[]): Promise<number> {
+    this.capturedBuildArgs = args
+    if (this.mockExecCommandWithOutput) {
+      return this.mockExecCommandWithOutput(args)
+    }
+    return super.execCommandWithOutput(args)
   }
   public testResolveWorkspacePath(workspace?: string): string | undefined {
     return this.resolveWorkspacePath(workspace)
@@ -22,6 +31,9 @@ class TestableDockerAdapter extends DockerAdapter {
     workspace?: string,
   ): Promise<string> {
     return this.prepareBuildContext(config, expertKey, workspace)
+  }
+  public async testBuildImages(buildDir: string, verbose?: boolean): Promise<void> {
+    return this.buildImages(buildDir, verbose)
   }
 }
 
@@ -214,6 +226,56 @@ describe("DockerAdapter", () => {
       } finally {
         fs.rmSync(tempWorkspace, { recursive: true, force: true })
       }
+    })
+  })
+  describe("buildImages", () => {
+    let tempDir: string
+    beforeEach(() => {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-build-test-"))
+      fs.writeFileSync(path.join(tempDir, "docker-compose.yml"), "version: '3'")
+    })
+    afterEach(() => {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    })
+    it("should use execCommand without verbose flag", async () => {
+      const adapter = new TestableDockerAdapter()
+      let capturedArgs: string[] = []
+      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
+        capturedArgs = args
+        return { stdout: "", stderr: "", exitCode: 0 }
+      })
+      await adapter.testBuildImages(tempDir, false)
+      expect(capturedArgs).toContain("docker")
+      expect(capturedArgs).toContain("compose")
+      expect(capturedArgs).toContain("build")
+      expect(capturedArgs).not.toContain("--progress=plain")
+    })
+    it("should use execCommandWithOutput with verbose flag", async () => {
+      const adapter = new TestableDockerAdapter()
+      adapter.mockExecCommandWithOutput = vi.fn(async () => 0)
+      await adapter.testBuildImages(tempDir, true)
+      expect(adapter.capturedBuildArgs).toContain("docker")
+      expect(adapter.capturedBuildArgs).toContain("compose")
+      expect(adapter.capturedBuildArgs).toContain("build")
+      expect(adapter.capturedBuildArgs).toContain("--progress=plain")
+    })
+    it("should throw error when build fails without verbose", async () => {
+      const adapter = new TestableDockerAdapter()
+      adapter.mockExecCommand = vi.fn(async () => ({
+        stdout: "",
+        stderr: "build error",
+        exitCode: 1,
+      }))
+      await expect(adapter.testBuildImages(tempDir, false)).rejects.toThrow(
+        "Docker build failed: build error",
+      )
+    })
+    it("should throw error when build fails with verbose", async () => {
+      const adapter = new TestableDockerAdapter()
+      adapter.mockExecCommandWithOutput = vi.fn(async () => 1)
+      await expect(adapter.testBuildImages(tempDir, true)).rejects.toThrow(
+        "Docker build failed with exit code 1",
+      )
     })
   })
 })

@@ -173,7 +173,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     const expertKey = setting.expertKey
     const buildDir = await this.prepareBuildContext(config, expertKey, workspace)
     try {
-      await this.buildImages(buildDir)
+      await this.buildImages(buildDir, setting.verbose)
       const envRequirements = extractRequiredEnvVars(config, expertKey)
       const envSource = { ...process.env, ...setting.env }
       const { resolved: envVars, missing } = resolveEnvValues(envRequirements, envSource)
@@ -350,17 +350,42 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     return buildDir
   }
 
-  protected async buildImages(buildDir: string): Promise<void> {
-    const result = await this.execCommand([
-      "docker",
-      "compose",
-      "-f",
-      path.join(buildDir, "docker-compose.yml"),
-      "build",
-    ])
-    if (result.exitCode !== 0) {
-      throw new Error(`Docker build failed: ${result.stderr}`)
+  protected async buildImages(buildDir: string, verbose?: boolean): Promise<void> {
+    const composeFile = path.join(buildDir, "docker-compose.yml")
+    const args = ["compose", "-f", composeFile, "build"]
+    if (verbose) {
+      args.push("--progress=plain")
     }
+    if (verbose) {
+      const exitCode = await this.execCommandWithOutput(["docker", ...args])
+      if (exitCode !== 0) {
+        throw new Error(`Docker build failed with exit code ${exitCode}`)
+      }
+    } else {
+      const result = await this.execCommand(["docker", ...args])
+      if (result.exitCode !== 0) {
+        throw new Error(`Docker build failed: ${result.stderr}`)
+      }
+    }
+  }
+  protected execCommandWithOutput(args: string[]): Promise<number> {
+    return new Promise((resolve) => {
+      const [cmd, ...cmdArgs] = args
+      if (!cmd) {
+        resolve(127)
+        return
+      }
+      const proc = spawn(cmd, cmdArgs, {
+        cwd: process.cwd(),
+        stdio: ["pipe", process.stderr, process.stderr],
+      })
+      proc.on("close", (code) => {
+        resolve(code ?? 127)
+      })
+      proc.on("error", () => {
+        resolve(127)
+      })
+    })
   }
 
   protected async runContainer(
