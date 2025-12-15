@@ -545,6 +545,63 @@ export const expertSchema = z.object({
 })
 ```
 
+### Comments Policy
+
+Code that requires comments to be understood is poorly written code.
+
+- Do NOT write comments by default
+- Comments are allowed ONLY when:
+  - The logic is fundamentally complex (algorithmic, mathematical)
+  - External constraints force unintuitive implementations
+  - Explaining "why" something is done unusually
+- Never write comments that explain "what" the code does
+
+### Blank Lines Policy
+
+Use blank lines to separate logical sections, not to fragment related code.
+
+**DO use blank lines:**
+- After import statements (one blank line)
+- Between functions/methods (one blank line)
+- Between major logical sections within a function
+
+**DO NOT use blank lines:**
+- Between closely related statements (consecutive variable declarations)
+- Inside control flow blocks (`if`/`else`, `switch`/`case`, `try`/`catch`)
+- Between a condition and its immediate consequence
+
+### Prohibited Patterns
+
+The following patterns are strictly prohibited:
+
+**Semicolon-prefixed expressions:**
+```typescript
+// ✗ Bad
+;(mockFn as ReturnType<typeof mock>).mockResolvedValue(value)
+
+// ✓ Good
+const mockFnTyped = mockFn as ReturnType<typeof mock>
+mockFnTyped.mockResolvedValue(value)
+```
+
+**IIFE for type casting:**
+```typescript
+// ✗ Bad
+spyOn(process, "exit").mockImplementation((() => {}) as unknown as (code: number) => never)
+
+// ✓ Good
+const mockExit: (code: number) => never = () => undefined as never
+spyOn(process, "exit").mockImplementation(mockExit)
+```
+
+**Suppression comments:**
+```typescript
+// ✗ Bad
+// @ts-ignore
+// @ts-expect-error
+// biome-ignore
+```
+
 ## Writing Good Issues
 
 For detailed issue writing guidelines, see [agents/issue-writing.md](./agents/issue-writing.md).

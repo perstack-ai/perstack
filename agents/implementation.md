@@ -111,6 +111,7 @@ perstack run <expert> "<query>" 2>&1 | npx tsx filter.ts
 
 ```typescript
 import * as readline from "node:readline"
+
 function formatEvent(event: Record<string, unknown>): string | null {
   const type = event.type as string
   const expertKey = event.expertKey as string
@@ -125,6 +126,7 @@ function formatEvent(event: Record<string, unknown>): string | null {
     default: return null
   }
 }
+
 const rl = readline.createInterface({ input: process.stdin, terminal: false })
 rl.on("line", (line) => {
   try {
