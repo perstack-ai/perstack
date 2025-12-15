@@ -4,72 +4,13 @@ This guide defines how AI agents should create Experts for Perstack.
 
 ## Core Principles
 
-### 1. Do One Thing Well
+Read [Best Practices](../docs/content/making-experts/best-practices.mdx) for the five principles:
 
-Each Expert should have a single, focused responsibility.
-
-| Bad | Good |
-| --- | --- |
-| "Handles inquiries, reports, meetings, and expenses" | "Answers customer questions about products and orders" |
-| "General assistant for everything" | "Generates unit tests for TypeScript files" |
-
-### 2. Trust the LLM, Define Domain Knowledge
-
-Write declarative instructions, not procedural scripts.
-
-**Bad (procedural):**
-
-```toml
-instruction = """
-1. First, greet the customer
-2. Ask for their order number
-3. Look up the order
-4. If found, show details
-5. If not found, apologize
-"""
-```
-
-**Good (declarative):**
-
-```toml
-instruction = """
-You are a customer support specialist.
-
-Key policies:
-- Orders ship within 2 business days
-- Free returns within 30 days
-- VIP customers get priority handling
-
-Tone: Friendly but professional.
-"""
-```
-
-### 3. Minimal Skills
-
-Only include skills the Expert actually needs. Use `pick` to whitelist specific tools.
-
-**Bad:**
-
-```toml
-[experts."my-expert".skills."@perstack/base"]
-type = "mcpStdioSkill"
-command = "npx"
-packageName = "@perstack/base"
-```
-
-**Good:**
-
-```toml
-[experts."my-expert".skills."@perstack/base"]
-type = "mcpStdioSkill"
-command = "npx"
-packageName = "@perstack/base"
-pick = ["readTextFile", "writeTextFile", "think", "attemptCompletion"]
-```
-
-### 4. Ship Early
-
-Start minimal. Add complexity only when needed based on real usage.
+1. **Do One Thing Well** — Single, focused responsibility
+2. **Trust the LLM, Define Domain Knowledge** — Declarative, not procedural
+3. **Let Them Collaborate** — Modular Experts with delegation
+4. **Keep It Verifiable** — Predictable behavior anyone can audit
+5. **Ship Early** — Start minimal, expand based on real usage
 
 ## perstack.toml Structure
 
