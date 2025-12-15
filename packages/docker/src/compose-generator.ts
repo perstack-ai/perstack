@@ -53,7 +53,6 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   if (workspacePath) {
     lines.push("    volumes:")
     lines.push(`      - ${workspacePath}:/workspace:rw`)
-    lines.push("    working_dir: /workspace")
   }
   lines.push("    stdin_open: true")
   lines.push("    tty: true")

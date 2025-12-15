@@ -49,7 +49,7 @@ describe("generateComposeFile", () => {
     })
     expect(compose).toContain("volumes:")
     expect(compose).toContain("./workspace:/workspace:rw")
-    expect(compose).toContain("working_dir: /workspace")
+    expect(compose).not.toContain("working_dir:")
   })
   it("should merge env keys with proxy env in single environment block", () => {
     const compose = generateComposeFile({
@@ -73,7 +73,7 @@ describe("generateComposeFile", () => {
     })
     expect(compose).toContain("volumes:")
     expect(compose).toContain("/path/to/my/project:/workspace:rw")
-    expect(compose).toContain("working_dir: /workspace")
+    expect(compose).not.toContain("working_dir:")
   })
 })
 describe("generateBuildContext", () => {
