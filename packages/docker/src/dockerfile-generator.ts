@@ -126,6 +126,8 @@ export function generateDockerfile(
   }
   lines.push("USER perstack")
   lines.push("")
+  lines.push("WORKDIR /workspace")
+  lines.push("")
   lines.push(
     `ENTRYPOINT ["perstack-runtime", "run", "--config", "/app/perstack.toml", ${JSON.stringify(expertKey)}]`,
   )
