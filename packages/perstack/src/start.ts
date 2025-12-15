@@ -178,6 +178,7 @@ export const startCommand = new Command()
             perstackApiKey: env.PERSTACK_API_KEY,
             perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
             env,
+            verbose: input.options.verbose,
           },
           checkpoint: currentCheckpoint,
           runtime,

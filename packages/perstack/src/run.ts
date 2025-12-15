@@ -79,6 +79,7 @@ export const runCommand = new Command()
           perstackBaseSkillCommand: perstackConfig.perstackBaseSkillCommand,
           env,
           proxyUrl: process.env.PERSTACK_PROXY_URL,
+          verbose: input.options.verbose,
         },
         checkpoint,
         runtime,
