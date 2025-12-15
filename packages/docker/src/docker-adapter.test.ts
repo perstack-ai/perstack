@@ -35,6 +35,9 @@ class TestableDockerAdapter extends DockerAdapter {
   public async testBuildImages(buildDir: string, verbose?: boolean): Promise<void> {
     return this.buildImages(buildDir, verbose)
   }
+  public testExecCommandWithOutput(args: string[]): Promise<number> {
+    return super.execCommandWithOutput(args)
+  }
 }
 
 describe("DockerAdapter", () => {
@@ -276,6 +279,28 @@ describe("DockerAdapter", () => {
       await expect(adapter.testBuildImages(tempDir, true)).rejects.toThrow(
         "Docker build failed with exit code 1",
       )
+    })
+  })
+  describe("execCommandWithOutput", () => {
+    it("should return exit code 0 for successful command", async () => {
+      const adapter = new TestableDockerAdapter()
+      const exitCode = await adapter.testExecCommandWithOutput(["true"])
+      expect(exitCode).toBe(0)
+    })
+    it("should return non-zero exit code for failed command", async () => {
+      const adapter = new TestableDockerAdapter()
+      const exitCode = await adapter.testExecCommandWithOutput(["false"])
+      expect(exitCode).not.toBe(0)
+    })
+    it("should return 127 for empty command", async () => {
+      const adapter = new TestableDockerAdapter()
+      const exitCode = await adapter.testExecCommandWithOutput([])
+      expect(exitCode).toBe(127)
+    })
+    it("should return 127 for non-existent command", async () => {
+      const adapter = new TestableDockerAdapter()
+      const exitCode = await adapter.testExecCommandWithOutput(["nonexistent-command-xyz"])
+      expect(exitCode).toBe(127)
     })
   })
 })
