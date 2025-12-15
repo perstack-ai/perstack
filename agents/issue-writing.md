@@ -183,11 +183,18 @@ Link issues with "depends on #X" or "blocked by #X" in the description.
 - `security` - Security-related
 
 ### Package Labels
-- `@perstack/core`
-- `@perstack/runtime`
+- `@perstack/api-client`
 - `@perstack/base`
+- `@perstack/claude-code`
+- `@perstack/core`
+- `@perstack/cursor`
 - `@perstack/docker`
+- `@perstack/gemini`
+- `@perstack/runner`
+- `@perstack/runtime`
+- `@perstack/storage`
 - `@perstack/tui`
+- `create-expert`
 - `perstack` (CLI)
 
 ### Priority Labels
