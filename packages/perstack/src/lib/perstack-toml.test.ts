@@ -53,4 +53,14 @@ instruction = "Test instruction"
       getPerstackConfig("https://raw.githubusercontent.com/owner/repo/main/perstack.toml"),
     ).rejects.toThrow("Failed to fetch remote config: Network error")
   })
+  it("should handle uppercase URL schemes (case-insensitive)", async () => {
+    await expect(getPerstackConfig("HTTPS://example.com/perstack.toml")).rejects.toThrow(
+      "Remote config only allowed from: raw.githubusercontent.com",
+    )
+  })
+  it("should reject uppercase HTTP URLs", async () => {
+    await expect(getPerstackConfig("HTTP://example.com/perstack.toml")).rejects.toThrow(
+      "Remote config requires HTTPS",
+    )
+  })
 })
