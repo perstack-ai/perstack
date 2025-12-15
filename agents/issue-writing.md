@@ -20,11 +20,11 @@ Each issue should represent **one actionable unit of work** that can be complete
 
 Titles should describe **what to solve**, not implementation details.
 
-| Bad (implementation details) | Good (problem/goal focused) |
-| --- | --- |
-| Fix `apps/tag/app.tsx` line 242 | Fix: Tag comparison fails when tags are reordered |
-| Refactor `ExpertSelector` in 4 files | Refactor: Share ExpertSelector across wizards |
-| Add `useInput` to error state | Fix: Wizard ignores keyboard input on error screen |
+| Bad (implementation details)         | Good (problem/goal focused)                        |
+| ------------------------------------ | -------------------------------------------------- |
+| Fix `apps/tag/app.tsx` line 242      | Fix: Tag comparison fails when tags are reordered  |
+| Refactor `ExpertSelector` in 4 files | Refactor: Share ExpertSelector across wizards      |
+| Add `useInput` to error state        | Fix: Wizard ignores keyboard input on error screen |
 
 **Why:** File names and line numbers change. The problem statement remains stable.
 

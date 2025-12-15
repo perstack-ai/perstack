@@ -68,11 +68,22 @@ Branch naming:
 
 Work autonomously until completion conditions are met.
 
+### Order of Changes
+
+**Always follow this order:**
+
+1. **Documentation first** — Update docs before writing code
+2. **Tests second** — Write/update tests before implementation
+3. **Implementation last** — Code comes after docs and tests
+
+This order ensures:
+- Clear understanding of requirements before coding
+- Test-driven development catches edge cases early
+- Documentation stays in sync with code
+
 ### Guidelines
 
 - Follow existing code patterns
-- Write tests for new functionality
-- Update documentation if needed
 - Create changeset if required (see [CONTRIBUTING.md](../CONTRIBUTING.md))
 
 ### When Stuck
