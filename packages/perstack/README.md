@@ -2,7 +2,7 @@
 
 The Command Line Interface (CLI) for Perstack. Run Experts interactively or in headless mode.
 
-For full documentation, see [docs.perstack.ai](https://docs.perstack.ai).
+For full documentation, see [Perstack Documentation](https://github.com/perstack-ai/perstack/blob/main/docs/README.md).
 
 ## Installation
 

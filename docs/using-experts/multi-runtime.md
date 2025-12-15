@@ -1,0 +1,287 @@
+# Multi-Runtime Support
+
+Perstack supports running Experts through third-party coding agent runtimes. Instead of using the default runtime, you can leverage Cursor, Claude Code, or Gemini CLI as the execution engine.
+
+> [!WARNING]
+> This feature is experimental. Some capabilities may be limited depending on the runtime.
+
+## Why use non-default runtimes?
+
+### Your Expert definitions are your assets
+
+In the agent-first era, **Expert definitions are the single source of truth** — not the runtime, not the app, not the vendor platform. Your carefully crafted instructions, delegation patterns, and skill configurations represent accumulated domain knowledge. They should be:
+
+- **Portable** — run on any compatible runtime
+- **Comparable** — test the same definition across different runtimes to measure cost vs. performance
+- **Shareable** — publish to the registry and let others run your Experts on their preferred runtime
+
+### No vendor lock-in
+
+Agent definitions should not be trapped in vendor silos. With multi-runtime support:
+
+| Traditional approach         | Perstack approach           |
+| ---------------------------- | --------------------------- |
+| Agent locked to one platform | Expert runs on any runtime  |
+| Switching requires rewrite   | Switching requires one flag |
+| Vendor controls your agent   | You control your Expert     |
+
+### Practical benefits
+
+| Benefit                         | Description                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| **Cost/performance comparison** | Run the same Expert on Cursor, Claude Code, and Gemini — compare results and costs |
+| **Runtime-specific strengths**  | Leverage Cursor's codebase indexing, Claude's reasoning, Gemini's speed            |
+| **Registry interoperability**   | Instantly try any published Expert on your preferred runtime                       |
+| **Subscription leverage**       | Use existing subscriptions (Cursor Pro, Claude Max) instead of API credits         |
+
+## Supported runtimes
+
+| Runtime       | Model Support | Domain             | Skill Definition    |
+| ------------- | ------------- | ------------------ | ------------------- |
+| `perstack`    | Multi-vendor  | General purpose    | Via `perstack.toml` |
+| `docker`      | Multi-vendor  | Isolated execution | Via `perstack.toml` |
+| `cursor`      | Multi-vendor  | Coding-focused     | Via Cursor settings |
+| `claude-code` | Claude only   | Coding-focused     | Via `claude mcp`    |
+| `gemini`      | Gemini only   | General purpose    | Via Gemini config   |
+
+> [!TIP]
+> **Skill definition** in `perstack.toml` only works with the default Perstack runtime. Other runtimes have their own tool/MCP configurations — you must set them up separately in each runtime.
+
+## Runtime selection
+
+Runtime is specified in two ways:
+
+### 1. CLI option (highest priority)
+
+```bash
+npx perstack run my-expert "query" --runtime cursor
+npx perstack run my-expert "query" --runtime claude-code
+npx perstack run my-expert "query" --runtime gemini
+```
+
+### 2. Config file (default)
+
+Set the default runtime in `perstack.toml`:
+
+```toml
+# perstack.toml
+runtime = "cursor"  # All Experts use Cursor by default
+model = "claude-sonnet-4-5"
+
+[provider]
+providerName = "anthropic"
+
+[experts."my-expert"]
+# ...
+```
+
+| Scenario                                        | Runtime used         |
+| ----------------------------------------------- | -------------------- |
+| `--runtime cursor` specified                    | `cursor`             |
+| No `--runtime`, config has `runtime = "cursor"` | `cursor`             |
+| No `--runtime`, no config `runtime`             | `perstack` (default) |
+
+> [!TIP]
+> The `--runtime` CLI option always takes precedence over the config file setting.
+
+## Example: Using Cursor for code review
+
+```toml
+# perstack.toml
+runtime = "cursor"
+model = "claude-sonnet-4-5"
+
+[provider]
+providerName = "anthropic"
+
+[experts."code-reviewer"]
+version = "1.0.0"
+description = "Reviews code for quality, security, and best practices"
+instruction = """
+You are a senior code reviewer. Analyze the codebase and provide feedback on:
+- Code quality and maintainability
+- Security vulnerabilities
+- Performance issues
+- Best practices violations
+
+Write your review to `review.md`.
+"""
+```
+
+Run the Expert:
+
+```bash
+# Uses Cursor (from config)
+npx perstack run code-reviewer "Review the src/ directory"
+
+# Override to use Claude Code instead
+npx perstack run code-reviewer "Review the src/ directory" --runtime claude-code
+```
+
+## How it works
+
+When you specify a non-default runtime, Perstack:
+
+1. **Converts** the Expert definition into the runtime's native format
+2. **Executes** the runtime CLI in headless mode
+3. **Captures** the output and converts events to Perstack format
+4. **Stores** checkpoints in the standard `perstack/jobs/` directory
+
+```
+perstack run --runtime <runtime>
+        │
+        ▼
+┌─────────────────────────┐
+│   Runtime Adapter       │
+│   (converts Expert      │
+│    to CLI arguments)    │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│   Runtime CLI           │
+│   (headless mode)       │
+│                         │
+│   cursor-agent --print  │
+│   claude -p "..."       │
+│   gemini -p "..."       │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│   Event Normalization   │
+│   → Perstack format     │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│   perstack/jobs/        │
+│   (Job/Run/Checkpoint)  │
+└─────────────────────────┘
+```
+
+## Runtime-specific setup
+
+### Docker
+
+**Prerequisites:**
+- Docker installed and daemon running
+- Docker Compose available
+
+**How it works:**
+The docker runtime provides containerized execution with security isolation:
+
+1. **Dockerfile generation**: Creates a container with required runtimes (Node.js, Python)
+2. **MCP server installation**: Installs skill packages inside the container
+3. **Network isolation**: Squid proxy enforces domain allowlist
+4. **Environment isolation**: Only required environment variables are passed
+
+**Network configuration:**
+
+```toml
+[experts."secure-expert"]
+instruction = "..."
+
+[experts."secure-expert".skills."web-search"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "exa-mcp-server"
+requiredEnv = ["EXA_API_KEY"]
+allowedDomains = ["api.exa.ai"]
+```
+
+The final allowlist merges:
+- Skill-level `allowedDomains` from all skills
+- Provider API domains (auto-included based on provider)
+
+> [!TIP]
+> Provider API domains (e.g., `api.anthropic.com` for Anthropic) are automatically included based on your `provider.providerName` setting.
+
+### Cursor
+
+**Prerequisites:**
+- Cursor CLI installed (`curl https://cursor.com/install -fsS | bash`)
+- `CURSOR_API_KEY` environment variable set
+
+**How Expert definitions are mapped:**
+- `instruction` → Passed via `cursor-agent --print "..."` prompt argument
+- `skills` → Not supported (headless mode has no MCP)
+- `delegates` → Included in prompt as context
+
+> [!WARNING]
+> Cursor headless CLI (`cursor-agent --print`) does not support MCP tools. Only built-in capabilities (file read/write, shell commands via `--force`) are available.
+
+### Claude Code
+
+**Prerequisites:**
+- Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
+- Authenticated via `claude` command
+
+**How Expert definitions are mapped:**
+- `instruction` → Passed via `--append-system-prompt` flag
+- `skills` → Not injectable (runtime uses its own MCP config)
+- `delegates` → Included in system prompt as context
+
+> [!WARNING]
+> Claude Code has its own MCP configuration (`claude mcp`), but Perstack cannot inject skills into it. Configure MCP servers separately.
+
+### Gemini CLI
+
+**Prerequisites:**
+- Gemini CLI installed
+- `GEMINI_API_KEY` environment variable set
+
+**How Expert definitions are mapped:**
+- `instruction` → Passed via `gemini -p "..."` prompt argument
+- `skills` → Not supported (MCP unavailable)
+- `delegates` → Included in prompt as context
+
+> [!WARNING]
+> Gemini CLI does not support MCP. Use Gemini's built-in file/shell capabilities instead.
+
+## Limitations
+
+### Delegation
+
+Non-default runtimes do not natively support Expert-to-Expert delegation. Delegation behavior depends on the runtime:
+
+| Runtime       | Delegation handling             |
+| ------------- | ------------------------------- |
+| `perstack`    | Native support                  |
+| `cursor`      | Instruction-based (LLM decides) |
+| `claude-code` | Instruction-based (LLM decides) |
+| `gemini`      | Instruction-based (LLM decides) |
+
+With instruction-based delegation, the delegate Expert's description is included in the system prompt, and the LLM is instructed to "think as" the delegate when appropriate.
+
+### Interactive skills
+
+Interactive tools (`interactiveSkill`) are handled differently:
+
+| Runtime       | Interactive tools                       |
+| ------------- | --------------------------------------- |
+| `perstack`    | Native support with `--continue -i`     |
+| `cursor`      | Mapped to Cursor's confirmation prompts |
+| `claude-code` | Mapped to Claude's permission system    |
+| `gemini`      | Not supported in headless mode          |
+
+### Checkpoint compatibility
+
+Checkpoints created with non-default runtimes use a normalized format. You can:
+- View checkpoints with `perstack start --continue-job`
+- Query job history
+- Resume may have limitations (runtime-specific state not preserved)
+
+## Best practices
+
+1. **Start with the default runtime** during development for full skill control
+2. **Design skill-free Experts** when targeting non-default runtimes
+3. **Configure tools in each runtime** — set up MCP servers via `claude mcp`, Cursor settings, etc.
+4. **Leverage built-in capabilities** — non-default runtimes have their own file/shell tools
+5. **Set runtime in config** for consistent team workflows
+
+## What's next
+
+- [Running Experts](./running-experts.md) — basic CLI usage
+- [CLI Reference](../references/cli.md) — all options including `--runtime`
+- [perstack.toml Reference](../references/perstack-toml.md) — configuration options

@@ -46,5 +46,5 @@ npx perstack run my-expert "query" --runtime cursor
 
 ## Related Documentation
 
-- [Multi-Runtime Support](https://docs.perstack.ai/using-experts/multi-runtime)
-- [Running Experts](https://docs.perstack.ai/using-experts/running-experts)
+- [Multi-Runtime Support](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/multi-runtime.md)
+- [Running Experts](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/running-experts.md)

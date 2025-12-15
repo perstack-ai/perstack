@@ -55,4 +55,4 @@ Returns a list of all registered runtime names.
 
 ## Related Documentation
 
-- [Multi-Runtime Support](https://docs.perstack.ai/using-experts/multi-runtime)
+- [Multi-Runtime Support](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/multi-runtime.md)

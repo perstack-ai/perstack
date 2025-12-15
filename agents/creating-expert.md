@@ -80,7 +80,7 @@ Read [SECURITY.md](../SECURITY.md) for the security model.
 
 ## Core Principles
 
-Read [Best Practices](../docs/content/making-experts/best-practices.mdx) for the five principles:
+Read [Best Practices](../docs/making-experts/best-practices.md) for the five principles:
 
 1. **Do One Thing Well** — Single, focused responsibility
 2. **Trust the LLM, Define Domain Knowledge** — Declarative, not procedural
@@ -90,7 +90,7 @@ Read [Best Practices](../docs/content/making-experts/best-practices.mdx) for the
 
 ## perstack.toml Structure
 
-See [perstack.toml Reference](../docs/content/references/perstack-toml.mdx) for complete field documentation.
+See [perstack.toml Reference](../docs/references/perstack-toml.md) for complete field documentation.
 
 ### Minimal Example
 
@@ -121,9 +121,9 @@ pick = ["readTextFile", "writeTextFile", "think", "attemptCompletion"]
 
 ## Skill Configuration
 
-See [Skills](../docs/content/making-experts/skills.mdx) for MCP skill types and configuration.
+See [Skills](../docs/making-experts/skills.md) for MCP skill types and configuration.
 
-See [Base Skill](../docs/content/making-experts/base-skill.mdx) for built-in tool reference.
+See [Base Skill](../docs/making-experts/base-skill.md) for built-in tool reference.
 
 **Key principle:** Use `pick` to whitelist only the tools the Expert needs.
 
@@ -137,7 +137,7 @@ pick = ["readTextFile", "writeTextFile", "think", "attemptCompletion"]
 
 ## Delegation
 
-See [Making Experts](../docs/content/making-experts/index.mdx) for delegation design patterns.
+See [Making Experts](../docs/making-experts/README.md) for delegation design patterns.
 
 **Key insight:** Delegators only see `description`, never `instruction`. Write `description` for the delegator, `instruction` for the Expert itself.
 
