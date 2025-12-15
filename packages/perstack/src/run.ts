@@ -40,6 +40,7 @@ export const runCommand = new Command()
   )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
   .option("--runtime <runtime>", "Execution runtime (perstack, cursor, claude-code, gemini)")
+  .option("--workspace <workspace>", "Workspace directory for Docker runtime")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
     try {
@@ -83,6 +84,7 @@ export const runCommand = new Command()
         runtime,
         config: perstackConfig,
         eventListener: defaultEventListener,
+        workspace: input.options.workspace,
       })
     } catch (error) {
       if (error instanceof Error) {

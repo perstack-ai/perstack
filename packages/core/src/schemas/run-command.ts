@@ -38,6 +38,8 @@ export interface CommandOptions {
   interactiveToolCallResult?: boolean
   /** Execution runtime */
   runtime?: RuntimeName
+  /** Workspace directory for Docker runtime */
+  workspace?: string
 }
 
 const commandOptionsSchema = z.object({
@@ -89,6 +91,7 @@ const commandOptionsSchema = z.object({
   resumeFrom: z.string().optional(),
   interactiveToolCallResult: z.boolean().optional(),
   runtime: runtimeNameSchema.optional(),
+  workspace: z.string().optional(),
 })
 
 /** Input for the `perstack run` command */

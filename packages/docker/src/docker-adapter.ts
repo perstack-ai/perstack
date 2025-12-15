@@ -82,11 +82,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   }
 
   async run(params: AdapterRunParams): Promise<AdapterRunResult> {
-    const { setting, config, eventListener } = params
+    const { setting, config, eventListener, workspace } = params
     let allEvents: (RunEvent | RuntimeEvent)[] = []
     if (!config) {
       throw new Error("DockerAdapter requires config in AdapterRunParams")
     }
+    const resolvedWorkspace = this.resolveWorkspacePath(workspace)
     let currentSetting = { ...setting }
     let currentCheckpoint: Checkpoint | undefined = params.checkpoint
     while (true) {
@@ -95,6 +96,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         currentCheckpoint,
         config,
         eventListener,
+        resolvedWorkspace,
       )
       allEvents = [...allEvents, ...events]
       if (checkpoint.status === "stoppedByDelegate") {
@@ -104,7 +106,14 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         }
         const delegationResults = await Promise.all(
           delegateTo.map((delegation) =>
-            this.runDelegation(delegation, currentSetting, checkpoint, config, eventListener),
+            this.runDelegation(
+              delegation,
+              currentSetting,
+              checkpoint,
+              config,
+              eventListener,
+              resolvedWorkspace,
+            ),
           ),
         )
         for (const result of delegationResults) {
@@ -158,10 +167,11 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     _checkpoint: Checkpoint | undefined,
     config: PerstackConfig,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
+    workspace?: string,
   ): Promise<{ checkpoint: Checkpoint; events: (RunEvent | RuntimeEvent)[] }> {
     const events: (RunEvent | RuntimeEvent)[] = []
     const expertKey = setting.expertKey
-    const buildDir = await this.prepareBuildContext(config, expertKey)
+    const buildDir = await this.prepareBuildContext(config, expertKey, workspace)
     try {
       await this.buildImages(buildDir)
       const envRequirements = extractRequiredEnvVars(config, expertKey)
@@ -211,6 +221,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     parentCheckpoint: Checkpoint,
     config: PerstackConfig,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
+    workspace?: string,
   ): Promise<{
     toolCallId: string
     toolName: string
@@ -265,6 +276,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       delegateCheckpoint,
       config,
       eventListener,
+      workspace,
     )
     const resultCheckpoint = result.checkpoint
     const lastMessage = resultCheckpoint.messages[resultCheckpoint.messages.length - 1]
@@ -295,9 +307,25 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     }
   }
 
-  protected async prepareBuildContext(config: PerstackConfig, expertKey: string): Promise<string> {
+  protected resolveWorkspacePath(workspace?: string): string | undefined {
+    if (!workspace) return undefined
+    const resolved = path.resolve(workspace)
+    if (!fs.existsSync(resolved)) {
+      throw new Error(`Workspace path does not exist: ${resolved}`)
+    }
+    const stats = fs.statSync(resolved)
+    if (!stats.isDirectory()) {
+      throw new Error(`Workspace path is not a directory: ${resolved}`)
+    }
+    return resolved
+  }
+  protected async prepareBuildContext(
+    config: PerstackConfig,
+    expertKey: string,
+    workspace?: string,
+  ): Promise<string> {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
-    const context = generateBuildContext(config, expertKey)
+    const context = generateBuildContext(config, expertKey, workspace)
     fs.writeFileSync(path.join(buildDir, "Dockerfile"), context.dockerfile)
     fs.writeFileSync(path.join(buildDir, "perstack.toml"), context.configToml)
     fs.writeFileSync(path.join(buildDir, "docker-compose.yml"), context.composeFile)
@@ -315,8 +343,10 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         fs.writeFileSync(path.join(proxyDir, "start.sh"), context.proxyStartScript)
       }
     }
-    const workspaceDir = path.join(buildDir, "workspace")
-    fs.mkdirSync(workspaceDir)
+    if (!workspace) {
+      const workspaceDir = path.join(buildDir, "workspace")
+      fs.mkdirSync(workspaceDir)
+    }
     return buildDir
   }
 

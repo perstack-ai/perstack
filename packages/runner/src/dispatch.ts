@@ -16,6 +16,7 @@ export type DispatchParams = {
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
   retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+  workspace?: string
 }
 
 export type DispatchResult = {
@@ -31,6 +32,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     eventListener,
     storeCheckpoint,
     retrieveCheckpoint,
+    workspace,
   } = params
   if (!isAdapterAvailable(runtime)) {
     const available = getRegisteredRuntimes().join(", ")
@@ -53,6 +55,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     eventListener,
     storeCheckpoint: storeCheckpoint ?? defaultStoreCheckpoint,
     retrieveCheckpoint: retrieveCheckpoint ?? defaultRetrieveCheckpoint,
+    workspace,
   })
   return { checkpoint: result.checkpoint }
 }

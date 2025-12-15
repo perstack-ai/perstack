@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { generateComposeFile } from "./compose-generator.js"
+import { generateBuildContext, generateComposeFile } from "./compose-generator.js"
 
 describe("generateComposeFile", () => {
   it("should generate basic compose file", () => {
@@ -49,7 +49,7 @@ describe("generateComposeFile", () => {
     })
     expect(compose).toContain("volumes:")
     expect(compose).toContain("./workspace:/workspace:rw")
-    expect(compose).toContain("working_dir: /workspace")
+    expect(compose).not.toContain("working_dir:")
   })
   it("should merge env keys with proxy env in single environment block", () => {
     const compose = generateComposeFile({
@@ -62,5 +62,43 @@ describe("generateComposeFile", () => {
     expect(envMatches).toHaveLength(1)
     expect(compose).toContain("- ANTHROPIC_API_KEY")
     expect(compose).toContain("- HTTP_PROXY")
+  })
+  it("should include absolute workspace path when specified", () => {
+    const compose = generateComposeFile({
+      expertKey: "my-expert",
+      proxyEnabled: false,
+      networkName: "perstack-net",
+      envKeys: [],
+      workspacePath: "/path/to/my/project",
+    })
+    expect(compose).toContain("volumes:")
+    expect(compose).toContain("/path/to/my/project:/workspace:rw")
+    expect(compose).not.toContain("working_dir:")
+  })
+})
+describe("generateBuildContext", () => {
+  const minimalConfig = {
+    model: "test-model",
+    provider: { providerName: "anthropic" as const },
+    experts: {
+      "test-expert": {
+        key: "test-expert",
+        name: "Test Expert",
+        version: "1.0.0",
+        description: "Test expert",
+        instruction: "You are a test expert",
+        skills: {},
+        delegates: [],
+        tags: [],
+      },
+    },
+  }
+  it("should use default workspace path when not provided", () => {
+    const context = generateBuildContext(minimalConfig, "test-expert")
+    expect(context.composeFile).toContain("./workspace:/workspace:rw")
+  })
+  it("should use provided workspace path", () => {
+    const context = generateBuildContext(minimalConfig, "test-expert", "/custom/path")
+    expect(context.composeFile).toContain("/custom/path:/workspace:rw")
   })
 })

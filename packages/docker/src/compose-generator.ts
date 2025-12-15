@@ -53,7 +53,6 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   if (workspacePath) {
     lines.push("    volumes:")
     lines.push(`      - ${workspacePath}:/workspace:rw`)
-    lines.push("    working_dir: /workspace")
   }
   lines.push("    stdin_open: true")
   lines.push("    tty: true")
@@ -106,6 +105,7 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
 export function generateBuildContext(
   config: PerstackConfig,
   expertKey: string,
+  workspacePath?: string,
 ): {
   dockerfile: string
   configToml: string
@@ -132,12 +132,13 @@ export function generateBuildContext(
   }
   const envRequirements = extractRequiredEnvVars(config, expertKey)
   const envKeys = envRequirements.map((r) => r.name)
+  const resolvedWorkspacePath = workspacePath ?? "./workspace"
   const composeFile = generateComposeFile({
     expertKey,
     proxyEnabled: hasAllowlist,
     networkName: "perstack-net",
     envKeys,
-    workspacePath: "./workspace",
+    workspacePath: resolvedWorkspacePath,
   })
   return {
     dockerfile,
