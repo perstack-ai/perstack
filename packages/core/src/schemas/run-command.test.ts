@@ -122,6 +122,40 @@ describe("@perstack/core: startCommandInputSchema", () => {
   })
 })
 
+describe("@perstack/core: commandOptionsSchema - envPath options", () => {
+  it("transforms empty envPath array to undefined", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { envPath: [] },
+    })
+    expect(result.options.envPath).toBeUndefined()
+  })
+  it("preserves non-empty envPath array", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { envPath: [".env", ".env.local"] },
+    })
+    expect(result.options.envPath).toEqual([".env", ".env.local"])
+  })
+  it("preserves single-element envPath array", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { envPath: [".env"] },
+    })
+    expect(result.options.envPath).toEqual([".env"])
+  })
+  it("handles undefined envPath", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { envPath: undefined },
+    })
+    expect(result.options.envPath).toBeUndefined()
+  })
+})
 describe("@perstack/core: commandOptionsSchema - Job options", () => {
   it("parses jobId option", () => {
     const result = runCommandInputSchema.parse({

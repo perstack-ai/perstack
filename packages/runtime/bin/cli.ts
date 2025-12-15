@@ -46,7 +46,12 @@ program
   )
   .option("--job-id <jobId>", "Job ID for identifying the job")
   .option("--run-id <runId>", "Run ID for identifying the run")
-  .option("--env-path <envPath...>", "Path to the environment file, default is .env and .env.local")
+  .option(
+    "--env-path <path>",
+    "Path to the environment file (can be specified multiple times), default is .env and .env.local",
+    (value: string, previous: string[]) => previous.concat(value),
+    [] as string[],
+  )
   .option("--verbose", "Enable verbose logging")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })

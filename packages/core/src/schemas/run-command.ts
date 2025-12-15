@@ -84,7 +84,10 @@ const commandOptionsSchema = z.object({
     }),
   jobId: z.string().optional(),
   runId: z.string().optional(),
-  envPath: z.array(z.string()).optional(),
+  envPath: z
+    .array(z.string())
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
   verbose: z.boolean().optional(),
   continue: z.boolean().optional(),
   continueJob: z.string().optional(),
