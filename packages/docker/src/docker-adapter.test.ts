@@ -1,5 +1,8 @@
+import * as fs from "node:fs"
+import * as os from "node:os"
+import * as path from "node:path"
 import type { ExecResult } from "@perstack/core"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
 
 class TestableDockerAdapter extends DockerAdapter {
@@ -9,6 +12,9 @@ class TestableDockerAdapter extends DockerAdapter {
       return this.mockExecCommand(args)
     }
     return super.execCommand(args)
+  }
+  public testResolveWorkspacePath(workspace?: string): string | undefined {
+    return this.resolveWorkspacePath(workspace)
   }
 }
 
@@ -96,6 +102,44 @@ describe("DockerAdapter", () => {
       }
       await expect(adapter.run(params as never)).rejects.toThrow(
         "DockerAdapter requires config in AdapterRunParams",
+      )
+    })
+  })
+  describe("resolveWorkspacePath", () => {
+    let tempDir: string
+    beforeEach(() => {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-test-"))
+    })
+    afterEach(() => {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    })
+    it("should return undefined when workspace is not provided", () => {
+      const adapter = new TestableDockerAdapter()
+      expect(adapter.testResolveWorkspacePath()).toBeUndefined()
+      expect(adapter.testResolveWorkspacePath(undefined)).toBeUndefined()
+    })
+    it("should resolve absolute path that exists", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testResolveWorkspacePath(tempDir)
+      expect(result).toBe(tempDir)
+    })
+    it("should resolve relative path to absolute path", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testResolveWorkspacePath(".")
+      expect(result).toBe(process.cwd())
+    })
+    it("should throw error when path does not exist", () => {
+      const adapter = new TestableDockerAdapter()
+      expect(() => adapter.testResolveWorkspacePath("/nonexistent/path")).toThrow(
+        "Workspace path does not exist",
+      )
+    })
+    it("should throw error when path is not a directory", () => {
+      const adapter = new TestableDockerAdapter()
+      const testFile = path.join(tempDir, "test.txt")
+      fs.writeFileSync(testFile, "test")
+      expect(() => adapter.testResolveWorkspacePath(testFile)).toThrow(
+        "Workspace path is not a directory",
       )
     })
   })
