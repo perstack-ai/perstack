@@ -35,19 +35,13 @@ export function detectRequiredRuntimes(
 
 export function generateBaseImageLayers(runtimes: Set<RuntimeRequirement>): string {
   const lines: string[] = []
-  lines.push("FROM debian:bookworm-slim")
+  lines.push("FROM node:22-bookworm-slim")
   lines.push("")
   lines.push("RUN apt-get update && apt-get install -y --no-install-recommends \\")
   lines.push("    ca-certificates \\")
   lines.push("    curl \\")
   lines.push("    && rm -rf /var/lib/apt/lists/*")
   lines.push("")
-  if (runtimes.has("nodejs")) {
-    lines.push("RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \\")
-    lines.push("    && apt-get install -y --no-install-recommends nodejs \\")
-    lines.push("    && rm -rf /var/lib/apt/lists/*")
-    lines.push("")
-  }
   if (runtimes.has("python")) {
     lines.push("RUN apt-get update && apt-get install -y --no-install-recommends \\")
     lines.push("    python3 \\")

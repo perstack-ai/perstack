@@ -112,17 +112,10 @@ describe("detectRequiredRuntimes", () => {
 })
 
 describe("generateBaseImageLayers", () => {
-  it("should start with bookworm-slim", () => {
+  it("should use official node image as base", () => {
     const runtimes = new Set<"nodejs" | "python">(["nodejs"])
     const layers = generateBaseImageLayers(runtimes)
-    expect(layers).toContain("FROM debian:bookworm-slim")
-  })
-
-  it("should include nodejs installation when required", () => {
-    const runtimes = new Set<"nodejs" | "python">(["nodejs"])
-    const layers = generateBaseImageLayers(runtimes)
-    expect(layers).toContain("nodesource")
-    expect(layers).toContain("nodejs")
+    expect(layers).toContain("FROM node:22-bookworm-slim")
   })
 
   it("should include python installation when required", () => {
@@ -183,8 +176,7 @@ describe("generateDockerfile", () => {
       },
     }
     const dockerfile = generateDockerfile(config, "my-expert")
-    expect(dockerfile).toContain("FROM debian:bookworm-slim")
-    expect(dockerfile).toContain("nodejs")
+    expect(dockerfile).toContain("FROM node:22-bookworm-slim")
     expect(dockerfile).toContain("npm install -g --ignore-scripts @perstack/base")
     expect(dockerfile).toContain("npm install -g @perstack/runtime")
     expect(dockerfile).toContain("COPY --chown=perstack:perstack perstack.toml /app/perstack.toml")
