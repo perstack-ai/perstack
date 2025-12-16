@@ -269,7 +269,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       }
       await this.execCommand(["docker", "compose", "-f", composeFile, "up", "-d", "proxy"])
 
-      // Wait for proxy to become healthy (healthcheck has start_period: 5s, interval: 2s)
+      // Wait for proxy to become healthy (healthcheck interval: 2s)
       await this.waitForProxyHealthy(composeFile, eventListener, jobId, runId, verbose)
 
       if (verbose) {

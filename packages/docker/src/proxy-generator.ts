@@ -189,7 +189,6 @@ export function generateProxyComposeService(
   lines.push("      interval: 2s")
   lines.push("      timeout: 5s")
   lines.push("      retries: 10")
-  lines.push("      start_period: 5s")
   lines.push("    restart: unless-stopped")
   return lines.join("\n")
 }

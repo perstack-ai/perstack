@@ -324,7 +324,13 @@ describe("DockerAdapter", () => {
       const adapter = new TestableDockerAdapter()
       const { events, listener } = createEventCollector()
       fs.mkdirSync(path.join(tempDir, "proxy"))
-      adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
+      // Mock execCommand to return healthy status for proxy health check
+      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
+        if (args.includes("ps") && args.includes("--format") && args.includes("json")) {
+          return { stdout: '{"Health": "healthy"}', stderr: "", exitCode: 0 }
+        }
+        return { stdout: "", stderr: "", exitCode: 0 }
+      })
       const mockProcs: MockProcess[] = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
@@ -341,8 +347,8 @@ describe("DockerAdapter", () => {
         "run-1",
         listener,
       )
-      // Proxy startup requires 2 second wait in production code
-      await wait(2100)
+      // Wait for proxy health check and process setup
+      await wait(100)
       if (mockProcs[1]) {
         mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
         mockProcs[1].emit("close", 0)
@@ -379,7 +385,13 @@ describe("DockerAdapter", () => {
     it("should kill proxy log process in finally block", async () => {
       const adapter = new TestableDockerAdapter()
       fs.mkdirSync(path.join(tempDir, "proxy"))
-      adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
+      // Mock execCommand to return healthy status for proxy health check
+      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
+        if (args.includes("ps") && args.includes("--format") && args.includes("json")) {
+          return { stdout: '{"Health": "healthy"}', stderr: "", exitCode: 0 }
+        }
+        return { stdout: "", stderr: "", exitCode: 0 }
+      })
       const mockProcs: MockProcess[] = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
@@ -396,8 +408,8 @@ describe("DockerAdapter", () => {
         "run-1",
         () => {},
       )
-      // Proxy startup requires 2 second wait in production code
-      await wait(2100)
+      // Wait for proxy health check and process setup
+      await wait(100)
       if (mockProcs[1]) {
         mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
         mockProcs[1].emit("close", 0)
