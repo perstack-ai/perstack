@@ -39,4 +39,4 @@ Proxy ✓ api.anthropic.com:443
 Proxy ✗ blocked.com:443           Domain not in allowlist
 ```
 
-Closes #167
+Closes #165, #167
