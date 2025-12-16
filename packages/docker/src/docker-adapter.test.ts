@@ -1,54 +1,17 @@
 import type { ChildProcess, SpawnOptions } from "node:child_process"
-import { EventEmitter } from "node:events"
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
 import type { ExecResult, RunEvent, RuntimeEvent } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
-
-type MockProcess = {
-  stdout: EventEmitter
-  stderr: EventEmitter
-  stdin: { end: () => void }
-  kill: ReturnType<typeof vi.fn>
-  on: (event: string, listener: (...args: unknown[]) => void) => void
-  emit: (event: string, ...args: unknown[]) => boolean
-}
-
-function createMockProcess(): MockProcess {
-  const emitter = new EventEmitter()
-  return {
-    stdout: new EventEmitter(),
-    stderr: new EventEmitter(),
-    stdin: { end: vi.fn() },
-    kill: vi.fn(),
-    on: emitter.on.bind(emitter),
-    emit: emitter.emit.bind(emitter),
-  }
-}
-
-function findContainerStatusEvent(
-  events: Array<RunEvent | RuntimeEvent>,
-  status: string,
-  service: string,
-): (RunEvent | RuntimeEvent) | undefined {
-  return events.find(
-    (e) =>
-      "type" in e &&
-      e.type === "dockerContainerStatus" &&
-      "status" in e &&
-      e.status === status &&
-      "service" in e &&
-      e.service === service,
-  )
-}
-
-function createEventCollector() {
-  const events: Array<RunEvent | RuntimeEvent> = []
-  const listener = (event: RunEvent | RuntimeEvent) => events.push(event)
-  return { events, listener }
-}
+import {
+  createEventCollector,
+  createMockProcess,
+  findContainerStatusEvent,
+  type MockProcess,
+  wait,
+} from "./lib/test-utils.js"
 
 function setupMockProcess(adapter: TestableDockerAdapter) {
   const mockProc = createMockProcess()
@@ -558,7 +521,7 @@ describe("DockerAdapter", () => {
         "data",
         Buffer.from("proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443\n"),
       )
-      await new Promise((r) => setTimeout(r, 10))
+      await wait(10)
       expect(events.length).toBe(1)
       expect(events[0]).toMatchObject({
         type: "proxyAccess",
@@ -577,7 +540,7 @@ describe("DockerAdapter", () => {
         "data",
         Buffer.from("proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443\n"),
       )
-      await new Promise((r) => setTimeout(r, 10))
+      await wait(10)
       expect(events.length).toBe(1)
       expect(events[0]).toMatchObject({
         action: "blocked",
@@ -595,7 +558,7 @@ describe("DockerAdapter", () => {
         "data",
         Buffer.from("1734567890.123 TCP_TUNNEL/200 CONNECT stderr-test.com:443\n"),
       )
-      await new Promise((r) => setTimeout(r, 10))
+      await wait(10)
       expect(events.length).toBe(1)
       expect(events[0]).toMatchObject({ domain: "stderr-test.com" })
     })
@@ -607,7 +570,7 @@ describe("DockerAdapter", () => {
       adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
       mockProc.stdout.emit("data", Buffer.from("some random log line\n"))
       mockProc.stdout.emit("data", Buffer.from("TCP_MISS/200 GET http://example.com/\n"))
-      await new Promise((r) => setTimeout(r, 10))
+      await wait(10)
       expect(events.length).toBe(0)
     })
   })
@@ -669,7 +632,7 @@ describe("DockerAdapter", () => {
         listener,
       )
       // Proxy startup requires 2 second wait in production code
-      await new Promise((r) => setTimeout(r, 2100))
+      await wait(2100)
       if (mockProcs[1]) {
         mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
         mockProcs[1].emit("close", 0)
@@ -724,7 +687,7 @@ describe("DockerAdapter", () => {
         () => {},
       )
       // Proxy startup requires 2 second wait in production code
-      await new Promise((r) => setTimeout(r, 2100))
+      await wait(2100)
       if (mockProcs[1]) {
         mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
         mockProcs[1].emit("close", 0)
