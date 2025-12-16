@@ -19,7 +19,7 @@ const mockAdapter = new MockAdapter({
   mockOutput: "Test completed successfully",
 })
 
-registerAdapter("perstack", () => mockAdapter)
+registerAdapter("local", () => mockAdapter)
 ```
 
 ## Options

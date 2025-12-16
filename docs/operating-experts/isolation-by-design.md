@@ -148,9 +148,9 @@ When network requests fail unexpectedly, verbose mode helps distinguish between:
 - Network connectivity issues
 - Target server errors
 
-### Default runtime (infrastructure-controlled)
+### Local runtime (infrastructure-controlled)
 
-With the default `perstack` runtime, Perstack outputs events to stdout. Your infrastructure decides what crosses the network boundary:
+With the `local` runtime, Perstack outputs events to stdout. Your infrastructure decides what crosses the network boundary:
 
 ```
 ┌─────────────────────────────────────────────────────────┐

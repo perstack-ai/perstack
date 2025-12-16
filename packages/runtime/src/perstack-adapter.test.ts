@@ -25,7 +25,7 @@ describe("@perstack/runtime: PerstackAdapter", () => {
   describe("Direct execution mode (default)", () => {
     it("has correct name", () => {
       const adapter = new PerstackAdapter()
-      expect(adapter.name).toBe("perstack")
+      expect(adapter.name).toBe("local")
     })
 
     it("prerequisites always pass in direct execution mode", async () => {

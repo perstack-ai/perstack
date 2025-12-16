@@ -131,9 +131,9 @@ allowedDomains = ["api.exa.ai"]
 > [!TIP]
 > Network access is controlled at the **skill level** because all network operations are performed through MCP skills. The Expert itself does not directly access the network.
 
-### Default runtime (infrastructure-controlled)
+### Local runtime (infrastructure-controlled)
 
-With the default `perstack` runtime, Perstack outputs events to stdout. Your infrastructure decides what crosses the network boundary:
+With the `local` runtime, Perstack outputs events to stdout. Your infrastructure decides what crosses the network boundary:
 
 ```
 ┌─────────────────────────────────────────────────────────┐

@@ -11,7 +11,7 @@
 # Runtime configuration
 model = "claude-sonnet-4-5"
 temperature = 0.3
-runtime = "perstack"
+runtime = "docker"
 maxSteps = 50
 maxRetries = 3
 timeout = 60000
@@ -87,7 +87,7 @@ Top-level settings that apply to all Experts in the file.
 ```toml
 model = "claude-sonnet-4-5"
 temperature = 0.3
-runtime = "perstack"
+runtime = "docker"
 maxSteps = 100
 maxRetries = 10
 timeout = 60000
@@ -99,14 +99,14 @@ baseUrl = "https://custom-endpoint.example.com"
 headers = { "X-Custom-Header" = "value" }
 ```
 
-| Field         | Type   | Description                                                                 |
-| ------------- | ------ | --------------------------------------------------------------------------- |
-| `model`       | string | Model name                                                                  |
-| `temperature` | number | Temperature (0.0-1.0)                                                       |
-| `runtime`     | string | Execution runtime (`perstack`, `docker`, `cursor`, `claude-code`, `gemini`) |
-| `maxSteps`    | number | Maximum steps per run                                                       |
-| `maxRetries`  | number | Maximum retry attempts                                                      |
-| `timeout`     | number | Timeout per generation (ms)                                                 |
+| Field         | Type   | Description                                                              |
+| ------------- | ------ | ------------------------------------------------------------------------ |
+| `model`       | string | Model name                                                               |
+| `temperature` | number | Temperature (0.0-1.0)                                                    |
+| `runtime`     | string | Execution runtime (`docker`, `local`, `cursor`, `claude-code`, `gemini`) |
+| `maxSteps`    | number | Maximum steps per run                                                    |
+| `maxRetries`  | number | Maximum retry attempts                                                   |
+| `timeout`     | number | Timeout per generation (ms)                                              |
 
 ### Provider Configuration
 

@@ -35,8 +35,8 @@ export const RunSetting = ({
     >
       <Text>
         <Text bold color="cyan">
-          {info.runtime === "perstack" || !info.runtime
-            ? "Perstack"
+          {info.runtime === "local" || !info.runtime
+            ? "Local"
             : info.runtime === "claude-code"
               ? "Claude Code"
               : info.runtime.charAt(0).toUpperCase() + info.runtime.slice(1)}
@@ -51,7 +51,7 @@ export const RunSetting = ({
             <Text color="gray">
               {" "}
               (
-              {info.runtime === "perstack" || !info.runtime
+              {info.runtime === "local" || !info.runtime
                 ? `v${info.runtimeVersion}`
                 : info.runtimeVersion}
               )

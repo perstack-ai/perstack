@@ -26,7 +26,7 @@ Key concepts:
 This project uses:
 - Provider: ${provider}
 - Model: ${model}
-${isNonDefaultRuntime ? `- Runtime: ${runtime}` : "- Runtime: perstack (built-in)"}
+${isNonDefaultRuntime ? `- Runtime: ${runtime}` : "- Runtime: docker (default)"}
 
 ## CLI Reference
 
@@ -50,11 +50,12 @@ perstack run <expertKey> <query> [options]
 | \`--model <model>\` | Model name | \`claude-sonnet-4-5\` |
 | \`--temperature <temp>\` | Temperature (0.0-1.0) | \`0.3\` |
 | \`--max-steps <n>\` | Maximum steps | unlimited |
-| \`--runtime <runtime>\` | Execution runtime | \`perstack\` |
+| \`--runtime <runtime>\` | Execution runtime | \`docker\` |
 
 ### Available Runtimes
 
-- \`perstack\` — Built-in runtime (default)
+- \`docker\` — Containerized runtime with network isolation (default)
+- \`local\` — Built-in runtime without isolation
 - \`cursor\` — Cursor CLI (experimental)
 - \`claude-code\` — Claude Code CLI (experimental)
 - \`gemini\` — Gemini CLI (experimental)
