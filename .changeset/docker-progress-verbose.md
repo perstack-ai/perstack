@@ -11,6 +11,7 @@
 "@perstack/cursor": minor
 "@perstack/claude-code": minor
 "@perstack/gemini": minor
+"@perstack/e2e-mcp-server": minor
 "perstack": minor
 "create-expert": minor
 ---
