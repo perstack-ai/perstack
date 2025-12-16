@@ -1,4 +1,4 @@
-import type { ChildProcess } from "node:child_process"
+import type { ChildProcess, SpawnOptions } from "node:child_process"
 import { spawn } from "node:child_process"
 import * as fs from "node:fs"
 import * as os from "node:os"
@@ -26,6 +26,13 @@ import { extractRequiredEnvVars, resolveEnvValues } from "./env-resolver.js"
 export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "docker"
   protected version = "0.0.1"
+
+  /**
+   * Creates a child process. Override in tests to inject mock processes.
+   */
+  protected createProcess(command: string, args: string[], options: SpawnOptions): ChildProcess {
+    return spawn(command, args, options)
+  }
 
   async checkPrerequisites(): Promise<PrerequisiteResult> {
     try {
@@ -429,7 +436,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         resolve(127)
         return
       }
-      const proc = spawn(cmd, cmdArgs, {
+      const proc = this.createProcess(cmd, cmdArgs, {
         cwd: process.cwd(),
         stdio: ["pipe", process.stderr, process.stderr],
       })
@@ -471,7 +478,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         resolve(127)
         return
       }
-      const proc = spawn(cmd, cmdArgs, {
+      const proc = this.createProcess(cmd, cmdArgs, {
         cwd: process.cwd(),
         stdio: ["pipe", "pipe", "pipe"],
       })
@@ -567,12 +574,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       envArgs.push("-e", `${key}=${value}`)
     }
     const args = ["compose", "-f", composeFile, "run", "--rm", ...envArgs, "runtime", ...cliArgs]
-    const proc = spawn("docker", args, {
+    const proc = this.createProcess("docker", args, {
       cwd: buildDir,
       env: { ...process.env },
       stdio: ["pipe", "pipe", "pipe"],
     })
-    proc.stdin.end()
+    proc.stdin?.end()
     if (verbose) {
       eventListener(
         createRuntimeEvent("dockerContainerStatus", jobId, runId, {
@@ -608,9 +615,13 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     runId: string,
     eventListener: (event: RunEvent | RuntimeEvent) => void,
   ): ChildProcess {
-    const proc = spawn("docker", ["compose", "-f", composeFile, "logs", "-f", "proxy"], {
-      stdio: ["pipe", "pipe", "pipe"],
-    })
+    const proc = this.createProcess(
+      "docker",
+      ["compose", "-f", composeFile, "logs", "-f", "proxy"],
+      {
+        stdio: ["pipe", "pipe", "pipe"],
+      },
+    )
     let buffer = ""
     const processLine = (line: string) => {
       const trimmed = line.trim()
