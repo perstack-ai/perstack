@@ -20,10 +20,10 @@ import type {
   Usage,
 } from "@perstack/core"
 import { BaseAdapter, checkpointSchema, createRuntimeEvent } from "@perstack/core"
-import { buildCliArgs } from "./cli-builder.js"
 import { generateBuildContext } from "./compose-generator.js"
 import { extractRequiredEnvVars, resolveEnvValues } from "./env-resolver.js"
-import { parseBuildOutputLine, parseProxyLogLine } from "./output-parser.js"
+import { buildCliArgs } from "./lib/cli-builder.js"
+import { parseBuildOutputLine, parseProxyLogLine } from "./lib/output-parser.js"
 
 export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "docker"

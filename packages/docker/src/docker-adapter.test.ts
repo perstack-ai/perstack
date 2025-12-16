@@ -6,7 +6,7 @@ import * as path from "node:path"
 import type { ExecResult, RunEvent, RuntimeEvent } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
-import { parseBuildOutputLine, parseProxyLogLine } from "./output-parser.js"
+import { parseBuildOutputLine, parseProxyLogLine } from "./lib/output-parser.js"
 
 type MockProcess = ChildProcess & {
   stdout: EventEmitter
