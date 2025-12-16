@@ -7,19 +7,25 @@ import type { ExecResult, RunEvent, RuntimeEvent } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
 
-type MockProcess = ChildProcess & {
+type MockProcess = {
   stdout: EventEmitter
   stderr: EventEmitter
   stdin: { end: () => void }
+  kill: ReturnType<typeof vi.fn>
+  on: (event: string, listener: (...args: unknown[]) => void) => void
+  emit: (event: string, ...args: unknown[]) => boolean
 }
 
 function createMockProcess(): MockProcess {
-  const proc = new EventEmitter() as MockProcess
-  proc.stdout = new EventEmitter()
-  proc.stderr = new EventEmitter()
-  proc.stdin = { end: vi.fn() }
-  proc.kill = vi.fn()
-  return proc
+  const emitter = new EventEmitter()
+  return {
+    stdout: new EventEmitter(),
+    stderr: new EventEmitter(),
+    stdin: { end: vi.fn() },
+    kill: vi.fn(),
+    on: emitter.on.bind(emitter),
+    emit: emitter.emit.bind(emitter),
+  }
 }
 
 function findContainerStatusEvent(
@@ -53,7 +59,7 @@ function setupMockProcess(adapter: TestableDockerAdapter) {
 class TestableDockerAdapter extends DockerAdapter {
   public mockExecCommand: ((args: string[]) => Promise<ExecResult>) | null = null
   public mockExecCommandWithOutput: ((args: string[]) => Promise<number>) | null = null
-  public mockCreateProcess: (() => ChildProcess) | null = null
+  public mockCreateProcess: (() => MockProcess) | null = null
   public capturedBuildArgs: string[] = []
 
   protected override async execCommand(args: string[]): Promise<ExecResult> {
@@ -77,7 +83,7 @@ class TestableDockerAdapter extends DockerAdapter {
     options: SpawnOptions,
   ): ChildProcess {
     if (this.mockCreateProcess) {
-      return this.mockCreateProcess()
+      return this.mockCreateProcess() as unknown as ChildProcess
     }
     return super.createProcess(command, args, options)
   }

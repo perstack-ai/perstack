@@ -2,10 +2,12 @@ import type { AdapterRunParams } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import { buildCliArgs } from "./cli-builder.js"
 
+type Setting = AdapterRunParams["setting"]
+
 describe("buildCliArgs", () => {
-  const baseSetting: AdapterRunParams["setting"] = {
+  const baseSetting = {
     input: { text: "test prompt" },
-  }
+  } as Setting
 
   it("should build minimal args with defaults", () => {
     const args = buildCliArgs(baseSetting)
@@ -59,7 +61,12 @@ describe("buildCliArgs", () => {
   })
 
   it("should handle interactiveToolCallResult with -i flag", () => {
-    const toolCallResult = { toolId: "test", result: "success" }
+    const toolCallResult = {
+      toolCallId: "call-1",
+      toolName: "test",
+      skillName: "test-skill",
+      text: "success",
+    }
     const args = buildCliArgs({
       ...baseSetting,
       input: { interactiveToolCallResult: toolCallResult },
@@ -79,6 +86,7 @@ describe("buildCliArgs", () => {
 
   it("should build full args with all options", () => {
     const args = buildCliArgs({
+      ...baseSetting,
       jobId: "job-1",
       runId: "run-1",
       model: "claude-sonnet-4-20250514",
