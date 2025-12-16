@@ -38,6 +38,18 @@ function findContainerStatusEvent(
   )
 }
 
+function createEventCollector() {
+  const events: Array<RunEvent | RuntimeEvent> = []
+  const listener = (event: RunEvent | RuntimeEvent) => events.push(event)
+  return { events, listener }
+}
+
+function setupMockProcess(adapter: TestableDockerAdapter) {
+  const mockProc = createMockProcess()
+  adapter.mockCreateProcess = () => mockProc
+  return mockProc
+}
+
 class TestableDockerAdapter extends DockerAdapter {
   public mockExecCommand: ((args: string[]) => Promise<ExecResult>) | null = null
   public mockExecCommandWithOutput: ((args: string[]) => Promise<number>) | null = null
@@ -428,154 +440,118 @@ describe("DockerAdapter", () => {
   })
 
   describe("parseProxyLogLine", () => {
-    it("should parse allowed CONNECT request with TCP_TUNNEL", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine(
-        "proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443",
-      )
-      expect(result).toEqual({
-        action: "allowed",
-        domain: "api.anthropic.com",
-        port: 443,
-      })
+    const adapter = new TestableDockerAdapter()
+
+    it.each([
+      {
+        name: "allowed CONNECT with TCP_TUNNEL",
+        input: "proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443",
+        expected: { action: "allowed", domain: "api.anthropic.com", port: 443 },
+      },
+      {
+        name: "allowed CONNECT with HIER_DIRECT",
+        input: "proxy-1  | 1734567890.123 HIER_DIRECT/200 CONNECT api.openai.com:443",
+        expected: { action: "allowed", domain: "api.openai.com", port: 443 },
+      },
+      {
+        name: "blocked CONNECT request",
+        input: "proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443",
+        expected: {
+          action: "blocked",
+          domain: "blocked.com",
+          port: 443,
+          reason: "Domain not in allowlist",
+        },
+      },
+      {
+        name: "log line without container prefix",
+        input: "1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443",
+        expected: { action: "allowed", domain: "api.anthropic.com", port: 443 },
+      },
+      {
+        name: "blocked with /403 status",
+        input: "1734567890.123 HIER_NONE/403 CONNECT evil.com:443",
+        expected: {
+          action: "blocked",
+          domain: "evil.com",
+          port: 443,
+          reason: "Domain not in allowlist",
+        },
+      },
+    ])("should parse $name", ({ input, expected }) => {
+      expect(adapter.testParseProxyLogLine(input)).toEqual(expected)
     })
 
-    it("should parse allowed CONNECT request with HIER_DIRECT", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine(
-        "proxy-1  | 1734567890.123 HIER_DIRECT/200 CONNECT api.openai.com:443",
-      )
-      expect(result).toEqual({
-        action: "allowed",
-        domain: "api.openai.com",
-        port: 443,
-      })
-    })
-
-    it("should parse blocked CONNECT request", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine(
-        "proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443",
-      )
-      expect(result).toEqual({
-        action: "blocked",
-        domain: "blocked.com",
-        port: 443,
-        reason: "Domain not in allowlist",
-      })
-    })
-
-    it("should return null for non-CONNECT requests", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine(
-        "proxy-1  | 1734567890.123 TCP_MISS/200 GET http://example.com/",
-      )
-      expect(result).toBeNull()
-    })
-
-    it("should return null for unrecognized log format", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine("some random log line")
-      expect(result).toBeNull()
-    })
-
-    it("should handle log line without container prefix", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine(
-        "1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443",
-      )
-      expect(result).toEqual({
-        action: "allowed",
-        domain: "api.anthropic.com",
-        port: 443,
-      })
-    })
-
-    it("should correctly identify blocked requests with /403 status", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseProxyLogLine(
-        "1734567890.123 HIER_NONE/403 CONNECT evil.com:443",
-      )
-      expect(result).toEqual({
-        action: "blocked",
-        domain: "evil.com",
-        port: 443,
-        reason: "Domain not in allowlist",
-      })
+    it.each([
+      {
+        name: "non-CONNECT requests",
+        input: "proxy-1  | 1734567890.123 TCP_MISS/200 GET http://example.com/",
+      },
+      { name: "unrecognized log format", input: "some random log line" },
+    ])("should return null for $name", ({ input }) => {
+      expect(adapter.testParseProxyLogLine(input)).toBeNull()
     })
   })
 
   describe("parseBuildOutputLine", () => {
-    it("should parse standard build output as building stage", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("Step 1/5 : FROM node:22-slim")
-      expect(result).toEqual({
-        stage: "building",
-        service: "runtime",
-        message: "Step 1/5 : FROM node:22-slim",
-      })
+    const adapter = new TestableDockerAdapter()
+
+    it.each([
+      {
+        name: "standard build output as building stage",
+        input: "Step 1/5 : FROM node:22-slim",
+        expected: {
+          stage: "building",
+          service: "runtime",
+          message: "Step 1/5 : FROM node:22-slim",
+        },
+      },
+      {
+        name: "pulling stage from 'Pulling'",
+        input: "Pulling from library/node",
+        expected: { stage: "pulling", service: "runtime", message: "Pulling from library/node" },
+      },
+      {
+        name: "pulling stage from 'pull'",
+        input: "digest: sha256:abc123 pull complete",
+        expected: {
+          stage: "pulling",
+          service: "runtime",
+          message: "digest: sha256:abc123 pull complete",
+        },
+      },
+      {
+        name: "buildkit format with runtime service",
+        input: "#5 [runtime 1/5] FROM node:22-slim",
+        expected: {
+          stage: "building",
+          service: "runtime",
+          message: "#5 [runtime 1/5] FROM node:22-slim",
+        },
+      },
+      {
+        name: "buildkit format with proxy service",
+        input: "#3 [proxy 2/3] RUN apt-get update",
+        expected: {
+          stage: "building",
+          service: "proxy",
+          message: "#3 [proxy 2/3] RUN apt-get update",
+        },
+      },
+      {
+        name: "npm install output",
+        input: "added 150 packages in 10s",
+        expected: { stage: "building", service: "runtime", message: "added 150 packages in 10s" },
+      },
+    ])("should parse $name", ({ input, expected }) => {
+      expect(adapter.testParseBuildOutputLine(input)).toEqual(expected)
     })
 
-    it("should parse pulling stage from output containing 'Pulling'", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("Pulling from library/node")
-      expect(result).toEqual({
-        stage: "pulling",
-        service: "runtime",
-        message: "Pulling from library/node",
-      })
-    })
-
-    it("should parse pulling stage from output containing 'pull'", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("digest: sha256:abc123 pull complete")
-      expect(result).toEqual({
-        stage: "pulling",
-        service: "runtime",
-        message: "digest: sha256:abc123 pull complete",
-      })
-    })
-
-    it("should extract service name from buildkit format", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("#5 [runtime 1/5] FROM node:22-slim")
-      expect(result).toEqual({
-        stage: "building",
-        service: "runtime",
-        message: "#5 [runtime 1/5] FROM node:22-slim",
-      })
-    })
-
-    it("should extract service name from proxy build", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("#3 [proxy 2/3] RUN apt-get update")
-      expect(result).toEqual({
-        stage: "building",
-        service: "proxy",
-        message: "#3 [proxy 2/3] RUN apt-get update",
-      })
-    })
-
-    it("should return null for empty line", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("")
-      expect(result).toBeNull()
-    })
-
-    it("should return null for whitespace-only line", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("   ")
-      expect(result).toBeNull()
-    })
-
-    it("should handle npm install output", () => {
-      const adapter = new TestableDockerAdapter()
-      const result = adapter.testParseBuildOutputLine("added 150 packages in 10s")
-      expect(result).toEqual({
-        stage: "building",
-        service: "runtime",
-        message: "added 150 packages in 10s",
-      })
+    it.each([
+      { name: "empty line", input: "" },
+      { name: "whitespace-only line", input: "   " },
+    ])("should return null for $name", ({ input }) => {
+      expect(adapter.testParseBuildOutputLine(input)).toBeNull()
     })
   })
 
@@ -593,17 +569,13 @@ describe("DockerAdapter", () => {
 
     it("should emit dockerBuildProgress events from stdout", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => {
-        events.push(event)
-      }
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
       const resultPromise = adapter.testExecCommandWithBuildProgress(
         ["docker", "compose", "build"],
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       mockProc.stdout.emit("data", Buffer.from("#5 [runtime 1/5] FROM node:22-slim\n"))
       mockProc.emit("close", 0)
@@ -620,15 +592,13 @@ describe("DockerAdapter", () => {
 
     it("should emit pulling stage for pull output", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
       const resultPromise = adapter.testExecCommandWithBuildProgress(
         ["docker", "compose", "build"],
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       mockProc.stdout.emit("data", Buffer.from("Pulling from library/node\n"))
       mockProc.emit("close", 0)
@@ -638,15 +608,13 @@ describe("DockerAdapter", () => {
 
     it("should handle stderr output", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
       const resultPromise = adapter.testExecCommandWithBuildProgress(
         ["docker", "compose", "build"],
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       mockProc.stderr.emit("data", Buffer.from("Building step 1\n"))
       mockProc.emit("close", 0)
@@ -656,15 +624,13 @@ describe("DockerAdapter", () => {
 
     it("should handle multiline output", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
       const resultPromise = adapter.testExecCommandWithBuildProgress(
         ["docker", "compose", "build"],
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       mockProc.stdout.emit("data", Buffer.from("Line1\nLine2\nLine3\n"))
       mockProc.emit("close", 0)
@@ -674,17 +640,14 @@ describe("DockerAdapter", () => {
 
     it("should handle buffered output with trailing content", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
       const resultPromise = adapter.testExecCommandWithBuildProgress(
         ["docker", "compose", "build"],
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
-      // Data without trailing newline - should be processed on close
       mockProc.stdout.emit("data", Buffer.from("NoNewline"))
       mockProc.emit("close", 0)
       await resultPromise
@@ -694,8 +657,7 @@ describe("DockerAdapter", () => {
 
     it("should handle error event", async () => {
       const adapter = new TestableDockerAdapter()
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const mockProc = setupMockProcess(adapter)
       const resultPromise = adapter.testExecCommandWithBuildProgress(
         ["docker", "compose", "build"],
         "job-1",
@@ -711,11 +673,9 @@ describe("DockerAdapter", () => {
   describe("startProxyLogStream with mock spawn", () => {
     it("should emit proxyAccess events for allowed CONNECT requests", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
-      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", eventListener)
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
+      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
       mockProc.stdout.emit(
         "data",
         Buffer.from("proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443\n"),
@@ -732,11 +692,9 @@ describe("DockerAdapter", () => {
 
     it("should emit proxyAccess events for blocked requests", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
-      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", eventListener)
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
+      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
       mockProc.stdout.emit(
         "data",
         Buffer.from("proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443\n"),
@@ -752,12 +710,9 @@ describe("DockerAdapter", () => {
 
     it("should handle stderr output for proxy logs", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
-      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", eventListener)
-      // Squid may also log to stderr
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
+      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
       mockProc.stderr.emit(
         "data",
         Buffer.from("1734567890.123 TCP_TUNNEL/200 CONNECT stderr-test.com:443\n"),
@@ -769,11 +724,9 @@ describe("DockerAdapter", () => {
 
     it("should ignore non-CONNECT log lines", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
-      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", eventListener)
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
+      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
       mockProc.stdout.emit("data", Buffer.from("some random log line\n"))
       mockProc.stdout.emit("data", Buffer.from("TCP_MISS/200 GET http://example.com/\n"))
       await new Promise((r) => setTimeout(r, 10))
@@ -783,21 +736,21 @@ describe("DockerAdapter", () => {
 
   describe("runContainer verbose mode events", () => {
     let tempDir: string
+
     beforeEach(() => {
       tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-run-test-"))
       fs.writeFileSync(path.join(tempDir, "docker-compose.yml"), "version: '3'")
     })
+
     afterEach(() => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
 
     it("should emit runtime container status events in verbose mode", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
+      const { events, listener } = createEventCollector()
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const mockProc = setupMockProcess(adapter)
       const runPromise = adapter.testRunContainer(
         tempDir,
         ["test"],
@@ -806,7 +759,7 @@ describe("DockerAdapter", () => {
         true,
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
       mockProc.emit("close", 0)
@@ -818,11 +771,10 @@ describe("DockerAdapter", () => {
 
     it("should emit proxy status events when proxy directory exists", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
+      const { events, listener } = createEventCollector()
       fs.mkdirSync(path.join(tempDir, "proxy"))
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
-      const mockProcs: Array<ReturnType<typeof createMockProcess>> = []
+      const mockProcs: MockProcess[] = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
         mockProcs.push(proc)
@@ -836,7 +788,7 @@ describe("DockerAdapter", () => {
         true,
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       // Proxy startup requires 2 second wait in production code
       await new Promise((r) => setTimeout(r, 2100))
@@ -848,13 +800,12 @@ describe("DockerAdapter", () => {
       expect(findContainerStatusEvent(events, "starting", "proxy")).toBeDefined()
       expect(findContainerStatusEvent(events, "healthy", "proxy")).toBeDefined()
     }, 15000)
+
     it("should not emit container status events when verbose is false", async () => {
       const adapter = new TestableDockerAdapter()
-      const events: Array<RunEvent | RuntimeEvent> = []
-      const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
+      const { events, listener } = createEventCollector()
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
-      const mockProc = createMockProcess()
-      adapter.mockCreateProcess = () => mockProc
+      const mockProc = setupMockProcess(adapter)
       const runPromise = adapter.testRunContainer(
         tempDir,
         ["test"],
@@ -863,7 +814,7 @@ describe("DockerAdapter", () => {
         false,
         "job-1",
         "run-1",
-        eventListener,
+        listener,
       )
       mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
       mockProc.emit("close", 0)
