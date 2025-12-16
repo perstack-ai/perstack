@@ -65,20 +65,31 @@ function getPerstackApiDomain(baseUrl?: string): string {
   }
 }
 
+function normalizeTrailingDot(domain: string): string {
+  return domain.endsWith(".") ? domain.slice(0, -1) : domain
+}
+
 export function generateSquidAllowlistAcl(domains: string[]): string {
+  const normalizedDomains = domains.map(normalizeTrailingDot)
   const wildcards = new Set<string>()
-  for (const domain of domains) {
+  for (const domain of normalizedDomains) {
     if (domain.startsWith("*.")) {
       wildcards.add(domain.slice(2))
     }
   }
+  const seen = new Set<string>()
   const lines: string[] = []
-  for (const domain of domains) {
+  for (const domain of normalizedDomains) {
     if (domain.startsWith("*.")) {
-      lines.push(`.${domain.slice(2)}`)
+      const squidFormat = `.${domain.slice(2)}`
+      if (!seen.has(squidFormat)) {
+        seen.add(squidFormat)
+        lines.push(squidFormat)
+      }
     } else {
       const isSubdomainOfWildcard = Array.from(wildcards).some((w) => domain.endsWith(`.${w}`))
-      if (!isSubdomainOfWildcard) {
+      if (!isSubdomainOfWildcard && !seen.has(domain)) {
+        seen.add(domain)
         lines.push(domain)
       }
     }
