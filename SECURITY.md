@@ -299,7 +299,6 @@ Network controls are defense-in-depth, not perfect boundaries. Be aware of:
 
 - **IPv6**: Ensure IPv6 is properly blocked or filtered
 - **Punycode/IDN**: Homograph attacks via internationalized domain names
-- **Trailing dots**: `example.com.` vs `example.com`
 - **Wildcard handling**: Subdomain enumeration and unexpected matches
 - **DoH/DoT**: DNS-over-HTTPS/TLS can bypass DNS-level filtering
 - **SNI vs certificate**: Proxy validates SNI, not the actual certificate chain

@@ -278,6 +278,30 @@ describe("generateSquidAllowlistAcl", () => {
     const acl = generateSquidAllowlistAcl(["api.anthropic.com", "*.googleapis.com"])
     expect(acl).toBe("api.anthropic.com\n.googleapis.com")
   })
+
+  it("should normalize domains with trailing dots", () => {
+    const acl = generateSquidAllowlistAcl(["api.anthropic.com.", "api.openai.com."])
+    expect(acl).toBe("api.anthropic.com\napi.openai.com")
+  })
+
+  it("should normalize wildcard domains with trailing dots", () => {
+    const acl = generateSquidAllowlistAcl(["*.googleapis.com.", "*.example.com."])
+    expect(acl).toBe(".googleapis.com\n.example.com")
+  })
+
+  it("should handle mixed domains with and without trailing dots", () => {
+    const acl = generateSquidAllowlistAcl([
+      "api.anthropic.com.",
+      "api.openai.com",
+      "*.googleapis.com.",
+    ])
+    expect(acl).toBe("api.anthropic.com\napi.openai.com\n.googleapis.com")
+  })
+
+  it("should deduplicate domains after trailing dot normalization", () => {
+    const acl = generateSquidAllowlistAcl(["api.anthropic.com", "api.anthropic.com."])
+    expect(acl).toBe("api.anthropic.com")
+  })
 })
 
 describe("generateSquidConf", () => {
