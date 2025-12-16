@@ -2,7 +2,6 @@ import type { ChildProcess, SpawnOptions } from "node:child_process"
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
-import { createId } from "@paralleldrive/cuid2"
 import type {
   AdapterRunParams,
   AdapterRunResult,
@@ -77,11 +76,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     if (!config) {
       throw new Error("DockerAdapter requires config in AdapterRunParams")
     }
+    if (!setting.jobId || !setting.runId) {
+      throw new Error("DockerAdapter requires jobId and runId in setting")
+    }
     const events: (RunEvent | RuntimeEvent)[] = []
     const resolvedWorkspace = this.resolveWorkspacePath(workspace)
-    const expertKey = setting.expertKey
-    const jobId = setting.jobId ?? createId()
-    const runId = setting.runId ?? createId()
+    const { expertKey, jobId, runId } = setting
     const buildDir = await this.prepareBuildContext(
       config,
       expertKey,
