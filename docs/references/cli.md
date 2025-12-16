@@ -55,18 +55,18 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 
 ### Runtime
 
-| Option                | Description       | Default                   |
-| --------------------- | ----------------- | ------------------------- |
-| `--runtime <runtime>` | Execution runtime | From config or `perstack` |
+| Option                | Description       | Default                 |
+| --------------------- | ----------------- | ----------------------- |
+| `--runtime <runtime>` | Execution runtime | From config or `docker` |
 
 Available runtimes:
-- `perstack` — Built-in runtime (default)
-- `docker` — Containerized runtime with network isolation
+- `docker` — Containerized runtime with network isolation (default)
+- `local` — Built-in runtime without isolation
 - `cursor` — Cursor CLI (experimental)
 - `claude-code` — Claude Code CLI (experimental)
 - `gemini` — Gemini CLI (experimental)
 
-If `--runtime` is not specified, the runtime is determined by `runtime` field in `perstack.toml`. If neither is set, `perstack` is used.
+If `--runtime` is not specified, the runtime is determined by `runtime` field in `perstack.toml`. If neither is set, `docker` is used.
 
 See [Multi-Runtime Support](../using-experts/multi-runtime.md) for setup and limitations.
 
@@ -201,7 +201,7 @@ npx perstack run tic-tac-toe "Let's play!"
 npx perstack run @org/expert@1.0.0 "query"
 
 # Non-default runtimes
-npx perstack run my-expert "query" --runtime docker
+npx perstack run my-expert "query" --runtime local
 npx perstack run my-expert "query" --runtime cursor
 npx perstack run my-expert "query" --runtime claude-code
 npx perstack run my-expert "query" --runtime gemini

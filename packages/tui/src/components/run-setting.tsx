@@ -35,13 +35,14 @@ export const RunSetting = ({
     >
       <Text>
         <Text bold color="cyan">
-          {info.runtime === "perstack" || !info.runtime
-            ? "Perstack"
+          {info.runtime === "local"
+            ? "Local"
             : info.runtime === "claude-code"
               ? "Claude Code"
-              : info.runtime.charAt(0).toUpperCase() + info.runtime.slice(1)}
+              : (info.runtime ?? "docker").charAt(0).toUpperCase() +
+                (info.runtime ?? "docker").slice(1)}
         </Text>
-        {info.runtime === "docker" ? (
+        {info.runtime === "docker" || !info.runtime ? (
           <Text color={info.dockerState === "building" ? "yellow" : "gray"}>
             {" "}
             ({info.dockerState ?? "initializing"})
@@ -50,11 +51,7 @@ export const RunSetting = ({
           info.runtimeVersion && (
             <Text color="gray">
               {" "}
-              (
-              {info.runtime === "perstack" || !info.runtime
-                ? `v${info.runtimeVersion}`
-                : info.runtimeVersion}
-              )
+              ({info.runtime === "local" ? `v${info.runtimeVersion}` : info.runtimeVersion})
             </Text>
           )
         )}

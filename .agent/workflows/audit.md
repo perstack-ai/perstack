@@ -22,8 +22,8 @@ Perstack supports multiple runtimes for flexibility:
 
 | Runtime       | Description                        | Security Layer                                  |
 | ------------- | ---------------------------------- | ----------------------------------------------- |
-| `perstack`    | Built-in runtime (default)         | perstack.toml-level controls [1]                |
 | `docker`      | Containerized with network control | Perstack on Docker (full sandbox + Squid proxy) |
+| `local`       | Built-in runtime                   | perstack.toml-level controls [1]                |
 | `cursor`      | Cursor CLI (experimental)          | Cursor's own security                           |
 | `claude-code` | Claude Code CLI (experimental)     | Claude Code's own security                      |
 | `gemini`      | Gemini CLI (experimental)          | Gemini's own security                           |

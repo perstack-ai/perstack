@@ -11,7 +11,7 @@ describe("Runtime Selection", () => {
           "--config",
           "./e2e/experts/special-tools.toml",
           "--runtime",
-          "perstack",
+          "local",
           "e2e-special-tools",
           "Use attemptCompletion to say hello",
         ],

@@ -2,7 +2,7 @@ import { registerAdapter } from "@perstack/core"
 import pkg from "../package.json" with { type: "json" }
 import { PerstackAdapter } from "./perstack-adapter.js"
 
-registerAdapter("perstack", () => new PerstackAdapter())
+registerAdapter("local", () => new PerstackAdapter())
 
 export { getModel } from "./helpers/model.js"
 export { PerstackAdapter } from "./perstack-adapter.js"

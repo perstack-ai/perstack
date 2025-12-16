@@ -57,7 +57,7 @@ export const startCommand = new Command()
     "Resume from a specific checkpoint (requires --continue or --continue-job)",
   )
   .option("-i, --interactive-tool-call-result", "Query is interactive tool call result")
-  .option("--runtime <runtime>", "Execution runtime (perstack, cursor, claude-code, gemini)")
+  .option("--runtime <runtime>", "Execution runtime (docker, local, cursor, claude-code, gemini)")
   .option("--workspace <workspace>", "Workspace directory for Docker runtime")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
@@ -73,7 +73,7 @@ export const startCommand = new Command()
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
-      const runtime = input.options.runtime ?? perstackConfig.runtime ?? "perstack"
+      const runtime = input.options.runtime ?? perstackConfig.runtime ?? "docker"
       const showHistory = !input.expertKey && !input.query && !checkpoint
       const needsQueryInput = !input.query && !checkpoint
       const configuredExperts = Object.keys(perstackConfig.experts ?? {}).map((key) => ({

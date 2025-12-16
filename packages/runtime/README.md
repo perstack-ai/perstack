@@ -296,12 +296,13 @@ For stop reasons and error handling, see [Error Handling](https://github.com/per
 
 The runtime supports multiple execution backends through the adapter pattern. External runtime adapters are provided as separate packages:
 
-| Package                 | Runtime Name  | Description                |
-| ----------------------- | ------------- | -------------------------- |
-| `@perstack/runtime`     | `perstack`    | Built-in runtime (default) |
-| `@perstack/cursor`      | `cursor`      | Cursor IDE headless mode   |
-| `@perstack/claude-code` | `claude-code` | Claude Code CLI            |
-| `@perstack/gemini`      | `gemini`      | Gemini CLI                 |
+| Package                 | Runtime Name  | Description                        |
+| ----------------------- | ------------- | ---------------------------------- |
+| `@perstack/docker`      | `docker`      | Docker containerized (default)     |
+| `@perstack/runtime`     | `local`       | Built-in runtime without isolation |
+| `@perstack/cursor`      | `cursor`      | Cursor IDE headless mode           |
+| `@perstack/claude-code` | `claude-code` | Claude Code CLI                    |
+| `@perstack/gemini`      | `gemini`      | Gemini CLI                         |
 
 ### Registration Pattern
 
