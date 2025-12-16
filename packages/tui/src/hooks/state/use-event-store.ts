@@ -66,6 +66,62 @@ const processEventToLogs = (
 ): void => {
   if (!("runId" in event)) return
   const runId = event.runId
+
+  // Handle Docker build progress events
+  if (event.type === "dockerBuildProgress") {
+    const buildEvent = event as {
+      stage: "pulling" | "building" | "complete" | "error"
+      service: string
+      message: string
+      progress?: number
+    }
+    addLog({
+      id: `docker-build-${event.id}`,
+      type: "docker-build",
+      stage: buildEvent.stage,
+      service: buildEvent.service,
+      message: buildEvent.message,
+      progress: buildEvent.progress,
+    })
+    return
+  }
+
+  // Handle Docker container status events
+  if (event.type === "dockerContainerStatus") {
+    const containerEvent = event as {
+      status: "starting" | "running" | "healthy" | "unhealthy" | "stopped" | "error"
+      service: string
+      message?: string
+    }
+    addLog({
+      id: `docker-container-${event.id}`,
+      type: "docker-container",
+      status: containerEvent.status,
+      service: containerEvent.service,
+      message: containerEvent.message,
+    })
+    return
+  }
+
+  // Handle proxy access events
+  if (event.type === "proxyAccess") {
+    const proxyEvent = event as {
+      action: "allowed" | "blocked"
+      domain: string
+      port: number
+      reason?: string
+    }
+    addLog({
+      id: `proxy-access-${event.id}`,
+      type: "proxy-access",
+      action: proxyEvent.action,
+      domain: proxyEvent.domain,
+      port: proxyEvent.port,
+      reason: proxyEvent.reason,
+    })
+    return
+  }
+
   if (event.type === "initializeRuntime") {
     if (!state.rootRunId) {
       state.rootRunId = runId

@@ -349,6 +349,62 @@ const renderDelegationCompleted = (
     </ActionRow>
   )
 }
+const renderDockerBuild = (
+  stage: "pulling" | "building" | "complete" | "error",
+  service: string,
+  message: string,
+): React.ReactNode => {
+  const stageColors: Record<string, StatusColor> = {
+    pulling: "yellow",
+    building: "yellow",
+    complete: "green",
+    error: "red",
+  }
+  const color = stageColors[stage] ?? "yellow"
+  const stageLabel = stage.charAt(0).toUpperCase() + stage.slice(1)
+  return (
+    <ActionRow indicatorColor={color} label={`Docker Build [${service}] ${stageLabel}`}>
+      <Text dimColor>{truncateText(message, UI_CONSTANTS.TRUNCATE_TEXT_DEFAULT)}</Text>
+    </ActionRow>
+  )
+}
+const renderDockerContainer = (
+  status: "starting" | "running" | "healthy" | "unhealthy" | "stopped" | "error",
+  service: string,
+  message?: string,
+): React.ReactNode => {
+  const statusColors: Record<string, StatusColor> = {
+    starting: "yellow",
+    running: "green",
+    healthy: "green",
+    unhealthy: "red",
+    stopped: "white",
+    error: "red",
+  }
+  const color = statusColors[status] ?? "white"
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1)
+  return (
+    <ActionRow indicatorColor={color} label={`Docker [${service}] ${statusLabel}`}>
+      {message && <Text dimColor>{truncateText(message, UI_CONSTANTS.TRUNCATE_TEXT_DEFAULT)}</Text>}
+    </ActionRow>
+  )
+}
+const renderProxyAccess = (
+  action: "allowed" | "blocked",
+  domain: string,
+  port: number,
+  reason?: string,
+): React.ReactNode => {
+  const isAllowed = action === "allowed"
+  const color: StatusColor = isAllowed ? "green" : "red"
+  const icon = isAllowed ? "✓" : "✗"
+  const label = `Proxy ${icon} ${domain}:${port}`
+  return (
+    <ActionRow indicatorColor={color} label={label}>
+      {reason && <Text dimColor>{reason}</Text>}
+    </ActionRow>
+  )
+}
 const renderToolFromLog = (
   toolName: string,
   args: Record<string, unknown>,
@@ -418,5 +474,11 @@ export const LogEntryRow = ({ entry }: LogEntryRowProps) => {
       )
     case "completion":
       return <CompletionRow text={entry.text} />
+    case "docker-build":
+      return <Box>{renderDockerBuild(entry.stage, entry.service, entry.message)}</Box>
+    case "docker-container":
+      return <Box>{renderDockerContainer(entry.status, entry.service, entry.message)}</Box>
+    case "proxy-access":
+      return <Box>{renderProxyAccess(entry.action, entry.domain, entry.port, entry.reason)}</Box>
   }
 }

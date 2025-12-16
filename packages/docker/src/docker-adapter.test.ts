@@ -38,6 +38,11 @@ class TestableDockerAdapter extends DockerAdapter {
   public testExecCommandWithOutput(args: string[]): Promise<number> {
     return super.execCommandWithOutput(args)
   }
+  public testParseProxyLogLine(
+    line: string,
+  ): { action: "allowed" | "blocked"; domain: string; port: number; reason?: string } | null {
+    return this.parseProxyLogLine(line)
+  }
 }
 
 describe("DockerAdapter", () => {
@@ -301,6 +306,77 @@ describe("DockerAdapter", () => {
       const adapter = new TestableDockerAdapter()
       const exitCode = await adapter.testExecCommandWithOutput(["nonexistent-command-xyz"])
       expect(exitCode).toBe(127)
+    })
+  })
+  describe("parseProxyLogLine", () => {
+    it("should parse allowed CONNECT request with TCP_TUNNEL", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine(
+        "proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443",
+      )
+      expect(result).toEqual({
+        action: "allowed",
+        domain: "api.anthropic.com",
+        port: 443,
+      })
+    })
+    it("should parse allowed CONNECT request with HIER_DIRECT", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine(
+        "proxy-1  | 1734567890.123 HIER_DIRECT/200 CONNECT api.openai.com:443",
+      )
+      expect(result).toEqual({
+        action: "allowed",
+        domain: "api.openai.com",
+        port: 443,
+      })
+    })
+    it("should parse blocked CONNECT request", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine(
+        "proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443",
+      )
+      expect(result).toEqual({
+        action: "blocked",
+        domain: "blocked.com",
+        port: 443,
+        reason: "Domain not in allowlist",
+      })
+    })
+    it("should return null for non-CONNECT requests", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine(
+        "proxy-1  | 1734567890.123 TCP_MISS/200 GET http://example.com/",
+      )
+      expect(result).toBeNull()
+    })
+    it("should return null for unrecognized log format", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine("some random log line")
+      expect(result).toBeNull()
+    })
+    it("should handle log line without container prefix", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine(
+        "1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443",
+      )
+      expect(result).toEqual({
+        action: "allowed",
+        domain: "api.anthropic.com",
+        port: 443,
+      })
+    })
+    it("should correctly identify blocked requests with /403 status", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseProxyLogLine(
+        "1734567890.123 HIER_NONE/403 CONNECT evil.com:443",
+      )
+      expect(result).toEqual({
+        action: "blocked",
+        domain: "evil.com",
+        port: 443,
+        reason: "Domain not in allowlist",
+      })
     })
   })
 })

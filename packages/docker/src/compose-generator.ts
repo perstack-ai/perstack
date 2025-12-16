@@ -102,10 +102,15 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   return lines.join("\n")
 }
 
+export interface BuildContextOptions {
+  workspacePath?: string
+  verbose?: boolean
+}
+
 export function generateBuildContext(
   config: PerstackConfig,
   expertKey: string,
-  workspacePath?: string,
+  options?: BuildContextOptions | string,
 ): {
   dockerfile: string
   configToml: string
@@ -115,6 +120,12 @@ export function generateBuildContext(
   proxyStartScript: string | null
   composeFile: string
 } {
+  // Support both old signature (string) and new signature (options object)
+  const { workspacePath, verbose } =
+    typeof options === "string" || options === undefined
+      ? { workspacePath: options, verbose: false }
+      : options
+
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
   const dockerfile = generateDockerfile(config, expertKey, { proxyEnabled: hasAllowlist })
@@ -126,7 +137,7 @@ export function generateBuildContext(
   let proxyStartScript: string | null = null
   if (hasAllowlist) {
     proxyDockerfileContent = generateProxyDockerfile(true)
-    proxySquidConf = generateSquidConf(allowedDomains)
+    proxySquidConf = generateSquidConf({ allowedDomains, verbose })
     proxyAllowlist = generateSquidAllowlistAcl(allowedDomains)
     proxyStartScript = generateProxyStartScript()
   }

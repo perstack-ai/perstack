@@ -86,7 +86,18 @@ export function generateSquidAllowlistAcl(domains: string[]): string {
   return lines.join("\n")
 }
 
-export function generateSquidConf(allowedDomains?: string[]): string {
+export interface SquidConfOptions {
+  allowedDomains?: string[]
+  verbose?: boolean
+}
+
+export function generateSquidConf(options: SquidConfOptions | string[] | undefined): string {
+  // Support both old signature (string[]) and new signature (options object)
+  const { allowedDomains, verbose } =
+    Array.isArray(options) || options === undefined
+      ? { allowedDomains: options, verbose: false }
+      : options
+
   const lines: string[] = []
   lines.push("http_port 3128")
   lines.push("")
@@ -114,7 +125,14 @@ export function generateSquidConf(allowedDomains?: string[]): string {
   }
   lines.push("http_access deny all")
   lines.push("")
-  lines.push("access_log none")
+  if (verbose) {
+    // Enable access log to stdout in verbose mode for real-time monitoring
+    // Format: timestamp action domain:port result
+    lines.push("logformat perstack %tl %Ss %rm %ru %Hs")
+    lines.push("access_log stdio:/dev/stdout perstack")
+  } else {
+    lines.push("access_log none")
+  }
   lines.push("cache_log /dev/null")
   lines.push("")
   return lines.join("\n")

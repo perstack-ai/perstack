@@ -19,7 +19,7 @@ import type {
   ToolResult,
   Usage,
 } from "@perstack/core"
-import { BaseAdapter, checkpointSchema } from "@perstack/core"
+import { BaseAdapter, checkpointSchema, createRuntimeEvent } from "@perstack/core"
 import { generateBuildContext } from "./compose-generator.js"
 import { extractRequiredEnvVars, resolveEnvValues } from "./env-resolver.js"
 
@@ -171,9 +171,22 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   ): Promise<{ checkpoint: Checkpoint; events: (RunEvent | RuntimeEvent)[] }> {
     const events: (RunEvent | RuntimeEvent)[] = []
     const expertKey = setting.expertKey
-    const buildDir = await this.prepareBuildContext(config, expertKey, workspace)
+    const jobId = setting.jobId ?? createId()
+    const runId = setting.runId ?? createId()
+    const buildDir = await this.prepareBuildContext(config, expertKey, workspace, setting.verbose)
     try {
-      await this.buildImages(buildDir, setting.verbose)
+      await this.buildImages(
+        buildDir,
+        setting.verbose,
+        jobId,
+        runId,
+        eventListener
+          ? (event) => {
+              events.push(event)
+              eventListener(event)
+            }
+          : undefined,
+      )
       const envRequirements = extractRequiredEnvVars(config, expertKey)
       const envSource = { ...process.env, ...setting.env }
       const { resolved: envVars, missing } = resolveEnvValues(envRequirements, envSource)
@@ -188,6 +201,9 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         cliArgs,
         envVars,
         processTimeout,
+        setting.verbose,
+        jobId,
+        runId,
         (event) => {
           events.push(event)
           eventListener?.(event)
@@ -323,9 +339,10 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     config: PerstackConfig,
     expertKey: string,
     workspace?: string,
+    verbose?: boolean,
   ): Promise<string> {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
-    const context = generateBuildContext(config, expertKey, workspace)
+    const context = generateBuildContext(config, expertKey, { workspacePath: workspace, verbose })
     fs.writeFileSync(path.join(buildDir, "Dockerfile"), context.dockerfile)
     fs.writeFileSync(path.join(buildDir, "perstack.toml"), context.configToml)
     fs.writeFileSync(path.join(buildDir, "docker-compose.yml"), context.composeFile)
@@ -350,13 +367,50 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     return buildDir
   }
 
-  protected async buildImages(buildDir: string, verbose?: boolean): Promise<void> {
+  protected async buildImages(
+    buildDir: string,
+    verbose?: boolean,
+    jobId?: string,
+    runId?: string,
+    eventListener?: (event: RunEvent | RuntimeEvent) => void,
+  ): Promise<void> {
     const composeFile = path.join(buildDir, "docker-compose.yml")
     const args = ["compose", "-f", composeFile, "build"]
     if (verbose) {
       args.push("--progress=plain")
     }
-    if (verbose) {
+    if (verbose && eventListener && jobId && runId) {
+      eventListener(
+        createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+          stage: "building",
+          service: "runtime",
+          message: "Starting Docker build...",
+        }),
+      )
+      const exitCode = await this.execCommandWithBuildProgress(
+        ["docker", ...args],
+        jobId,
+        runId,
+        eventListener,
+      )
+      if (exitCode !== 0) {
+        eventListener(
+          createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+            stage: "error",
+            service: "runtime",
+            message: `Docker build failed with exit code ${exitCode}`,
+          }),
+        )
+        throw new Error(`Docker build failed with exit code ${exitCode}`)
+      }
+      eventListener(
+        createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+          stage: "complete",
+          service: "runtime",
+          message: "Docker build completed",
+        }),
+      )
+    } else if (verbose) {
       const exitCode = await this.execCommandWithOutput(["docker", ...args])
       if (exitCode !== 0) {
         throw new Error(`Docker build failed with exit code ${exitCode}`)
@@ -387,19 +441,115 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       })
     })
   }
+  protected execCommandWithBuildProgress(
+    args: string[],
+    jobId: string,
+    runId: string,
+    eventListener: (event: RunEvent | RuntimeEvent) => void,
+  ): Promise<number> {
+    return new Promise((resolve) => {
+      const [cmd, ...cmdArgs] = args
+      if (!cmd) {
+        resolve(127)
+        return
+      }
+      const proc = spawn(cmd, cmdArgs, {
+        cwd: process.cwd(),
+        stdio: ["pipe", "pipe", "pipe"],
+      })
+      let buffer = ""
+      const processLine = (line: string) => {
+        const trimmed = line.trim()
+        if (!trimmed) return
+        // Parse Docker build output to emit progress events
+        let stage: "pulling" | "building" = "building"
+        if (trimmed.includes("Pulling") || trimmed.includes("pull")) {
+          stage = "pulling"
+        }
+        // Extract service name if present
+        const serviceMatch = trimmed.match(/^\s*#\d+\s+\[([^\]]+)\]/)
+        const service = serviceMatch?.[1]?.split(" ")[0] ?? "runtime"
+        eventListener(
+          createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+            stage,
+            service,
+            message: trimmed,
+          }),
+        )
+      }
+      proc.stdout?.on("data", (data) => {
+        buffer += data.toString()
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+        for (const line of lines) {
+          processLine(line)
+        }
+      })
+      proc.stderr?.on("data", (data) => {
+        buffer += data.toString()
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+        for (const line of lines) {
+          processLine(line)
+        }
+      })
+      proc.on("close", (code) => {
+        if (buffer.trim()) {
+          processLine(buffer)
+        }
+        resolve(code ?? 127)
+      })
+      proc.on("error", () => {
+        resolve(127)
+      })
+    })
+  }
 
   protected async runContainer(
     buildDir: string,
     cliArgs: string[],
     envVars: Record<string, string>,
     timeout: number,
+    verbose: boolean | undefined,
+    jobId: string,
+    runId: string,
     eventListener: (event: RunEvent | RuntimeEvent) => void,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const composeFile = path.join(buildDir, "docker-compose.yml")
     const hasProxy = fs.existsSync(path.join(buildDir, "proxy"))
+    let proxyLogProcess: ChildProcess | undefined
     if (hasProxy) {
+      if (verbose) {
+        eventListener(
+          createRuntimeEvent("dockerContainerStatus", jobId, runId, {
+            status: "starting",
+            service: "proxy",
+            message: "Starting proxy container...",
+          }),
+        )
+      }
       await this.execCommand(["docker", "compose", "-f", composeFile, "up", "-d", "proxy"])
       await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (verbose) {
+        eventListener(
+          createRuntimeEvent("dockerContainerStatus", jobId, runId, {
+            status: "healthy",
+            service: "proxy",
+            message: "Proxy container ready",
+          }),
+        )
+        // Start streaming proxy logs in verbose mode
+        proxyLogProcess = this.startProxyLogStream(composeFile, jobId, runId, eventListener)
+      }
+    }
+    if (verbose) {
+      eventListener(
+        createRuntimeEvent("dockerContainerStatus", jobId, runId, {
+          status: "starting",
+          service: "runtime",
+          message: "Starting runtime container...",
+        }),
+      )
     }
     const envArgs: string[] = []
     for (const [key, value] of Object.entries(envVars)) {
@@ -412,7 +562,114 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()
-    return this.executeWithStreaming(proc, timeout, eventListener)
+    if (verbose) {
+      eventListener(
+        createRuntimeEvent("dockerContainerStatus", jobId, runId, {
+          status: "running",
+          service: "runtime",
+          message: "Runtime container started",
+        }),
+      )
+    }
+    try {
+      const result = await this.executeWithStreaming(proc, timeout, eventListener)
+      if (verbose) {
+        eventListener(
+          createRuntimeEvent("dockerContainerStatus", jobId, runId, {
+            status: "stopped",
+            service: "runtime",
+            message: `Runtime container exited with code ${result.exitCode}`,
+          }),
+        )
+      }
+      return result
+    } finally {
+      // Stop proxy log streaming
+      if (proxyLogProcess) {
+        proxyLogProcess.kill("SIGTERM")
+      }
+    }
+  }
+
+  protected startProxyLogStream(
+    composeFile: string,
+    jobId: string,
+    runId: string,
+    eventListener: (event: RunEvent | RuntimeEvent) => void,
+  ): ChildProcess {
+    const proc = spawn("docker", ["compose", "-f", composeFile, "logs", "-f", "proxy"], {
+      stdio: ["pipe", "pipe", "pipe"],
+    })
+    let buffer = ""
+    const processLine = (line: string) => {
+      const trimmed = line.trim()
+      if (!trimmed) return
+      // Parse Squid access log format: timestamp action method url status
+      // Example: "2024/01/15 10:30:00 TCP_DENIED/403 CONNECT blocked.com:443"
+      // or with our custom format: "timestamp action domain:port result"
+      const proxyEvent = this.parseProxyLogLine(trimmed)
+      if (proxyEvent) {
+        eventListener(createRuntimeEvent("proxyAccess", jobId, runId, proxyEvent))
+      }
+    }
+    proc.stdout?.on("data", (data) => {
+      buffer += data.toString()
+      const lines = buffer.split("\n")
+      buffer = lines.pop() ?? ""
+      for (const line of lines) {
+        processLine(line)
+      }
+    })
+    proc.stderr?.on("data", (data) => {
+      // Squid may also log to stderr
+      buffer += data.toString()
+      const lines = buffer.split("\n")
+      buffer = lines.pop() ?? ""
+      for (const line of lines) {
+        processLine(line)
+      }
+    })
+    return proc
+  }
+
+  protected parseProxyLogLine(line: string): {
+    action: "allowed" | "blocked"
+    domain: string
+    port: number
+    reason?: string
+  } | null {
+    // Skip container prefix (e.g., "proxy-1  | ")
+    const logContent = line.replace(/^[^|]+\|\s*/, "")
+    // Match Squid access log patterns
+    // Allowed: TCP_TUNNEL/200 or HIER_DIRECT/200
+    // Denied: TCP_DENIED/403
+    const connectMatch = logContent.match(/CONNECT\s+([^:\s]+):(\d+)/)
+    if (!connectMatch) return null
+    const domain = connectMatch[1]
+    const port = Number.parseInt(connectMatch[2], 10)
+    if (!domain || Number.isNaN(port)) return null
+    // Determine if allowed or blocked based on status
+    const isBlocked = logContent.includes("TCP_DENIED") || logContent.includes("/403")
+    const isAllowed =
+      logContent.includes("TCP_TUNNEL") ||
+      logContent.includes("HIER_DIRECT") ||
+      logContent.includes("/200")
+    if (isBlocked) {
+      return {
+        action: "blocked",
+        domain,
+        port,
+        reason: "Domain not in allowlist",
+      }
+    }
+    if (isAllowed) {
+      return {
+        action: "allowed",
+        domain,
+        port,
+      }
+    }
+    return null
   }
 
   protected buildCliArgs(setting: AdapterRunParams["setting"]): string[] {

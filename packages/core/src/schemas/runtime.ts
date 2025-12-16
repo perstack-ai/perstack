@@ -433,6 +433,26 @@ type RuntimeEventPayloads = {
   streamingText: {
     text: string
   }
+  /** Docker build progress event */
+  dockerBuildProgress: {
+    stage: "pulling" | "building" | "complete" | "error"
+    service: string
+    message: string
+    progress?: number
+  }
+  /** Docker container status event */
+  dockerContainerStatus: {
+    status: "starting" | "running" | "healthy" | "unhealthy" | "stopped" | "error"
+    service: string
+    message?: string
+  }
+  /** Proxy access event (allow/block) */
+  proxyAccess: {
+    action: "allowed" | "blocked"
+    domain: string
+    port: number
+    reason?: string
+  }
 }
 
 /** All runtime event types */
