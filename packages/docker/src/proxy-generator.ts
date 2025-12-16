@@ -164,6 +164,8 @@ export function generateProxyDockerfile(hasAllowlist: boolean): string {
 export function generateProxyStartScript(): string {
   const lines: string[] = []
   lines.push("#!/bin/sh")
+  lines.push("# Allow proxy user to write to stdout for access logs")
+  lines.push("chmod 666 /dev/stdout 2>/dev/null || true")
   lines.push("dnsmasq --no-daemon --server=8.8.8.8 --server=8.8.4.4 &")
   lines.push("exec squid -N -d 1")
   lines.push("")
