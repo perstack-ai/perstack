@@ -87,7 +87,7 @@ export async function run(runInput: RunParamsInput, options?: RunOptions): Promi
     if (options?.eventListener) {
       const initEvent = createRuntimeEvent("initializeRuntime", setting.jobId, setting.runId, {
         runtimeVersion: pkg.version,
-        runtime: "local",
+        runtime: "perstack",
         expertName: expertToRun.name,
         experts: Object.keys(experts),
         model: setting.model,

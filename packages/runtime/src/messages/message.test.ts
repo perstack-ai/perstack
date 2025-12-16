@@ -448,7 +448,7 @@ describe("@perstack/messages: instruction-message", () => {
         skills: {},
         delegates: [],
         tags: [],
-        runtime: ["local" as const],
+        runtime: ["perstack" as const],
       }
       const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.type).toBe("instructionMessage")
@@ -478,7 +478,7 @@ describe("@perstack/messages: instruction-message", () => {
         },
         delegates: [],
         tags: [],
-        runtime: ["local" as const],
+        runtime: ["perstack" as const],
       }
       const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).toContain("Always use this skill carefully.")
@@ -505,7 +505,7 @@ describe("@perstack/messages: instruction-message", () => {
         },
         delegates: [],
         tags: [],
-        runtime: ["local" as const],
+        runtime: ["perstack" as const],
       }
       const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).not.toContain('"test-skill" skill rules:')
@@ -520,7 +520,7 @@ describe("@perstack/messages: instruction-message", () => {
         skills: {},
         delegates: ["delegate-expert"],
         tags: [],
-        runtime: ["local" as const],
+        runtime: ["perstack" as const],
       }
       const experts = {
         "test-expert": expert,
@@ -533,7 +533,7 @@ describe("@perstack/messages: instruction-message", () => {
           skills: {},
           delegates: [],
           tags: [],
-          runtime: ["local" as const],
+          runtime: ["perstack" as const],
         },
       }
       const result = createInstructionMessage(expert, experts, startedAt)
@@ -550,7 +550,7 @@ describe("@perstack/messages: instruction-message", () => {
         skills: {},
         delegates: ["nonexistent-delegate"],
         tags: [],
-        runtime: ["local" as const],
+        runtime: ["perstack" as const],
       }
       const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).not.toContain('About "')
@@ -565,7 +565,7 @@ describe("@perstack/messages: instruction-message", () => {
         skills: {},
         delegates: [],
         tags: [],
-        runtime: ["local" as const],
+        runtime: ["perstack" as const],
       }
       const result = createInstructionMessage(expert, {}, startedAt)
       expect(result.contents[0].text).toContain("2023-11-14T22:13:20.000Z")

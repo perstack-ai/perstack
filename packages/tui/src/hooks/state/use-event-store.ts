@@ -33,7 +33,7 @@ const extractQuery = (event: Extract<RunEvent, { type: "startRun" }>): string | 
 }
 const formatRuntimeName = (runtime: string): string => {
   if (runtime === "claude-code") return "Claude Code"
-  if (runtime === "local") return "Local"
+  if (runtime === "perstack") return "Perstack"
   return runtime.charAt(0).toUpperCase() + runtime.slice(1)
 }
 type ToolState = {

@@ -306,6 +306,26 @@ Network controls are defense-in-depth, not perfect boundaries. Be aware of:
 
 **Best practice:** Use the smallest possible `allowedDomains` list. Default to deny.
 
+### DNS Exfiltration Channels
+
+Squid proxy blocks HTTP/HTTPS responses but does not intercept DNS queries. A malicious skill could:
+
+- Encode secrets in DNS query subdomains (e.g., `secretdata.attacker.com`)
+- Use DNS TXT record lookups for bidirectional communication
+- Exfiltrate data via DNS query patterns
+
+**What Perstack blocks:**
+
+- HTTP/HTTPS responses from non-allowedDomains (via Squid proxy)
+- The response to any HTTP request to attacker-controlled domains
+
+**What Perstack does NOT block:**
+
+- DNS queries themselves (the query is sent even if the HTTP response is blocked)
+- Data encoded in the DNS query string reaching the attacker's DNS server
+
+**Mitigation:** For highly sensitive environments, deploy additional DNS-level filtering at the infrastructure level (e.g., DNS firewall, restricted DNS resolver).
+
 ### Windows Platform Limitations
 
 > **🚨 Windows Security Warning**

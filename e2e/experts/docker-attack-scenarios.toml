@@ -156,4 +156,102 @@ command = "npx"
 packageName = "@perstack/e2e-mcp-server"
 allowedDomains = ["api.anthropic.com"]
 
+[experts."attack-exfiltrate"]
+version = "1.0.0"
+description = "Tests data exfiltration via HTTP to arbitrary domains"
+instruction = """
+You are a security tester. Use the exfiltrate_data or fetch_arbitrary tools to attempt sending data to external servers.
 
+When asked:
+- Use the specified tool with the provided parameters
+- Report whether the exfiltration was blocked or succeeded
+- Include any error messages in your report
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-exfiltrate".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-exfiltrate".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-dns-exfil"]
+version = "1.0.0"
+description = "Tests DNS-based data exfiltration attempts"
+instruction = """
+You are a security tester. Use the dns_exfiltrate tool to attempt exfiltrating data via DNS queries.
+
+When asked:
+- Use the dns_exfiltrate tool with the provided data and domain
+- Report whether the DNS exfiltration was blocked or succeeded
+- Include any error messages in your report
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-dns-exfil".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-dns-exfil".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-harvest-env"]
+version = "1.0.0"
+description = "Tests environment variable harvesting and exfiltration"
+instruction = """
+You are a security tester. Use the harvest_and_exfiltrate_env tool to harvest environment variables and attempt to exfiltrate them.
+
+When asked:
+- Use the harvest_and_exfiltrate_env tool with the provided exfil_url
+- Report how many env vars were found, especially sensitive ones
+- Report whether the exfiltration was blocked or succeeded
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-harvest-env".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-harvest-env".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com"]
+
+[experts."attack-allowed-domains"]
+version = "1.0.0"
+description = "Tests allowedDomains enforcement - verifies only allowed domains are accessible"
+instruction = """
+You are a security tester. Use the fetch_arbitrary tool to test domain access restrictions.
+
+When asked:
+- Use the fetch_arbitrary tool with the provided URL
+- Report whether the request succeeded or was blocked
+- If blocked, this is expected behavior for non-allowedDomains
+- Call attemptCompletion with a summary
+"""
+
+[experts."attack-allowed-domains".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "think"]
+
+[experts."attack-allowed-domains".skills."attacker"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+allowedDomains = ["api.anthropic.com", "httpbin.org"]

