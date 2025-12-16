@@ -19,11 +19,13 @@ import type {
   ToolResult,
   Usage,
 } from "@perstack/core"
-import { BaseAdapter, checkpointSchema, createRuntimeEvent } from "@perstack/core"
+import { BaseAdapter, createRuntimeEvent } from "@perstack/core"
 import { generateBuildContext } from "./compose-generator.js"
 import { extractRequiredEnvVars, resolveEnvValues } from "./env-resolver.js"
 import { buildCliArgs } from "./lib/cli-builder.js"
+import { findTerminalEvent, parseContainerEvent } from "./lib/event-parser.js"
 import { parseBuildOutputLine, parseProxyLogLine } from "./lib/output-parser.js"
+import { StreamBuffer } from "./lib/stream-buffer.js"
 
 export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "docker"
@@ -220,15 +222,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
           `Docker container failed with exit code ${result.exitCode}: ${result.stderr}`,
         )
       }
-      const terminalEventTypes = [
-        "completeRun",
-        "stopRunByInteractiveTool",
-        "stopRunByDelegate",
-        "stopRunByExceededMaxSteps",
-      ]
-      const terminalEvent = events.find((e) => terminalEventTypes.includes(e.type)) as
-        | (RunEvent & { checkpoint: Checkpoint })
-        | undefined
+      const terminalEvent = findTerminalEvent(events)
       if (!terminalEvent?.checkpoint) {
         throw new Error("No terminal event with checkpoint received from container")
       }
@@ -465,7 +459,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         cwd: process.cwd(),
         stdio: ["pipe", "pipe", "pipe"],
       })
-      let buffer = ""
+      const buffer = new StreamBuffer()
       const processLine = (line: string) => {
         const parsed = parseBuildOutputLine(line)
         if (parsed) {
@@ -478,26 +472,10 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
           )
         }
       }
-      proc.stdout?.on("data", (data) => {
-        buffer += data.toString()
-        const lines = buffer.split("\n")
-        buffer = lines.pop() ?? ""
-        for (const line of lines) {
-          processLine(line)
-        }
-      })
-      proc.stderr?.on("data", (data) => {
-        buffer += data.toString()
-        const lines = buffer.split("\n")
-        buffer = lines.pop() ?? ""
-        for (const line of lines) {
-          processLine(line)
-        }
-      })
+      proc.stdout?.on("data", (data) => buffer.processChunk(data.toString(), processLine))
+      proc.stderr?.on("data", (data) => buffer.processChunk(data.toString(), processLine))
       proc.on("close", (code) => {
-        if (buffer.trim()) {
-          processLine(buffer)
-        }
+        buffer.flush(processLine)
         resolve(code ?? 127)
       })
       proc.on("error", () => {
@@ -599,11 +577,9 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     const proc = this.createProcess(
       "docker",
       ["compose", "-f", composeFile, "logs", "-f", "proxy"],
-      {
-        stdio: ["pipe", "pipe", "pipe"],
-      },
+      { stdio: ["pipe", "pipe", "pipe"] },
     )
-    let buffer = ""
+    const buffer = new StreamBuffer()
     const processLine = (line: string) => {
       const trimmed = line.trim()
       if (!trimmed) return
@@ -612,23 +588,8 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         eventListener(createRuntimeEvent("proxyAccess", jobId, runId, proxyEvent))
       }
     }
-    proc.stdout?.on("data", (data) => {
-      buffer += data.toString()
-      const lines = buffer.split("\n")
-      buffer = lines.pop() ?? ""
-      for (const line of lines) {
-        processLine(line)
-      }
-    })
-    proc.stderr?.on("data", (data) => {
-      // Squid may also log to stderr
-      buffer += data.toString()
-      const lines = buffer.split("\n")
-      buffer = lines.pop() ?? ""
-      for (const line of lines) {
-        processLine(line)
-      }
-    })
+    proc.stdout?.on("data", (data) => buffer.processChunk(data.toString(), processLine))
+    proc.stderr?.on("data", (data) => buffer.processChunk(data.toString(), processLine))
     return proc
   }
 
@@ -640,75 +601,26 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     return new Promise((resolve, reject) => {
       let stdout = ""
       let stderr = ""
-      let buffer = ""
+      const buffer = new StreamBuffer()
       const timer = setTimeout(() => {
         proc.kill("SIGTERM")
         reject(new Error(`Docker container timed out after ${timeout}ms`))
       }, timeout)
+      const processLine = (line: string) => {
+        const parsed = parseContainerEvent(line)
+        if (parsed) eventListener(parsed)
+      }
       proc.stdout?.on("data", (data) => {
         const chunk = data.toString()
         stdout += chunk
-        buffer += chunk
-        const lines = buffer.split("\n")
-        buffer = lines.pop() ?? ""
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (!trimmed) continue
-          let parsed: RunEvent | RuntimeEvent
-          try {
-            parsed = JSON.parse(trimmed) as RunEvent | RuntimeEvent
-          } catch {
-            continue
-          }
-          const terminalEventTypes = [
-            "completeRun",
-            "stopRunByInteractiveTool",
-            "stopRunByDelegate",
-            "stopRunByExceededMaxSteps",
-          ]
-          if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
-            try {
-              const checkpointData = parsed.checkpoint
-              parsed.checkpoint = checkpointSchema.parse(checkpointData)
-            } catch {
-              continue
-            }
-          }
-          eventListener(parsed)
-        }
+        buffer.processChunk(chunk, processLine)
       })
       proc.stderr?.on("data", (data) => {
         stderr += data.toString()
       })
       proc.on("close", (code) => {
         clearTimeout(timer)
-        if (buffer.trim()) {
-          let parsed: RunEvent | RuntimeEvent | null = null
-          try {
-            parsed = JSON.parse(buffer.trim()) as RunEvent | RuntimeEvent
-          } catch {
-            // Non-JSON content from container output is expected
-          }
-          if (parsed) {
-            const terminalEventTypes = [
-              "completeRun",
-              "stopRunByInteractiveTool",
-              "stopRunByDelegate",
-              "stopRunByExceededMaxSteps",
-            ]
-            if (terminalEventTypes.includes(parsed.type) && "checkpoint" in parsed) {
-              try {
-                const checkpointData = parsed.checkpoint
-                parsed.checkpoint = checkpointSchema.parse(checkpointData)
-              } catch {
-                parsed = null
-              }
-            }
-            if (parsed) {
-              eventListener(parsed)
-            }
-          }
-        }
+        buffer.flush(processLine)
         resolve({ stdout, stderr, exitCode: code ?? 127 })
       })
       proc.on("error", (err) => {
