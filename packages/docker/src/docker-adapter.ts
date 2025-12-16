@@ -268,7 +268,10 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         )
       }
       await this.execCommand(["docker", "compose", "-f", composeFile, "up", "-d", "proxy"])
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // Wait for proxy to become healthy (healthcheck has start_period: 5s, interval: 2s)
+      await this.waitForProxyHealthy(composeFile, eventListener, jobId, runId, verbose)
+
       if (verbose) {
         this.emitContainerStatus(
           eventListener,
@@ -392,6 +395,51 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         reject(err)
       })
     })
+  }
+
+  protected async waitForProxyHealthy(
+    composeFile: string,
+    eventListener: (event: RunEvent | RuntimeEvent) => void,
+    jobId: string,
+    runId: string,
+    verbose: boolean | undefined,
+    maxAttempts = 30,
+    intervalMs = 1000,
+  ): Promise<void> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const result = await this.execCommand([
+        "docker",
+        "compose",
+        "-f",
+        composeFile,
+        "ps",
+        "--format",
+        "json",
+        "proxy",
+      ])
+      if (result.exitCode === 0 && result.stdout) {
+        try {
+          const status = JSON.parse(result.stdout)
+          if (status.Health === "healthy") {
+            return
+          }
+          if (verbose && attempt > 0 && attempt % 5 === 0) {
+            this.emitContainerStatus(
+              eventListener,
+              jobId,
+              runId,
+              "starting",
+              "proxy",
+              `Waiting for proxy health check... (${attempt}/${maxAttempts})`,
+            )
+          }
+        } catch {
+          // JSON parse error, continue waiting
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs))
+    }
+    throw new Error("Proxy container failed to become healthy within timeout")
   }
 
   protected async cleanup(buildDir: string): Promise<void> {
