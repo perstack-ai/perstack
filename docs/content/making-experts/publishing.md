@@ -199,3 +199,4 @@ The `--force` flag is required when using CLI mode.
 
 - [Registry](../understanding-perstack/registry.md) — how the Registry works
 - [Registry API](../references/registry-api.md) — programmatic access
+

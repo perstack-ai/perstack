@@ -188,3 +188,4 @@ The coordinator reads the customer's message, decides which specialist to call, 
 - [Experts](../understanding-perstack/experts.md) — How delegation works in detail
 - [Best Practices](../making-experts/best-practices.md) — Design patterns for splitting Experts
 - [Adding AI to Your App](./adding-ai-to-your-app.md) — Integrate your modular agents
+

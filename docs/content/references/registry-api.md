@@ -386,3 +386,4 @@ Expert keys follow this pattern:
 | `400`  | Bad Request — Invalid parameters or business rule violation |
 | `401`  | Unauthorized — Missing or invalid authentication            |
 | `404`  | Not Found — Expert does not exist                           |
+

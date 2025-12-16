@@ -103,3 +103,4 @@ rule = "Prefer .edu and .gov sources. Avoid user-generated content."
 - [Examples](./examples.md) — see skills in context
 - [Base Skill](./base-skill.md) — built-in tools available to all Experts
 - [perstack.toml Reference](../references/perstack-toml.md) — complete field reference
+

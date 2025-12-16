@@ -188,3 +188,4 @@ For more on isolation, see [Isolation by Design](./isolation-by-design.md).
 - [Isolation by Design](./isolation-by-design.md) — security boundaries
 - [Skills](../making-experts/skills.md) — defining skills in perstack.toml
 - [Base Skill](../making-experts/base-skill.md) — built-in tools
+

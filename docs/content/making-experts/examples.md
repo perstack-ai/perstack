@@ -149,3 +149,4 @@ inputJsonSchema = """
 ```
 
 When `addToCart` is called, execution pauses and returns control to your application. Your app performs the cart operation, then resumes the Expert. This pattern separates AI reasoning from actual operations.
+

@@ -188,3 +188,4 @@ You've seen the basics. Here's where to go from here:
 **Reference:**
 - [CLI Reference](./references/cli.md) — all commands and options
 - [perstack.toml Reference](./references/perstack-toml.md) — complete configuration spec
+

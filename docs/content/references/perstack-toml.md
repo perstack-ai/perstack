@@ -304,3 +304,4 @@ inputJsonSchema = """
 | ----------------- | ------ | -------- | --------------------- |
 | `description`     | string | No       | Tool description      |
 | `inputJsonSchema` | string | **Yes**  | JSON Schema for input |
+

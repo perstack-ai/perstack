@@ -99,3 +99,4 @@ Registry security is one layer of defense. See [Sandbox Integration](./sandbox-i
 ## API Reference
 
 For programmatic access, see [Registry API Reference](../references/registry-api.md).
+

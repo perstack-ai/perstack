@@ -22,6 +22,22 @@ function createMockProcess(): MockProcess {
   return proc
 }
 
+function findContainerStatusEvent(
+  events: Array<RunEvent | RuntimeEvent>,
+  status: string,
+  service: string,
+): (RunEvent | RuntimeEvent) | undefined {
+  return events.find(
+    (e) =>
+      "type" in e &&
+      e.type === "dockerContainerStatus" &&
+      "status" in e &&
+      e.status === status &&
+      "service" in e &&
+      e.service === service,
+  )
+}
+
 class TestableDockerAdapter extends DockerAdapter {
   public mockExecCommand: ((args: string[]) => Promise<ExecResult>) | null = null
   public mockExecCommandWithOutput: ((args: string[]) => Promise<number>) | null = null
@@ -538,42 +554,7 @@ describe("DockerAdapter", () => {
       )
       expect(exitCode).toBe(127)
     })
-    it("should return 127 for non-existent command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithBuildProgress(
-        ["nonexistent-cmd-xyz"],
-        "job-1",
-        "run-1",
-        () => {},
-      )
-      expect(exitCode).toBe(127)
-    })
-  })
-  describe("execCommandWithBuildProgress with mock spawn", () => {
-    it("should call mockCreateProcess when executing", async () => {
-      const adapter = new TestableDockerAdapter()
-      const mockProc = createMockProcess()
-      const mockFn = vi.fn(() => mockProc)
-      adapter.mockCreateProcess = mockFn
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        () => {},
-      )
-      mockProc.emit("close", 0)
-      await resultPromise
-      expect(mockFn).toHaveBeenCalled()
-    })
-    it("should verify mock EventEmitter works correctly", () => {
-      const mockProc = createMockProcess()
-      const received: string[] = []
-      mockProc.stdout.on("data", (data: Buffer) => {
-        received.push(data.toString())
-      })
-      mockProc.stdout.emit("data", Buffer.from("test"))
-      expect(received).toEqual(["test"])
-    })
+
     it("should emit dockerBuildProgress events from stdout", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -783,36 +764,9 @@ describe("DockerAdapter", () => {
       mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
       mockProc.emit("close", 0)
       await runPromise
-      const startingEvent = events.find(
-        (e) =>
-          "type" in e &&
-          e.type === "dockerContainerStatus" &&
-          "status" in e &&
-          e.status === "starting" &&
-          "service" in e &&
-          e.service === "runtime",
-      )
-      const runningEvent = events.find(
-        (e) =>
-          "type" in e &&
-          e.type === "dockerContainerStatus" &&
-          "status" in e &&
-          e.status === "running" &&
-          "service" in e &&
-          e.service === "runtime",
-      )
-      const stoppedEvent = events.find(
-        (e) =>
-          "type" in e &&
-          e.type === "dockerContainerStatus" &&
-          "status" in e &&
-          e.status === "stopped" &&
-          "service" in e &&
-          e.service === "runtime",
-      )
-      expect(startingEvent).toBeDefined()
-      expect(runningEvent).toBeDefined()
-      expect(stoppedEvent).toBeDefined()
+      expect(findContainerStatusEvent(events, "starting", "runtime")).toBeDefined()
+      expect(findContainerStatusEvent(events, "running", "runtime")).toBeDefined()
+      expect(findContainerStatusEvent(events, "stopped", "runtime")).toBeDefined()
     })
     it("should emit proxy status events when proxy directory exists", async () => {
       const adapter = new TestableDockerAdapter()
@@ -843,26 +797,8 @@ describe("DockerAdapter", () => {
         mockProcs[1].emit("close", 0)
       }
       await runPromise
-      const proxyStarting = events.find(
-        (e) =>
-          "type" in e &&
-          e.type === "dockerContainerStatus" &&
-          "status" in e &&
-          e.status === "starting" &&
-          "service" in e &&
-          e.service === "proxy",
-      )
-      const proxyHealthy = events.find(
-        (e) =>
-          "type" in e &&
-          e.type === "dockerContainerStatus" &&
-          "status" in e &&
-          e.status === "healthy" &&
-          "service" in e &&
-          e.service === "proxy",
-      )
-      expect(proxyStarting).toBeDefined()
-      expect(proxyHealthy).toBeDefined()
+      expect(findContainerStatusEvent(events, "starting", "proxy")).toBeDefined()
+      expect(findContainerStatusEvent(events, "healthy", "proxy")).toBeDefined()
     }, 15000)
     it("should not emit container status events when verbose is false", async () => {
       const adapter = new TestableDockerAdapter()
@@ -893,8 +829,7 @@ describe("DockerAdapter", () => {
       const adapter = new TestableDockerAdapter()
       fs.mkdirSync(path.join(tempDir, "proxy"))
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
-      const mockProcs: Array<typeof mockProc> = []
-      const mockProc = createMockProcess()
+      const mockProcs: MockProcess[] = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
         mockProcs.push(proc)

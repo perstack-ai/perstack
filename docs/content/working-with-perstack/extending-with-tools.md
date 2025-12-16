@@ -146,3 +146,4 @@ requiredEnv = ["ANALYTICS_DB_URL"]
 - [Skills](../making-experts/skills.md) — Complete skill reference
 - [Base Skill](../making-experts/base-skill.md) — Built-in tools available to all Experts
 - [Examples](../making-experts/examples.md) — More tool integration patterns
+

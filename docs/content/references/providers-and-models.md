@@ -325,3 +325,4 @@ headers = { "X-Custom-Header" = "value" }        # Optional
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 npx perstack run my-expert "query" --provider google-vertex --model gemini-1.5-pro
 ```
+

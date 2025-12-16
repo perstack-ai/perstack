@@ -152,3 +152,4 @@ The stateless container model fits all of these patterns.
 - [Sandbox Integration](../understanding-perstack/sandbox-integration.md) — Deep dive on the security model
 - [Operating Experts](../operating-experts/deployment.md) — Monitoring, maintenance, and operations
 - [Isolation by Design](../operating-experts/isolation-by-design.md) — How isolation is enforced
+

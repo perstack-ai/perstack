@@ -105,3 +105,4 @@ An Expert is a modular micro-agent:
 - Modular and composable
 
 An agent represents a user. An Expert is a specialist component that helps an application achieve its goals.
+

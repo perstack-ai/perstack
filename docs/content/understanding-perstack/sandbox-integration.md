@@ -153,3 +153,4 @@ wrangler secret put ANTHROPIC_API_KEY
 **Auditability**: Correlate Perstack's event logs with your platform's audit logs. Set up anomaly detection for unexpected behavior.
 
 **Dependency pinning**: Pin Registry Expert versions. Write-once versioning guarantees reproducible builds.
+

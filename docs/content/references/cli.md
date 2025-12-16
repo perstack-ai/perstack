@@ -285,3 +285,4 @@ npx create-expert my-expert "Add X"         # Improve existing Expert
 
 **Improvement Mode:**
 When called with Expert name, skips setup and improves existing Expert.
+

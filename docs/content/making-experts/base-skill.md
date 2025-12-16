@@ -685,3 +685,4 @@ You organize files in the current directory.
 ```
 
 All tools come from Base Skill — no skill definitions needed.
+

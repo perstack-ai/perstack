@@ -228,3 +228,4 @@ Ready to build Experts? See the Making Experts guide:
 - [Making Experts](../making-experts/README.md) — defining Experts in `perstack.toml`
 - [Best Practices](../making-experts/best-practices.md) — design guidelines for effective Experts
 - [Skills](../making-experts/skills.md) — adding MCP tools to your Experts
+
