@@ -42,6 +42,10 @@ export function collectSkillAllowedDomains(config: PerstackConfig, expertKey: st
 export function collectAllowedDomains(config: PerstackConfig, expertKey: string): string[] {
   const domains = new Set<string>()
   domains.add("registry.npmjs.org")
+  const perstackApiDomain = getPerstackApiDomain(config.perstackApiBaseUrl)
+  if (perstackApiDomain) {
+    domains.add(perstackApiDomain)
+  }
   const skillDomains = collectSkillAllowedDomains(config, expertKey)
   for (const domain of skillDomains) {
     domains.add(domain)
@@ -51,6 +55,14 @@ export function collectAllowedDomains(config: PerstackConfig, expertKey: string)
     domains.add(domain)
   }
   return Array.from(domains)
+}
+function getPerstackApiDomain(baseUrl?: string): string {
+  const url = baseUrl ?? "https://api.perstack.ai"
+  try {
+    return new URL(url).hostname
+  } catch {
+    return "api.perstack.ai"
+  }
 }
 
 export function generateSquidAllowlistAcl(domains: string[]): string {
