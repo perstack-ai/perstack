@@ -218,6 +218,19 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     )
   }
 
+  protected emitContainerStatus(
+    eventListener: (event: RunEvent | RuntimeEvent) => void,
+    jobId: string,
+    runId: string,
+    status: string,
+    service: string,
+    message: string,
+  ): void {
+    eventListener(
+      createRuntimeEvent("dockerContainerStatus", jobId, runId, { status, service, message }),
+    )
+  }
+
   protected async runContainer(
     buildDir: string,
     cliArgs: string[],
@@ -233,34 +246,37 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     let proxyLogProcess: ChildProcess | undefined
     if (hasProxy) {
       if (verbose) {
-        eventListener(
-          createRuntimeEvent("dockerContainerStatus", jobId, runId, {
-            status: "starting",
-            service: "proxy",
-            message: "Starting proxy container...",
-          }),
+        this.emitContainerStatus(
+          eventListener,
+          jobId,
+          runId,
+          "starting",
+          "proxy",
+          "Starting proxy container...",
         )
       }
       await this.execCommand(["docker", "compose", "-f", composeFile, "up", "-d", "proxy"])
       await new Promise((resolve) => setTimeout(resolve, 2000))
       if (verbose) {
-        eventListener(
-          createRuntimeEvent("dockerContainerStatus", jobId, runId, {
-            status: "healthy",
-            service: "proxy",
-            message: "Proxy container ready",
-          }),
+        this.emitContainerStatus(
+          eventListener,
+          jobId,
+          runId,
+          "healthy",
+          "proxy",
+          "Proxy container ready",
         )
         proxyLogProcess = this.startProxyLogStream(composeFile, jobId, runId, eventListener)
       }
     }
     if (verbose) {
-      eventListener(
-        createRuntimeEvent("dockerContainerStatus", jobId, runId, {
-          status: "starting",
-          service: "runtime",
-          message: "Starting runtime container...",
-        }),
+      this.emitContainerStatus(
+        eventListener,
+        jobId,
+        runId,
+        "starting",
+        "runtime",
+        "Starting runtime container...",
       )
     }
     const envArgs: string[] = []
@@ -275,23 +291,25 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     })
     proc.stdin?.end()
     if (verbose) {
-      eventListener(
-        createRuntimeEvent("dockerContainerStatus", jobId, runId, {
-          status: "running",
-          service: "runtime",
-          message: "Runtime container started",
-        }),
+      this.emitContainerStatus(
+        eventListener,
+        jobId,
+        runId,
+        "running",
+        "runtime",
+        "Runtime container started",
       )
     }
     try {
       const result = await this.executeWithStreaming(proc, timeout, eventListener)
       if (verbose) {
-        eventListener(
-          createRuntimeEvent("dockerContainerStatus", jobId, runId, {
-            status: "stopped",
-            service: "runtime",
-            message: `Runtime container exited with code ${result.exitCode}`,
-          }),
+        this.emitContainerStatus(
+          eventListener,
+          jobId,
+          runId,
+          "stopped",
+          "runtime",
+          `Runtime container exited with code ${result.exitCode}`,
         )
       }
       return result
