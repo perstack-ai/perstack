@@ -230,6 +230,7 @@ describe("DockerAdapter", () => {
       )
     })
   })
+
   describe("resolveWorkspacePath", () => {
     let tempDir: string
     beforeEach(() => {
@@ -275,6 +276,7 @@ describe("DockerAdapter", () => {
       )
     })
   })
+
   describe("prepareBuildContext", () => {
     const minimalConfig = {
       model: "test-model",
@@ -334,6 +336,7 @@ describe("DockerAdapter", () => {
       }
     })
   })
+
   describe("buildImages", () => {
     let tempDir: string
     beforeEach(() => {
@@ -384,6 +387,7 @@ describe("DockerAdapter", () => {
       )
     })
   })
+
   describe("execCommandWithOutput", () => {
     it("should return exit code 0 for successful command", async () => {
       const adapter = new TestableDockerAdapter()
@@ -406,6 +410,7 @@ describe("DockerAdapter", () => {
       expect(exitCode).toBe(127)
     })
   })
+
   describe("parseProxyLogLine", () => {
     it("should parse allowed CONNECT request with TCP_TUNNEL", () => {
       const adapter = new TestableDockerAdapter()
@@ -477,6 +482,7 @@ describe("DockerAdapter", () => {
       })
     })
   })
+
   describe("parseBuildOutputLine", () => {
     it("should parse standard build output as building stage", () => {
       const adapter = new TestableDockerAdapter()
@@ -543,6 +549,7 @@ describe("DockerAdapter", () => {
       })
     })
   })
+
   describe("execCommandWithBuildProgress", () => {
     it("should return 127 for empty command", async () => {
       const adapter = new TestableDockerAdapter()
@@ -666,6 +673,7 @@ describe("DockerAdapter", () => {
       expect(exitCode).toBe(127)
     })
   })
+
   describe("startProxyLogStream with mock spawn", () => {
     it("should emit proxyAccess events for allowed CONNECT requests", async () => {
       const adapter = new TestableDockerAdapter()
@@ -735,6 +743,7 @@ describe("DockerAdapter", () => {
       expect(events.length).toBe(0)
     })
   })
+
   describe("runContainer verbose mode events", () => {
     let tempDir: string
     beforeEach(() => {
