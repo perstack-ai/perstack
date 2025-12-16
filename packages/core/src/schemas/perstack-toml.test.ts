@@ -27,6 +27,17 @@ describe("domainPatternSchema", () => {
   it("should reject standalone wildcard", () => {
     expect(domainPatternSchema.safeParse("*").success).toBe(false)
   })
+
+  it("should reject punycode domains to prevent homograph attacks", () => {
+    expect(domainPatternSchema.safeParse("xn--nxasmq5b.com").success).toBe(false)
+    expect(domainPatternSchema.safeParse("api.xn--nxasmq5b.com").success).toBe(false)
+    expect(domainPatternSchema.safeParse("*.xn--nxasmq5b.com").success).toBe(false)
+  })
+
+  it("should reject domains with punycode labels in any position", () => {
+    expect(domainPatternSchema.safeParse("example.xn--80ak6aa92e.com").success).toBe(false)
+    expect(domainPatternSchema.safeParse("xn--e1afmkfd.xn--p1ai").success).toBe(false)
+  })
 })
 
 describe("perstackConfigSchema with skill allowedDomains", () => {

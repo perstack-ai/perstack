@@ -249,6 +249,9 @@ allowedDomains = ["api.example.com", "*.example.com"]
 | `requiredEnv`    | string[] | No       | Required environment variables                      |
 | `allowedDomains` | string[] | No       | Allowed domains for network access (docker runtime) |
 
+> [!CAUTION]
+> Punycode domains (containing `xn--` labels) are rejected to prevent homograph attacks. Only ASCII domains are allowed.
+
 ### MCP SSE Skill
 
 ```toml
@@ -270,6 +273,9 @@ allowedDomains = ["api.example.com"]
 | `pick`           | string[] | No       | Tools to include                                    |
 | `omit`           | string[] | No       | Tools to exclude                                    |
 | `allowedDomains` | string[] | No       | Allowed domains for network access (docker runtime) |
+
+> [!CAUTION]
+> Punycode domains (containing `xn--` labels) are rejected to prevent homograph attacks. Only ASCII domains are allowed.
 
 ### Interactive Skill
 

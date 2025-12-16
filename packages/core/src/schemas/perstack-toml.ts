@@ -5,10 +5,17 @@ import { runtimeNameSchema } from "./runtime-name.js"
 
 const domainPatternRegex =
   /^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/
-export const domainPatternSchema = z.string().regex(domainPatternRegex, {
-  message:
-    "Invalid domain pattern. Use exact domain (example.com) or wildcard prefix (*.example.com)",
-})
+const punycodeRegex = /(?:^|\.)(xn--)/i
+export const domainPatternSchema = z
+  .string()
+  .regex(domainPatternRegex, {
+    message:
+      "Invalid domain pattern. Use exact domain (example.com) or wildcard prefix (*.example.com)",
+  })
+  .refine((domain) => !punycodeRegex.test(domain), {
+    message:
+      "Punycode domains (xn--) are not allowed to prevent homograph attacks. Use ASCII domains only.",
+  })
 
 function isPrivateOrLocalIP(hostname: string): boolean {
   if (
