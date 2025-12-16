@@ -1,0 +1,90 @@
+# Testing Experts
+
+Experts are probabilistic — the same query can produce different results. This guide covers strategies for testing effectively.
+
+## Local testing
+
+Run your Expert locally before publishing:
+
+```bash
+npx perstack start my-expert "test query"
+```
+
+### Test different scenarios
+
+- **Happy path** — expected inputs and workflows
+- **Edge cases** — unusual inputs, empty data, large files
+- **Error handling** — missing files, invalid formats, network failures
+- **Delegation** — if your Expert delegates, test the full chain
+
+### Inspect execution
+
+Use JSON output to see exactly what happened:
+
+```bash
+npx perstack run my-expert "query"
+```
+
+Each event shows:
+- Tool calls and results
+- Checkpoint state
+- Timing information
+
+## Checkpoint-based testing
+
+Checkpoints enable deterministic replay of the runtime portion. Checkpoints are stored in `perstack/jobs/{jobId}/runs/{runId}/` — see [Runtime](../understanding-perstack/runtime.md#the-perstack-directory) for the full directory structure.
+
+### Resume from checkpoint
+
+Continue a paused run:
+
+```bash
+npx perstack run my-expert --continue
+```
+
+This resumes from the last checkpoint — useful for:
+- Debugging a specific step
+- Testing recovery behavior
+- Iterating on long-running tasks
+
+### Replay for debugging
+
+Examine checkpoints to understand what the Expert "saw" at each step:
+- Message history
+- Tool call decisions
+- Intermediate state
+
+## Testing with mocks
+
+For automated testing, mock the LLM to get deterministic behavior:
+
+```typescript
+import { run } from "@perstack/runtime"
+
+const result = await run(params, {
+  // Mock eventListener for assertions
+  eventListener: (event) => {
+    if (event.type === "callTools") {
+      expect(event.toolCalls[0].toolName).toBe("expectedTool")
+    }
+  }
+})
+```
+
+The runtime is deterministic — only LLM responses are probabilistic. Mock the LLM layer for unit tests; use real LLMs for integration tests.
+
+## Testing checklist
+
+Before publishing:
+
+- [ ] Works with typical queries
+- [ ] Handles edge cases gracefully
+- [ ] Delegates correctly (if applicable)
+- [ ] Skills work as expected
+- [ ] Error messages are helpful
+- [ ] Description accurately reflects behavior
+
+## What's next
+
+- [Publishing](./publishing.md) — share your tested Expert
+- [Best Practices](./best-practices.md) — design guidelines

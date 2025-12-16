@@ -441,6 +441,24 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       })
     })
   }
+  protected parseBuildOutputLine(line: string): {
+    stage: "pulling" | "building"
+    service: string
+    message: string
+  } | null {
+    const trimmed = line.trim()
+    if (!trimmed) return null
+    // Parse Docker build output to emit progress events
+    let stage: "pulling" | "building" = "building"
+    if (trimmed.includes("Pulling") || trimmed.includes("pull")) {
+      stage = "pulling"
+    }
+    // Extract service name if present (e.g., "#5 [runtime 1/5] FROM ...")
+    const serviceMatch = trimmed.match(/^\s*#\d+\s+\[([^\]]+)\]/)
+    const service = serviceMatch?.[1]?.split(" ")[0] ?? "runtime"
+    return { stage, service, message: trimmed }
+  }
+
   protected execCommandWithBuildProgress(
     args: string[],
     jobId: string,
@@ -459,23 +477,16 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       })
       let buffer = ""
       const processLine = (line: string) => {
-        const trimmed = line.trim()
-        if (!trimmed) return
-        // Parse Docker build output to emit progress events
-        let stage: "pulling" | "building" = "building"
-        if (trimmed.includes("Pulling") || trimmed.includes("pull")) {
-          stage = "pulling"
+        const parsed = this.parseBuildOutputLine(line)
+        if (parsed) {
+          eventListener(
+            createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+              stage: parsed.stage,
+              service: parsed.service,
+              message: parsed.message,
+            }),
+          )
         }
-        // Extract service name if present
-        const serviceMatch = trimmed.match(/^\s*#\d+\s+\[([^\]]+)\]/)
-        const service = serviceMatch?.[1]?.split(" ")[0] ?? "runtime"
-        eventListener(
-          createRuntimeEvent("dockerBuildProgress", jobId, runId, {
-            stage,
-            service,
-            message: trimmed,
-          }),
-        )
       }
       proc.stdout?.on("data", (data) => {
         buffer += data.toString()

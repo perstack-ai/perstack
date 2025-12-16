@@ -43,6 +43,11 @@ class TestableDockerAdapter extends DockerAdapter {
   ): { action: "allowed" | "blocked"; domain: string; port: number; reason?: string } | null {
     return this.parseProxyLogLine(line)
   }
+  public testParseBuildOutputLine(
+    line: string,
+  ): { stage: "pulling" | "building"; service: string; message: string } | null {
+    return this.parseBuildOutputLine(line)
+  }
 }
 
 describe("DockerAdapter", () => {
@@ -376,6 +381,72 @@ describe("DockerAdapter", () => {
         domain: "evil.com",
         port: 443,
         reason: "Domain not in allowlist",
+      })
+    })
+  })
+  describe("parseBuildOutputLine", () => {
+    it("should parse standard build output as building stage", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("Step 1/5 : FROM node:22-slim")
+      expect(result).toEqual({
+        stage: "building",
+        service: "runtime",
+        message: "Step 1/5 : FROM node:22-slim",
+      })
+    })
+    it("should parse pulling stage from output containing 'Pulling'", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("Pulling from library/node")
+      expect(result).toEqual({
+        stage: "pulling",
+        service: "runtime",
+        message: "Pulling from library/node",
+      })
+    })
+    it("should parse pulling stage from output containing 'pull'", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("digest: sha256:abc123 pull complete")
+      expect(result).toEqual({
+        stage: "pulling",
+        service: "runtime",
+        message: "digest: sha256:abc123 pull complete",
+      })
+    })
+    it("should extract service name from buildkit format", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("#5 [runtime 1/5] FROM node:22-slim")
+      expect(result).toEqual({
+        stage: "building",
+        service: "runtime",
+        message: "#5 [runtime 1/5] FROM node:22-slim",
+      })
+    })
+    it("should extract service name from proxy build", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("#3 [proxy 2/3] RUN apt-get update")
+      expect(result).toEqual({
+        stage: "building",
+        service: "proxy",
+        message: "#3 [proxy 2/3] RUN apt-get update",
+      })
+    })
+    it("should return null for empty line", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("")
+      expect(result).toBeNull()
+    })
+    it("should return null for whitespace-only line", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("   ")
+      expect(result).toBeNull()
+    })
+    it("should handle npm install output", () => {
+      const adapter = new TestableDockerAdapter()
+      const result = adapter.testParseBuildOutputLine("added 150 packages in 10s")
+      expect(result).toEqual({
+        stage: "building",
+        service: "runtime",
+        message: "added 150 packages in 10s",
       })
     })
   })
