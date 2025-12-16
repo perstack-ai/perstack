@@ -4,5 +4,3 @@ export const TERMINAL_EVENT_TYPES = [
   "stopRunByDelegate",
   "stopRunByExceededMaxSteps",
 ] as const
-
-export type TerminalEventType = (typeof TERMINAL_EVENT_TYPES)[number]

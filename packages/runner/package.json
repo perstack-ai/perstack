@@ -26,6 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^3.0.4",
     "@perstack/claude-code": "workspace:*",
     "@perstack/core": "workspace:*",
     "@perstack/cursor": "workspace:*",
