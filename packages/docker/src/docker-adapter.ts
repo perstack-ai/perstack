@@ -27,9 +27,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "docker"
   protected version = "0.0.1"
 
-  /**
-   * Creates a child process. Override in tests to inject mock processes.
-   */
   protected createProcess(command: string, args: string[], options: SpawnOptions): ChildProcess {
     return spawn(command, args, options)
   }
@@ -455,12 +452,10 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   } | null {
     const trimmed = line.trim()
     if (!trimmed) return null
-    // Parse Docker build output to emit progress events
     let stage: "pulling" | "building" = "building"
     if (trimmed.includes("Pulling") || trimmed.includes("pull")) {
       stage = "pulling"
     }
-    // Extract service name if present (e.g., "#5 [runtime 1/5] FROM ...")
     const serviceMatch = trimmed.match(/^\s*#\d+\s+\[([^\]]+)\]/)
     const service = serviceMatch?.[1]?.split(" ")[0] ?? "runtime"
     return { stage, service, message: trimmed }
@@ -556,7 +551,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
             message: "Proxy container ready",
           }),
         )
-        // Start streaming proxy logs in verbose mode
         proxyLogProcess = this.startProxyLogStream(composeFile, jobId, runId, eventListener)
       }
     }
@@ -602,7 +596,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       }
       return result
     } finally {
-      // Stop proxy log streaming
       if (proxyLogProcess) {
         proxyLogProcess.kill("SIGTERM")
       }
@@ -626,9 +619,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     const processLine = (line: string) => {
       const trimmed = line.trim()
       if (!trimmed) return
-      // Parse Squid access log format: timestamp action method url status
-      // Example: "2024/01/15 10:30:00 TCP_DENIED/403 CONNECT blocked.com:443"
-      // or with our custom format: "timestamp action domain:port result"
       const proxyEvent = this.parseProxyLogLine(trimmed)
       if (proxyEvent) {
         eventListener(createRuntimeEvent("proxyAccess", jobId, runId, proxyEvent))
@@ -660,17 +650,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     port: number
     reason?: string
   } | null {
-    // Skip container prefix (e.g., "proxy-1  | ")
     const logContent = line.replace(/^[^|]+\|\s*/, "")
-    // Match Squid access log patterns
-    // Allowed: TCP_TUNNEL/200 or HIER_DIRECT/200
-    // Denied: TCP_DENIED/403
     const connectMatch = logContent.match(/CONNECT\s+([^:\s]+):(\d+)/)
     if (!connectMatch) return null
     const domain = connectMatch[1]
     const port = Number.parseInt(connectMatch[2], 10)
     if (!domain || Number.isNaN(port)) return null
-    // Determine if allowed or blocked based on status
     const isBlocked = logContent.includes("TCP_DENIED") || logContent.includes("/403")
     const isAllowed =
       logContent.includes("TCP_TUNNEL") ||
@@ -764,7 +749,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
               const checkpointData = parsed.checkpoint
               parsed.checkpoint = checkpointSchema.parse(checkpointData)
             } catch {
-              // Skip invalid checkpoint data
               continue
             }
           }
@@ -781,7 +765,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
           try {
             parsed = JSON.parse(buffer.trim()) as RunEvent | RuntimeEvent
           } catch {
-            // ignore non-JSON content
+            // Non-JSON content from container output is expected
           }
           if (parsed) {
             const terminalEventTypes = [

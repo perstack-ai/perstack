@@ -7,17 +7,14 @@ import type { ExecResult, RunEvent, RuntimeEvent } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
 
-// Helper to create a mock ChildProcess for testing
-function createMockProcess(): ChildProcess & {
+type MockProcess = ChildProcess & {
   stdout: EventEmitter
   stderr: EventEmitter
   stdin: { end: () => void }
-} {
-  const proc = new EventEmitter() as ChildProcess & {
-    stdout: EventEmitter
-    stderr: EventEmitter
-    stdin: { end: () => void }
-  }
+}
+
+function createMockProcess(): MockProcess {
+  const proc = new EventEmitter() as MockProcess
   proc.stdout = new EventEmitter()
   proc.stderr = new EventEmitter()
   proc.stdin = { end: vi.fn() }
@@ -580,7 +577,6 @@ describe("DockerAdapter", () => {
         "run-1",
         eventListener,
       )
-      // Simulate stdout output
       mockProc.stdout.emit("data", Buffer.from("#5 [runtime 1/5] FROM node:22-slim\n"))
       mockProc.emit("close", 0)
       const exitCode = await resultPromise
@@ -686,7 +682,6 @@ describe("DockerAdapter", () => {
       const mockProc = createMockProcess()
       adapter.mockCreateProcess = () => mockProc
       adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", eventListener)
-      // Simulate proxy log output
       mockProc.stdout.emit(
         "data",
         Buffer.from("proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443\n"),
@@ -761,9 +756,7 @@ describe("DockerAdapter", () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
       const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      // Mock execCommand to succeed
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
-      // Create mock process for container run
       const mockProc = createMockProcess()
       adapter.mockCreateProcess = () => mockProc
       const runPromise = adapter.testRunContainer(
@@ -776,11 +769,9 @@ describe("DockerAdapter", () => {
         "run-1",
         eventListener,
       )
-      // Simulate successful container execution
       mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
       mockProc.emit("close", 0)
       await runPromise
-      // Should have emitted "starting" and "running" events for runtime
       const startingEvent = events.find(
         (e) =>
           "type" in e &&
@@ -816,11 +807,8 @@ describe("DockerAdapter", () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
       const eventListener = (event: RunEvent | RuntimeEvent) => events.push(event)
-      // Create proxy directory to trigger proxy logic
       fs.mkdirSync(path.join(tempDir, "proxy"))
-      // Mock execCommand to succeed
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
-      // Create separate mock processes for proxy logs and container
       const mockProcs: Array<ReturnType<typeof createMockProcess>> = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
@@ -837,15 +825,13 @@ describe("DockerAdapter", () => {
         "run-1",
         eventListener,
       )
-      // Wait for proxy startup (2 seconds) + small buffer
+      // Proxy startup requires 2 second wait in production code
       await new Promise((r) => setTimeout(r, 2100))
-      // Second mock process is for container run (first is for proxy logs)
       if (mockProcs[1]) {
         mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
         mockProcs[1].emit("close", 0)
       }
       await runPromise
-      // Should have emitted proxy events
       const proxyStarting = events.find(
         (e) =>
           "type" in e &&
@@ -887,7 +873,6 @@ describe("DockerAdapter", () => {
       mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
       mockProc.emit("close", 0)
       await runPromise
-      // Should not have any dockerContainerStatus events
       const containerEvents = events.filter(
         (e) => "type" in e && e.type === "dockerContainerStatus",
       )
@@ -895,7 +880,6 @@ describe("DockerAdapter", () => {
     })
     it("should kill proxy log process in finally block", async () => {
       const adapter = new TestableDockerAdapter()
-      // Create proxy directory
       fs.mkdirSync(path.join(tempDir, "proxy"))
       adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
       const mockProcs: Array<typeof mockProc> = []
@@ -915,15 +899,13 @@ describe("DockerAdapter", () => {
         "run-1",
         () => {},
       )
-      // Allow proxy log process to start
+      // Proxy startup requires 2 second wait in production code
       await new Promise((r) => setTimeout(r, 2100))
-      // First spawn is for proxy logs, second is for container run
       if (mockProcs[1]) {
         mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
         mockProcs[1].emit("close", 0)
       }
       await runPromise
-      // First process (proxy logs) should have been killed
       expect(mockProcs[0]?.kill).toHaveBeenCalledWith("SIGTERM")
     }, 10000)
   })
