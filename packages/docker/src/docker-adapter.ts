@@ -38,52 +38,32 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     return this.processFactory(command, args, options)
   }
 
+  protected createPrerequisiteError(message: string, helpUrl: string): PrerequisiteResult {
+    return { ok: false, error: { type: "cli-not-found", message, helpUrl } }
+  }
+
   async checkPrerequisites(): Promise<PrerequisiteResult> {
+    const cliNotFoundError = this.createPrerequisiteError(
+      "Docker CLI is not installed or not in PATH.",
+      "https://docs.docker.com/get-docker/",
+    )
+    const daemonNotRunningError = this.createPrerequisiteError(
+      "Docker daemon is not running.",
+      "https://docs.docker.com/config/daemon/start/",
+    )
     try {
       const result = await this.execCommand(["docker", "--version"])
-      if (result.exitCode !== 0) {
-        return {
-          ok: false,
-          error: {
-            type: "cli-not-found",
-            message: "Docker CLI is not installed or not in PATH.",
-            helpUrl: "https://docs.docker.com/get-docker/",
-          },
-        }
-      }
+      if (result.exitCode !== 0) return cliNotFoundError
       const versionMatch = result.stdout.match(/Docker version ([\d.]+)/)
       this.version = versionMatch?.[1] ?? "unknown"
     } catch {
-      return {
-        ok: false,
-        error: {
-          type: "cli-not-found",
-          message: "Docker CLI is not installed or not in PATH.",
-          helpUrl: "https://docs.docker.com/get-docker/",
-        },
-      }
+      return cliNotFoundError
     }
     try {
       const pingResult = await this.execCommand(["docker", "info"])
-      if (pingResult.exitCode !== 0) {
-        return {
-          ok: false,
-          error: {
-            type: "cli-not-found",
-            message: "Docker daemon is not running.",
-            helpUrl: "https://docs.docker.com/config/daemon/start/",
-          },
-        }
-      }
+      if (pingResult.exitCode !== 0) return daemonNotRunningError
     } catch {
-      return {
-        ok: false,
-        error: {
-          type: "cli-not-found",
-          message: "Docker daemon is not running.",
-          helpUrl: "https://docs.docker.com/config/daemon/start/",
-        },
-      }
+      return daemonNotRunningError
     }
     return { ok: true }
   }
