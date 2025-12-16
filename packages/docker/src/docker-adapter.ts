@@ -20,8 +20,10 @@ import type {
   Usage,
 } from "@perstack/core"
 import { BaseAdapter, checkpointSchema, createRuntimeEvent } from "@perstack/core"
+import { buildCliArgs } from "./cli-builder.js"
 import { generateBuildContext } from "./compose-generator.js"
 import { extractRequiredEnvVars, resolveEnvValues } from "./env-resolver.js"
+import { parseBuildOutputLine, parseProxyLogLine } from "./output-parser.js"
 
 export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "docker"
@@ -197,7 +199,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       if (missing.length > 0) {
         throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
       }
-      const cliArgs = this.buildCliArgs(setting)
+      const cliArgs = buildCliArgs(setting)
       const maxSteps = setting.maxSteps ?? 100
       const processTimeout = (setting.timeout ?? 60000) * maxSteps
       const result = await this.runContainer(
@@ -447,22 +449,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     })
   }
 
-  protected parseBuildOutputLine(line: string): {
-    stage: "pulling" | "building"
-    service: string
-    message: string
-  } | null {
-    const trimmed = line.trim()
-    if (!trimmed) return null
-    let stage: "pulling" | "building" = "building"
-    if (trimmed.includes("Pulling") || trimmed.includes("pull")) {
-      stage = "pulling"
-    }
-    const serviceMatch = trimmed.match(/^\s*#\d+\s+\[([^\]]+)\]/)
-    const service = serviceMatch?.[1]?.split(" ")[0] ?? "runtime"
-    return { stage, service, message: trimmed }
-  }
-
   protected execCommandWithBuildProgress(
     args: string[],
     jobId: string,
@@ -481,7 +467,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       })
       let buffer = ""
       const processLine = (line: string) => {
-        const parsed = this.parseBuildOutputLine(line)
+        const parsed = parseBuildOutputLine(line)
         if (parsed) {
           eventListener(
             createRuntimeEvent("dockerBuildProgress", jobId, runId, {
@@ -621,7 +607,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     const processLine = (line: string) => {
       const trimmed = line.trim()
       if (!trimmed) return
-      const proxyEvent = this.parseProxyLogLine(trimmed)
+      const proxyEvent = parseProxyLogLine(trimmed)
       if (proxyEvent) {
         eventListener(createRuntimeEvent("proxyAccess", jobId, runId, proxyEvent))
       }
@@ -644,72 +630,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       }
     })
     return proc
-  }
-
-  protected parseProxyLogLine(line: string): {
-    action: "allowed" | "blocked"
-    domain: string
-    port: number
-    reason?: string
-  } | null {
-    const logContent = line.replace(/^[^|]+\|\s*/, "")
-    const connectMatch = logContent.match(/CONNECT\s+([^:\s]+):(\d+)/)
-    if (!connectMatch) return null
-    const domain = connectMatch[1]
-    const port = Number.parseInt(connectMatch[2], 10)
-    if (!domain || Number.isNaN(port)) return null
-    const isBlocked = logContent.includes("TCP_DENIED") || logContent.includes("/403")
-    const isAllowed =
-      logContent.includes("TCP_TUNNEL") ||
-      logContent.includes("HIER_DIRECT") ||
-      logContent.includes("/200")
-    if (isBlocked) {
-      return {
-        action: "blocked",
-        domain,
-        port,
-        reason: "Domain not in allowlist",
-      }
-    }
-    if (isAllowed) {
-      return {
-        action: "allowed",
-        domain,
-        port,
-      }
-    }
-    return null
-  }
-
-  protected buildCliArgs(setting: AdapterRunParams["setting"]): string[] {
-    const args: string[] = []
-    if (setting.jobId !== undefined) {
-      args.push("--job-id", setting.jobId)
-    }
-    if (setting.runId !== undefined) {
-      args.push("--run-id", setting.runId)
-    }
-    if (setting.model !== undefined) {
-      args.push("--model", setting.model)
-    }
-    const maxSteps = setting.maxSteps ?? 100
-    args.push("--max-steps", String(maxSteps))
-    if (setting.maxRetries !== undefined) {
-      args.push("--max-retries", String(setting.maxRetries))
-    }
-    if (setting.timeout !== undefined) {
-      args.push("--timeout", String(setting.timeout))
-    }
-    if (setting.temperature !== undefined) {
-      args.push("--temperature", String(setting.temperature))
-    }
-    if (setting.input.interactiveToolCallResult) {
-      args.push("-i")
-      args.push(JSON.stringify(setting.input.interactiveToolCallResult))
-    } else {
-      args.push(setting.input.text ?? "")
-    }
-    return args
   }
 
   protected executeWithStreaming(

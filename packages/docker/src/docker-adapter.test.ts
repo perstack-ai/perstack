@@ -6,6 +6,7 @@ import * as path from "node:path"
 import type { ExecResult, RunEvent, RuntimeEvent } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
+import { parseBuildOutputLine, parseProxyLogLine } from "./output-parser.js"
 
 type MockProcess = ChildProcess & {
   stdout: EventEmitter
@@ -100,18 +101,6 @@ class TestableDockerAdapter extends DockerAdapter {
 
   public testExecCommandWithOutput(args: string[]): Promise<number> {
     return super.execCommandWithOutput(args)
-  }
-
-  public testParseProxyLogLine(
-    line: string,
-  ): { action: "allowed" | "blocked"; domain: string; port: number; reason?: string } | null {
-    return this.parseProxyLogLine(line)
-  }
-
-  public testParseBuildOutputLine(
-    line: string,
-  ): { stage: "pulling" | "building"; service: string; message: string } | null {
-    return this.parseBuildOutputLine(line)
   }
 
   public testExecCommandWithBuildProgress(
@@ -440,8 +429,6 @@ describe("DockerAdapter", () => {
   })
 
   describe("parseProxyLogLine", () => {
-    const adapter = new TestableDockerAdapter()
-
     it.each([
       {
         name: "allowed CONNECT with TCP_TUNNEL",
@@ -479,7 +466,7 @@ describe("DockerAdapter", () => {
         },
       },
     ])("should parse $name", ({ input, expected }) => {
-      expect(adapter.testParseProxyLogLine(input)).toEqual(expected)
+      expect(parseProxyLogLine(input)).toEqual(expected)
     })
 
     it.each([
@@ -489,13 +476,11 @@ describe("DockerAdapter", () => {
       },
       { name: "unrecognized log format", input: "some random log line" },
     ])("should return null for $name", ({ input }) => {
-      expect(adapter.testParseProxyLogLine(input)).toBeNull()
+      expect(parseProxyLogLine(input)).toBeNull()
     })
   })
 
   describe("parseBuildOutputLine", () => {
-    const adapter = new TestableDockerAdapter()
-
     it.each([
       {
         name: "standard build output as building stage",
@@ -544,14 +529,14 @@ describe("DockerAdapter", () => {
         expected: { stage: "building", service: "runtime", message: "added 150 packages in 10s" },
       },
     ])("should parse $name", ({ input, expected }) => {
-      expect(adapter.testParseBuildOutputLine(input)).toEqual(expected)
+      expect(parseBuildOutputLine(input)).toEqual(expected)
     })
 
     it.each([
       { name: "empty line", input: "" },
       { name: "whitespace-only line", input: "   " },
     ])("should return null for $name", ({ input }) => {
-      expect(adapter.testParseBuildOutputLine(input)).toBeNull()
+      expect(parseBuildOutputLine(input)).toBeNull()
     })
   })
 
