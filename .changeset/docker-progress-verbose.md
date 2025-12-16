@@ -1,19 +1,19 @@
 ---
-"@perstack/core": minor
-"@perstack/docker": minor
-"@perstack/tui": minor
-"@perstack/api-client": minor
-"@perstack/base": minor
-"@perstack/runtime": minor
-"@perstack/storage": minor
-"@perstack/runner": minor
-"@perstack/mock": minor
-"@perstack/cursor": minor
-"@perstack/claude-code": minor
-"@perstack/gemini": minor
-"@perstack/e2e-mcp-server": minor
-"perstack": minor
-"create-expert": minor
+"@perstack/core": patch
+"@perstack/docker": patch
+"@perstack/tui": patch
+"@perstack/api-client": patch
+"@perstack/base": patch
+"@perstack/runtime": patch
+"@perstack/storage": patch
+"@perstack/runner": patch
+"@perstack/mock": patch
+"@perstack/cursor": patch
+"@perstack/claude-code": patch
+"@perstack/gemini": patch
+"@perstack/e2e-mcp-server": patch
+"perstack": patch
+"create-expert": patch
 ---
 
 feat: display Docker progress and proxy status during perstack start
