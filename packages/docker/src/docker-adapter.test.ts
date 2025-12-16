@@ -239,21 +239,25 @@ describe("DockerAdapter", () => {
     afterEach(() => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
+
     it("should return undefined when workspace is not provided", () => {
       const adapter = new TestableDockerAdapter()
       expect(adapter.testResolveWorkspacePath()).toBeUndefined()
       expect(adapter.testResolveWorkspacePath(undefined)).toBeUndefined()
     })
+
     it("should resolve absolute path that exists", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testResolveWorkspacePath(tempDir)
       expect(result).toBe(tempDir)
     })
+
     it("should resolve relative path to absolute path", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testResolveWorkspacePath(".")
       expect(result).toBe(process.cwd())
     })
+
     it("should normalize absolute path with parent directory references", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testResolveWorkspacePath(
@@ -261,12 +265,14 @@ describe("DockerAdapter", () => {
       )
       expect(result).toBe(tempDir)
     })
+
     it("should throw error when path does not exist", () => {
       const adapter = new TestableDockerAdapter()
       expect(() => adapter.testResolveWorkspacePath("/nonexistent/path")).toThrow(
         "Workspace path does not exist",
       )
     })
+
     it("should throw error when path is not a directory", () => {
       const adapter = new TestableDockerAdapter()
       const testFile = path.join(tempDir, "test.txt")
@@ -301,11 +307,13 @@ describe("DockerAdapter", () => {
         buildDir = null
       }
     })
+
     it("should create workspace directory when workspace is not provided", async () => {
       const adapter = new TestableDockerAdapter()
       buildDir = await adapter.testPrepareBuildContext(minimalConfig, "test-expert")
       expect(fs.existsSync(path.join(buildDir, "workspace"))).toBe(true)
     })
+
     it("should not create workspace directory when workspace is provided", async () => {
       const adapter = new TestableDockerAdapter()
       const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "test-workspace-"))
@@ -320,6 +328,7 @@ describe("DockerAdapter", () => {
         fs.rmSync(tempWorkspace, { recursive: true, force: true })
       }
     })
+
     it("should generate compose file with workspace path", async () => {
       const adapter = new TestableDockerAdapter()
       const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "test-workspace-"))
@@ -346,6 +355,7 @@ describe("DockerAdapter", () => {
     afterEach(() => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
+
     it("should use execCommand without verbose flag", async () => {
       const adapter = new TestableDockerAdapter()
       let capturedArgs: string[] = []
@@ -359,6 +369,7 @@ describe("DockerAdapter", () => {
       expect(capturedArgs).toContain("build")
       expect(capturedArgs).not.toContain("--progress=plain")
     })
+
     it("should use execCommandWithOutput with verbose flag", async () => {
       const adapter = new TestableDockerAdapter()
       adapter.mockExecCommandWithOutput = vi.fn(async () => 0)
@@ -368,6 +379,7 @@ describe("DockerAdapter", () => {
       expect(adapter.capturedBuildArgs).toContain("build")
       expect(adapter.capturedBuildArgs).toContain("--progress=plain")
     })
+
     it("should throw error when build fails without verbose", async () => {
       const adapter = new TestableDockerAdapter()
       adapter.mockExecCommand = vi.fn(async () => ({
@@ -379,6 +391,7 @@ describe("DockerAdapter", () => {
         "Docker build failed: build error",
       )
     })
+
     it("should throw error when build fails with verbose", async () => {
       const adapter = new TestableDockerAdapter()
       adapter.mockExecCommandWithOutput = vi.fn(async () => 1)
@@ -394,16 +407,19 @@ describe("DockerAdapter", () => {
       const exitCode = await adapter.testExecCommandWithOutput(["true"])
       expect(exitCode).toBe(0)
     })
+
     it("should return non-zero exit code for failed command", async () => {
       const adapter = new TestableDockerAdapter()
       const exitCode = await adapter.testExecCommandWithOutput(["false"])
       expect(exitCode).not.toBe(0)
     })
+
     it("should return 127 for empty command", async () => {
       const adapter = new TestableDockerAdapter()
       const exitCode = await adapter.testExecCommandWithOutput([])
       expect(exitCode).toBe(127)
     })
+
     it("should return 127 for non-existent command", async () => {
       const adapter = new TestableDockerAdapter()
       const exitCode = await adapter.testExecCommandWithOutput(["nonexistent-command-xyz"])
@@ -423,6 +439,7 @@ describe("DockerAdapter", () => {
         port: 443,
       })
     })
+
     it("should parse allowed CONNECT request with HIER_DIRECT", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseProxyLogLine(
@@ -434,6 +451,7 @@ describe("DockerAdapter", () => {
         port: 443,
       })
     })
+
     it("should parse blocked CONNECT request", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseProxyLogLine(
@@ -446,6 +464,7 @@ describe("DockerAdapter", () => {
         reason: "Domain not in allowlist",
       })
     })
+
     it("should return null for non-CONNECT requests", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseProxyLogLine(
@@ -453,11 +472,13 @@ describe("DockerAdapter", () => {
       )
       expect(result).toBeNull()
     })
+
     it("should return null for unrecognized log format", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseProxyLogLine("some random log line")
       expect(result).toBeNull()
     })
+
     it("should handle log line without container prefix", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseProxyLogLine(
@@ -469,6 +490,7 @@ describe("DockerAdapter", () => {
         port: 443,
       })
     })
+
     it("should correctly identify blocked requests with /403 status", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseProxyLogLine(
@@ -493,6 +515,7 @@ describe("DockerAdapter", () => {
         message: "Step 1/5 : FROM node:22-slim",
       })
     })
+
     it("should parse pulling stage from output containing 'Pulling'", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("Pulling from library/node")
@@ -502,6 +525,7 @@ describe("DockerAdapter", () => {
         message: "Pulling from library/node",
       })
     })
+
     it("should parse pulling stage from output containing 'pull'", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("digest: sha256:abc123 pull complete")
@@ -511,6 +535,7 @@ describe("DockerAdapter", () => {
         message: "digest: sha256:abc123 pull complete",
       })
     })
+
     it("should extract service name from buildkit format", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("#5 [runtime 1/5] FROM node:22-slim")
@@ -520,6 +545,7 @@ describe("DockerAdapter", () => {
         message: "#5 [runtime 1/5] FROM node:22-slim",
       })
     })
+
     it("should extract service name from proxy build", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("#3 [proxy 2/3] RUN apt-get update")
@@ -529,16 +555,19 @@ describe("DockerAdapter", () => {
         message: "#3 [proxy 2/3] RUN apt-get update",
       })
     })
+
     it("should return null for empty line", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("")
       expect(result).toBeNull()
     })
+
     it("should return null for whitespace-only line", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("   ")
       expect(result).toBeNull()
     })
+
     it("should handle npm install output", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testParseBuildOutputLine("added 150 packages in 10s")
@@ -588,6 +617,7 @@ describe("DockerAdapter", () => {
         message: "#5 [runtime 1/5] FROM node:22-slim",
       })
     })
+
     it("should emit pulling stage for pull output", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -605,6 +635,7 @@ describe("DockerAdapter", () => {
       await resultPromise
       expect(events[0]).toMatchObject({ stage: "pulling" })
     })
+
     it("should handle stderr output", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -622,6 +653,7 @@ describe("DockerAdapter", () => {
       await resultPromise
       expect(events.length).toBe(1)
     })
+
     it("should handle multiline output", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -639,6 +671,7 @@ describe("DockerAdapter", () => {
       await resultPromise
       expect(events.length).toBe(3)
     })
+
     it("should handle buffered output with trailing content", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -658,6 +691,7 @@ describe("DockerAdapter", () => {
       expect(events.length).toBe(1)
       expect(events[0]).toMatchObject({ message: "NoNewline" })
     })
+
     it("should handle error event", async () => {
       const adapter = new TestableDockerAdapter()
       const mockProc = createMockProcess()
@@ -695,6 +729,7 @@ describe("DockerAdapter", () => {
         port: 443,
       })
     })
+
     it("should emit proxyAccess events for blocked requests", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -714,6 +749,7 @@ describe("DockerAdapter", () => {
         reason: "Domain not in allowlist",
       })
     })
+
     it("should handle stderr output for proxy logs", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -730,6 +766,7 @@ describe("DockerAdapter", () => {
       expect(events.length).toBe(1)
       expect(events[0]).toMatchObject({ domain: "stderr-test.com" })
     })
+
     it("should ignore non-CONNECT log lines", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -753,6 +790,7 @@ describe("DockerAdapter", () => {
     afterEach(() => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
+
     it("should emit runtime container status events in verbose mode", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -777,6 +815,7 @@ describe("DockerAdapter", () => {
       expect(findContainerStatusEvent(events, "running", "runtime")).toBeDefined()
       expect(findContainerStatusEvent(events, "stopped", "runtime")).toBeDefined()
     })
+
     it("should emit proxy status events when proxy directory exists", async () => {
       const adapter = new TestableDockerAdapter()
       const events: Array<RunEvent | RuntimeEvent> = []
@@ -834,6 +873,7 @@ describe("DockerAdapter", () => {
       )
       expect(containerEvents).toHaveLength(0)
     })
+
     it("should kill proxy log process in finally block", async () => {
       const adapter = new TestableDockerAdapter()
       fs.mkdirSync(path.join(tempDir, "proxy"))
