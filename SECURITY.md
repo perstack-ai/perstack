@@ -404,7 +404,7 @@ We aim to acknowledge reports promptly and will work with you to resolve the iss
 
 | Date       | Versions                                                                | Auditor     | Summary                                                              | Report                                                               |
 | ---------- | ----------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 2024-12-15 | core@0.0.23, runtime@0.0.66, base@0.0.33, docker@0.0.1, perstack@0.0.46 | AI (Claude) | First audit. 0 Critical, 0 High, 2 Medium, 3 Low. Ready for release. | [Report](./agents/audit-reports/2024-12-15T12-00-00_audit_report.md) |
+| 2024-12-15 | core@0.0.23, runtime@0.0.66, base@0.0.33, docker@0.0.1, perstack@0.0.46 | AI (Claude) | First audit. 0 Critical, 0 High, 2 Medium, 3 Low. Ready for release. | [Report](./.agent/reports/audit-reports/2024-12-15T12-00-00_audit_report.md) |
 
 ---
 
