@@ -398,10 +398,12 @@ const renderProxyAccess = (
   const isAllowed = action === "allowed"
   const color: StatusColor = isAllowed ? "green" : "red"
   const icon = isAllowed ? "✓" : "✗"
-  const label = `Proxy ${icon} ${domain}:${port}`
+  const detail = reason ? `${domain}:${port} (${reason})` : `${domain}:${port}`
   return (
-    <ActionRow indicatorColor={color} label={label}>
-      {reason && <Text dimColor>{reason}</Text>}
+    <ActionRow indicatorColor={color} label="Proxy">
+      <Text color={color}>
+        {icon} {detail}
+      </Text>
     </ActionRow>
   )
 }
