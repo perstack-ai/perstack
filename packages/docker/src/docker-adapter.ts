@@ -202,7 +202,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     eventListener: (event: RunEvent | RuntimeEvent) => void,
     jobId: string,
     runId: string,
-    status: string,
+    status: "starting" | "running" | "healthy" | "unhealthy" | "stopped" | "error",
     service: string,
     message: string,
   ): void {
