@@ -426,6 +426,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       }
     }
   }
+
   protected execCommandWithOutput(args: string[]): Promise<number> {
     return new Promise((resolve) => {
       const [cmd, ...cmdArgs] = args
@@ -445,6 +446,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       })
     })
   }
+
   protected parseBuildOutputLine(line: string): {
     stage: "pulling" | "building"
     service: string

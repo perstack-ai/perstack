@@ -34,6 +34,7 @@ class TestableDockerAdapter extends DockerAdapter {
     }
     return super.execCommand(args)
   }
+
   protected override execCommandWithOutput(args: string[]): Promise<number> {
     this.capturedBuildArgs = args
     if (this.mockExecCommandWithOutput) {
@@ -41,6 +42,7 @@ class TestableDockerAdapter extends DockerAdapter {
     }
     return super.execCommandWithOutput(args)
   }
+
   protected override createProcess(
     command: string,
     args: string[],
@@ -51,9 +53,11 @@ class TestableDockerAdapter extends DockerAdapter {
     }
     return super.createProcess(command, args, options)
   }
+
   public testResolveWorkspacePath(workspace?: string): string | undefined {
     return this.resolveWorkspacePath(workspace)
   }
+
   public async testPrepareBuildContext(
     config: Parameters<DockerAdapter["prepareBuildContext"]>[0],
     expertKey: string,
@@ -61,22 +65,27 @@ class TestableDockerAdapter extends DockerAdapter {
   ): Promise<string> {
     return this.prepareBuildContext(config, expertKey, workspace)
   }
+
   public async testBuildImages(buildDir: string, verbose?: boolean): Promise<void> {
     return this.buildImages(buildDir, verbose)
   }
+
   public testExecCommandWithOutput(args: string[]): Promise<number> {
     return super.execCommandWithOutput(args)
   }
+
   public testParseProxyLogLine(
     line: string,
   ): { action: "allowed" | "blocked"; domain: string; port: number; reason?: string } | null {
     return this.parseProxyLogLine(line)
   }
+
   public testParseBuildOutputLine(
     line: string,
   ): { stage: "pulling" | "building"; service: string; message: string } | null {
     return this.parseBuildOutputLine(line)
   }
+
   public testExecCommandWithBuildProgress(
     args: string[],
     jobId: string,
@@ -85,6 +94,7 @@ class TestableDockerAdapter extends DockerAdapter {
   ): Promise<number> {
     return this.execCommandWithBuildProgress(args, jobId, runId, eventListener)
   }
+
   public testStartProxyLogStream(
     composeFile: string,
     jobId: string,
@@ -93,6 +103,7 @@ class TestableDockerAdapter extends DockerAdapter {
   ): ChildProcess {
     return this.startProxyLogStream(composeFile, jobId, runId, eventListener)
   }
+
   public async testRunContainer(
     buildDir: string,
     cliArgs: string[],
