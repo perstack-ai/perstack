@@ -21,13 +21,13 @@ Follow this guide to define the Expert in `perstack.toml`.
 
 **Debug autonomously. Do not ask users for help.**
 
-⚠️ Raw `perstack run` output contains massive JSON events. Always pipe through a filter script.
+Raw `perstack run` output contains massive JSON events. Always pipe through a filter script.
 
 ```bash
 perstack run expert-name "test query" 2>&1 | npx tsx filter.ts
 ```
 
-Create `filter.ts` if it doesn't exist. See [implementation.md](./implementation.md#autonomous-debugging) for the filter script template.
+Create `filter.ts` if it doesn't exist. See [implementation.md](implementation.md) for the filter script template.
 
 ### Phase 3: Validate
 
@@ -55,9 +55,11 @@ Example report format:
 ## Expert Created: my-expert
 
 ### Definition
+
 [perstack.toml content]
 
 ### Test Results
+
 | Pattern    | Query                  | Behavior                              |
 | ---------- | ---------------------- | ------------------------------------- |
 | Happy path | "Find files with TODO" | Listed 3 files, showed line numbers   |
@@ -65,14 +67,16 @@ Example report format:
 | Error case | "Read /etc/passwd"     | Correctly refused (outside workspace) |
 
 ### Issues Fixed
+
 - Initial version missed `attemptCompletion` in pick list
 ```
 
 ## Security
 
-Read [SECURITY.md](../SECURITY.md) for the security model.
+Read [SECURITY.md](../../SECURITY.md) for the security model.
 
 **Key requirements:**
+
 - Use `pick` to whitelist only needed tools (minimal privilege)
 - Set `allowedDomains` for external API access (required for `--runtime docker`)
 - Set `requiredEnv` to declare environment variables explicitly
@@ -80,7 +84,7 @@ Read [SECURITY.md](../SECURITY.md) for the security model.
 
 ## Core Principles
 
-Read [Best Practices](../docs/making-experts/best-practices.md) for the five principles:
+Read [Best Practices](../../docs/making-experts/best-practices.md) for the five principles:
 
 1. **Do One Thing Well** — Single, focused responsibility
 2. **Trust the LLM, Define Domain Knowledge** — Declarative, not procedural
@@ -90,7 +94,7 @@ Read [Best Practices](../docs/making-experts/best-practices.md) for the five pri
 
 ## perstack.toml Structure
 
-See [perstack.toml Reference](../docs/references/perstack-toml.md) for complete field documentation.
+See [perstack.toml Reference](../../docs/references/perstack-toml.md) for complete field documentation.
 
 ### Minimal Example
 
@@ -121,9 +125,9 @@ pick = ["readTextFile", "writeTextFile", "think", "attemptCompletion"]
 
 ## Skill Configuration
 
-See [Skills](../docs/making-experts/skills.md) for MCP skill types and configuration.
+See [Skills](../../docs/making-experts/skills.md) for MCP skill types and configuration.
 
-See [Base Skill](../docs/making-experts/base-skill.md) for built-in tool reference.
+See [Base Skill](../../docs/making-experts/base-skill.md) for built-in tool reference.
 
 **Key principle:** Use `pick` to whitelist only the tools the Expert needs.
 
@@ -137,7 +141,7 @@ pick = ["readTextFile", "writeTextFile", "think", "attemptCompletion"]
 
 ## Delegation
 
-See [Making Experts](../docs/making-experts/README.md) for delegation design patterns.
+See [Making Experts](../../docs/making-experts/README.md) for delegation design patterns.
 
 **Key insight:** Delegators only see `description`, never `instruction`. Write `description` for the delegator, `instruction` for the Expert itself.
 
@@ -161,12 +165,15 @@ instruction = """
 You are a [role description].
 
 ## Context
+
 [Background information the Expert needs]
 
 ## Guidelines
+
 [Dos and don'ts]
 
 ## Output Format
+
 [Expected output structure]
 """
 ```
@@ -196,4 +203,4 @@ Before reporting to user:
 
 ## Examples
 
-See [examples/](../examples/) for working Expert definitions.
+See [examples/](../../examples/) for working Expert definitions.

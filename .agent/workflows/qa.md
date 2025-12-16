@@ -25,16 +25,9 @@ pnpm typecheck && pnpm format-and-lint && pnpm test && pnpm build && pnpm test:e
 ### Running Tests
 
 ```bash
-# All tests
 pnpm test
-
-# Specific package
 pnpm --filter @perstack/runtime test
-
-# Watch mode
 pnpm test -- --watch
-
-# With coverage
 pnpm test -- --coverage
 ```
 
@@ -45,7 +38,7 @@ Tests are located next to the source files:
 ```
 packages/runtime/src/
 ├── executor.ts
-├── executor.test.ts  ← Test file
+├── executor.test.ts
 ```
 
 ### Writing Tests
@@ -65,10 +58,7 @@ describe("functionName", () => {
 ### Running E2E Tests
 
 ```bash
-# Full E2E suite
 pnpm test:e2e
-
-# Specific test file
 pnpm test:e2e -- --grep "test name"
 ```
 
@@ -114,11 +104,6 @@ Type errors must be fixed before merge. Common issues:
 
 ```bash
 pnpm format-and-lint
-```
-
-Auto-fix available issues:
-
-```bash
 pnpm format-and-lint:fix
 ```
 
@@ -138,7 +123,7 @@ For security-related changes, also verify:
    - Proxy configuration correct
    - DNS rebinding protection works
 
-See [audit.md](./audit.md) for comprehensive security audit methodology.
+See [audit.md](audit.md) for comprehensive security audit methodology.
 
 ## Pre-PR Checklist
 
@@ -174,7 +159,6 @@ All checks must pass before merge.
 If tests timeout:
 
 ```bash
-# Increase timeout
 pnpm test -- --timeout 30000
 ```
 
