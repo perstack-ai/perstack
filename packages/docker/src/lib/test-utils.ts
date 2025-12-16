@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events"
 import type { ExecResult, RunEvent, RuntimeEvent } from "@perstack/core"
 import { vi } from "vitest"
 import { DockerAdapter } from "../docker-adapter.js"
+import type { ProcessFactory } from "./process-factory.js"
 
 export type MockProcess = {
   stdout: EventEmitter
@@ -23,6 +24,10 @@ export function createMockProcess(): MockProcess {
     on: emitter.on.bind(emitter),
     emit: emitter.emit.bind(emitter),
   }
+}
+
+export function createMockProcessFactory(getMockProcess: () => MockProcess): ProcessFactory {
+  return () => getMockProcess() as unknown as ChildProcess
 }
 
 export function createEventCollector() {
@@ -53,23 +58,13 @@ export function wait(ms: number): Promise<void> {
 
 export class TestableDockerAdapter extends DockerAdapter {
   public mockExecCommand: ((args: string[]) => Promise<ExecResult>) | null = null
-  public mockExecCommandWithOutput: ((args: string[]) => Promise<number>) | null = null
   public mockCreateProcess: (() => MockProcess) | null = null
-  public capturedBuildArgs: string[] = []
 
   protected override async execCommand(args: string[]): Promise<ExecResult> {
     if (this.mockExecCommand) {
       return this.mockExecCommand(args)
     }
     return super.execCommand(args)
-  }
-
-  protected override execCommandWithOutput(args: string[]): Promise<number> {
-    this.capturedBuildArgs = args
-    if (this.mockExecCommandWithOutput) {
-      return this.mockExecCommandWithOutput(args)
-    }
-    return super.execCommandWithOutput(args)
   }
 
   protected override createProcess(
@@ -97,19 +92,6 @@ export class TestableDockerAdapter extends DockerAdapter {
 
   public async testBuildImages(buildDir: string, verbose?: boolean): Promise<void> {
     return this.buildImages(buildDir, verbose)
-  }
-
-  public testExecCommandWithOutput(args: string[]): Promise<number> {
-    return super.execCommandWithOutput(args)
-  }
-
-  public testExecCommandWithBuildProgress(
-    args: string[],
-    jobId: string,
-    runId: string,
-    eventListener: (event: RunEvent | RuntimeEvent) => void,
-  ): Promise<number> {
-    return this.execCommandWithBuildProgress(args, jobId, runId, eventListener)
   }
 
   public testStartProxyLogStream(

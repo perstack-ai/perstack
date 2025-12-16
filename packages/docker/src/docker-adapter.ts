@@ -1,5 +1,4 @@
 import type { ChildProcess, SpawnOptions } from "node:child_process"
-import { spawn } from "node:child_process"
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
@@ -22,17 +21,25 @@ import type {
 import { BaseAdapter, createRuntimeEvent } from "@perstack/core"
 import { generateBuildContext } from "./compose-generator.js"
 import { extractRequiredEnvVars, resolveEnvValues } from "./env-resolver.js"
+import { selectBuildStrategy } from "./lib/build-strategy.js"
 import { buildCliArgs } from "./lib/cli-builder.js"
 import { findTerminalEvent, parseContainerEvent } from "./lib/event-parser.js"
-import { parseBuildOutputLine, parseProxyLogLine } from "./lib/output-parser.js"
+import { parseProxyLogLine } from "./lib/output-parser.js"
+import { defaultProcessFactory, type ProcessFactory } from "./lib/process-factory.js"
 import { StreamBuffer } from "./lib/stream-buffer.js"
 
 export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   readonly name = "docker"
   protected version = "0.0.1"
+  protected readonly processFactory: ProcessFactory
+
+  constructor(processFactory: ProcessFactory = defaultProcessFactory) {
+    super()
+    this.processFactory = processFactory
+  }
 
   protected createProcess(command: string, args: string[], options: SpawnOptions): ChildProcess {
-    return spawn(command, args, options)
+    return this.processFactory(command, args, options)
   }
 
   async checkPrerequisites(): Promise<PrerequisiteResult> {
@@ -374,114 +381,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     runId?: string,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
   ): Promise<void> {
-    const composeFile = path.join(buildDir, "docker-compose.yml")
-    const args = ["compose", "-f", composeFile, "build"]
-    if (verbose) {
-      args.push("--progress=plain")
-    }
-    if (verbose && eventListener && jobId && runId) {
-      eventListener(
-        createRuntimeEvent("dockerBuildProgress", jobId, runId, {
-          stage: "building",
-          service: "runtime",
-          message: "Starting Docker build...",
-        }),
-      )
-      const exitCode = await this.execCommandWithBuildProgress(
-        ["docker", ...args],
-        jobId,
-        runId,
-        eventListener,
-      )
-      if (exitCode !== 0) {
-        eventListener(
-          createRuntimeEvent("dockerBuildProgress", jobId, runId, {
-            stage: "error",
-            service: "runtime",
-            message: `Docker build failed with exit code ${exitCode}`,
-          }),
-        )
-        throw new Error(`Docker build failed with exit code ${exitCode}`)
-      }
-      eventListener(
-        createRuntimeEvent("dockerBuildProgress", jobId, runId, {
-          stage: "complete",
-          service: "runtime",
-          message: "Docker build completed",
-        }),
-      )
-    } else if (verbose) {
-      const exitCode = await this.execCommandWithOutput(["docker", ...args])
-      if (exitCode !== 0) {
-        throw new Error(`Docker build failed with exit code ${exitCode}`)
-      }
-    } else {
-      const result = await this.execCommand(["docker", ...args])
-      if (result.exitCode !== 0) {
-        throw new Error(`Docker build failed: ${result.stderr}`)
-      }
-    }
-  }
-
-  protected execCommandWithOutput(args: string[]): Promise<number> {
-    return new Promise((resolve) => {
-      const [cmd, ...cmdArgs] = args
-      if (!cmd) {
-        resolve(127)
-        return
-      }
-      const proc = this.createProcess(cmd, cmdArgs, {
-        cwd: process.cwd(),
-        stdio: ["pipe", process.stderr, process.stderr],
-      })
-      proc.on("close", (code) => {
-        resolve(code ?? 127)
-      })
-      proc.on("error", () => {
-        resolve(127)
-      })
-    })
-  }
-
-  protected execCommandWithBuildProgress(
-    args: string[],
-    jobId: string,
-    runId: string,
-    eventListener: (event: RunEvent | RuntimeEvent) => void,
-  ): Promise<number> {
-    return new Promise((resolve) => {
-      const [cmd, ...cmdArgs] = args
-      if (!cmd) {
-        resolve(127)
-        return
-      }
-      const proc = this.createProcess(cmd, cmdArgs, {
-        cwd: process.cwd(),
-        stdio: ["pipe", "pipe", "pipe"],
-      })
-      const buffer = new StreamBuffer()
-      const processLine = (line: string) => {
-        const parsed = parseBuildOutputLine(line)
-        if (parsed) {
-          eventListener(
-            createRuntimeEvent("dockerBuildProgress", jobId, runId, {
-              stage: parsed.stage,
-              service: parsed.service,
-              message: parsed.message,
-            }),
-          )
-        }
-      }
-      proc.stdout?.on("data", (data) => buffer.processChunk(data.toString(), processLine))
-      proc.stderr?.on("data", (data) => buffer.processChunk(data.toString(), processLine))
-      proc.on("close", (code) => {
-        buffer.flush(processLine)
-        resolve(code ?? 127)
-      })
-      proc.on("error", () => {
-        resolve(127)
-      })
-    })
+    const strategy = selectBuildStrategy(verbose, !!eventListener, !!(jobId && runId))
+    await strategy.build(
+      { buildDir, jobId, runId, eventListener },
+      (args) => this.execCommand(args),
+      this.processFactory,
+    )
   }
 
   protected async runContainer(

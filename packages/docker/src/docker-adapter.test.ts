@@ -211,7 +211,7 @@ describe("DockerAdapter", () => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
 
-    it("should use execCommand without verbose flag", async () => {
+    it("should use QuietBuildStrategy without verbose flag", async () => {
       const adapter = new TestableDockerAdapter()
       let capturedArgs: string[] = []
       adapter.mockExecCommand = vi.fn(async (args: string[]) => {
@@ -222,20 +222,9 @@ describe("DockerAdapter", () => {
       expect(capturedArgs).toContain("docker")
       expect(capturedArgs).toContain("compose")
       expect(capturedArgs).toContain("build")
-      expect(capturedArgs).not.toContain("--progress=plain")
     })
 
-    it("should use execCommandWithOutput with verbose flag", async () => {
-      const adapter = new TestableDockerAdapter()
-      adapter.mockExecCommandWithOutput = vi.fn(async () => 0)
-      await adapter.testBuildImages(tempDir, true)
-      expect(adapter.capturedBuildArgs).toContain("docker")
-      expect(adapter.capturedBuildArgs).toContain("compose")
-      expect(adapter.capturedBuildArgs).toContain("build")
-      expect(adapter.capturedBuildArgs).toContain("--progress=plain")
-    })
-
-    it("should throw error when build fails without verbose", async () => {
+    it("should throw error when build fails", async () => {
       const adapter = new TestableDockerAdapter()
       adapter.mockExecCommand = vi.fn(async () => ({
         stdout: "",
@@ -245,147 +234,6 @@ describe("DockerAdapter", () => {
       await expect(adapter.testBuildImages(tempDir, false)).rejects.toThrow(
         "Docker build failed: build error",
       )
-    })
-
-    it("should throw error when build fails with verbose", async () => {
-      const adapter = new TestableDockerAdapter()
-      adapter.mockExecCommandWithOutput = vi.fn(async () => 1)
-      await expect(adapter.testBuildImages(tempDir, true)).rejects.toThrow(
-        "Docker build failed with exit code 1",
-      )
-    })
-  })
-
-  describe("execCommandWithOutput", () => {
-    it.each([
-      { name: "successful command", args: ["true"], expected: 0 },
-      { name: "empty command", args: [], expected: 127 },
-      { name: "non-existent command", args: ["nonexistent-command-xyz"], expected: 127 },
-    ])("should return $expected for $name", async ({ args, expected }) => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(args)
-      expect(exitCode).toBe(expected)
-    })
-
-    it("should return non-zero exit code for failed command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(["false"])
-      expect(exitCode).not.toBe(0)
-    })
-  })
-
-  describe("execCommandWithBuildProgress", () => {
-    it("should return 127 for empty command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithBuildProgress(
-        [],
-        "job-1",
-        "run-1",
-        () => {},
-      )
-      expect(exitCode).toBe(127)
-    })
-
-    it("should emit dockerBuildProgress events from stdout", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        listener,
-      )
-      mockProc.stdout.emit("data", Buffer.from("#5 [runtime 1/5] FROM node:22-slim\n"))
-      mockProc.emit("close", 0)
-      const exitCode = await resultPromise
-      expect(exitCode).toBe(0)
-      expect(events.length).toBe(1)
-      expect(events[0]).toMatchObject({
-        type: "dockerBuildProgress",
-        stage: "building",
-        service: "runtime",
-        message: "#5 [runtime 1/5] FROM node:22-slim",
-      })
-    })
-
-    it("should emit pulling stage for pull output", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        listener,
-      )
-      mockProc.stdout.emit("data", Buffer.from("Pulling from library/node\n"))
-      mockProc.emit("close", 0)
-      await resultPromise
-      expect(events[0]).toMatchObject({ stage: "pulling" })
-    })
-
-    it("should handle stderr output", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        listener,
-      )
-      mockProc.stderr.emit("data", Buffer.from("Building step 1\n"))
-      mockProc.emit("close", 0)
-      await resultPromise
-      expect(events.length).toBe(1)
-    })
-
-    it("should handle multiline output", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        listener,
-      )
-      mockProc.stdout.emit("data", Buffer.from("Line1\nLine2\nLine3\n"))
-      mockProc.emit("close", 0)
-      await resultPromise
-      expect(events.length).toBe(3)
-    })
-
-    it("should handle buffered output with trailing content", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        listener,
-      )
-      mockProc.stdout.emit("data", Buffer.from("NoNewline"))
-      mockProc.emit("close", 0)
-      await resultPromise
-      expect(events.length).toBe(1)
-      expect(events[0]).toMatchObject({ message: "NoNewline" })
-    })
-
-    it("should handle error event", async () => {
-      const adapter = new TestableDockerAdapter()
-      const mockProc = setupMockProcess(adapter)
-      const resultPromise = adapter.testExecCommandWithBuildProgress(
-        ["docker", "compose", "build"],
-        "job-1",
-        "run-1",
-        () => {},
-      )
-      mockProc.emit("error", new Error("spawn error"))
-      const exitCode = await resultPromise
-      expect(exitCode).toBe(127)
     })
   })
 
