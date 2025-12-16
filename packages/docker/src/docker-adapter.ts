@@ -88,7 +88,28 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       resolvedWorkspace,
       setting.verbose,
     )
+
+    // Register signal handlers for cleanup on interrupt
+    let signalReceived = false
+    const signalHandler = async (signal: string) => {
+      if (signalReceived) return
+      signalReceived = true
+      await this.cleanup(buildDir)
+      process.exit(signal === "SIGINT" ? 130 : 143)
+    }
+    process.on("SIGINT", () => signalHandler("SIGINT"))
+    process.on("SIGTERM", () => signalHandler("SIGTERM"))
+
     try {
+      // Emit build start event (always, not just in verbose mode)
+      const buildStartEvent = createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+        stage: "building",
+        service: "runtime",
+        message: "Building Docker images...",
+      })
+      events.push(buildStartEvent)
+      eventListener?.(buildStartEvent)
+
       await this.buildImages(
         buildDir,
         setting.verbose,
@@ -101,6 +122,15 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
             }
           : undefined,
       )
+
+      // Emit build complete event
+      const buildCompleteEvent = createRuntimeEvent("dockerBuildProgress", jobId, runId, {
+        stage: "complete",
+        service: "runtime",
+        message: "Docker images built successfully",
+      })
+      events.push(buildCompleteEvent)
+      eventListener?.(buildCompleteEvent)
       const envRequirements = extractRequiredEnvVars(config, expertKey)
       const envSource = { ...process.env, ...setting.env }
       const { resolved: envVars, missing } = resolveEnvValues(envRequirements, envSource)
@@ -134,6 +164,8 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       }
       return { checkpoint: terminalEvent.checkpoint, events }
     } finally {
+      process.removeAllListeners("SIGINT")
+      process.removeAllListeners("SIGTERM")
       await this.cleanup(buildDir)
     }
   }

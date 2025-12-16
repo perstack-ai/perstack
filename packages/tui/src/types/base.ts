@@ -67,6 +67,7 @@ export type RuntimeInfo = {
   contextWindowUsage: number
   runtime?: string
   streamingText?: string
+  dockerState?: "building" | "starting" | "running" | "healthy" | "stopped" | "error"
 }
 export type InitialRuntimeConfig = {
   runtimeVersion: string
