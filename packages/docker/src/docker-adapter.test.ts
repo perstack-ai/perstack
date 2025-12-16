@@ -257,28 +257,20 @@ describe("DockerAdapter", () => {
   })
 
   describe("execCommandWithOutput", () => {
-    it("should return exit code 0 for successful command", async () => {
+    it.each([
+      { name: "successful command", args: ["true"], expected: 0 },
+      { name: "empty command", args: [], expected: 127 },
+      { name: "non-existent command", args: ["nonexistent-command-xyz"], expected: 127 },
+    ])("should return $expected for $name", async ({ args, expected }) => {
       const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(["true"])
-      expect(exitCode).toBe(0)
+      const exitCode = await adapter.testExecCommandWithOutput(args)
+      expect(exitCode).toBe(expected)
     })
 
     it("should return non-zero exit code for failed command", async () => {
       const adapter = new TestableDockerAdapter()
       const exitCode = await adapter.testExecCommandWithOutput(["false"])
       expect(exitCode).not.toBe(0)
-    })
-
-    it("should return 127 for empty command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput([])
-      expect(exitCode).toBe(127)
-    })
-
-    it("should return 127 for non-existent command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(["nonexistent-command-xyz"])
-      expect(exitCode).toBe(127)
     })
   })
 
@@ -398,55 +390,39 @@ describe("DockerAdapter", () => {
   })
 
   describe("startProxyLogStream with mock spawn", () => {
-    it("should emit proxyAccess events for allowed CONNECT requests", async () => {
+    it.each([
+      {
+        name: "allowed CONNECT (stdout)",
+        stream: "stdout" as const,
+        data: "proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443\n",
+        expected: {
+          type: "proxyAccess",
+          action: "allowed",
+          domain: "api.anthropic.com",
+          port: 443,
+        },
+      },
+      {
+        name: "blocked CONNECT (stdout)",
+        stream: "stdout" as const,
+        data: "proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443\n",
+        expected: { action: "blocked", domain: "blocked.com", reason: "Domain not in allowlist" },
+      },
+      {
+        name: "allowed CONNECT (stderr)",
+        stream: "stderr" as const,
+        data: "1734567890.123 TCP_TUNNEL/200 CONNECT stderr-test.com:443\n",
+        expected: { domain: "stderr-test.com" },
+      },
+    ])("should emit proxyAccess events for $name", async ({ stream, data, expected }) => {
       const adapter = new TestableDockerAdapter()
       const { events, listener } = createEventCollector()
       const mockProc = setupMockProcess(adapter)
       adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
-      mockProc.stdout.emit(
-        "data",
-        Buffer.from("proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443\n"),
-      )
+      mockProc[stream].emit("data", Buffer.from(data))
       await wait(10)
       expect(events.length).toBe(1)
-      expect(events[0]).toMatchObject({
-        type: "proxyAccess",
-        action: "allowed",
-        domain: "api.anthropic.com",
-        port: 443,
-      })
-    })
-
-    it("should emit proxyAccess events for blocked requests", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
-      mockProc.stdout.emit(
-        "data",
-        Buffer.from("proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443\n"),
-      )
-      await wait(10)
-      expect(events.length).toBe(1)
-      expect(events[0]).toMatchObject({
-        action: "blocked",
-        domain: "blocked.com",
-        reason: "Domain not in allowlist",
-      })
-    })
-
-    it("should handle stderr output for proxy logs", async () => {
-      const adapter = new TestableDockerAdapter()
-      const { events, listener } = createEventCollector()
-      const mockProc = setupMockProcess(adapter)
-      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
-      mockProc.stderr.emit(
-        "data",
-        Buffer.from("1734567890.123 TCP_TUNNEL/200 CONNECT stderr-test.com:443\n"),
-      )
-      await wait(10)
-      expect(events.length).toBe(1)
-      expect(events[0]).toMatchObject({ domain: "stderr-test.com" })
+      expect(events[0]).toMatchObject(expected)
     })
 
     it("should ignore non-CONNECT log lines", async () => {
