@@ -131,6 +131,23 @@ allowedDomains = ["api.exa.ai"]
 > [!TIP]
 > Network access is controlled at the **skill level** because all network operations are performed through MCP skills. The Expert itself does not directly access the network.
 
+**Debugging network issues:**
+
+Use `--verbose` to see real-time proxy activity:
+
+```bash
+npx perstack start my-expert "query" --runtime docker --verbose
+```
+
+This shows:
+- ✅ `Proxy ✓ api.anthropic.com:443` — Request allowed
+- 🚫 `Proxy ✗ blocked.com:443 (Domain not in allowlist)` — Request blocked
+
+When network requests fail unexpectedly, verbose mode helps distinguish between:
+- Domain not in allowlist (blocked by proxy)
+- Network connectivity issues
+- Target server errors
+
 ### Default runtime (infrastructure-controlled)
 
 With the default `perstack` runtime, Perstack outputs events to stdout. Your infrastructure decides what crosses the network boundary:

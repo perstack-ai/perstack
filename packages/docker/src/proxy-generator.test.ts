@@ -336,6 +336,32 @@ describe("generateSquidConf", () => {
     expect(conf).toContain("http_access deny !Safe_ports")
     expect(conf).toContain("http_access deny CONNECT !SSL_ports")
   })
+
+  it("should disable access log by default", () => {
+    const conf = generateSquidConf(["example.com"])
+    expect(conf).toContain("access_log none")
+    expect(conf).not.toContain("access_log stdio")
+  })
+
+  it("should accept options object format", () => {
+    const conf = generateSquidConf({ allowedDomains: ["api.anthropic.com"], verbose: false })
+    expect(conf).toContain("http_port 3128")
+    expect(conf).toContain("acl allowed_domains dstdomain")
+    expect(conf).toContain("access_log none")
+  })
+
+  it("should enable access log to stdout in verbose mode", () => {
+    const conf = generateSquidConf({ allowedDomains: ["api.anthropic.com"], verbose: true })
+    expect(conf).toContain("logformat perstack")
+    expect(conf).toContain("access_log stdio:/dev/stdout perstack")
+    expect(conf).not.toContain("access_log none")
+  })
+
+  it("should enable verbose logging without allowlist", () => {
+    const conf = generateSquidConf({ verbose: true })
+    expect(conf).toContain("access_log stdio:/dev/stdout perstack")
+    expect(conf).not.toContain("allowed_domains")
+  })
 })
 
 describe("generateProxyDockerfile", () => {

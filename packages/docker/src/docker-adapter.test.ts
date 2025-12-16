@@ -1,44 +1,18 @@
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
-import type { ExecResult } from "@perstack/core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DockerAdapter } from "./docker-adapter.js"
-
-class TestableDockerAdapter extends DockerAdapter {
-  public mockExecCommand: ((args: string[]) => Promise<ExecResult>) | null = null
-  public mockExecCommandWithOutput: ((args: string[]) => Promise<number>) | null = null
-  public capturedBuildArgs: string[] = []
-  protected override async execCommand(args: string[]): Promise<ExecResult> {
-    if (this.mockExecCommand) {
-      return this.mockExecCommand(args)
-    }
-    return super.execCommand(args)
-  }
-  protected override execCommandWithOutput(args: string[]): Promise<number> {
-    this.capturedBuildArgs = args
-    if (this.mockExecCommandWithOutput) {
-      return this.mockExecCommandWithOutput(args)
-    }
-    return super.execCommandWithOutput(args)
-  }
-  public testResolveWorkspacePath(workspace?: string): string | undefined {
-    return this.resolveWorkspacePath(workspace)
-  }
-  public async testPrepareBuildContext(
-    config: Parameters<DockerAdapter["prepareBuildContext"]>[0],
-    expertKey: string,
-    workspace?: string,
-  ): Promise<string> {
-    return this.prepareBuildContext(config, expertKey, workspace)
-  }
-  public async testBuildImages(buildDir: string, verbose?: boolean): Promise<void> {
-    return this.buildImages(buildDir, verbose)
-  }
-  public testExecCommandWithOutput(args: string[]): Promise<number> {
-    return super.execCommandWithOutput(args)
-  }
-}
+import {
+  createEventCollector,
+  createMockProcess,
+  findContainerStatusEvent,
+  type MockProcess,
+  minimalExpertConfig,
+  setupMockProcess,
+  TestableDockerAdapter,
+  wait,
+} from "./lib/test-utils.js"
 
 describe("DockerAdapter", () => {
   describe("name", () => {
@@ -127,6 +101,7 @@ describe("DockerAdapter", () => {
       )
     })
   })
+
   describe("resolveWorkspacePath", () => {
     let tempDir: string
     beforeEach(() => {
@@ -135,21 +110,25 @@ describe("DockerAdapter", () => {
     afterEach(() => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
+
     it("should return undefined when workspace is not provided", () => {
       const adapter = new TestableDockerAdapter()
       expect(adapter.testResolveWorkspacePath()).toBeUndefined()
       expect(adapter.testResolveWorkspacePath(undefined)).toBeUndefined()
     })
+
     it("should resolve absolute path that exists", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testResolveWorkspacePath(tempDir)
       expect(result).toBe(tempDir)
     })
+
     it("should resolve relative path to absolute path", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testResolveWorkspacePath(".")
       expect(result).toBe(process.cwd())
     })
+
     it("should normalize absolute path with parent directory references", () => {
       const adapter = new TestableDockerAdapter()
       const result = adapter.testResolveWorkspacePath(
@@ -157,12 +136,14 @@ describe("DockerAdapter", () => {
       )
       expect(result).toBe(tempDir)
     })
+
     it("should throw error when path does not exist", () => {
       const adapter = new TestableDockerAdapter()
       expect(() => adapter.testResolveWorkspacePath("/nonexistent/path")).toThrow(
         "Workspace path does not exist",
       )
     })
+
     it("should throw error when path is not a directory", () => {
       const adapter = new TestableDockerAdapter()
       const testFile = path.join(tempDir, "test.txt")
@@ -172,23 +153,8 @@ describe("DockerAdapter", () => {
       )
     })
   })
+
   describe("prepareBuildContext", () => {
-    const minimalConfig = {
-      model: "test-model",
-      provider: { providerName: "anthropic" as const },
-      experts: {
-        "test-expert": {
-          key: "test-expert",
-          name: "Test Expert",
-          version: "1.0.0",
-          description: "Test expert",
-          instruction: "You are a test expert",
-          skills: {},
-          delegates: [],
-          tags: [],
-        },
-      },
-    }
     let buildDir: string | null = null
     afterEach(() => {
       if (buildDir) {
@@ -196,17 +162,19 @@ describe("DockerAdapter", () => {
         buildDir = null
       }
     })
+
     it("should create workspace directory when workspace is not provided", async () => {
       const adapter = new TestableDockerAdapter()
-      buildDir = await adapter.testPrepareBuildContext(minimalConfig, "test-expert")
+      buildDir = await adapter.testPrepareBuildContext(minimalExpertConfig, "test-expert")
       expect(fs.existsSync(path.join(buildDir, "workspace"))).toBe(true)
     })
+
     it("should not create workspace directory when workspace is provided", async () => {
       const adapter = new TestableDockerAdapter()
       const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "test-workspace-"))
       try {
         buildDir = await adapter.testPrepareBuildContext(
-          minimalConfig,
+          minimalExpertConfig,
           "test-expert",
           tempWorkspace,
         )
@@ -215,12 +183,13 @@ describe("DockerAdapter", () => {
         fs.rmSync(tempWorkspace, { recursive: true, force: true })
       }
     })
+
     it("should generate compose file with workspace path", async () => {
       const adapter = new TestableDockerAdapter()
       const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "test-workspace-"))
       try {
         buildDir = await adapter.testPrepareBuildContext(
-          minimalConfig,
+          minimalExpertConfig,
           "test-expert",
           tempWorkspace,
         )
@@ -231,6 +200,7 @@ describe("DockerAdapter", () => {
       }
     })
   })
+
   describe("buildImages", () => {
     let tempDir: string
     beforeEach(() => {
@@ -240,7 +210,8 @@ describe("DockerAdapter", () => {
     afterEach(() => {
       fs.rmSync(tempDir, { recursive: true, force: true })
     })
-    it("should use execCommand without verbose flag", async () => {
+
+    it("should use QuietBuildStrategy without verbose flag", async () => {
       const adapter = new TestableDockerAdapter()
       let capturedArgs: string[] = []
       adapter.mockExecCommand = vi.fn(async (args: string[]) => {
@@ -251,18 +222,9 @@ describe("DockerAdapter", () => {
       expect(capturedArgs).toContain("docker")
       expect(capturedArgs).toContain("compose")
       expect(capturedArgs).toContain("build")
-      expect(capturedArgs).not.toContain("--progress=plain")
     })
-    it("should use execCommandWithOutput with verbose flag", async () => {
-      const adapter = new TestableDockerAdapter()
-      adapter.mockExecCommandWithOutput = vi.fn(async () => 0)
-      await adapter.testBuildImages(tempDir, true)
-      expect(adapter.capturedBuildArgs).toContain("docker")
-      expect(adapter.capturedBuildArgs).toContain("compose")
-      expect(adapter.capturedBuildArgs).toContain("build")
-      expect(adapter.capturedBuildArgs).toContain("--progress=plain")
-    })
-    it("should throw error when build fails without verbose", async () => {
+
+    it("should throw error when build fails", async () => {
       const adapter = new TestableDockerAdapter()
       adapter.mockExecCommand = vi.fn(async () => ({
         stdout: "",
@@ -273,34 +235,187 @@ describe("DockerAdapter", () => {
         "Docker build failed: build error",
       )
     })
-    it("should throw error when build fails with verbose", async () => {
+  })
+
+  describe("startProxyLogStream with mock spawn", () => {
+    it.each([
+      {
+        name: "allowed CONNECT (stdout)",
+        stream: "stdout" as const,
+        data: "proxy-1  | 1734567890.123 TCP_TUNNEL/200 CONNECT api.anthropic.com:443\n",
+        expected: {
+          type: "proxyAccess",
+          action: "allowed",
+          domain: "api.anthropic.com",
+          port: 443,
+        },
+      },
+      {
+        name: "blocked CONNECT (stdout)",
+        stream: "stdout" as const,
+        data: "proxy-1  | 1734567890.123 TCP_DENIED/403 CONNECT blocked.com:443\n",
+        expected: { action: "blocked", domain: "blocked.com", reason: "Domain not in allowlist" },
+      },
+      {
+        name: "allowed CONNECT (stderr)",
+        stream: "stderr" as const,
+        data: "1734567890.123 TCP_TUNNEL/200 CONNECT stderr-test.com:443\n",
+        expected: { domain: "stderr-test.com" },
+      },
+    ])("should emit proxyAccess events for $name", async ({ stream, data, expected }) => {
       const adapter = new TestableDockerAdapter()
-      adapter.mockExecCommandWithOutput = vi.fn(async () => 1)
-      await expect(adapter.testBuildImages(tempDir, true)).rejects.toThrow(
-        "Docker build failed with exit code 1",
-      )
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
+      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
+      mockProc[stream].emit("data", Buffer.from(data))
+      await wait(10)
+      expect(events.length).toBe(1)
+      expect(events[0]).toMatchObject(expected)
+    })
+
+    it("should ignore non-CONNECT log lines", async () => {
+      const adapter = new TestableDockerAdapter()
+      const { events, listener } = createEventCollector()
+      const mockProc = setupMockProcess(adapter)
+      adapter.testStartProxyLogStream("/tmp/docker-compose.yml", "job-1", "run-1", listener)
+      mockProc.stdout.emit("data", Buffer.from("some random log line\n"))
+      mockProc.stdout.emit("data", Buffer.from("TCP_MISS/200 GET http://example.com/\n"))
+      await wait(10)
+      expect(events.length).toBe(0)
     })
   })
-  describe("execCommandWithOutput", () => {
-    it("should return exit code 0 for successful command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(["true"])
-      expect(exitCode).toBe(0)
+
+  describe("runContainer verbose mode events", () => {
+    let tempDir: string
+
+    beforeEach(() => {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-run-test-"))
+      fs.writeFileSync(path.join(tempDir, "docker-compose.yml"), "version: '3'")
     })
-    it("should return non-zero exit code for failed command", async () => {
-      const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(["false"])
-      expect(exitCode).not.toBe(0)
+
+    afterEach(() => {
+      fs.rmSync(tempDir, { recursive: true, force: true })
     })
-    it("should return 127 for empty command", async () => {
+
+    it("should emit runtime container status events in verbose mode", async () => {
       const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput([])
-      expect(exitCode).toBe(127)
+      const { events, listener } = createEventCollector()
+      adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
+      const mockProc = setupMockProcess(adapter)
+      const runPromise = adapter.testRunContainer(
+        tempDir,
+        ["test"],
+        {},
+        5000,
+        true,
+        "job-1",
+        "run-1",
+        listener,
+      )
+      mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
+      mockProc.emit("close", 0)
+      await runPromise
+      expect(findContainerStatusEvent(events, "starting", "runtime")).toBeDefined()
+      expect(findContainerStatusEvent(events, "running", "runtime")).toBeDefined()
+      expect(findContainerStatusEvent(events, "stopped", "runtime")).toBeDefined()
     })
-    it("should return 127 for non-existent command", async () => {
+
+    it("should emit proxy status events when proxy directory exists", async () => {
       const adapter = new TestableDockerAdapter()
-      const exitCode = await adapter.testExecCommandWithOutput(["nonexistent-command-xyz"])
-      expect(exitCode).toBe(127)
+      const { events, listener } = createEventCollector()
+      fs.mkdirSync(path.join(tempDir, "proxy"))
+      // Mock execCommand to return healthy status for proxy health check
+      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
+        if (args.includes("ps") && args.includes("--format") && args.includes("json")) {
+          return { stdout: '{"Health": "healthy"}', stderr: "", exitCode: 0 }
+        }
+        return { stdout: "", stderr: "", exitCode: 0 }
+      })
+      const mockProcs: MockProcess[] = []
+      adapter.mockCreateProcess = () => {
+        const proc = createMockProcess()
+        mockProcs.push(proc)
+        return proc
+      }
+      const runPromise = adapter.testRunContainer(
+        tempDir,
+        ["test"],
+        {},
+        10000,
+        true,
+        "job-1",
+        "run-1",
+        listener,
+      )
+      // Wait for proxy health check and process setup
+      await wait(100)
+      if (mockProcs[1]) {
+        mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
+        mockProcs[1].emit("close", 0)
+      }
+      await runPromise
+      expect(findContainerStatusEvent(events, "starting", "proxy")).toBeDefined()
+      expect(findContainerStatusEvent(events, "healthy", "proxy")).toBeDefined()
+    }, 15000)
+
+    it("should not emit container status events when verbose is false", async () => {
+      const adapter = new TestableDockerAdapter()
+      const { events, listener } = createEventCollector()
+      adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
+      const mockProc = setupMockProcess(adapter)
+      const runPromise = adapter.testRunContainer(
+        tempDir,
+        ["test"],
+        {},
+        5000,
+        false,
+        "job-1",
+        "run-1",
+        listener,
+      )
+      mockProc.stdout.emit("data", Buffer.from('{"output": "result"}\n'))
+      mockProc.emit("close", 0)
+      await runPromise
+      const containerEvents = events.filter(
+        (e) => "type" in e && e.type === "dockerContainerStatus",
+      )
+      expect(containerEvents).toHaveLength(0)
     })
+
+    it("should kill proxy log process in finally block", async () => {
+      const adapter = new TestableDockerAdapter()
+      fs.mkdirSync(path.join(tempDir, "proxy"))
+      // Mock execCommand to return healthy status for proxy health check
+      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
+        if (args.includes("ps") && args.includes("--format") && args.includes("json")) {
+          return { stdout: '{"Health": "healthy"}', stderr: "", exitCode: 0 }
+        }
+        return { stdout: "", stderr: "", exitCode: 0 }
+      })
+      const mockProcs: MockProcess[] = []
+      adapter.mockCreateProcess = () => {
+        const proc = createMockProcess()
+        mockProcs.push(proc)
+        return proc
+      }
+      const runPromise = adapter.testRunContainer(
+        tempDir,
+        ["test"],
+        {},
+        5000,
+        true,
+        "job-1",
+        "run-1",
+        () => {},
+      )
+      // Wait for proxy health check and process setup
+      await wait(100)
+      if (mockProcs[1]) {
+        mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
+        mockProcs[1].emit("close", 0)
+      }
+      await runPromise
+      expect(mockProcs[0]?.kill).toHaveBeenCalledWith("SIGTERM")
+    }, 10000)
   })
 })

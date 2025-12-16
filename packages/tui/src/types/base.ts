@@ -27,6 +27,29 @@ export type LogEntry =
       result?: string
     }
   | { id: string; type: "completion"; text: string }
+  | {
+      id: string
+      type: "docker-build"
+      stage: "pulling" | "building" | "complete" | "error"
+      service: string
+      message: string
+      progress?: number
+    }
+  | {
+      id: string
+      type: "docker-container"
+      status: "starting" | "running" | "healthy" | "unhealthy" | "stopped" | "error"
+      service: string
+      message?: string
+    }
+  | {
+      id: string
+      type: "proxy-access"
+      action: "allowed" | "blocked"
+      domain: string
+      port: number
+      reason?: string
+    }
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
   runtimeVersion?: string
@@ -44,6 +67,7 @@ export type RuntimeInfo = {
   contextWindowUsage: number
   runtime?: string
   streamingText?: string
+  dockerState?: "building" | "starting" | "running" | "healthy" | "stopped" | "error"
 }
 export type InitialRuntimeConfig = {
   runtimeVersion: string

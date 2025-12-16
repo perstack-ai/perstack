@@ -111,9 +111,54 @@ Use with `--continue` to respond to interactive tool calls from the Coordinator 
 
 ### Other
 
-| Option      | Description            |
-| ----------- | ---------------------- |
-| `--verbose` | Enable verbose logging |
+| Option      | Description                                                |
+| ----------- | ---------------------------------------------------------- |
+| `--verbose` | Enable verbose logging (see [Verbose Mode](#verbose-mode)) |
+
+## Verbose Mode
+
+The `--verbose` flag enables detailed logging for debugging purposes. The behavior varies by runtime:
+
+### Default Runtime (`perstack`)
+
+Shows additional runtime information in the output.
+
+### Docker Runtime (`--runtime docker`)
+
+Enables comprehensive debugging output:
+
+**Docker Build Progress:**
+- Image layer pulling progress
+- Build step execution
+- Dependency installation status
+
+**Container Lifecycle:**
+- Container startup status
+- Health check results
+- Container exit information
+
+**Proxy Monitoring (when network isolation is enabled):**
+- Real-time allow/block events for network requests
+- Domain and port information for each request
+- Clear indication of blocked requests with reasons
+
+**Example output in TUI:**
+```
+Docker Build [runtime] Building    Installing dependencies...
+Docker Build [runtime] Complete    Docker build completed
+Docker [proxy] Starting            Starting proxy container...
+Docker [proxy] Healthy             Proxy container ready
+Docker [runtime] Starting          Starting runtime container...
+Docker [runtime] Running           Runtime container started
+Proxy ✓ api.anthropic.com:443
+Proxy ✗ blocked-domain.com:443     Domain not in allowlist
+```
+
+**Use cases:**
+- Debugging network connectivity issues
+- Verifying proxy allowlist configuration
+- Monitoring which domains are being accessed
+- Troubleshooting container startup failures
 
 ## Examples
 

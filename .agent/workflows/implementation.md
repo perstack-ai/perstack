@@ -220,6 +220,14 @@ If Codecov reports decreased coverage:
 2. Push fixes
 3. Wait for Codecov to re-run
 
+**Testing Strategy for Hard-to-Test Code:**
+
+When code requires external dependencies (Docker, network, etc.):
+
+- **Use mock tests** — Mock `spawn`, `ChildProcess`, or other system calls
+- **Don't exclude from coverage** — Excluding files masks real coverage issues
+- **Don't skip tests** — Write mock-based tests to verify logic paths
+
 ### Handling Cursor Bugbot Comments
 
 Every 5 minutes:

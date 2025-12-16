@@ -1,0 +1,288 @@
+# CLI Reference
+
+## Running Experts
+
+### `perstack start`
+
+Interactive workbench for developing and testing Experts.
+
+```bash
+perstack start [expertKey] [query] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key (optional — prompts if not provided)
+- `[query]`: Input query (optional — prompts if not provided)
+
+Opens a text-based UI for iterating on Expert definitions. See [Running Experts](../using-experts/running-experts.md).
+
+### `perstack run`
+
+Headless execution for production and automation.
+
+```bash
+perstack run <expertKey> <query> [options]
+```
+
+**Arguments:**
+- `<expertKey>`: Expert key (required)
+  - Examples: `my-expert`, `@org/my-expert`, `@org/my-expert@1.0.0`
+- `<query>`: Input query (required)
+
+Outputs JSON events to stdout.
+
+## Shared Options
+
+Both `start` and `run` accept the same options:
+
+### Model and Provider
+
+| Option                  | Description           | Default             |
+| ----------------------- | --------------------- | ------------------- |
+| `--provider <provider>` | LLM provider          | `anthropic`         |
+| `--model <model>`       | Model name            | `claude-sonnet-4-5` |
+| `--temperature <temp>`  | Temperature (0.0-1.0) | `0.3`               |
+
+Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-bedrock`, `google-vertex`
+
+### Execution Control
+
+| Option              | Description                                  | Default   |
+| ------------------- | -------------------------------------------- | --------- |
+| `--max-steps <n>`   | Maximum total steps across all Runs in a Job | unlimited |
+| `--max-retries <n>` | Max retry attempts per generation            | `5`       |
+| `--timeout <ms>`    | Timeout per generation (ms)                  | `60000`   |
+
+### Runtime
+
+| Option                | Description       | Default                   |
+| --------------------- | ----------------- | ------------------------- |
+| `--runtime <runtime>` | Execution runtime | From config or `perstack` |
+
+Available runtimes:
+- `perstack` — Built-in runtime (default)
+- `docker` — Containerized runtime with network isolation
+- `cursor` — Cursor CLI (experimental)
+- `claude-code` — Claude Code CLI (experimental)
+- `gemini` — Gemini CLI (experimental)
+
+If `--runtime` is not specified, the runtime is determined by `runtime` field in `perstack.toml`. If neither is set, `perstack` is used.
+
+See [Multi-Runtime Support](../using-experts/multi-runtime.md) for setup and limitations.
+
+### Configuration
+
+| Option                 | Description             | Default                |
+| ---------------------- | ----------------------- | ---------------------- |
+| `--config <path>`      | Path to `perstack.toml` | Auto-discover from cwd |
+| `--env-path <path...>` | Environment file paths  | `.env`, `.env.local`   |
+
+### Job and Run Management
+
+| Option                | Description                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| `--job-id <id>`       | Custom Job ID for new Job (default: auto-generated)         |
+| `--continue`          | Continue latest Job with new Run                            |
+| `--continue-job <id>` | Continue specific Job with new Run                          |
+| `--resume-from <id>`  | Resume from specific checkpoint (requires `--continue-job`) |
+
+**Combining options:**
+
+```bash
+# Continue latest Job from its latest checkpoint
+--continue
+
+# Continue specific Job from its latest checkpoint
+--continue-job <jobId>
+
+# Continue specific Job from a specific checkpoint
+--continue-job <jobId> --resume-from <checkpointId>
+```
+
+**Note:** `--resume-from` requires `--continue-job` (Job ID must be specified). You can only resume from the Coordinator Expert's checkpoints.
+
+### Interactive
+
+| Option                               | Description                                 |
+| ------------------------------------ | ------------------------------------------- |
+| `-i, --interactive-tool-call-result` | Treat query as interactive tool call result |
+
+Use with `--continue` to respond to interactive tool calls from the Coordinator Expert.
+
+### Other
+
+| Option      | Description            |
+| ----------- | ---------------------- |
+| `--verbose` | Enable verbose logging |
+
+## Examples
+
+```bash
+# Basic execution (creates new Job)
+npx perstack run my-expert "Review this code"
+
+# With model options
+npx perstack run my-expert "query" \
+  --provider google \
+  --model gemini-2.5-pro \
+  --temperature 0.7 \
+  --max-steps 100
+
+# Continue Job with follow-up
+npx perstack run my-expert "initial query"
+npx perstack run my-expert "follow-up" --continue
+
+# Continue specific Job from latest checkpoint
+npx perstack run my-expert "continue" --continue-job job_abc123
+
+# Continue specific Job from specific checkpoint
+npx perstack run my-expert "retry with different approach" \
+  --continue-job job_abc123 \
+  --resume-from checkpoint_xyz
+
+# Custom Job ID for new Job
+npx perstack run my-expert "query" --job-id my-custom-job
+
+# Respond to interactive tool call
+npx perstack run my-expert "user response" --continue -i
+
+# Custom config
+npx perstack run my-expert "query" \
+  --config ./configs/production.toml \
+  --env-path .env.production
+
+# Registry Experts
+npx perstack run tic-tac-toe "Let's play!"
+npx perstack run @org/expert@1.0.0 "query"
+
+# Non-default runtimes
+npx perstack run my-expert "query" --runtime docker
+npx perstack run my-expert "query" --runtime cursor
+npx perstack run my-expert "query" --runtime claude-code
+npx perstack run my-expert "query" --runtime gemini
+```
+
+## Registry Management
+
+### `perstack publish`
+
+Publish an Expert to the registry.
+
+```bash
+perstack publish [expertName] [options]
+```
+
+**Arguments:**
+- `[expertName]`: Expert name from `perstack.toml` (prompts if not provided)
+
+**Options:**
+| Option            | Description                 |
+| ----------------- | --------------------------- |
+| `--config <path>` | Path to `perstack.toml`     |
+| `--dry-run`       | Validate without publishing |
+
+**Example:**
+```bash
+perstack publish my-expert
+perstack publish my-expert --dry-run
+```
+
+Requires `PERSTACK_API_KEY` environment variable.
+
+**Note:** Published Experts must use `npx` or `uvx` as skill commands. Arbitrary commands are not allowed for security reasons. See [Publishing](../making-experts/publishing.md#skill-requirements).
+
+### `perstack unpublish`
+
+Remove an Expert version from the registry.
+
+```bash
+perstack unpublish [expertKey] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key with version (e.g., `my-expert@1.0.0`)
+
+**Options:**
+| Option            | Description                                      |
+| ----------------- | ------------------------------------------------ |
+| `--config <path>` | Path to `perstack.toml`                          |
+| `--force`         | Skip confirmation (required for non-interactive) |
+
+**Example:**
+```bash
+perstack unpublish                          # Interactive mode
+perstack unpublish my-expert@1.0.0 --force  # Non-interactive
+```
+
+### `perstack tag`
+
+Add or update tags on an Expert version.
+
+```bash
+perstack tag [expertKey] [tags...] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key with version (e.g., `my-expert@1.0.0`)
+- `[tags...]`: Tags to set (e.g., `stable`, `beta`)
+
+**Options:**
+| Option            | Description             |
+| ----------------- | ----------------------- |
+| `--config <path>` | Path to `perstack.toml` |
+
+**Example:**
+```bash
+perstack tag                              # Interactive mode
+perstack tag my-expert@1.0.0 stable beta  # Set tags directly
+```
+
+### `perstack status`
+
+Change the status of an Expert version.
+
+```bash
+perstack status [expertKey] [status] [options]
+```
+
+**Arguments:**
+- `[expertKey]`: Expert key with version (e.g., `my-expert@1.0.0`)
+- `[status]`: New status (`available`, `deprecated`, `disabled`)
+
+**Options:**
+| Option            | Description             |
+| ----------------- | ----------------------- |
+| `--config <path>` | Path to `perstack.toml` |
+
+**Example:**
+```bash
+perstack status                           # Interactive mode
+perstack status my-expert@1.0.0 deprecated
+```
+
+| Status       | Meaning                      |
+| ------------ | ---------------------------- |
+| `available`  | Normal, visible in registry  |
+| `deprecated` | Still usable but discouraged |
+| `disabled`   | Cannot be executed           |
+
+## Project Setup
+
+### `npx create-expert`
+
+Interactive wizard to create Perstack Experts.
+
+```bash
+npx create-expert                           # New project setup
+npx create-expert my-expert "Add X"         # Improve existing Expert
+```
+
+**New Project Mode:**
+- Detects available LLMs (Anthropic, OpenAI, Google)
+- Detects available runtimes (Cursor, Claude Code, Gemini)
+- Creates `.env`, `AGENTS.md`, `perstack.toml`
+- Runs Expert creation flow
+
+**Improvement Mode:**
+When called with Expert name, skips setup and improves existing Expert.
+

@@ -21,6 +21,28 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
     runtime: options.initialConfig.runtime,
   })
   const handleEvent = useCallback((event: PerstackEvent) => {
+    // Handle Docker build progress events
+    if (event.type === "dockerBuildProgress") {
+      const buildEvent = event as { stage: string }
+      setRuntimeInfo((prev) => ({
+        ...prev,
+        dockerState: buildEvent.stage === "complete" ? "running" : "building",
+      }))
+      return null
+    }
+
+    // Handle Docker container status events
+    if (event.type === "dockerContainerStatus") {
+      const containerEvent = event as { status: string; service: string }
+      if (containerEvent.service === "runtime") {
+        setRuntimeInfo((prev) => ({
+          ...prev,
+          dockerState: containerEvent.status as RuntimeInfo["dockerState"],
+        }))
+      }
+      return null
+    }
+
     if (event.type === "initializeRuntime") {
       setRuntimeInfo((prev) => ({
         runtimeVersion: event.runtimeVersion,
@@ -37,6 +59,7 @@ export const useRuntimeInfo = (options: UseRuntimeInfoOptions) => {
         activeSkills: [],
         contextWindowUsage: prev.contextWindowUsage,
         runtime: prev.runtime,
+        dockerState: prev.dockerState === "building" ? "running" : prev.dockerState,
       }))
       return { initialized: true }
     }

@@ -1,0 +1,155 @@
+# Going to Production
+
+Your agent works in development. Now you want to deploy it for real users.
+
+**The concern**: AI agents have larger attack surfaces than typical applications. They make decisions, use tools, and interact with external systems. How do you deploy them safely?
+
+**Perstack's approach**: Sandbox the environment, not the agent's capabilities. The runtime is designed to run in isolated containers with full observability.
+
+## The deployment model
+
+```
+┌─────────────────────────────────────────────────┐
+│  Container (your sandbox)                       │
+│  ┌─────────────────────────────────────────┐   │
+│  │  Perstack Runtime                        │   │
+│  │  ├── Expert execution                   │   │
+│  │  ├── MCP skill servers                  │   │
+│  │  └── Workspace (mounted volume)         │   │
+│  └─────────────────────────────────────────┘   │
+│                     │                           │
+│                     ▼                           │
+│              JSON events → stdout               │
+└─────────────────────────────────────────────────┘
+                      │
+                      ▼
+           Your application / orchestrator
+```
+
+One container = one Expert execution. The container:
+- Has no persistent state (stateless)
+- Writes execution events to stdout (observable)
+- Has a mounted workspace for file I/O (controlled)
+- Terminates when the Expert completes (isolated)
+
+## Basic Docker setup
+
+```dockerfile
+FROM node:22-slim
+RUN npm install -g perstack
+COPY perstack.toml /app/perstack.toml
+WORKDIR /workspace
+ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml"]
+```
+
+```bash
+docker build -t my-expert .
+docker run --rm \
+  -e ANTHROPIC_API_KEY \
+  -v $(pwd)/workspace:/workspace \
+  my-expert "my-expert" "User query here"
+```
+
+The `ENTRYPOINT` fixes the Expert. Callers just pass the query.
+
+## Per-user workspaces
+
+For multi-user applications, mount per-user workspaces:
+
+```bash
+# User Alice
+docker run --rm \
+  -e ANTHROPIC_API_KEY \
+  -v /data/users/alice:/workspace \
+  my-expert "assistant" "What's on my schedule today?"
+
+# User Bob
+docker run --rm \
+  -e ANTHROPIC_API_KEY \
+  -v /data/users/bob:/workspace \
+  my-expert "assistant" "What's on my schedule today?"
+```
+
+Each user gets isolated state. The Expert reads and writes to their workspace only.
+
+## Observability in production
+
+`perstack run` outputs JSON events to stdout. Each line is a structured event:
+
+```json
+{"type":"generation:start","timestamp":"2024-01-15T10:30:00Z"}
+{"type":"tool:called","toolName":"search","input":{"query":"..."},"timestamp":"..."}
+{"type":"generation:complete","content":"Based on my search...","timestamp":"..."}
+{"type":"complete","timestamp":"..."}
+```
+
+Pipe these to your logging system:
+
+```bash
+docker run --rm ... my-expert "assistant" "query" | your-log-collector
+```
+
+You get full execution traces without any instrumentation code.
+
+> [!NOTE]
+> Events are also written to `workspace/perstack/` as checkpoints. You can replay any execution for debugging or auditing.
+
+## Why sandbox-first?
+
+Traditional security approach: Restrict what the agent *can do* — limit tools, filter outputs, add guardrails inside the agent.
+
+**Problem**: This creates an arms race. The agent tries to be helpful; the restrictions try to prevent misuse. Complex, brittle, never complete.
+
+**Sandbox-first approach**: Let the agent do its job. Contain the *impact* at the infrastructure level.
+
+| Aspect          | Traditional             | Sandbox-first                |
+| --------------- | ----------------------- | ---------------------------- |
+| Tool access     | Restricted, filtered    | Full access within sandbox   |
+| Output handling | Content filtering       | Events to stdout, you decide |
+| Failure mode    | Agent fights guardrails | Container terminates         |
+| Audit           | Logs + hope             | Complete event stream        |
+
+The agent operates freely within its sandbox. Your infrastructure controls what the sandbox can affect.
+
+## Production checklist
+
+**Container isolation**:
+- [ ] Each execution runs in a fresh container
+- [ ] No shared state between containers
+- [ ] Network access controlled (if agent shouldn't reach internet, don't allow it)
+
+**Secrets management**:
+- [ ] API keys passed via environment variables
+- [ ] Only required variables passed to container
+- [ ] No secrets in Expert definitions or workspace
+
+**Observability**:
+- [ ] JSON events collected and indexed
+- [ ] Checkpoints retained for replay
+- [ ] Alerts on execution failures
+
+**Resource limits**:
+- [ ] Container memory limits set
+- [ ] Execution time limits (via `--max-steps` or container timeout)
+- [ ] Workspace size limits
+
+## Scaling patterns
+
+**Job queue**: Push queries to a queue, workers pull and execute in containers.
+
+```
+Queue → Worker → Container → Expert → Events → Your system
+```
+
+**Serverless**: Run containers on-demand (AWS Lambda, Cloud Run, etc.).
+
+**Kubernetes**: Use Jobs for batch, Deployments for persistent workers.
+
+The stateless container model fits all of these patterns.
+
+## What's next
+
+- [Sandbox Integration](../understanding-perstack/sandbox-integration.md) — Deep dive on the security model
+- [Operating Experts](../operating-experts/deployment.md) — Monitoring, maintenance, and operations
+- [Isolation by Design](../operating-experts/isolation-by-design.md) — How isolation is enforced
+

@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2"
 import type {
   Checkpoint,
   PerstackConfig,
@@ -8,6 +9,7 @@ import type {
 } from "@perstack/core"
 import { defaultRetrieveCheckpoint, defaultStoreCheckpoint } from "@perstack/storage"
 import { getAdapter, getRegisteredRuntimes, isAdapterAvailable } from "./registry.js"
+
 export type DispatchParams = {
   setting: RunParamsInput["setting"]
   checkpoint?: Checkpoint
@@ -25,7 +27,6 @@ export type DispatchResult = {
 
 export async function dispatchToRuntime(params: DispatchParams): Promise<DispatchResult> {
   const {
-    setting,
     checkpoint,
     runtime,
     config,
@@ -34,6 +35,11 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     retrieveCheckpoint,
     workspace,
   } = params
+  const setting = {
+    ...params.setting,
+    jobId: params.setting.jobId ?? createId(),
+    runId: params.setting.runId ?? createId(),
+  }
   if (!isAdapterAvailable(runtime)) {
     const available = getRegisteredRuntimes().join(", ")
     throw new Error(`Runtime "${runtime}" is not available. Available runtimes: ${available}.`)

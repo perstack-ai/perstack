@@ -117,8 +117,10 @@ export class CursorAdapter extends BaseAdapter {
     if (!expert) {
       throw new Error(`Expert "${setting.expertKey}" not found`)
     }
-    const jobId = setting.jobId ?? createId()
-    const runId = setting.runId ?? createId()
+    if (!setting.jobId || !setting.runId) {
+      throw new Error("CursorAdapter requires jobId and runId in setting")
+    }
+    const { jobId, runId } = setting
     const expertInfo = { key: setting.expertKey, name: expert.name, version: expert.version }
     const query = setting.input.text
     const prompt = this.buildPrompt(expert.instruction, query)

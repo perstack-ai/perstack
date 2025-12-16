@@ -1,0 +1,138 @@
+# State Management
+
+Perstack automatically saves execution state, enabling continuation and replay.
+
+## Execution hierarchy
+
+Perstack organizes execution into three levels:
+
+| Level          | Description              | Created when                       |
+| -------------- | ------------------------ | ---------------------------------- |
+| **Job**        | Top-level execution unit | `perstack run` starts              |
+| **Run**        | Single Expert execution  | Expert starts or delegation occurs |
+| **Checkpoint** | Snapshot at step end     | Each step completes                |
+
+For the full execution model, including step counting and Coordinator vs. Delegated Expert differences, see [Runtime](../understanding-perstack/runtime.md).
+
+## Jobs
+
+A Job represents one complete task. It tracks:
+- All Runs (Coordinator and delegated)
+- Total steps across all Runs
+- Accumulated token usage
+
+Jobs are stored in `perstack/jobs/{jobId}/`.
+
+**Continue a job:**
+
+```bash
+npx perstack run my-expert "Initial query"
+# Job created with first Run
+
+npx perstack run my-expert "Follow-up query" --continue
+# New Run added to the same Job
+```
+
+**Specify a job ID:**
+
+```bash
+npx perstack run my-expert "query" --job-id my-custom-job-id
+```
+
+## Runs
+
+A Run is a single Expert execution within a Job. Each Run has:
+- Its own `stepNumber` (starts from 1)
+- Its own message history
+- Its own checkpoints
+
+When an Expert delegates to another Expert, a new Run is created for the delegate.
+
+## Checkpoints
+
+Every step creates a checkpoint — a complete snapshot of Run state:
+- Message history
+- Token usage
+- Step number
+- Expert info
+
+Checkpoints enable pause, resume, and replay.
+
+## Continuing execution
+
+Use `--continue` to add a new Run to the latest Job:
+
+```bash
+npx perstack run my-expert "Initial query"
+npx perstack run my-expert "Follow-up query" --continue
+```
+
+The Coordinator Expert receives the follow-up as a new user message in a fresh Run, but within the same Job context.
+
+**Continue a specific job:**
+
+```bash
+npx perstack run my-expert "Follow-up" --continue-job <jobId>
+```
+
+## Resuming from a checkpoint
+
+Resume from a specific checkpoint to branch execution. Use `--resume-from` with `--continue-job`:
+
+```bash
+npx perstack run my-expert "try again" --continue-job <jobId> --resume-from <checkpointId>
+```
+
+Useful for:
+- Re-running from a past step
+- Trying different approaches
+- Debugging
+
+**Important:**
+- `--resume-from` requires `--continue-job` (Job ID must be specified)
+- You can only resume from the Coordinator Expert's checkpoints
+
+## Interactive tool calls
+
+When the Coordinator Expert calls an interactive tool, execution pauses for user input. Respond with `--continue` and `-i`:
+
+```bash
+npx perstack run my-expert "Initial query"
+# Execution pauses at interactive tool call
+
+npx perstack run my-expert "User response" --continue -i
+```
+
+The `-i` flag (or `--interactive-tool-call-result`) treats the query as the tool call result.
+
+**Note:** Interactive tools are only available to the Coordinator Expert. See [Why no interactive tools for delegates?](../understanding-perstack/experts.md#why-no-interactive-tools-for-delegates)
+
+## Max steps
+
+The `--max-steps` option limits total steps across all Runs in a Job:
+
+```bash
+npx perstack run my-expert "query" --max-steps 50
+```
+
+```
+Job (maxSteps = 50)
+ ├── Run 1: 10 steps
+ ├── Run 2: 5 steps
+ └── Run 3: 8 steps
+     Total: 23 steps (can continue until 50)
+```
+
+When total steps reach the limit, the Job stops gracefully.
+
+## Events
+
+Every state change is recorded as an event in `perstack/jobs/{jobId}/runs/{runId}/`.
+
+Events enable debugging, monitoring, and analysis. See [Runtime](../understanding-perstack/runtime.md#event-notification) for event types and the notification system.
+
+## What's next
+
+- [Error Handling](./error-handling.md) — handling failures gracefully
+- [Runtime](../understanding-perstack/runtime.md) — how state management works
+
