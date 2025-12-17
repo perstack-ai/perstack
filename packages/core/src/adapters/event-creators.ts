@@ -61,7 +61,6 @@ export function createStartRunEvent(
     jobId,
     runId,
     stepNumber: checkpoint.stepNumber,
-    checkpoint,
     initialCheckpoint: checkpoint,
     inputMessages: [],
   }

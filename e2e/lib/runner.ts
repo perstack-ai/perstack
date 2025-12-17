@@ -15,16 +15,17 @@ export type RunResult = CommandResult & {
 
 export async function runCli(
   args: string[],
-  options?: { timeout?: number; cwd?: string },
+  options?: { timeout?: number; cwd?: string; env?: Record<string, string> },
 ): Promise<CommandResult> {
   const timeout = options?.timeout ?? 30000
   const cwd = options?.cwd ?? process.cwd()
+  const env = options?.env ?? { ...process.env }
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
     const proc = spawn("npx", ["tsx", "./packages/perstack/bin/cli.ts", ...args], {
       cwd,
-      env: { ...process.env },
+      env,
       stdio: ["pipe", "pipe", "pipe"],
     })
     const timer = setTimeout(() => {
