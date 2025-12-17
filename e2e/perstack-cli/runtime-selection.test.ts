@@ -12,7 +12,7 @@ import { runCli, withEventParsing } from "../lib/runner.js"
 const CONFIG = "./e2e/experts/special-tools.toml"
 const GLOBAL_RUNTIME_CONFIG = "./e2e/experts/global-runtime.toml"
 // LLM API calls require extended timeout beyond the default 30s
-const TIMEOUT = 120000
+const LLM_TIMEOUT = 120000
 
 describe.concurrent("Runtime Selection", () => {
   it("should run with local runtime", async () => {
@@ -26,7 +26,7 @@ describe.concurrent("Runtime Selection", () => {
         "e2e-special-tools",
         "Use attemptCompletion to say hello",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
     const events = parseEvents(result.stdout)
@@ -49,7 +49,7 @@ describe.concurrent("Runtime Selection", () => {
   it.runIf(isCursorAvailable())("should run with cursor runtime", async () => {
     const result = await runCli(
       ["run", "--config", CONFIG, "--runtime", "cursor", "e2e-special-tools", "echo test"],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
     const events = parseEvents(result.stdout)
@@ -59,7 +59,7 @@ describe.concurrent("Runtime Selection", () => {
   it.runIf(isClaudeAvailable())("should run with claude-code runtime", async () => {
     const result = await runCli(
       ["run", "--config", CONFIG, "--runtime", "claude-code", "e2e-special-tools", "echo test"],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
     const events = parseEvents(result.stdout)
@@ -78,7 +78,7 @@ describe.concurrent("Runtime Selection", () => {
         "e2e-global-runtime",
         "Say hello",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
     const events = parseEvents(result.stdout)
@@ -99,7 +99,7 @@ describe.concurrent("Runtime Selection", () => {
         "e2e-special-tools",
         "Use attemptCompletion to say hello",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
     const events = parseEvents(result.stdout)
@@ -109,7 +109,7 @@ describe.concurrent("Runtime Selection", () => {
   it("should use runtime from perstack.toml when --runtime not specified", async () => {
     const cmdResult = await runCli(
       ["run", "--config", GLOBAL_RUNTIME_CONFIG, "e2e-global-runtime", "Say hello"],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const result = withEventParsing(cmdResult)
     expect(assertEventSequenceContains(result.events, ["startRun", "completeRun"]).passed).toBe(

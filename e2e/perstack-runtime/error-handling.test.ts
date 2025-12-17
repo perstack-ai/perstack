@@ -3,18 +3,25 @@ import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType } from "../lib/event-parser.js"
 import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
 
-describe("Error Handling", () => {
-  describe("Recover from tool error", () => {
-    it("should recover from file not found error and complete successfully", async () => {
+const ERROR_HANDLING_CONFIG = "./e2e/experts/error-handling.toml"
+const ERRORS_CONFIG = "./e2e/experts/errors.toml"
+const GLOBAL_RUNTIME_CONFIG = "./e2e/experts/global-runtime.toml"
+// LLM API calls require extended timeout
+const LLM_TIMEOUT = 180000
+
+describe.concurrent("Error Handling", () => {
+  it(
+    "should recover from file not found error and complete successfully",
+    async () => {
       const cmdResult = await runRuntimeCli(
         [
           "run",
           "--config",
-          "./e2e/experts/error-handling.toml",
+          ERROR_HANDLING_CONFIG,
           "e2e-tool-error-recovery",
           "Read the file at nonexistent_file_12345.txt and report what happened",
         ],
-        { timeout: 180000 },
+        { timeout: LLM_TIMEOUT },
       )
       const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
@@ -29,35 +36,32 @@ describe("Error Handling", () => {
       })
       expect(hasFileNotFoundError).toBe(true)
       expect(assertEventSequenceContains(result.events, ["completeRun"]).passed).toBe(true)
-    }, 200000)
+    },
+    LLM_TIMEOUT,
+  )
+
+  it("should fail gracefully when MCP skill command is invalid", async () => {
+    const result = await runRuntimeCli([
+      "run",
+      "--config",
+      ERRORS_CONFIG,
+      "e2e-mcp-error",
+      "Say hello",
+    ])
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toMatch(/failed|error|spawn|ENOENT/i)
   })
 
-  describe("MCP connection error", () => {
-    it("should fail gracefully when MCP skill command is invalid", async () => {
-      const result = await runRuntimeCli([
-        "run",
-        "--config",
-        "./e2e/experts/errors.toml",
-        "e2e-mcp-error",
-        "Say hello",
-      ])
-      expect(result.exitCode).toBe(1)
-      expect(result.stderr).toMatch(/failed|error|spawn|ENOENT/i)
-    }, 60000)
-  })
-
-  describe("Invalid provider", () => {
-    it("should fail with invalid provider name", async () => {
-      const result = await runRuntimeCli([
-        "run",
-        "--config",
-        "./e2e/experts/global-runtime.toml",
-        "--provider",
-        "invalid-provider-xyz",
-        "e2e-global-runtime",
-        "Say hello",
-      ])
-      expect(result.exitCode).toBe(1)
-    }, 60000)
+  it("should fail with invalid provider name", async () => {
+    const result = await runRuntimeCli([
+      "run",
+      "--config",
+      GLOBAL_RUNTIME_CONFIG,
+      "--provider",
+      "invalid-provider-xyz",
+      "e2e-global-runtime",
+      "Say hello",
+    ])
+    expect(result.exitCode).toBe(1)
   })
 })

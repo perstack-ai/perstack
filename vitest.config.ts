@@ -1,4 +1,9 @@
+import { config } from "dotenv"
 import { defineConfig } from "vitest/config"
+
+// Load .env and .env.local for E2E tests (e.g., NPM_TOKEN for Docker tests)
+config({ path: ".env" })
+config({ path: ".env.local" })
 
 export default defineConfig({
   test: {
@@ -20,8 +25,11 @@ export default defineConfig({
           include: ["e2e/**/*.test.ts"],
           testTimeout: 300000,
           hookTimeout: 300000,
-          // Limit parallelism for Docker tests which are resource-intensive
+          // Disable file-level parallelism to avoid LLM API rate limits
+          // Tests within files can still run in parallel via describe.concurrent
+          fileParallelism: false,
           maxConcurrency: 3,
+          bail: 1,
         },
       },
     ],

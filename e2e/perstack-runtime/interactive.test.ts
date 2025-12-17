@@ -2,18 +2,17 @@ import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
 
-describe("Interactive Input", () => {
-  describe("Ask user for input", () => {
-    it("should stop at interactive tool and emit checkpoint", async () => {
+const CONTINUE_CONFIG = "./e2e/experts/continue-resume.toml"
+// LLM API calls require extended timeout
+const LLM_TIMEOUT = 180000
+
+describe.concurrent("Interactive Input", () => {
+  it(
+    "should stop at interactive tool and emit checkpoint",
+    async () => {
       const cmdResult = await runRuntimeCli(
-        [
-          "run",
-          "--config",
-          "./e2e/experts/continue-resume.toml",
-          "e2e-continue",
-          "Test continue/resume functionality",
-        ],
-        { timeout: 180000 },
+        ["run", "--config", CONTINUE_CONFIG, "e2e-continue", "Test continue/resume functionality"],
+        { timeout: LLM_TIMEOUT },
       )
       const result = withEventParsing(cmdResult)
       expect(
@@ -26,6 +25,7 @@ describe("Interactive Input", () => {
       const stopEvent = result.events.find((e) => e.type === "stopRunByInteractiveTool")
       expect(stopEvent).toBeDefined()
       expect((stopEvent as { checkpoint?: { id?: string } }).checkpoint?.id).toBeDefined()
-    }, 200000)
-  })
+    },
+    LLM_TIMEOUT,
+  )
 })
