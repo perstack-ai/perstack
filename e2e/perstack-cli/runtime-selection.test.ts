@@ -53,7 +53,7 @@ describe.concurrent("Runtime Selection", () => {
       )
       if (result.exitCode === 0) {
         const events = parseEvents(result.stdout)
-        expect(assertEventSequenceContains(events, ["completeRun"]).passed).toBe(true)
+        expect(assertEventSequenceContains(events, ["startRun", "completeRun"]).passed).toBe(true)
       } else {
         expect(result.stderr).toMatch(
           /not installed|prerequisites|not found|failed with exit code|timed out/i,
@@ -76,7 +76,7 @@ describe.concurrent("Runtime Selection", () => {
       )
       if (result.exitCode === 0) {
         const events = parseEvents(result.stdout)
-        expect(assertEventSequenceContains(events, ["completeRun"]).passed).toBe(true)
+        expect(assertEventSequenceContains(events, ["startRun", "completeRun"]).passed).toBe(true)
       } else {
         expect(result.stderr).toMatch(
           /not installed|prerequisites|not found|invalid api key|authentication/i,
@@ -99,7 +99,7 @@ describe.concurrent("Runtime Selection", () => {
       )
       if (result.exitCode === 0) {
         const events = parseEvents(result.stdout)
-        expect(assertEventSequenceContains(events, ["completeRun"]).passed).toBe(true)
+        expect(assertEventSequenceContains(events, ["startRun", "completeRun"]).passed).toBe(true)
       } else {
         expect(result.stderr).toMatch(/not installed|prerequisites|API_KEY/i)
       }

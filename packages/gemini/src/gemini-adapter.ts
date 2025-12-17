@@ -19,6 +19,7 @@ import {
   createEmptyUsage,
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
+  createStartRunEvent,
   createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
@@ -106,9 +107,11 @@ export class GeminiAdapter extends BaseAdapter {
       usage: createEmptyUsage(),
       metadata: { runtime: "gemini" },
     }
+    const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
+    eventListener?.(startRunEvent)
     const state: StreamingState = {
       checkpoint: initialCheckpoint,
-      events: [initEvent],
+      events: [initEvent, startRunEvent],
       pendingToolCalls: new Map(),
       finalOutput: "",
       accumulatedText: "",

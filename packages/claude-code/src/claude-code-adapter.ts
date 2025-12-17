@@ -19,6 +19,7 @@ import {
   createEmptyUsage,
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
+  createStartRunEvent,
   createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
@@ -94,9 +95,11 @@ export class ClaudeCodeAdapter extends BaseAdapter {
       usage: createEmptyUsage(),
       metadata: { runtime: "claude-code" },
     }
+    const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
+    eventListener?.(startRunEvent)
     const state: StreamingState = {
       checkpoint: initialCheckpoint,
-      events: [initEvent],
+      events: [initEvent, startRunEvent],
       pendingToolCalls: new Map(),
       finalOutput: "",
       lastStreamingText: "",

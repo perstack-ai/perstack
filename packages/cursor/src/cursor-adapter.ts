@@ -19,6 +19,7 @@ import {
   createEmptyUsage,
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
+  createStartRunEvent,
   createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
@@ -144,9 +145,11 @@ export class CursorAdapter extends BaseAdapter {
       usage: createEmptyUsage(),
       metadata: { runtime: "cursor" },
     }
+    const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
+    eventListener?.(startRunEvent)
     const state: StreamingState = {
       checkpoint: initialCheckpoint,
-      events: [initEvent],
+      events: [initEvent, startRunEvent],
       pendingToolCalls: new Map(),
       finalOutput: "",
       lastStreamingText: "",

@@ -47,6 +47,26 @@ export function createNormalizedCheckpoint(params: CreateCheckpointParams): Chec
   }
 }
 
+export function createStartRunEvent(
+  jobId: string,
+  runId: string,
+  expertKey: string,
+  checkpoint: Checkpoint,
+): RunEvent {
+  return {
+    type: "startRun",
+    id: createId(),
+    expertKey,
+    timestamp: Date.now(),
+    jobId,
+    runId,
+    stepNumber: checkpoint.stepNumber,
+    checkpoint,
+    initialCheckpoint: checkpoint,
+    inputMessages: [],
+  }
+}
+
 export function createRuntimeInitEvent(
   jobId: string,
   runId: string,

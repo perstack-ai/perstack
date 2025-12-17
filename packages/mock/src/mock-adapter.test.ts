@@ -90,13 +90,14 @@ describe("MockAdapter", () => {
       eventListener = vi.fn()
     })
 
-    it("should emit init and complete events", async () => {
+    it("should emit init, startRun, and complete events", async () => {
       const adapter = new MockAdapter({ name: "cursor" })
       const setting = createTestSetting()
       await adapter.run({ setting, eventListener })
-      expect(eventListener).toHaveBeenCalledTimes(2)
-      const [initEvent, completeEvent] = eventListener.mock.calls.map((c) => c[0])
+      expect(eventListener).toHaveBeenCalledTimes(3)
+      const [initEvent, startRunEvent, completeEvent] = eventListener.mock.calls.map((c) => c[0])
       expect(initEvent.type).toBe("initializeRuntime")
+      expect(startRunEvent.type).toBe("startRun")
       expect(completeEvent.type).toBe("completeRun")
     })
 
@@ -145,9 +146,10 @@ describe("MockAdapter", () => {
       const adapter = new MockAdapter({ name: "cursor" })
       const setting = createTestSetting()
       const result = await adapter.run({ setting, eventListener })
-      expect(result.events).toHaveLength(2)
+      expect(result.events).toHaveLength(3)
       expect(result.events[0].type).toBe("initializeRuntime")
-      expect(result.events[1].type).toBe("completeRun")
+      expect(result.events[1].type).toBe("startRun")
+      expect(result.events[2].type).toBe("completeRun")
     })
   })
 })
