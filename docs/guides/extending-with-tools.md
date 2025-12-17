@@ -1,3 +1,10 @@
+---
+title: "Extending with Tools"
+description: "Give your agent access to web search, databases, and APIs using MCP skills."
+tags: ["mcp", "integration"]
+order: 3
+---
+
 # Extending with Tools
 
 Your agent can reason and generate text. But sometimes that's not enough — you need it to search the web, query a database, or call an API.

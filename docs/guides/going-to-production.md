@@ -1,3 +1,10 @@
+---
+title: "Going to Production"
+description: "Deploy your agent safely and reliably. Sandbox integration, monitoring, and best practices."
+tags: ["production", "devops"]
+order: 5
+---
+
 # Going to Production
 
 Your agent works in development. Now you want to deploy it for real users.

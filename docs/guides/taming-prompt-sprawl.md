@@ -1,3 +1,10 @@
+---
+title: "Taming Prompt Sprawl"
+description: "Fix bloated prompts and confused behavior. Split responsibilities with delegation."
+tags: ["architecture", "best-practices"]
+order: 2
+---
+
 # Taming Prompt Sprawl
 
 Your agent started simple. A focused prompt, clear behavior, reliable results.

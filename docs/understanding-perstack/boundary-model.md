@@ -48,12 +48,12 @@ Application developers focus on user experience and control flows. Infrastructur
 
 The boundary is enforced by infrastructure — typically Docker containers.
 
-**Application side** (see [Adding AI to Your App](../working-with-perstack/adding-ai-to-your-app.md)):
+**Application side** (see [Adding AI to Your App](../guides/adding-ai-to-your-app.md)):
 - Spawn containers with queries
 - Read JSON events from stdout
 - Make decisions based on events
 
-**Infrastructure side** (see [Going to Production](../working-with-perstack/going-to-production.md)):
+**Infrastructure side** (see [Going to Production](../guides/going-to-production.md)):
 - Choose where to run containers (Docker, ECS, Cloud Run, Kubernetes)
 - Configure network isolation, resource limits, secrets
 - Route events back to the application
@@ -150,6 +150,6 @@ You get the benefits of separation without the infrastructure complexity.
 
 ## What's next
 
-- [Adding AI to Your App](../working-with-perstack/adding-ai-to-your-app.md) — Application developer guide
-- [Going to Production](../working-with-perstack/going-to-production.md) — Infrastructure / DevOps guide
+- [Adding AI to Your App](../guides/adding-ai-to-your-app.md) — Application developer guide
+- [Going to Production](../guides/going-to-production.md) — Infrastructure / DevOps guide
 - [Sandbox Integration](./sandbox-integration.md) — Technical deep dive on sandbox security
