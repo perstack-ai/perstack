@@ -54,14 +54,12 @@ export function generateBaseImageLayers(runtimes: Set<RuntimeRequirement>): stri
   return lines.join("\n")
 }
 
-export function generateMcpInstallLayers(config: PerstackConfig, expertKey: string): string {
-  const lines: string[] = []
+export function collectNpmPackages(config: PerstackConfig, expertKey: string): string[] {
   const expert = config.experts?.[expertKey]
   if (!expert?.skills) {
-    return ""
+    return []
   }
   const npmPackages: string[] = []
-  const uvxPackages: string[] = []
   for (const skill of Object.values(expert.skills)) {
     if (skill.type !== "mcpStdioSkill") continue
     const mcpSkill = skill as McpStdioSkill
@@ -71,6 +69,19 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
       }
       npmPackages.push(mcpSkill.packageName)
     }
+  }
+  return npmPackages
+}
+
+export function collectUvxPackages(config: PerstackConfig, expertKey: string): string[] {
+  const expert = config.experts?.[expertKey]
+  if (!expert?.skills) {
+    return []
+  }
+  const uvxPackages: string[] = []
+  for (const skill of Object.values(expert.skills)) {
+    if (skill.type !== "mcpStdioSkill") continue
+    const mcpSkill = skill as McpStdioSkill
     if (mcpSkill.command === "uvx" && mcpSkill.packageName) {
       if (!isValidPackageName(mcpSkill.packageName)) {
         throw new Error(`Invalid Python package name: ${mcpSkill.packageName}`)
@@ -78,16 +89,15 @@ export function generateMcpInstallLayers(config: PerstackConfig, expertKey: stri
       uvxPackages.push(mcpSkill.packageName)
     }
   }
-  if (npmPackages.length > 0) {
-    lines.push(`RUN npm install -g --ignore-scripts ${npmPackages.join(" ")}`)
-    lines.push("")
-  }
-  if (uvxPackages.length > 0) {
-    for (const pkg of uvxPackages) {
-      lines.push(`RUN uvx --help > /dev/null && uv tool install ${pkg}`)
-    }
-    lines.push("")
-  }
+  return uvxPackages
+}
+
+export function generateRuntimeInstallLayers(): string {
+  const lines: string[] = []
+  // Only install core runtime packages at build time
+  // Skill packages (npx/uvx) are installed at runtime via npx/uvx commands
+  lines.push("RUN npm install -g @perstack/runtime @perstack/base")
+  lines.push("")
   return lines.join("\n")
 }
 
@@ -101,12 +111,11 @@ export function generateDockerfile(
   lines.push(generateBaseImageLayers(runtimes))
   lines.push("WORKDIR /app")
   lines.push("")
-  const mcpLayers = generateMcpInstallLayers(config, expertKey)
-  if (mcpLayers) {
-    lines.push(mcpLayers)
-  }
-  lines.push("RUN npm install -g @perstack/runtime @perstack/base")
-  lines.push("")
+
+  // Install only core runtime packages at build time
+  // Skill packages are installed at runtime via npx/uvx
+  lines.push(generateRuntimeInstallLayers())
+
   lines.push("RUN groupadd -r perstack && useradd -r -g perstack -d /home/perstack -m perstack")
   lines.push("RUN mkdir -p /workspace && chown -R perstack:perstack /workspace /app")
   lines.push("")

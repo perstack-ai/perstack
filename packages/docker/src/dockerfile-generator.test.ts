@@ -1,10 +1,11 @@
 import type { PerstackConfig } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import {
+  collectNpmPackages,
   detectRequiredRuntimes,
   generateBaseImageLayers,
   generateDockerfile,
-  generateMcpInstallLayers,
+  generateRuntimeInstallLayers,
 } from "./dockerfile-generator.js"
 
 describe("detectRequiredRuntimes", () => {
@@ -126,8 +127,8 @@ describe("generateBaseImageLayers", () => {
   })
 })
 
-describe("generateMcpInstallLayers", () => {
-  it("should generate npm install for npx packages", () => {
+describe("collectNpmPackages", () => {
+  it("should collect npm packages from npx skills", () => {
     const config: PerstackConfig = {
       experts: {
         "test-expert": {
@@ -142,11 +143,11 @@ describe("generateMcpInstallLayers", () => {
         },
       },
     }
-    const layers = generateMcpInstallLayers(config, "test-expert")
-    expect(layers).toContain("npm install -g --ignore-scripts @perstack/base")
+    const packages = collectNpmPackages(config, "test-expert")
+    expect(packages).toContain("@perstack/base")
   })
 
-  it("should return empty string when no skills", () => {
+  it("should return empty array when no skills", () => {
     const config: PerstackConfig = {
       experts: {
         "test-expert": {
@@ -154,8 +155,15 @@ describe("generateMcpInstallLayers", () => {
         },
       },
     }
-    const layers = generateMcpInstallLayers(config, "test-expert")
-    expect(layers).toBe("")
+    const packages = collectNpmPackages(config, "test-expert")
+    expect(packages).toEqual([])
+  })
+})
+
+describe("generateRuntimeInstallLayers", () => {
+  it("should generate npm install for runtime packages", () => {
+    const layers = generateRuntimeInstallLayers()
+    expect(layers).toContain("npm install -g @perstack/runtime @perstack/base")
   })
 })
 
@@ -177,12 +185,32 @@ describe("generateDockerfile", () => {
     }
     const dockerfile = generateDockerfile(config, "my-expert")
     expect(dockerfile).toContain("FROM node:22-bookworm-slim")
-    expect(dockerfile).toContain("npm install -g --ignore-scripts @perstack/base")
-    expect(dockerfile).toContain("npm install -g @perstack/runtime")
+    expect(dockerfile).toContain("npm install -g @perstack/runtime @perstack/base")
     expect(dockerfile).toContain("COPY --chown=perstack:perstack perstack.toml /app/perstack.toml")
     expect(dockerfile).toContain("USER perstack")
     expect(dockerfile).toContain(
       'ENTRYPOINT ["perstack-runtime", "run", "--config", "/app/perstack.toml", "my-expert"]',
     )
+  })
+
+  it("should not install skill packages at build time", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "my-expert": {
+          instruction: "test",
+          skills: {
+            "custom-skill": {
+              type: "mcpStdioSkill",
+              command: "npx",
+              packageName: "@my-org/private-mcp-server",
+            },
+          },
+        },
+      },
+    }
+    const dockerfile = generateDockerfile(config, "my-expert")
+    // Skill packages should NOT be installed at build time
+    // They are installed at runtime via npx
+    expect(dockerfile).not.toContain("@my-org/private-mcp-server")
   })
 })
