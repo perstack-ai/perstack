@@ -2,17 +2,9 @@
 "@perstack/core": patch
 "@perstack/runtime": patch
 "perstack": patch
-"@perstack/docker": patch
-"@perstack/tui": patch
-"@perstack/runner": patch
 "create-expert": patch
 "@perstack/base": patch
 "@perstack/api-client": patch
-"@perstack/storage": patch
-"@perstack/cursor": patch
-"@perstack/claude-code": patch
-"@perstack/gemini": patch
-"@perstack/mock": patch
 ---
 
 Change default runtime from `perstack` to `docker` for security-by-default posture.
