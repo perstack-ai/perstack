@@ -19,7 +19,7 @@ export type PerstackAdapterOptions = {
 }
 
 export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
-  readonly name = "perstack"
+  readonly name = "local"
   protected version = "unknown"
   private useDirectExecution: boolean
 
