@@ -10,7 +10,7 @@ import { runCli, withEventParsing } from "../lib/runner.js"
 
 const CONFIG = "./e2e/experts/mixed-tools.toml"
 // LLM API calls require extended timeout beyond the default 30s
-const TIMEOUT = 180000
+const LLM_TIMEOUT = 180000
 
 describe("Interactive Input", () => {
   it("should handle mixed tool calls with delegate and interactive stop", async () => {
@@ -24,7 +24,7 @@ describe("Interactive Input", () => {
         "e2e-mixed-tools",
         "Test mixed tool calls: search, delegate, and ask user",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const result = withEventParsing(cmdResult)
 

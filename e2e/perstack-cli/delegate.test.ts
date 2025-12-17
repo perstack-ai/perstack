@@ -6,7 +6,7 @@ import { runCli, withEventParsing } from "../lib/runner.js"
 const CHAIN_CONFIG = "./e2e/experts/delegate-chain.toml"
 const PARALLEL_CONFIG = "./e2e/experts/parallel-delegate.toml"
 // LLM API calls require extended timeout beyond the default 30s
-const TIMEOUT = 180000
+const LLM_TIMEOUT = 180000
 
 describe.concurrent("Delegate to Expert", () => {
   it("should chain through multiple experts and complete all runs", async () => {
@@ -20,7 +20,7 @@ describe.concurrent("Delegate to Expert", () => {
         "e2e-delegate-chain",
         "Test delegate chain: process this request through multiple levels",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const result = withEventParsing(cmdResult)
 
@@ -46,7 +46,7 @@ describe.concurrent("Delegate to Expert", () => {
         "e2e-parallel-delegate",
         "Test parallel delegation: call both math and text experts simultaneously",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const result = withEventParsing(cmdResult)
 

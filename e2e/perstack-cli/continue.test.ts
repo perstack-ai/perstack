@@ -6,7 +6,7 @@ import { runCli, withEventParsing } from "../lib/runner.js"
 const CONTINUE_CONFIG = "./e2e/experts/continue-resume.toml"
 const PARALLEL_CONFIG = "./e2e/experts/parallel-delegate.toml"
 // LLM API calls require extended timeout beyond the default 30s
-const TIMEOUT = 180000
+const LLM_TIMEOUT = 180000
 
 function runArgs(expertKey: string, query: string): string[] {
   return ["run", "--config", CONTINUE_CONFIG, "--runtime", "local", expertKey, query]
@@ -30,14 +30,14 @@ describe.concurrent("Continue Job", () => {
   it("should continue job with --continue-job from interactive stop", async () => {
     const initialCmdResult = await runCli(
       runArgs("e2e-continue", "Test continue/resume functionality"),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const initialResult = withEventParsing(initialCmdResult)
     expect(initialResult.jobId).not.toBeNull()
 
     const continueCmdResult = await runCli(
       continueArgs(initialResult.jobId!, "e2e-continue", "User confirmed the test", true),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const continueResult = withEventParsing(continueCmdResult)
     expect(assertEventSequenceContains(continueResult.events, ["startRun"]).passed).toBe(true)
@@ -54,14 +54,14 @@ describe.concurrent("Continue Job", () => {
   it("should complete after continue from interactive stop", async () => {
     const initialCmdResult = await runCli(
       runArgs("e2e-continue", "Test continue/resume functionality"),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const initialResult = withEventParsing(initialCmdResult)
     expect(initialResult.jobId).not.toBeNull()
 
     const continueCmdResult = await runCli(
       continueArgs(initialResult.jobId!, "e2e-continue", "User confirmed the test", true),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const continueResult = withEventParsing(continueCmdResult)
     expect(getEventSequence(continueResult.events)).toContain("completeRun")
@@ -78,7 +78,7 @@ describe.concurrent("Continue Job", () => {
         "e2e-parallel-delegate",
         "Test parallel delegation: call both math and text experts simultaneously",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const initialResult = withEventParsing(initialCmdResult)
     expect(initialResult.jobId).not.toBeNull()
@@ -99,7 +99,7 @@ describe.concurrent("Continue Job", () => {
         "e2e-parallel-delegate",
         "Now summarize the previous results in one sentence",
       ],
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const continueResult = withEventParsing(continueCmdResult)
     expect(
@@ -113,7 +113,7 @@ describe.concurrent("Continue Job", () => {
 
   it("should capture checkpoint ID for resume-from", async () => {
     const cmdResult = await runCli(runArgs("e2e-continue", "Test continue/resume functionality"), {
-      timeout: TIMEOUT,
+      timeout: LLM_TIMEOUT,
     })
     const result = withEventParsing(cmdResult)
     const stopEvents = filterEventsByType(result.events, "stopRunByInteractiveTool")

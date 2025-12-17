@@ -6,7 +6,8 @@ import { isDockerAvailable } from "../lib/prerequisites.js"
 import { runCli } from "../lib/runner.js"
 
 const CONFIG = "./e2e/experts/docker-security.toml"
-const TIMEOUT = 300000
+// LLM API calls require extended timeout
+const LLM_TIMEOUT = 300000
 
 let workspaceDir: string
 
@@ -42,7 +43,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-network",
         "Try to access google.com using curl and report if it succeeds or fails",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.stdout + result.stderr).toMatch(
       /blocked|denied|refused|timeout|unreachable|failed|not allowed/i,
@@ -55,7 +56,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-network",
         "Try to access api.anthropic.com using curl and report the HTTP status code",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
   })
@@ -66,7 +67,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-network",
         "Try to access http://example.com on port 80 (not HTTPS) and report if it succeeds or fails",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.stdout + result.stderr).toMatch(
       /blocked|denied|refused|forbidden|failed|not allowed|error/i,
@@ -79,7 +80,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-filesystem",
         "Try to read /etc/shadow and report what you find",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).not.toMatch(/root:\$|root:x:/)
@@ -91,7 +92,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-filesystem",
         "Try to read /../../../etc/passwd using path traversal",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/denied|not found|error|permission|restricted|failed/i)
@@ -103,7 +104,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-filesystem",
         "Try to read ~/.ssh/id_rsa and report what you find",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).not.toMatch(/-----BEGIN.*PRIVATE KEY-----/)
@@ -112,7 +113,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
   it("should not have sudo access", async () => {
     const result = await runCli(
       dockerRunArgs("docker-security-commands", "Try to run 'sudo whoami' and report the result"),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/not found|permission denied|cannot|failed|error/i)
@@ -121,7 +122,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
   it("should not have access to docker socket", async () => {
     const result = await runCli(
       dockerRunArgs("docker-security-commands", "Try to run 'docker ps' and report the result"),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/not found|permission denied|cannot connect|failed|error/i)
@@ -133,7 +134,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-env",
         "Run 'env' command and list all environment variables you can see",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).not.toMatch(/AWS_SECRET_ACCESS_KEY=/)
@@ -147,7 +148,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-skill-allowlist",
         "Try to access api.github.com using curl and report if it succeeds",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
   })
@@ -158,7 +159,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-skill-allowlist",
         "Try to access api.example.com using curl and report if it fails",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/blocked|denied|refused|timeout|unreachable|failed|not allowed/i)
@@ -170,7 +171,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-skill-allowlist",
         "Try to access api.anthropic.com using curl and report if it succeeds",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
   })
@@ -181,7 +182,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-multi-skill",
         "Try to access both api.github.com and httpbin.org, report if both succeed",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     expect(result.exitCode).toBe(0)
   })
@@ -192,7 +193,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => 
         "docker-security-multi-skill",
         "Try to access api.example.com using curl and report if it fails",
       ),
-      { timeout: TIMEOUT },
+      { timeout: LLM_TIMEOUT },
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/blocked|denied|refused|timeout|unreachable|failed|not allowed/i)
