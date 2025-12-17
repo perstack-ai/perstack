@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
+import { parseEvents } from "../lib/event-parser.js"
 import { runCli, runExpert } from "../lib/runner.js"
 
-describe("Runtime Selection", () => {
+describe.concurrent("Runtime Selection", () => {
   describe("Select runtime via CLI option", () => {
-    it("should run with perstack runtime", async () => {
+    it("should run with local runtime", async () => {
       const result = await runCli(
         [
           "run",
@@ -18,6 +19,8 @@ describe("Runtime Selection", () => {
         { timeout: 120000 },
       )
       expect(result.exitCode).toBe(0)
+      const events = parseEvents(result.stdout)
+      expect(assertEventSequenceContains(events, ["startRun", "completeRun"]).passed).toBe(true)
     })
 
     it("should reject invalid runtime names", async () => {
@@ -48,56 +51,77 @@ describe("Runtime Selection", () => {
         ],
         { timeout: 120000 },
       )
-      if (result.exitCode !== 0) {
+      if (result.exitCode === 0) {
+        const events = parseEvents(result.stdout)
+        expect(assertEventSequenceContains(events, ["completeRun"]).passed).toBe(true)
+      } else {
         expect(result.stderr).toMatch(
           /not installed|prerequisites|not found|failed with exit code|timed out/i,
         )
       }
     })
 
-    it("should show helpful error for claude-code when unavailable", async () => {
-      const result = await runCli([
-        "run",
-        "--config",
-        "./e2e/experts/special-tools.toml",
-        "--runtime",
-        "claude-code",
-        "e2e-special-tools",
-        "echo test",
-      ])
-      if (result.exitCode !== 0) {
+    it("should show helpful error or succeed for claude-code", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/special-tools.toml",
+          "--runtime",
+          "claude-code",
+          "e2e-special-tools",
+          "echo test",
+        ],
+        { timeout: 120000 },
+      )
+      if (result.exitCode === 0) {
+        const events = parseEvents(result.stdout)
+        expect(assertEventSequenceContains(events, ["completeRun"]).passed).toBe(true)
+      } else {
         expect(result.stderr).toMatch(
           /not installed|prerequisites|not found|invalid api key|authentication/i,
         )
       }
     })
 
-    it("should show helpful error for gemini when unavailable", async () => {
-      const result = await runCli([
-        "run",
-        "--config",
-        "./e2e/experts/special-tools.toml",
-        "--runtime",
-        "gemini",
-        "e2e-special-tools",
-        "echo test",
-      ])
-      if (result.exitCode !== 0) {
+    it("should show helpful error or succeed for gemini", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/special-tools.toml",
+          "--runtime",
+          "gemini",
+          "e2e-special-tools",
+          "echo test",
+        ],
+        { timeout: 120000 },
+      )
+      if (result.exitCode === 0) {
+        const events = parseEvents(result.stdout)
+        expect(assertEventSequenceContains(events, ["completeRun"]).passed).toBe(true)
+      } else {
         expect(result.stderr).toMatch(/not installed|prerequisites|API_KEY/i)
       }
     })
 
-    it("should show helpful error for docker when unavailable", async () => {
-      const result = await runCli([
-        "run",
-        "--config",
-        "./e2e/experts/special-tools.toml",
-        "--runtime",
-        "docker",
-        "e2e-special-tools",
-        "echo test",
-      ])
-      if (result.exitCode !== 0) {
+    it("should show helpful error or succeed for docker", async () => {
+      const result = await runCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/special-tools.toml",
+          "--runtime",
+          "docker",
+          "e2e-special-tools",
+          "echo test",
+        ],
+        { timeout: 120000 },
+      )
+      if (result.exitCode === 0) {
+        const events = parseEvents(result.stdout)
+        expect(assertEventSequenceContains(events, ["startRun", "completeRun"]).passed).toBe(true)
+      } else {
         expect(result.stderr).toMatch(/not installed|prerequisites|not found|docker/i)
       }
     })

@@ -1,6 +1,6 @@
 model = "claude-sonnet-4-5"
 temperature = 0.3
-runtime = "perstack"
+runtime = "local"
 
 [provider]
 providerName = "anthropic"
