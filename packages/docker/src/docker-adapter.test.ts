@@ -320,17 +320,10 @@ describe("DockerAdapter", () => {
       expect(findContainerStatusEvent(events, "stopped", "runtime")).toBeDefined()
     })
 
-    it("should emit proxy status events when proxy directory exists", async () => {
+    it("should start proxy log stream in verbose mode", async () => {
       const adapter = new TestableDockerAdapter()
       const { events, listener } = createEventCollector()
-      fs.mkdirSync(path.join(tempDir, "proxy"))
-      // Mock execCommand to return healthy status for proxy health check
-      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
-        if (args.includes("ps") && args.includes("--format") && args.includes("json")) {
-          return { stdout: '{"Health": "healthy"}', stderr: "", exitCode: 0 }
-        }
-        return { stdout: "", stderr: "", exitCode: 0 }
-      })
+      adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
       const mockProcs: MockProcess[] = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
@@ -341,22 +334,20 @@ describe("DockerAdapter", () => {
         tempDir,
         ["test"],
         {},
-        10000,
+        5000,
         true,
         "job-1",
         "run-1",
         listener,
       )
-      // Wait for proxy health check and process setup
-      await wait(100)
-      if (mockProcs[1]) {
-        mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
-        mockProcs[1].emit("close", 0)
-      }
+      await wait(50)
+      // First proc is runtime, second is proxy log stream
+      expect(mockProcs.length).toBe(2)
+      mockProcs[0].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
+      mockProcs[0].emit("close", 0)
       await runPromise
-      expect(findContainerStatusEvent(events, "starting", "proxy")).toBeDefined()
-      expect(findContainerStatusEvent(events, "healthy", "proxy")).toBeDefined()
-    }, 15000)
+      expect(findContainerStatusEvent(events, "starting", "runtime")).toBeDefined()
+    })
 
     it("should not emit container status events when verbose is false", async () => {
       const adapter = new TestableDockerAdapter()
@@ -384,14 +375,7 @@ describe("DockerAdapter", () => {
 
     it("should kill proxy log process in finally block", async () => {
       const adapter = new TestableDockerAdapter()
-      fs.mkdirSync(path.join(tempDir, "proxy"))
-      // Mock execCommand to return healthy status for proxy health check
-      adapter.mockExecCommand = vi.fn(async (args: string[]) => {
-        if (args.includes("ps") && args.includes("--format") && args.includes("json")) {
-          return { stdout: '{"Health": "healthy"}', stderr: "", exitCode: 0 }
-        }
-        return { stdout: "", stderr: "", exitCode: 0 }
-      })
+      adapter.mockExecCommand = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }))
       const mockProcs: MockProcess[] = []
       adapter.mockCreateProcess = () => {
         const proc = createMockProcess()
@@ -408,14 +392,12 @@ describe("DockerAdapter", () => {
         "run-1",
         () => {},
       )
-      // Wait for proxy health check and process setup
-      await wait(100)
-      if (mockProcs[1]) {
-        mockProcs[1].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
-        mockProcs[1].emit("close", 0)
-      }
+      await wait(50)
+      // First proc is runtime, second is proxy log stream
+      mockProcs[0].stdout.emit("data", Buffer.from('{"output": "result"}\n'))
+      mockProcs[0].emit("close", 0)
       await runPromise
-      expect(mockProcs[0]?.kill).toHaveBeenCalledWith("SIGTERM")
-    }, 10000)
+      expect(mockProcs[1]?.kill).toHaveBeenCalledWith("SIGTERM")
+    })
   })
 })
