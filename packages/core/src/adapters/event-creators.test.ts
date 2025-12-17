@@ -66,7 +66,7 @@ describe("@perstack/core: event-creators", () => {
     })
 
     it("creates event without query", () => {
-      const event = createRuntimeInitEvent("job-1", "run-1", "Expert", "perstack", "1.0.0")
+      const event = createRuntimeInitEvent("job-1", "run-1", "Expert", "local", "1.0.0")
       if (event.type === "initializeRuntime") {
         expect(event.query).toBeUndefined()
       }
@@ -81,7 +81,7 @@ describe("@perstack/core: event-creators", () => {
         expertKey: "expert-key",
         expert: { key: "expert-key", name: "Expert", version: "1.0.0" },
         output: "Result",
-        runtime: "perstack",
+        runtime: "local",
       })
       const event = createCompleteRunEvent("job-1", "run-1", "expert-key", checkpoint, "Result")
       expect(event.type).toBe("completeRun")
@@ -112,7 +112,7 @@ describe("@perstack/core: event-creators", () => {
         expertKey: "expert",
         expert: { key: "expert", name: "Expert", version: "1.0.0" },
         output: "",
-        runtime: "perstack",
+        runtime: "local",
       })
       const toolCalls = [{ id: "tc-1", skillName: "skill", toolName: "tool", input: {}, args: {} }]
       const event = createCallToolsEvent("job-1", "run-1", "expert", 1, toolCalls, checkpoint)

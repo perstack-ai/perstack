@@ -20,15 +20,15 @@ describe("@perstack/core: adapter registry", () => {
   describe("registerAdapter and getAdapter", () => {
     it("registers and retrieves an adapter", () => {
       const mockAdapter = createMockAdapter("test-adapter")
-      registerAdapter("perstack", () => mockAdapter)
-      const result = getAdapter("perstack")
+      registerAdapter("local", () => mockAdapter)
+      const result = getAdapter("local")
       expect(result).toBe(mockAdapter)
     })
   })
 
   describe("getAdapter", () => {
     it("throws error for unregistered runtime", () => {
-      expect(() => getAdapter("unknown-runtime" as "perstack")).toThrow(
+      expect(() => getAdapter("unknown-runtime" as "local")).toThrow(
         'Runtime "unknown-runtime" is not registered',
       )
     })
@@ -41,7 +41,7 @@ describe("@perstack/core: adapter registry", () => {
     })
 
     it("returns false for unregistered adapter", () => {
-      expect(isAdapterAvailable("unknown" as "perstack")).toBe(false)
+      expect(isAdapterAvailable("unknown" as "local")).toBe(false)
     })
   })
 
