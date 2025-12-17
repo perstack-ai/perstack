@@ -55,9 +55,11 @@ Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-be
 
 ### Runtime
 
-| Option                | Description       | Default                 |
-| --------------------- | ----------------- | ----------------------- |
-| `--runtime <runtime>` | Execution runtime | From config or `docker` |
+| Option                | Description                            | Default                 |
+| --------------------- | -------------------------------------- | ----------------------- |
+| `--runtime <runtime>` | Execution runtime                      | From config or `docker` |
+| `--workspace <path>`  | Workspace directory for Docker runtime | `./workspace`           |
+| `--env <name...>`     | Env vars to pass to Docker runtime     | -                       |
 
 Available runtimes:
 - `docker` — Containerized runtime with network isolation (default)
@@ -67,6 +69,20 @@ Available runtimes:
 - `gemini` — Gemini CLI (experimental)
 
 If `--runtime` is not specified, the runtime is determined by `runtime` field in `perstack.toml`. If neither is set, `docker` is used.
+
+**Passing environment variables to Docker:**
+
+Use `--env` to pass specific environment variables to the Docker container at runtime. This is useful for:
+- Private npm packages: `--env NPM_TOKEN`
+- Custom API keys needed by skills: `--env MY_API_KEY`
+
+```bash
+# Pass NPM_TOKEN for private npm packages
+perstack run my-expert "query" --runtime docker --env NPM_TOKEN
+
+# Pass multiple environment variables
+perstack run my-expert "query" --env NPM_TOKEN --env MY_API_KEY
+```
 
 See [Multi-Runtime Support](../using-experts/multi-runtime.md) for setup and limitations.
 

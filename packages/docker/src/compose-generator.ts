@@ -105,6 +105,8 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
 export interface BuildContextOptions {
   workspacePath?: string
   verbose?: boolean
+  /** Additional environment variable names to pass to Docker container */
+  additionalEnvKeys?: string[]
 }
 
 export function generateBuildContext(
@@ -121,10 +123,10 @@ export function generateBuildContext(
   composeFile: string
 } {
   // Support both old signature (string) and new signature (options object)
-  const { workspacePath, verbose } =
+  const { workspacePath, verbose, additionalEnvKeys } =
     typeof options === "string" || options === undefined
-      ? { workspacePath: options, verbose: false }
-      : options
+      ? { workspacePath: options, verbose: false, additionalEnvKeys: [] as string[] }
+      : { additionalEnvKeys: [], ...options }
 
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
@@ -143,12 +145,14 @@ export function generateBuildContext(
   }
   const envRequirements = extractRequiredEnvVars(config, expertKey)
   const envKeys = envRequirements.map((r) => r.name)
+  // Merge required env vars with additional env keys (from --env option)
+  const allEnvKeys = [...new Set([...envKeys, ...(additionalEnvKeys ?? [])])]
   const resolvedWorkspacePath = workspacePath ?? "./workspace"
   const composeFile = generateComposeFile({
     expertKey,
     proxyEnabled: hasAllowlist,
     networkName: "perstack-net",
-    envKeys,
+    envKeys: allEnvKeys,
     workspacePath: resolvedWorkspacePath,
   })
   return {

@@ -101,4 +101,12 @@ describe("generateBuildContext", () => {
     const context = generateBuildContext(minimalConfig, "test-expert", "/custom/path")
     expect(context.composeFile).toContain("/custom/path:/workspace:rw")
   })
+  it("should include additional env keys in compose file", () => {
+    const context = generateBuildContext(minimalConfig, "test-expert", {
+      workspacePath: "./workspace",
+      additionalEnvKeys: ["NPM_TOKEN", "MY_API_KEY"],
+    })
+    expect(context.composeFile).toContain("- NPM_TOKEN")
+    expect(context.composeFile).toContain("- MY_API_KEY")
+  })
 })

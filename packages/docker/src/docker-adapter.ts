@@ -72,7 +72,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   }
 
   async run(params: AdapterRunParams): Promise<AdapterRunResult> {
-    const { setting, config, eventListener, workspace } = params
+    const { setting, config, eventListener, workspace, additionalEnvKeys } = params
     if (!config) {
       throw new Error("DockerAdapter requires config in AdapterRunParams")
     }
@@ -87,6 +87,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       expertKey,
       resolvedWorkspace,
       setting.verbose,
+      additionalEnvKeys,
     )
 
     // Register signal handlers for cleanup on interrupt
@@ -188,9 +189,14 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     expertKey: string,
     workspace?: string,
     verbose?: boolean,
+    additionalEnvKeys?: string[],
   ): Promise<string> {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
-    const context = generateBuildContext(config, expertKey, { workspacePath: workspace, verbose })
+    const context = generateBuildContext(config, expertKey, {
+      workspacePath: workspace,
+      verbose,
+      additionalEnvKeys,
+    })
     fs.writeFileSync(path.join(buildDir, "Dockerfile"), context.dockerfile)
     fs.writeFileSync(path.join(buildDir, "perstack.toml"), context.configToml)
     fs.writeFileSync(path.join(buildDir, "docker-compose.yml"), context.composeFile)

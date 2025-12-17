@@ -197,6 +197,23 @@ The final allowlist merges:
 > [!TIP]
 > Provider API domains (e.g., `api.anthropic.com` for Anthropic) are automatically included based on your `provider.providerName` setting.
 
+**Passing environment variables:**
+
+Use `--env` to pass specific environment variables to the Docker container at runtime:
+
+```bash
+# Pass NPM_TOKEN for private npm packages
+perstack run my-expert "query" --runtime docker --env NPM_TOKEN
+
+# Pass multiple environment variables
+perstack run my-expert "query" --runtime docker --env NPM_TOKEN --env MY_API_KEY
+```
+
+This is useful for:
+- Private npm packages (skills using `npx` with private registries)
+- Custom API keys needed by skills at runtime
+- Any credentials that shouldn't be baked into the container image
+
 ### Cursor
 
 **Prerequisites:**
