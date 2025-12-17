@@ -6,7 +6,13 @@ describe("Interactive Input", () => {
   describe("Ask user for input", () => {
     it("should stop at interactive tool and emit checkpoint", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/continue-resume.toml", "e2e-continue", "Test continue/resume functionality"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/continue-resume.toml",
+          "e2e-continue",
+          "Test continue/resume functionality",
+        ],
         { timeout: 180000 },
       )
       const result = withEventParsing(cmdResult)

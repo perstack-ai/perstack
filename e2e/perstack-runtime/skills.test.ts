@@ -7,7 +7,13 @@ describe("Skills", () => {
   describe("Pick tools", () => {
     it("should only have access to picked tools", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/skills.toml", "e2e-pick-tools", "Try to read file test.txt and report if you can"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/skills.toml",
+          "e2e-pick-tools",
+          "Try to read file test.txt and report if you can",
+        ],
         { timeout: 180000 },
       )
       const result = withEventParsing(cmdResult)
@@ -25,7 +31,13 @@ describe("Skills", () => {
 
     it("should be able to use picked tools", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/skills.toml", "e2e-pick-tools", "Think about something and complete"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/skills.toml",
+          "e2e-pick-tools",
+          "Think about something and complete",
+        ],
         { timeout: 180000 },
       )
       const result = withEventParsing(cmdResult)
@@ -63,7 +75,13 @@ describe("Skills", () => {
   describe("Multiple skills", () => {
     it("should have access to tools from multiple skills", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/skills.toml", "e2e-multi-skill", "Think about AI and complete"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/skills.toml",
+          "e2e-multi-skill",
+          "Think about AI and complete",
+        ],
         { timeout: 180000 },
       )
       const result = withEventParsing(cmdResult)

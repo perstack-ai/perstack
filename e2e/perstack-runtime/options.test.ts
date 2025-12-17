@@ -88,7 +88,15 @@ describe("CLI Options", () => {
   describe("Job identification", () => {
     it("should accept --job-id option", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/global-runtime.toml", "--job-id", "test-job-123", "e2e-global-runtime", "Say hello"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/global-runtime.toml",
+          "--job-id",
+          "test-job-123",
+          "e2e-global-runtime",
+          "Say hello",
+        ],
         { timeout: 120000 },
       )
       const result = withEventParsing(cmdResult)
@@ -99,7 +107,15 @@ describe("CLI Options", () => {
 
     it("should accept --run-id option", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/global-runtime.toml", "--run-id", "test-run-456", "e2e-global-runtime", "Say hello"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/global-runtime.toml",
+          "--run-id",
+          "test-run-456",
+          "e2e-global-runtime",
+          "Say hello",
+        ],
         { timeout: 120000 },
       )
       const result = withEventParsing(cmdResult)
@@ -113,7 +129,15 @@ describe("CLI Options", () => {
   describe("Environment configuration", () => {
     it("should accept --env-path option", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/global-runtime.toml", "--env-path", ".env", "e2e-global-runtime", "Say hello"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/global-runtime.toml",
+          "--env-path",
+          ".env",
+          "e2e-global-runtime",
+          "Say hello",
+        ],
         { timeout: 120000 },
       )
       const result = withEventParsing(cmdResult)

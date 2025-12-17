@@ -7,7 +7,13 @@ describe("Error Handling", () => {
   describe("Recover from tool error", () => {
     it("should recover from file not found error and complete successfully", async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", "./e2e/experts/error-handling.toml", "e2e-tool-error-recovery", "Read the file at nonexistent_file_12345.txt and report what happened"],
+        [
+          "run",
+          "--config",
+          "./e2e/experts/error-handling.toml",
+          "e2e-tool-error-recovery",
+          "Read the file at nonexistent_file_12345.txt and report what happened",
+        ],
         { timeout: 180000 },
       )
       const result = withEventParsing(cmdResult)
