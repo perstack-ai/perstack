@@ -172,7 +172,9 @@ export class GeminiAdapter extends BaseAdapter {
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const proc = spawn("gemini", ["-p", prompt, "--output-format", "stream-json"], {
       cwd: process.cwd(),
-      env: getFilteredEnv(),
+      env: getFilteredEnv({
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
+      }),
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()

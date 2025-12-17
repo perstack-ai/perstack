@@ -157,7 +157,9 @@ export class ClaudeCodeAdapter extends BaseAdapter {
     }
     const proc = spawn("claude", args, {
       cwd: process.cwd(),
-      env: getFilteredEnv(),
+      env: getFilteredEnv({
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? "",
+      }),
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()
