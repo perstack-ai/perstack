@@ -2,6 +2,7 @@ import type { PerstackConfig } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import {
   collectNpmPackages,
+  collectUvxPackages,
   detectRequiredRuntimes,
   generateBaseImageLayers,
   generateDockerfile,
@@ -158,6 +159,94 @@ describe("collectNpmPackages", () => {
     const packages = collectNpmPackages(config, "test-expert")
     expect(packages).toEqual([])
   })
+
+  it("should throw error for invalid npm package name", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "test-expert": {
+          instruction: "test",
+          skills: {
+            "bad-skill": {
+              type: "mcpStdioSkill",
+              command: "npx",
+              packageName: "invalid;package",
+            },
+          },
+        },
+      },
+    }
+    expect(() => collectNpmPackages(config, "test-expert")).toThrow("Invalid npm package name")
+  })
+})
+
+describe("collectUvxPackages", () => {
+  it("should collect uvx packages from uvx skills", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "test-expert": {
+          instruction: "test",
+          skills: {
+            "python-skill": {
+              type: "mcpStdioSkill",
+              command: "uvx",
+              packageName: "mcp-server-fetch",
+            },
+          },
+        },
+      },
+    }
+    const packages = collectUvxPackages(config, "test-expert")
+    expect(packages).toContain("mcp-server-fetch")
+  })
+
+  it("should return empty array when no skills", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "test-expert": {
+          instruction: "test",
+        },
+      },
+    }
+    const packages = collectUvxPackages(config, "test-expert")
+    expect(packages).toEqual([])
+  })
+
+  it("should not include npx packages", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "test-expert": {
+          instruction: "test",
+          skills: {
+            "node-skill": {
+              type: "mcpStdioSkill",
+              command: "npx",
+              packageName: "@perstack/base",
+            },
+          },
+        },
+      },
+    }
+    const packages = collectUvxPackages(config, "test-expert")
+    expect(packages).toEqual([])
+  })
+
+  it("should throw error for invalid Python package name", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "test-expert": {
+          instruction: "test",
+          skills: {
+            "bad-skill": {
+              type: "mcpStdioSkill",
+              command: "uvx",
+              packageName: "invalid;package",
+            },
+          },
+        },
+      },
+    }
+    expect(() => collectUvxPackages(config, "test-expert")).toThrow("Invalid Python package name")
+  })
 })
 
 describe("generateRuntimeInstallLayers", () => {
@@ -212,5 +301,20 @@ describe("generateDockerfile", () => {
     // Skill packages should NOT be installed at build time
     // They are installed at runtime via npx
     expect(dockerfile).not.toContain("@my-org/private-mcp-server")
+  })
+
+  it("should include proxy environment variables when proxyEnabled", () => {
+    const config: PerstackConfig = {
+      experts: {
+        "my-expert": {
+          instruction: "test",
+        },
+      },
+    }
+    const dockerfile = generateDockerfile(config, "my-expert", { proxyEnabled: true })
+    expect(dockerfile).toContain("ENV PERSTACK_PROXY_URL=http://proxy:3128")
+    expect(dockerfile).toContain("ENV NPM_CONFIG_PROXY=http://proxy:3128")
+    expect(dockerfile).toContain("ENV NPM_CONFIG_HTTPS_PROXY=http://proxy:3128")
+    expect(dockerfile).toContain("ENV NODE_OPTIONS=--use-env-proxy")
   })
 })
