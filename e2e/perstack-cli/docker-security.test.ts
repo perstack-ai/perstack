@@ -1,22 +1,41 @@
-import { describe, expect, it } from "vitest"
+import * as fs from "node:fs"
+import * as os from "node:os"
+import * as path from "node:path"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { isDockerAvailable } from "../lib/prerequisites.js"
 import { runCli } from "../lib/runner.js"
 
 const CONFIG = "./e2e/experts/docker-security.toml"
 const TIMEOUT = 300000
 
-// Helper to get docker run args with NPM_TOKEN if available
+let workspaceDir: string
+
 function dockerRunArgs(expertKey: string, query: string): string[] {
   const args = ["run", "--config", CONFIG, "--runtime", "docker"]
-  // Pass NPM_TOKEN to Docker runtime for private npm packages
-  if (process.env.NPM_TOKEN) {
-    args.push("--env", "NPM_TOKEN")
-  }
+  args.push("--workspace", workspaceDir)
+  args.push("--env", "NPM_CONFIG_USERCONFIG")
   args.push(expertKey, query)
   return args
 }
 
 describe.runIf(isDockerAvailable()).concurrent("Docker Security Sandbox", () => {
+  beforeAll(() => {
+    workspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-e2e-"))
+    if (process.env.NPM_TOKEN) {
+      const npmrcContent = `//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}\n`
+      fs.writeFileSync(path.join(workspaceDir, ".npmrc"), npmrcContent, { mode: 0o600 })
+      // NPM_CONFIG_USERCONFIG points to /workspace/.npmrc inside Docker container
+      process.env.NPM_CONFIG_USERCONFIG = "/workspace/.npmrc"
+    }
+  })
+
+  afterAll(() => {
+    if (workspaceDir && fs.existsSync(workspaceDir)) {
+      fs.rmSync(workspaceDir, { recursive: true, force: true })
+    }
+    delete process.env.NPM_CONFIG_USERCONFIG
+  })
+
   it("should block access to domains not in allowlist", async () => {
     const result = await runCli(
       dockerRunArgs(
