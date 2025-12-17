@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
-import { runExpertWithRuntimeCli, runRuntimeCli } from "../lib/runner.js"
+import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
 
 describe("CLI Options", () => {
   describe("Model configuration", () => {
@@ -87,22 +87,38 @@ describe("CLI Options", () => {
 
   describe("Job identification", () => {
     it("should accept --job-id option", async () => {
-      const result = await runExpertWithRuntimeCli("e2e-global-runtime", "Say hello", {
-        configPath: "./e2e/experts/global-runtime.toml",
-        timeout: 120000,
-        extraArgs: ["--job-id", "test-job-123"],
-      })
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/global-runtime.toml",
+          "--job-id",
+          "test-job-123",
+          "e2e-global-runtime",
+          "Say hello",
+        ],
+        { timeout: 120000 },
+      )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       const startEvent = result.events.find((e) => e.type === "startRun")
       expect(startEvent).toBeDefined()
     }, 180000)
 
     it("should accept --run-id option", async () => {
-      const result = await runExpertWithRuntimeCli("e2e-global-runtime", "Say hello", {
-        configPath: "./e2e/experts/global-runtime.toml",
-        timeout: 120000,
-        extraArgs: ["--run-id", "test-run-456"],
-      })
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/global-runtime.toml",
+          "--run-id",
+          "test-run-456",
+          "e2e-global-runtime",
+          "Say hello",
+        ],
+        { timeout: 120000 },
+      )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       expect(assertEventSequenceContains(result.events, ["startRun", "completeRun"]).passed).toBe(
         true,
@@ -112,11 +128,19 @@ describe("CLI Options", () => {
 
   describe("Environment configuration", () => {
     it("should accept --env-path option", async () => {
-      const result = await runExpertWithRuntimeCli("e2e-global-runtime", "Say hello", {
-        configPath: "./e2e/experts/global-runtime.toml",
-        timeout: 120000,
-        extraArgs: ["--env-path", ".env"],
-      })
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/global-runtime.toml",
+          "--env-path",
+          ".env",
+          "e2e-global-runtime",
+          "Say hello",
+        ],
+        { timeout: 120000 },
+      )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
     }, 180000)
 

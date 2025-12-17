@@ -11,6 +11,7 @@ import {
   createCompleteRunEvent,
   createNormalizedCheckpoint,
   createRuntimeInitEvent,
+  createStartRunEvent,
 } from "@perstack/core"
 
 export type MockAdapterOptions = {
@@ -63,6 +64,20 @@ export class MockAdapter implements RuntimeAdapter {
     const expertInfo = { key: setting.expertKey, name: expert.name, version: expert.version }
     const initEvent = createRuntimeInitEvent(jobId, runId, expert.name, this.options.name, "mock")
     eventListener?.(initEvent)
+    const initialCheckpoint = createNormalizedCheckpoint({
+      jobId,
+      runId,
+      expertKey: setting.expertKey,
+      expert: expertInfo,
+      output: "",
+      runtime: this.options.name,
+    })
+    const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, {
+      ...initialCheckpoint,
+      status: "init",
+      stepNumber: 0,
+    })
+    eventListener?.(startRunEvent)
     const checkpoint = createNormalizedCheckpoint({
       jobId,
       runId,
@@ -80,6 +95,6 @@ export class MockAdapter implements RuntimeAdapter {
       startedAt,
     )
     eventListener?.(completeEvent)
-    return { checkpoint, events: [initEvent, completeEvent] }
+    return { checkpoint, events: [initEvent, startRunEvent, completeEvent] }
   }
 }

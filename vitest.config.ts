@@ -20,14 +20,8 @@ export default defineConfig({
           include: ["e2e/**/*.test.ts"],
           testTimeout: 300000,
           hookTimeout: 300000,
-          pool: "forks",
-          poolOptions: {
-            forks: {
-              singleFork: true,
-            },
-          },
-          fileParallelism: false,
-          teardownTimeout: 10000,
+          // Limit parallelism for Docker tests which are resource-intensive
+          maxConcurrency: 3,
         },
       },
     ],

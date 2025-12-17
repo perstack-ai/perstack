@@ -49,6 +49,12 @@ export const startCommand = new Command()
     (value: string, previous: string[]) => previous.concat(value),
     [] as string[],
   )
+  .option(
+    "--env <name>",
+    "Environment variable name to pass to Docker runtime (can be specified multiple times)",
+    (value: string, previous: string[]) => previous.concat(value),
+    [] as string[],
+  )
   .option("--verbose", "Enable verbose logging")
   .option("--continue", "Continue the most recent job with new query")
   .option("--continue-job <jobId>", "Continue the specified job with new query")
@@ -190,6 +196,7 @@ export const startCommand = new Command()
           config: perstackConfig,
           eventListener: result.eventListener,
           workspace: input.options.workspace,
+          additionalEnvKeys: input.options.env,
         })
         if (
           runResult.status === "completed" ||

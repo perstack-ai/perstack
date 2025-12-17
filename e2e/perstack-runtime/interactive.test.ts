@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
-import { runExpertWithRuntimeCli } from "../lib/runner.js"
+import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
 
 describe("Interactive Input", () => {
   describe("Ask user for input", () => {
     it("should stop at interactive tool and emit checkpoint", async () => {
-      const result = await runExpertWithRuntimeCli(
-        "e2e-continue",
-        "Test continue/resume functionality",
-        { configPath: "./e2e/experts/continue-resume.toml", timeout: 180000 },
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/continue-resume.toml",
+          "e2e-continue",
+          "Test continue/resume functionality",
+        ],
+        { timeout: 180000 },
       )
+      const result = withEventParsing(cmdResult)
       expect(
         assertEventSequenceContains(result.events, [
           "startRun",

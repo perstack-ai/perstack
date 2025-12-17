@@ -38,23 +38,26 @@ perstack run <expert> <query>
 
 ### Shared Options
 
-| Option                               | Description               | Default              |
-| ------------------------------------ | ------------------------- | -------------------- |
-| `--config <path>`                    | Path to `perstack.toml`   | Auto-discover        |
-| `--provider <provider>`              | LLM provider              | `anthropic`          |
-| `--model <model>`                    | Model name                | `claude-sonnet-4-5`  |
-| `--temperature <temp>`               | Temperature (0.0-1.0)     | `0.3`                |
-| `--max-steps <n>`                    | Maximum steps             | unlimited            |
-| `--max-retries <n>`                  | Max retry attempts        | `5`                  |
-| `--timeout <ms>`                     | Timeout per generation    | `60000`              |
-| `--job-id <id>`                      | Custom job ID             | auto-generated       |
-| `--run-id <id>`                      | Custom run ID             | auto-generated       |
-| `--env-path <path...>`               | Environment file paths    | `.env`, `.env.local` |
-| `--continue`                         | Continue latest job       | -                    |
-| `--continue-job <id>`                | Continue specific job     | -                    |
-| `--resume-from <id>`                 | Resume from checkpoint    | -                    |
-| `-i, --interactive-tool-call-result` | Query is tool call result | -                    |
-| `--verbose`                          | Enable verbose logging    | -                    |
+| Option                               | Description                            | Default              |
+| ------------------------------------ | -------------------------------------- | -------------------- |
+| `--config <path>`                    | Path to `perstack.toml`                | Auto-discover        |
+| `--provider <provider>`              | LLM provider                           | `anthropic`          |
+| `--model <model>`                    | Model name                             | `claude-sonnet-4-5`  |
+| `--temperature <temp>`               | Temperature (0.0-1.0)                  | `0.3`                |
+| `--max-steps <n>`                    | Maximum steps                          | unlimited            |
+| `--max-retries <n>`                  | Max retry attempts                     | `5`                  |
+| `--timeout <ms>`                     | Timeout per generation                 | `60000`              |
+| `--job-id <id>`                      | Custom job ID                          | auto-generated       |
+| `--run-id <id>`                      | Custom run ID                          | auto-generated       |
+| `--env-path <path...>`               | Environment file paths                 | `.env`, `.env.local` |
+| `--env <name...>`                    | Env vars to pass to Docker runtime     | -                    |
+| `--runtime <runtime>`                | Execution runtime                      | `docker`             |
+| `--workspace <path>`                 | Workspace directory for Docker runtime | `./workspace`        |
+| `--continue`                         | Continue latest job                    | -                    |
+| `--continue-job <id>`                | Continue specific job                  | -                    |
+| `--resume-from <id>`                 | Resume from checkpoint                 | -                    |
+| `-i, --interactive-tool-call-result` | Query is tool call result              | -                    |
+| `--verbose`                          | Enable verbose logging                 | -                    |
 
 ---
 

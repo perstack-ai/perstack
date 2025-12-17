@@ -72,7 +72,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
   }
 
   async run(params: AdapterRunParams): Promise<AdapterRunResult> {
-    const { setting, config, eventListener, workspace } = params
+    const { setting, config, eventListener, workspace, additionalEnvKeys } = params
     if (!config) {
       throw new Error("DockerAdapter requires config in AdapterRunParams")
     }
@@ -87,6 +87,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       expertKey,
       resolvedWorkspace,
       setting.verbose,
+      additionalEnvKeys,
     )
 
     // Register signal handlers for cleanup on interrupt
@@ -188,9 +189,14 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     expertKey: string,
     workspace?: string,
     verbose?: boolean,
+    additionalEnvKeys?: string[],
   ): Promise<string> {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
-    const context = generateBuildContext(config, expertKey, { workspacePath: workspace, verbose })
+    const context = generateBuildContext(config, expertKey, {
+      workspacePath: workspace,
+      verbose,
+      additionalEnvKeys,
+    })
     fs.writeFileSync(path.join(buildDir, "Dockerfile"), context.dockerfile)
     fs.writeFileSync(path.join(buildDir, "perstack.toml"), context.configToml)
     fs.writeFileSync(path.join(buildDir, "docker-compose.yml"), context.composeFile)
@@ -254,36 +260,7 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     eventListener: (event: RunEvent | RuntimeEvent) => void,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const composeFile = path.join(buildDir, "docker-compose.yml")
-    const hasProxy = fs.existsSync(path.join(buildDir, "proxy"))
     let proxyLogProcess: ChildProcess | undefined
-    if (hasProxy) {
-      if (verbose) {
-        this.emitContainerStatus(
-          eventListener,
-          jobId,
-          runId,
-          "starting",
-          "proxy",
-          "Starting proxy container...",
-        )
-      }
-      await this.execCommand(["docker", "compose", "-f", composeFile, "up", "-d", "proxy"])
-
-      // Wait for proxy to become healthy (healthcheck interval: 2s)
-      await this.waitForProxyHealthy(composeFile, eventListener, jobId, runId, verbose)
-
-      if (verbose) {
-        this.emitContainerStatus(
-          eventListener,
-          jobId,
-          runId,
-          "healthy",
-          "proxy",
-          "Proxy container ready",
-        )
-        proxyLogProcess = this.startProxyLogStream(composeFile, jobId, runId, eventListener)
-      }
-    }
     if (verbose) {
       this.emitContainerStatus(
         eventListener,
@@ -305,6 +282,10 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin?.end()
+    // Start proxy log stream after runtime starts (proxy is started via depends_on)
+    if (verbose) {
+      proxyLogProcess = this.startProxyLogStream(composeFile, jobId, runId, eventListener)
+    }
     if (verbose) {
       this.emitContainerStatus(
         eventListener,
@@ -395,51 +376,6 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
         reject(err)
       })
     })
-  }
-
-  protected async waitForProxyHealthy(
-    composeFile: string,
-    eventListener: (event: RunEvent | RuntimeEvent) => void,
-    jobId: string,
-    runId: string,
-    verbose: boolean | undefined,
-    maxAttempts = 30,
-    intervalMs = 1000,
-  ): Promise<void> {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const result = await this.execCommand([
-        "docker",
-        "compose",
-        "-f",
-        composeFile,
-        "ps",
-        "--format",
-        "json",
-        "proxy",
-      ])
-      if (result.exitCode === 0 && result.stdout) {
-        try {
-          const status = JSON.parse(result.stdout)
-          if (status.Health === "healthy") {
-            return
-          }
-          if (verbose && attempt > 0 && attempt % 5 === 0) {
-            this.emitContainerStatus(
-              eventListener,
-              jobId,
-              runId,
-              "starting",
-              "proxy",
-              `Waiting for proxy health check... (${attempt}/${maxAttempts})`,
-            )
-          }
-        } catch {
-          // JSON parse error, continue waiting
-        }
-      }
-      await new Promise((resolve) => setTimeout(resolve, intervalMs))
-    }
-    throw new Error("Proxy container failed to become healthy within timeout")
   }
 
   protected async cleanup(buildDir: string): Promise<void> {

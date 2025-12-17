@@ -5,10 +5,12 @@ export {
 } from "./compose-generator.js"
 export { DockerAdapter } from "./docker-adapter.js"
 export {
+  collectNpmPackages,
+  collectUvxPackages,
   detectRequiredRuntimes,
   generateBaseImageLayers,
   generateDockerfile,
-  generateMcpInstallLayers,
+  generateRuntimeInstallLayers,
   type RuntimeRequirement,
 } from "./dockerfile-generator.js"
 export {

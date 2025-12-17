@@ -1,9 +1,11 @@
 const SAFE_ENV_VARS = [
+  // System
   "PATH",
   "HOME",
   "SHELL",
   "TERM",
   "NODE_PATH",
+  // Proxy
   "HTTP_PROXY",
   "HTTPS_PROXY",
   "http_proxy",

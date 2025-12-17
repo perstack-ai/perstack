@@ -19,6 +19,7 @@ import {
   createEmptyUsage,
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
+  createStartRunEvent,
   createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
@@ -106,9 +107,11 @@ export class GeminiAdapter extends BaseAdapter {
       usage: createEmptyUsage(),
       metadata: { runtime: "gemini" },
     }
+    const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
+    eventListener?.(startRunEvent)
     const state: StreamingState = {
       checkpoint: initialCheckpoint,
-      events: [initEvent],
+      events: [initEvent, startRunEvent],
       pendingToolCalls: new Map(),
       finalOutput: "",
       accumulatedText: "",
@@ -167,9 +170,16 @@ export class GeminiAdapter extends BaseAdapter {
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
     storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    // Gemini CLI requires additional env vars for authentication and config
     const proc = spawn("gemini", ["-p", prompt, "--output-format", "stream-json"], {
       cwd: process.cwd(),
-      env: getFilteredEnv(),
+      env: getFilteredEnv({
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
+        XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME ?? "",
+        GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS ?? "",
+        USER: process.env.USER ?? "",
+        LOGNAME: process.env.LOGNAME ?? "",
+      }),
       stdio: ["pipe", "pipe", "pipe"],
     })
     proc.stdin.end()

@@ -82,16 +82,31 @@ describe("getFilteredEnv", () => {
     expect(result.MY_API_KEY).toBe("secret")
     expect(result.CUSTOM_CONFIG).toBe("value")
   })
-  it("should not leak sensitive API keys", () => {
+  it("should allow API keys via additional parameter", () => {
+    const result = getFilteredEnv({
+      ANTHROPIC_API_KEY: "sk-ant-secret",
+      GEMINI_API_KEY: "gemini-secret",
+    })
+    expect(result.ANTHROPIC_API_KEY).toBe("sk-ant-secret")
+    expect(result.GEMINI_API_KEY).toBe("gemini-secret")
+  })
+  it("should not auto-include API keys from process.env", () => {
     process.env.ANTHROPIC_API_KEY = "sk-ant-secret"
     process.env.OPENAI_API_KEY = "sk-openai-secret"
-    process.env.AWS_SECRET_ACCESS_KEY = "aws-secret"
-    process.env.DATABASE_URL = "postgres://user:pass@host/db"
+    process.env.GEMINI_API_KEY = "gemini-secret"
     const result = getFilteredEnv()
     expect(result.ANTHROPIC_API_KEY).toBeUndefined()
     expect(result.OPENAI_API_KEY).toBeUndefined()
+    expect(result.GEMINI_API_KEY).toBeUndefined()
+  })
+  it("should not leak other sensitive credentials", () => {
+    process.env.AWS_SECRET_ACCESS_KEY = "aws-secret"
+    process.env.DATABASE_URL = "postgres://user:pass@host/db"
+    process.env.GITHUB_TOKEN = "ghp_xxx"
+    const result = getFilteredEnv()
     expect(result.AWS_SECRET_ACCESS_KEY).toBeUndefined()
     expect(result.DATABASE_URL).toBeUndefined()
+    expect(result.GITHUB_TOKEN).toBeUndefined()
   })
 })
 describe("SAFE_ENV_VARS", () => {
@@ -106,9 +121,13 @@ describe("SAFE_ENV_VARS", () => {
     expect(SAFE_ENV_VARS).toContain("NO_PROXY")
     expect(SAFE_ENV_VARS).toContain("PERSTACK_PROXY_URL")
   })
-  it("should NOT include any API key or secret patterns", () => {
+  it("should NOT include API keys (passed via additional parameter)", () => {
+    expect(SAFE_ENV_VARS).not.toContain("ANTHROPIC_API_KEY")
+    expect(SAFE_ENV_VARS).not.toContain("GEMINI_API_KEY")
+    expect(SAFE_ENV_VARS).not.toContain("OPENAI_API_KEY")
+  })
+  it("should NOT include dangerous patterns like secret or token", () => {
     for (const envVar of SAFE_ENV_VARS) {
-      expect(envVar).not.toMatch(/api.?key/i)
       expect(envVar).not.toMatch(/secret/i)
       expect(envVar).not.toMatch(/token/i)
       expect(envVar).not.toMatch(/password/i)

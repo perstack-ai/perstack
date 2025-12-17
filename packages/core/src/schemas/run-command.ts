@@ -26,6 +26,8 @@ export interface CommandOptions {
   runId?: string
   /** Paths to .env files */
   envPath?: string[]
+  /** Environment variable names to pass to Docker runtime */
+  env?: string[]
   /** Enable verbose logging */
   verbose?: boolean
   /** Continue most recent job */
@@ -85,6 +87,10 @@ const commandOptionsSchema = z.object({
   jobId: z.string().optional(),
   runId: z.string().optional(),
   envPath: z
+    .array(z.string())
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
+  env: z
     .array(z.string())
     .optional()
     .transform((value) => (value && value.length > 0 ? value : undefined)),

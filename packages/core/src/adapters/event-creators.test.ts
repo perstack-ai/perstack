@@ -6,6 +6,7 @@ import {
   createNormalizedCheckpoint,
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
+  createStartRunEvent,
   createStreamingTextEvent,
   createToolMessage,
 } from "./event-creators.js"
@@ -69,6 +70,29 @@ describe("@perstack/core: event-creators", () => {
       const event = createRuntimeInitEvent("job-1", "run-1", "Expert", "local", "1.0.0")
       if (event.type === "initializeRuntime") {
         expect(event.query).toBeUndefined()
+      }
+    })
+  })
+
+  describe("createStartRunEvent", () => {
+    it("creates start run event", () => {
+      const checkpoint = createNormalizedCheckpoint({
+        jobId: "job-1",
+        runId: "run-1",
+        expertKey: "expert-key",
+        expert: { key: "expert-key", name: "Expert", version: "1.0.0" },
+        output: "",
+        runtime: "cursor",
+      })
+      const initCheckpoint = { ...checkpoint, status: "init" as const, stepNumber: 0 }
+      const event = createStartRunEvent("job-1", "run-1", "expert-key", initCheckpoint)
+      expect(event.type).toBe("startRun")
+      expect(event.jobId).toBe("job-1")
+      expect(event.runId).toBe("run-1")
+      expect(event.expertKey).toBe("expert-key")
+      if (event.type === "startRun") {
+        expect(event.initialCheckpoint).toBe(initCheckpoint)
+        expect(event.inputMessages).toEqual([])
       }
     })
   })

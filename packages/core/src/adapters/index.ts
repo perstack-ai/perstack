@@ -7,6 +7,7 @@ export {
   createNormalizedCheckpoint,
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
+  createStartRunEvent,
   createStreamingTextEvent,
   createToolMessage,
 } from "./event-creators.js"

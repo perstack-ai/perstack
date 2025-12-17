@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType } from "../lib/event-parser.js"
-import { runExpertWithRuntimeCli } from "../lib/runner.js"
+import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
 
 describe("Skills", () => {
   describe("Pick tools", () => {
     it("should only have access to picked tools", async () => {
-      const result = await runExpertWithRuntimeCli(
-        "e2e-pick-tools",
-        "Try to read file test.txt and report if you can",
-        { configPath: "./e2e/experts/skills.toml", timeout: 180000 },
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/skills.toml",
+          "e2e-pick-tools",
+          "Try to read file test.txt and report if you can",
+        ],
+        { timeout: 180000 },
       )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       expect(assertEventSequenceContains(result.events, ["startRun", "completeRun"]).passed).toBe(
         true,
@@ -24,11 +30,17 @@ describe("Skills", () => {
     }, 200000)
 
     it("should be able to use picked tools", async () => {
-      const result = await runExpertWithRuntimeCli(
-        "e2e-pick-tools",
-        "Think about something and complete",
-        { configPath: "./e2e/experts/skills.toml", timeout: 180000 },
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/skills.toml",
+          "e2e-pick-tools",
+          "Think about something and complete",
+        ],
+        { timeout: 180000 },
       )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       const callToolsEvents = filterEventsByType(result.events, "callTools")
       const hasThink = callToolsEvents.some((e) => {
@@ -45,10 +57,11 @@ describe("Skills", () => {
 
   describe("Omit tools", () => {
     it("should not have access to omitted tools", async () => {
-      const result = await runExpertWithRuntimeCli("e2e-omit-tools", "Say hello", {
-        configPath: "./e2e/experts/skills.toml",
-        timeout: 180000,
-      })
+      const cmdResult = await runRuntimeCli(
+        ["run", "--config", "./e2e/experts/skills.toml", "e2e-omit-tools", "Say hello"],
+        { timeout: 180000 },
+      )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       const callToolsEvents = filterEventsByType(result.events, "callTools")
       const hasThink = callToolsEvents.some((e) => {
@@ -61,11 +74,17 @@ describe("Skills", () => {
 
   describe("Multiple skills", () => {
     it("should have access to tools from multiple skills", async () => {
-      const result = await runExpertWithRuntimeCli(
-        "e2e-multi-skill",
-        "Think about AI and complete",
-        { configPath: "./e2e/experts/skills.toml", timeout: 180000 },
+      const cmdResult = await runRuntimeCli(
+        [
+          "run",
+          "--config",
+          "./e2e/experts/skills.toml",
+          "e2e-multi-skill",
+          "Think about AI and complete",
+        ],
+        { timeout: 180000 },
       )
+      const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       expect(assertEventSequenceContains(result.events, ["startRun", "completeRun"]).passed).toBe(
         true,

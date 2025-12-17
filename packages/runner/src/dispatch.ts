@@ -19,6 +19,8 @@ export type DispatchParams = {
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
   retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
   workspace?: string
+  /** Additional environment variable names to pass to Docker runtime */
+  additionalEnvKeys?: string[]
 }
 
 export type DispatchResult = {
@@ -34,6 +36,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     storeCheckpoint,
     retrieveCheckpoint,
     workspace,
+    additionalEnvKeys,
   } = params
   const setting = {
     ...params.setting,
@@ -62,6 +65,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     storeCheckpoint: storeCheckpoint ?? defaultStoreCheckpoint,
     retrieveCheckpoint: retrieveCheckpoint ?? defaultRetrieveCheckpoint,
     workspace,
+    additionalEnvKeys,
   })
   return { checkpoint: result.checkpoint }
 }

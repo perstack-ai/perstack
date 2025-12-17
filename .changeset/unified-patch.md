@@ -1,17 +1,9 @@
 ---
 "@perstack/api-client": patch
 "@perstack/base": patch
-"@perstack/claude-code": patch
 "@perstack/core": patch
-"@perstack/cursor": patch
-"@perstack/docker": patch
 "@perstack/e2e-mcp-server": patch
-"@perstack/gemini": patch
-"@perstack/mock": patch
-"@perstack/runner": patch
 "@perstack/runtime": patch
-"@perstack/storage": patch
-"@perstack/tui": patch
 "create-expert": patch
 "perstack": patch
 ---
