@@ -1,3 +1,10 @@
+---
+title: "Rapid Prototyping"
+description: "Validate your AI agent idea without writing code. Define in TOML, run immediately, iterate fast."
+tags: ["beginner", "quick-start"]
+order: 1
+---
+
 # Rapid Prototyping
 
 You have an idea for an AI agent. Maybe it's a customer support bot, a research assistant, or a code reviewer. You want to test whether the idea works — before investing in a full implementation.

@@ -1,3 +1,10 @@
+---
+title: "Adding AI to Your App"
+description: "Integrate Experts into your existing application. Embed the runtime programmatically."
+tags: ["integration", "api"]
+order: 4
+---
+
 # Adding AI to Your App
 
 You have an existing application — maybe a web app, a CLI tool, or a backend service. You want to add AI capabilities, but you're not sure where to start.

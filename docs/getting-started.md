@@ -172,10 +172,10 @@ See [Sandbox Integration](./understanding-perstack/sandbox-integration.md) for t
 You've seen the basics. Here's where to go from here:
 
 **Do something specific:**
-- [Rapid Prototyping](./working-with-perstack/rapid-prototyping.md) — validate ideas without writing code
-- [Taming Prompt Sprawl](./working-with-perstack/taming-prompt-sprawl.md) — fix bloated prompts with modular Experts
-- [Adding AI to Your App](./working-with-perstack/adding-ai-to-your-app.md) — integrate Experts into existing applications
-- [Going to Production](./working-with-perstack/going-to-production.md) — deploy safely with Docker isolation
+- [Rapid Prototyping](./guides/rapid-prototyping.md) — validate ideas without writing code
+- [Taming Prompt Sprawl](./guides/taming-prompt-sprawl.md) — fix bloated prompts with modular Experts
+- [Adding AI to Your App](./guides/adding-ai-to-your-app.md) — integrate Experts into existing applications
+- [Going to Production](./guides/going-to-production.md) — deploy safely with Docker isolation
 
 **Understand the architecture:**
 - [Concept](./understanding-perstack/concept.md) — why isolation and observability matter
