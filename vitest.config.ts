@@ -20,6 +20,8 @@ export default defineConfig({
           include: ["e2e/**/*.test.ts"],
           testTimeout: 300000,
           hookTimeout: 300000,
+          // Limit parallelism for Docker tests which are resource-intensive
+          maxConcurrency: 3,
         },
       },
     ],

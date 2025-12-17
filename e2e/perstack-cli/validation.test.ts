@@ -55,18 +55,15 @@ describe.concurrent("CLI Validation", () => {
     expect(result.exitCode).toBe(1)
   })
   it("should fail with clear message for nonexistent delegate", async () => {
-    const result = await runCli(
-      [
-        "run",
-        "--config",
-        "./e2e/experts/error-handling.toml",
-        "--runtime",
-        "local",
-        "e2e-invalid-delegate",
-        "test",
-      ],
-      { timeout: 60000 },
-    )
+    const result = await runCli([
+      "run",
+      "--config",
+      "./e2e/experts/error-handling.toml",
+      "--runtime",
+      "local",
+      "e2e-invalid-delegate",
+      "test",
+    ])
     expect(result.exitCode).not.toBe(0)
     expect(result.stderr).toMatch(/not found|nonexistent/i)
   })

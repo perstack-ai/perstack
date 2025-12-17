@@ -8,19 +8,23 @@ import {
 import type { ToolCallInfo } from "../lib/event-parser.js"
 import { runCli, withEventParsing } from "../lib/runner.js"
 
+const CONFIG = "./e2e/experts/mixed-tools.toml"
+// LLM API calls require extended timeout beyond the default 30s
+const TIMEOUT = 180000
+
 describe("Interactive Input", () => {
   it("should handle mixed tool calls with delegate and interactive stop", async () => {
     const cmdResult = await runCli(
       [
         "run",
         "--config",
-        "./e2e/experts/mixed-tools.toml",
+        CONFIG,
         "--runtime",
         "local",
         "e2e-mixed-tools",
         "Test mixed tool calls: search, delegate, and ask user",
       ],
-      { timeout: 180000 },
+      { timeout: TIMEOUT },
     )
     const result = withEventParsing(cmdResult)
 
@@ -56,5 +60,5 @@ describe("Interactive Input", () => {
       pendingToolCalls: [{}] as ToolCallInfo[],
     })
     expect(checkResult.passed).toBe(true)
-  }, 200000)
+  })
 })

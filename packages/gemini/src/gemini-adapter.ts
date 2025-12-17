@@ -170,10 +170,15 @@ export class GeminiAdapter extends BaseAdapter {
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
     storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    // Gemini CLI requires additional env vars for authentication and config
     const proc = spawn("gemini", ["-p", prompt, "--output-format", "stream-json"], {
       cwd: process.cwd(),
       env: getFilteredEnv({
         GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
+        XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME ?? "",
+        GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS ?? "",
+        USER: process.env.USER ?? "",
+        LOGNAME: process.env.LOGNAME ?? "",
       }),
       stdio: ["pipe", "pipe", "pipe"],
     })
