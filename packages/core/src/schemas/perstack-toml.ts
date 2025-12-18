@@ -178,6 +178,7 @@ export type PerstackConfigSkill =
       args?: string[]
       requiredEnv?: string[]
       allowedDomains?: string[]
+      lazyInit?: boolean
     }
   | {
       type: "mcpSseSkill"
@@ -273,6 +274,7 @@ export const perstackConfigSchema = z.object({
                 args: z.array(z.string()).optional(),
                 requiredEnv: z.array(z.string()).optional(),
                 allowedDomains: z.array(domainPatternSchema).optional(),
+                lazyInit: z.boolean().optional(),
               }),
               z.object({
                 type: z.literal("mcpSseSkill"),

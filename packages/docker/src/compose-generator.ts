@@ -64,6 +64,7 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("    tmpfs:")
   lines.push("      - /tmp:size=256M,mode=1777,exec")
   lines.push("      - /home/perstack/.npm:size=512M,uid=999,gid=999,mode=0755,exec")
+  lines.push("      - /home/perstack/.cache:size=256M,uid=999,gid=999,mode=0755,exec")
   lines.push("    deploy:")
   lines.push("      resources:")
   lines.push("        limits:")
