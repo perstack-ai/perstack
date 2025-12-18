@@ -1,7 +1,72 @@
 import type { ToolDefinition } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import type { BaseSkillManager } from "./base.js"
-import { closeSkillManagers, getSkillManagerByToolName, getToolSet } from "./helpers.js"
+import {
+  closeSkillManagers,
+  getSkillManagerByToolName,
+  getToolSet,
+  initSkillManagersWithCleanup,
+} from "./helpers.js"
+
+describe("@perstack/runtime: initSkillManagersWithCleanup", () => {
+  it("initializes all managers successfully", async () => {
+    const initFn1 = vi.fn().mockResolvedValue(undefined)
+    const initFn2 = vi.fn().mockResolvedValue(undefined)
+    const managers = [
+      { init: initFn1, close: vi.fn() } as unknown as BaseSkillManager,
+      { init: initFn2, close: vi.fn() } as unknown as BaseSkillManager,
+    ]
+    await initSkillManagersWithCleanup(managers, managers)
+    expect(initFn1).toHaveBeenCalledTimes(1)
+    expect(initFn2).toHaveBeenCalledTimes(1)
+  })
+
+  it("closes all managers when one fails to initialize", async () => {
+    const closeFn1 = vi.fn().mockResolvedValue(undefined)
+    const closeFn2 = vi.fn().mockResolvedValue(undefined)
+    const managers = [
+      {
+        init: vi.fn().mockRejectedValue(new Error("init failed")),
+        close: closeFn1,
+      } as unknown as BaseSkillManager,
+      { init: vi.fn().mockResolvedValue(undefined), close: closeFn2 } as unknown as BaseSkillManager,
+    ]
+    await expect(initSkillManagersWithCleanup(managers, managers)).rejects.toThrow("init failed")
+    expect(closeFn1).toHaveBeenCalledTimes(1)
+    expect(closeFn2).toHaveBeenCalledTimes(1)
+  })
+
+  it("handles empty managers array", async () => {
+    await expect(initSkillManagersWithCleanup([], [])).resolves.toBeUndefined()
+  })
+
+  it("closes allManagers (not just failed subset) on failure", async () => {
+    const closeFn1 = vi.fn().mockResolvedValue(undefined)
+    const closeFn2 = vi.fn().mockResolvedValue(undefined)
+    const closeFn3 = vi.fn().mockResolvedValue(undefined)
+    const manager1 = { init: vi.fn().mockResolvedValue(undefined), close: closeFn1 } as unknown as BaseSkillManager
+    const manager2 = { init: vi.fn().mockRejectedValue(new Error("fail")), close: closeFn2 } as unknown as BaseSkillManager
+    const allManagers = [
+      manager1,
+      { init: vi.fn(), close: closeFn3 } as unknown as BaseSkillManager,
+    ]
+    await expect(initSkillManagersWithCleanup([manager2], allManagers)).rejects.toThrow("fail")
+    expect(closeFn1).toHaveBeenCalledTimes(1)
+    expect(closeFn3).toHaveBeenCalledTimes(1)
+  })
+
+  it("ignores close errors during cleanup", async () => {
+    const closeFn = vi.fn().mockRejectedValue(new Error("close failed"))
+    const managers = [
+      {
+        init: vi.fn().mockRejectedValue(new Error("init failed")),
+        close: closeFn,
+      } as unknown as BaseSkillManager,
+    ]
+    await expect(initSkillManagersWithCleanup(managers, managers)).rejects.toThrow("init failed")
+    expect(closeFn).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe("@perstack/runtime: closeSkillManagers", () => {
   it("closes all skill managers", async () => {
