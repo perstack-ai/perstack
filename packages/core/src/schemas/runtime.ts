@@ -422,6 +422,9 @@ type RuntimeEventPayloads = {
     }
     connectDurationMs?: number
     totalDurationMs?: number
+    spawnDurationMs?: number
+    handshakeDurationMs?: number
+    toolDiscoveryDurationMs?: number
   }
   skillStderr: {
     skillName: string

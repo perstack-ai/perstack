@@ -20,6 +20,13 @@ import {
 } from "@perstack/core"
 import { BaseSkillManager } from "./base.js"
 
+interface InitTimingInfo {
+  startTime: number
+  spawnDurationMs: number
+  handshakeDurationMs: number
+  serverInfo?: { name: string; version: string }
+}
+
 export class McpSkillManager extends BaseSkillManager {
   readonly name: string
   readonly type: SkillType = "mcp"
@@ -48,12 +55,15 @@ export class McpSkillManager extends BaseSkillManager {
       name: `${this.skill.name}-mcp-client`,
       version: "1.0.0",
     })
+    let timingInfo: InitTimingInfo | undefined
     if (this.skill.type === "mcpStdioSkill") {
-      await this._initStdio(this.skill)
+      timingInfo = await this._initStdio(this.skill)
     } else {
       await this._initSse(this.skill)
     }
+    const toolDiscoveryStartTime = Date.now()
     const { tools } = await this._mcpClient.listTools()
+    const toolDiscoveryDurationMs = Date.now() - toolDiscoveryStartTime
     this._toolDefinitions = tools.map((tool) => ({
       skillName: this.skill.name,
       name: tool.name,
@@ -61,9 +71,22 @@ export class McpSkillManager extends BaseSkillManager {
       inputSchema: tool.inputSchema,
       interactive: false,
     }))
+    if (this._eventListener && timingInfo) {
+      const totalDurationMs = Date.now() - timingInfo.startTime
+      const event = createRuntimeEvent("skillConnected", this._jobId, this._runId, {
+        skillName: this.skill.name,
+        serverInfo: timingInfo.serverInfo,
+        spawnDurationMs: timingInfo.spawnDurationMs,
+        handshakeDurationMs: timingInfo.handshakeDurationMs,
+        toolDiscoveryDurationMs,
+        connectDurationMs: timingInfo.spawnDurationMs + timingInfo.handshakeDurationMs,
+        totalDurationMs,
+      })
+      this._eventListener(event)
+    }
   }
 
-  private async _initStdio(skill: McpStdioSkill): Promise<void> {
+  private async _initStdio(skill: McpStdioSkill): Promise<InitTimingInfo> {
     if (!skill.command) {
       throw new Error(`Skill ${skill.name} has no command`)
     }
@@ -86,6 +109,7 @@ export class McpSkillManager extends BaseSkillManager {
       this._eventListener(event)
     }
     const transport = new StdioClientTransport({ command, args, env, stderr: "pipe" })
+    const spawnDurationMs = Date.now() - startTime
     if (transport.stderr) {
       transport.stderr.on("data", (chunk: Buffer) => {
         if (this._eventListener) {
@@ -99,16 +123,15 @@ export class McpSkillManager extends BaseSkillManager {
     }
     const connectStartTime = Date.now()
     await this._mcpClient!.connect(transport)
-    const connectTime = Date.now()
-    if (this._eventListener) {
-      const serverInfo = this._mcpClient!.getServerVersion()
-      const event = createRuntimeEvent("skillConnected", this._jobId, this._runId, {
-        skillName: skill.name,
-        serverInfo: serverInfo ? { name: serverInfo.name, version: serverInfo.version } : undefined,
-        connectDurationMs: connectTime - connectStartTime,
-        totalDurationMs: connectTime - startTime,
-      })
-      this._eventListener(event)
+    const handshakeDurationMs = Date.now() - connectStartTime
+    const serverVersion = this._mcpClient!.getServerVersion()
+    return {
+      startTime,
+      spawnDurationMs,
+      handshakeDurationMs,
+      serverInfo: serverVersion
+        ? { name: serverVersion.name, version: serverVersion.version }
+        : undefined,
     }
   }
 

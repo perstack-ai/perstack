@@ -1,4 +1,10 @@
-import type { Expert, InteractiveSkill, ToolDefinition } from "@perstack/core"
+import type {
+  Expert,
+  InteractiveSkill,
+  RunEvent,
+  RuntimeEvent,
+  ToolDefinition,
+} from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import {
   type BaseSkillManager,
@@ -250,6 +256,17 @@ describe("@perstack/runtime: McpSkillManager", () => {
     expect(skillManager.type).toBe("mcp")
     expect(skillManager.name).toBe("sse-skill")
     expect(skillManager.lazyInit).toBe(false)
+  })
+
+  it("accepts event listener in constructor", () => {
+    const skill = createMcpSkill({ lazyInit: false })
+    const events: (RunEvent | RuntimeEvent)[] = []
+    const eventListener = (event: RunEvent | RuntimeEvent) => {
+      events.push(event)
+    }
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId, eventListener)
+    expect(skillManager).toBeDefined()
+    expect(skillManager.name).toBe("test-skill")
   })
 })
 
