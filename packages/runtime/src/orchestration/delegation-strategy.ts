@@ -4,8 +4,10 @@ import type {
   DelegationTarget,
   Expert,
   Message,
+  RunEvent,
   RunParamsInput,
   RunSetting,
+  RuntimeEvent,
   ToolCall,
   ToolResult,
   Usage,
@@ -37,8 +39,14 @@ export type DelegationExecutionResult = {
 
 /**
  * Run options that can be passed to child delegation runs.
+ * Extends key callbacks from parent options to ensure checkpoint persistence
+ * and event emission work correctly for delegated runs.
  */
 export type DelegationRunOptions = {
+  storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
+  eventListener?: (event: RunEvent | RuntimeEvent) => void
+  storeEvent?: (event: RunEvent) => Promise<void>
   returnOnDelegationComplete?: boolean
 }
 
@@ -73,6 +81,7 @@ export type DelegationContext = {
 export interface DelegationStrategy {
   /**
    * Execute delegations and return the next setting/checkpoint for the run loop.
+   * @param parentOptions - Options from the parent run to be inherited by child runs
    */
   execute(
     delegations: DelegationTarget[],
@@ -80,6 +89,7 @@ export interface DelegationStrategy {
     context: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     runFn: (params: RunParamsInput, options?: DelegationRunOptions) => Promise<Checkpoint>,
+    parentOptions?: DelegationRunOptions,
   ): Promise<DelegationExecutionResult>
 }
 
@@ -94,6 +104,7 @@ export class SingleDelegationStrategy implements DelegationStrategy {
     context: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     _runFn: (params: RunParamsInput, options?: DelegationRunOptions) => Promise<Checkpoint>,
+    _parentOptions?: DelegationRunOptions,
   ): Promise<DelegationExecutionResult> {
     if (delegations.length !== 1) {
       throw new Error("SingleDelegationStrategy requires exactly one delegation")
@@ -151,6 +162,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     context: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     runFn: (params: RunParamsInput, options?: DelegationRunOptions) => Promise<Checkpoint>,
+    parentOptions?: DelegationRunOptions,
   ): Promise<DelegationExecutionResult> {
     if (delegations.length < 2) {
       throw new Error("ParallelDelegationStrategy requires at least two delegations")
@@ -164,7 +176,14 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     // Execute all delegations in parallel
     const allResults = await Promise.all(
       delegations.map((delegation) =>
-        this.executeSingleDelegation(delegation, setting, context, parentExpert, runFn),
+        this.executeSingleDelegation(
+          delegation,
+          setting,
+          context,
+          parentExpert,
+          runFn,
+          parentOptions,
+        ),
       ),
     )
 
@@ -236,6 +255,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     parentContext: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     runFn: (params: RunParamsInput, options?: DelegationRunOptions) => Promise<Checkpoint>,
+    parentOptions?: DelegationRunOptions,
   ): Promise<DelegationResult> {
     const { expert, toolCallId, toolName, query } = delegation
     const delegateRunId = createId()
@@ -273,10 +293,11 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       contextWindow: parentContext.contextWindow,
     }
 
-    // Pass returnOnDelegationComplete - parent options are inherited through run.ts
+    // Merge parent options with returnOnDelegationComplete to ensure child runs
+    // inherit callbacks for checkpoint persistence and event emission
     const resultCheckpoint = await runFn(
       { setting: delegateSetting, checkpoint: delegateCheckpoint },
-      { returnOnDelegationComplete: true },
+      { ...parentOptions, returnOnDelegationComplete: true },
     )
 
     return this.extractDelegationResult(resultCheckpoint, toolCallId, toolName, expert.key)

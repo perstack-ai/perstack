@@ -400,6 +400,64 @@ describe("@perstack/runtime: delegation-strategy", () => {
         strategy.execute(delegations, setting, context, parentExpert, runFn),
       ).rejects.toThrow("Delegation error: delegation result message does not contain text")
     })
+
+    it("passes parent options to child runs", async () => {
+      const strategy = new ParallelDelegationStrategy()
+      const setting = createMockSetting()
+      const delegations = [
+        createMockDelegation({
+          toolCallId: "tc-1",
+          expert: { key: "expert-a", name: "A", version: "1" },
+        }),
+        createMockDelegation({
+          toolCallId: "tc-2",
+          expert: { key: "expert-b", name: "B", version: "1" },
+        }),
+      ]
+      const context = createMockContext()
+      const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
+
+      const createMockResultCheckpoint = (expertKey: string): Checkpoint => ({
+        ...createMockCheckpoint(),
+        messages: [
+          {
+            id: `msg-${expertKey}`,
+            type: "expertMessage",
+            contents: [{ type: "textPart", id: "txt-1", text: `Result` }],
+          },
+        ],
+      })
+
+      const runFn = vi
+        .fn()
+        .mockResolvedValueOnce(createMockResultCheckpoint("expert-a"))
+        .mockResolvedValueOnce(createMockResultCheckpoint("expert-b"))
+
+      const storeCheckpoint = vi.fn()
+      const eventListener = vi.fn()
+      const parentOptions = {
+        storeCheckpoint,
+        eventListener,
+      }
+
+      await strategy.execute(delegations, setting, context, parentExpert, runFn, parentOptions)
+
+      // Verify runFn was called with merged options (parent options + returnOnDelegationComplete)
+      expect(runFn).toHaveBeenCalledTimes(2)
+      const firstCallOptions = runFn.mock.calls[0][1]
+      const secondCallOptions = runFn.mock.calls[1][1]
+
+      expect(firstCallOptions).toEqual({
+        storeCheckpoint,
+        eventListener,
+        returnOnDelegationComplete: true,
+      })
+      expect(secondCallOptions).toEqual({
+        storeCheckpoint,
+        eventListener,
+        returnOnDelegationComplete: true,
+      })
+    })
   })
 
   describe("selectDelegationStrategy()", () => {

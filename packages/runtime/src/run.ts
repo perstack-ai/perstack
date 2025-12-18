@@ -124,12 +124,14 @@ export async function run(runInput: RunParamsInput, options?: RunOptions): Promi
         const context = extractDelegationContext(resultCheckpoint)
 
         // All strategies now use the same interface - delegations parameter is used directly
+        // Pass parent options so child runs inherit callbacks for checkpoint persistence and events
         const delegationResult = await strategy.execute(
           delegateTo,
           setting,
           context,
           runResult.expertToRun,
           run,
+          options,
         )
 
         setting = delegationResult.nextSetting
