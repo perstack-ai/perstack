@@ -5,7 +5,7 @@ import type {
   RuntimeEvent,
   ToolDefinition,
 } from "@perstack/core"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 // Mock the MCP SDK
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => {
@@ -15,6 +15,7 @@ vi.mock("@modelcontextprotocol/sdk/client/index.js", () => {
   mockClient.prototype.close = vi.fn().mockResolvedValue(undefined)
   return { Client: mockClient }
 })
+
 import {
   type BaseSkillManager,
   closeSkillManagers,
