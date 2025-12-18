@@ -1,0 +1,24 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+[experts."mcp-startup-benchmark"]
+version = "1.0.0"
+description = "Benchmark Expert for MCP skill startup timing"
+instruction = "You are a benchmark Expert. Simply respond with 'Ready' to confirm all skills loaded."
+
+[experts."mcp-startup-benchmark".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+requiredEnv = []
+
+[experts."mcp-startup-benchmark".skills."firecrawl"]
+type = "mcpStdioSkill"
+description = "Browser automation capabilities using Firecrawl"
+command = "npx"
+packageName = "firecrawl-mcp"
+requiredEnv = ["FIRECRAWL_API_KEY"]
+lazyInit = false

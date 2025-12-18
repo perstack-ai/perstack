@@ -120,6 +120,24 @@ describe("@perstack/core: createRuntimeEvent", () => {
     expect(event.skillName).toBe("@perstack/base")
   })
 
+  it("creates skillConnected event with timing metrics", () => {
+    const event = createRuntimeEvent("skillConnected", "job-456", "run-456", {
+      skillName: "@perstack/base",
+      serverInfo: { name: "base", version: "1.0.0" },
+      spawnDurationMs: 150,
+      handshakeDurationMs: 8500,
+      toolDiscoveryDurationMs: 1100,
+      connectDurationMs: 8650,
+      totalDurationMs: 9750,
+    })
+    expect(event.type).toBe("skillConnected")
+    expect(event.spawnDurationMs).toBe(150)
+    expect(event.handshakeDurationMs).toBe(8500)
+    expect(event.toolDiscoveryDurationMs).toBe(1100)
+    expect(event.connectDurationMs).toBe(8650)
+    expect(event.totalDurationMs).toBe(9750)
+  })
+
   it("creates skillDisconnected event", () => {
     const event = createRuntimeEvent("skillDisconnected", "job-789", "run-789", {
       skillName: "@perstack/base",

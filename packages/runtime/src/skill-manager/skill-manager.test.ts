@@ -1,5 +1,21 @@
-import type { Expert, InteractiveSkill, ToolDefinition } from "@perstack/core"
+import type {
+  Expert,
+  InteractiveSkill,
+  RunEvent,
+  RuntimeEvent,
+  ToolDefinition,
+} from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
+
+// Mock the MCP SDK
+vi.mock("@modelcontextprotocol/sdk/client/index.js", () => {
+  const mockClient = vi.fn()
+  mockClient.prototype.listTools = vi.fn().mockResolvedValue({ tools: [] })
+  mockClient.prototype.connect = vi.fn().mockResolvedValue(undefined)
+  mockClient.prototype.close = vi.fn().mockResolvedValue(undefined)
+  return { Client: mockClient }
+})
+
 import {
   type BaseSkillManager,
   closeSkillManagers,
@@ -250,6 +266,87 @@ describe("@perstack/runtime: McpSkillManager", () => {
     expect(skillManager.type).toBe("mcp")
     expect(skillManager.name).toBe("sse-skill")
     expect(skillManager.lazyInit).toBe(false)
+  })
+
+  it("accepts event listener in constructor", () => {
+    const skill = createMcpSkill({ lazyInit: false })
+    const events: (RunEvent | RuntimeEvent)[] = []
+    const eventListener = (event: RunEvent | RuntimeEvent) => {
+      events.push(event)
+    }
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId, eventListener)
+    expect(skillManager).toBeDefined()
+    expect(skillManager.name).toBe("test-skill")
+  })
+
+  it("emits skillConnected event with timing metrics when _doInit completes", async () => {
+    const skill = createMcpSkill({ lazyInit: false })
+    const events: RuntimeEvent[] = []
+    const eventListener = (event: RunEvent | RuntimeEvent) => {
+      if ("type" in event && event.type === "skillConnected") {
+        events.push(event as RuntimeEvent)
+      }
+    }
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId, eventListener)
+    const sm = skillManager as unknown as McpSkillManagerInternal & {
+      _initStdio: () => Promise<{
+        startTime: number
+        spawnDurationMs: number
+        handshakeDurationMs: number
+        serverInfo?: { name: string; version: string }
+      }>
+    }
+
+    // Mock _initStdio to return timing info (this allows _doInit to run its real logic)
+    vi.spyOn(sm, "_initStdio").mockResolvedValue({
+      startTime: Date.now() - 1000,
+      spawnDurationMs: 10,
+      handshakeDurationMs: 500,
+      serverInfo: { name: "test-server", version: "1.0.0" },
+    })
+
+    await skillManager.init()
+
+    expect(events).toHaveLength(1)
+    const event = events[0]
+    expect(event.type).toBe("skillConnected")
+    if (event.type === "skillConnected") {
+      expect(event.skillName).toBe("test-skill")
+      expect(event.spawnDurationMs).toBe(10)
+      expect(event.handshakeDurationMs).toBe(500)
+      expect(event.connectDurationMs).toBe(510)
+      expect(event.serverInfo).toEqual({ name: "test-server", version: "1.0.0" })
+      expect(typeof event.toolDiscoveryDurationMs).toBe("number")
+      expect(typeof event.totalDurationMs).toBe("number")
+    }
+  })
+
+  it("does not emit skillConnected with timing for SSE skills (no timingInfo)", async () => {
+    const skill = {
+      type: "mcpSseSkill" as const,
+      name: "sse-skill",
+      endpoint: "https://example.com/sse",
+      pick: [],
+      omit: [],
+    }
+    const events: RuntimeEvent[] = []
+    const eventListener = (event: RunEvent | RuntimeEvent) => {
+      if ("type" in event && event.type === "skillConnected") {
+        events.push(event as RuntimeEvent)
+      }
+    }
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId, eventListener)
+    const sm = skillManager as unknown as McpSkillManagerInternal & {
+      _initSse: () => Promise<void>
+    }
+
+    // Mock _initSse (SSE skills don't return timing info)
+    vi.spyOn(sm, "_initSse").mockResolvedValue(undefined)
+
+    await skillManager.init()
+
+    // SSE skills don't emit skillConnected with timing because timingInfo is undefined
+    expect(events).toHaveLength(0)
   })
 })
 
