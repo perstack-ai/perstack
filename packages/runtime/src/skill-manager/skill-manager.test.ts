@@ -321,13 +321,15 @@ describe("@perstack/runtime: McpSkillManager", () => {
     expect(events).toHaveLength(1)
     const event = events[0]
     expect(event.type).toBe("skillConnected")
-    expect(event.skillName).toBe("test-skill")
-    expect(event.spawnDurationMs).toBe(10)
-    expect(event.handshakeDurationMs).toBe(500)
-    expect(event.connectDurationMs).toBe(510)
-    expect(event.serverInfo).toEqual({ name: "test-server", version: "1.0.0" })
-    expect(event.toolDiscoveryDurationMs).toBe(50)
-    expect(event.totalDurationMs).toBe(560)
+    if (event.type === "skillConnected") {
+      expect(event.skillName).toBe("test-skill")
+      expect(event.spawnDurationMs).toBe(10)
+      expect(event.handshakeDurationMs).toBe(500)
+      expect(event.connectDurationMs).toBe(510)
+      expect(event.serverInfo).toEqual({ name: "test-server", version: "1.0.0" })
+      expect(event.toolDiscoveryDurationMs).toBe(50)
+      expect(event.totalDurationMs).toBe(560)
+    }
   })
 })
 
