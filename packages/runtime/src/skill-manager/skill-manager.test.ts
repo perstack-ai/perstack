@@ -320,6 +320,34 @@ describe("@perstack/runtime: McpSkillManager", () => {
       expect(typeof event.totalDurationMs).toBe("number")
     }
   })
+
+  it("does not emit skillConnected with timing for SSE skills (no timingInfo)", async () => {
+    const skill = {
+      type: "mcpSseSkill" as const,
+      name: "sse-skill",
+      endpoint: "https://example.com/sse",
+      pick: [],
+      omit: [],
+    }
+    const events: RuntimeEvent[] = []
+    const eventListener = (event: RunEvent | RuntimeEvent) => {
+      if ("type" in event && event.type === "skillConnected") {
+        events.push(event as RuntimeEvent)
+      }
+    }
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId, eventListener)
+    const sm = skillManager as unknown as McpSkillManagerInternal & {
+      _initSse: () => Promise<void>
+    }
+
+    // Mock _initSse (SSE skills don't return timing info)
+    vi.spyOn(sm, "_initSse").mockResolvedValue(undefined)
+
+    await skillManager.init()
+
+    // SSE skills don't emit skillConnected with timing because timingInfo is undefined
+    expect(events).toHaveLength(0)
+  })
 })
 
 describe("@perstack/runtime: InteractiveSkillManager", () => {
