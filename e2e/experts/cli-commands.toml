@@ -10,8 +10,7 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for CLI publish command validation"
 instruction = """
-You are a minimal expert for testing the publish CLI command.
-Simply respond with "Ready" and call attemptCompletion.
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-publish-test".skills."@perstack/base"]

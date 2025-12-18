@@ -1,3 +1,18 @@
+/**
+ * Interactive Input E2E Tests
+ *
+ * Tests mixed tool call handling where MCP tools, delegate tools,
+ * and interactive tools are called in a single response.
+ *
+ * Flow:
+ * 1. Expert calls 3 tools in parallel: web_search_exa, e2e-helper, askUser
+ * 2. MCP tool (exa) executes first
+ * 3. Delegate tool suspends run (stopRunByDelegate)
+ * 4. After delegate completes, run resumes
+ * 5. Interactive tool suspends run (stopRunByInteractiveTool)
+ *
+ * TOML: e2e/experts/mixed-tools.toml
+ */
 import { describe, expect, it } from "vitest"
 import {
   assertCheckpointState,
@@ -13,6 +28,14 @@ const CONFIG = "./e2e/experts/mixed-tools.toml"
 const LLM_TIMEOUT = 180000
 
 describe("Interactive Input", () => {
+  /**
+   * Verifies mixed tool call processing order and checkpoint states.
+   *
+   * Expected event sequence:
+   * startRun → callTools → callDelegate → stopRunByDelegate →
+   * startRun → completeRun → startRun → resumeToolCalls →
+   * callInteractiveTool → stopRunByInteractiveTool
+   */
   it("should handle mixed tool calls with delegate and interactive stop", async () => {
     const cmdResult = await runCli(
       [
