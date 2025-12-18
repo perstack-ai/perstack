@@ -15,17 +15,6 @@ export type ClassifiedToolCalls = {
 }
 
 /**
- * Get the skill type for a single tool call
- */
-export async function getToolType(
-  toolCall: ToolCall,
-  skillManagers: Record<string, BaseSkillManager>,
-): Promise<SkillType> {
-  const skillManager = await getSkillManagerByToolName(skillManagers, toolCall.toolName)
-  return skillManager.type
-}
-
-/**
  * Get the skill type for a tool by name only
  */
 export async function getToolTypeByName(
@@ -61,11 +50,4 @@ export async function classifyToolCalls(
   }
 
   return classified
-}
-
-/**
- * Sort tool calls by execution priority: mcp -> delegate -> interactive
- */
-export function sortByPriority(classified: ClassifiedToolCalls): ClassifiedToolCall[] {
-  return [...classified.mcp, ...classified.delegate, ...classified.interactive]
 }

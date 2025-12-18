@@ -1,5 +1,5 @@
 import type { Checkpoint, RunParamsInput } from "@perstack/core"
-import { type RunOptions, RunOrchestrator } from "./orchestration/run-orchestrator.js"
+import { type RunOptions, RunOrchestrator } from "./orchestration/index.js"
 
 export type { RunOptions }
 
