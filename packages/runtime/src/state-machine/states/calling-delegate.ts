@@ -1,15 +1,7 @@
 import { type DelegationTarget, type RunEvent, stopRunByDelegate } from "@perstack/core"
-import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { getSkillManagerByToolName } from "../../skill-manager/index.js"
+import { getToolTypeByName } from "../../tool-execution/index.js"
 import type { RunSnapshot } from "../machine.js"
-
-async function getToolType(
-  toolName: string,
-  skillManagers: Record<string, BaseSkillManager>,
-): Promise<"mcp" | "delegate" | "interactive"> {
-  const skillManager = await getSkillManagerByToolName(skillManagers, toolName)
-  return skillManager.type
-}
 
 export async function callingDelegateLogic({
   setting,
@@ -23,7 +15,7 @@ export async function callingDelegateLogic({
   const toolCallTypes = await Promise.all(
     step.pendingToolCalls.map(async (tc) => ({
       toolCall: tc,
-      type: await getToolType(tc.toolName, skillManagers),
+      type: await getToolTypeByName(tc.toolName, skillManagers),
     })),
   )
   const delegateToolCalls = toolCallTypes
