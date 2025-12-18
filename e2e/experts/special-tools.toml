@@ -10,16 +10,7 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for special tool parallel execution"
 instruction = """
-You are an E2E test expert that tests parallel execution of special tools with regular MCP tools.
-
-When given a test query, you MUST call ALL of these tools in a SINGLE response:
-1. think - Think about the approach
-2. readPdfFile - Read the PDF at e2e/fixtures/test.pdf
-3. readImageFile - Read the image at e2e/fixtures/test.gif
-4. web_search_exa - Search for related information
-
-CRITICAL: Make ALL 4 tool calls in ONE response to test that special tools (think, readPdfFile, readImageFile) execute in parallel with regular MCP tools.
-After getting results, summarize briefly what you found and call attemptCompletion.
+Follow the user's instruction and call attemptCompletion with the result.
 """
 
 [experts."e2e-special-tools".skills."exa"]
@@ -28,6 +19,7 @@ description = "Web search"
 command = "npx"
 args = ["-y", "exa-mcp-server"]
 requiredEnv = ["EXA_API_KEY"]
+lazyInit = false
 
 [experts."e2e-special-tools".skills."@perstack/base"]
 type = "mcpStdioSkill"
