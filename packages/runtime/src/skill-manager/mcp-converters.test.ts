@@ -45,15 +45,15 @@ describe("@perstack/runtime: convertToolResult", () => {
     const converted = convertToolResult(result, "test-tool", { arg: "value" })
     expect(converted).toHaveLength(1)
     expect(converted[0].type).toBe("textPart")
-    expect(converted[0].text).toContain("Tool test-tool returned nothing")
-    expect(converted[0].text).toContain('"arg":"value"')
+    expect((converted[0] as { text: string }).text).toContain("Tool test-tool returned nothing")
+    expect((converted[0] as { text: string }).text).toContain('"arg":"value"')
   })
 
   it("returns empty result message when content is undefined", () => {
     const result = {} as CallToolResult
     const converted = convertToolResult(result, "test-tool", {})
     expect(converted).toHaveLength(1)
-    expect(converted[0].text).toContain("returned nothing")
+    expect((converted[0] as { text: string }).text).toContain("returned nothing")
   })
 
   it("converts text content parts", () => {
@@ -67,13 +67,13 @@ describe("@perstack/runtime: convertToolResult", () => {
   })
 
   it("filters out audio and resource_link types", () => {
-    const result: CallToolResult = {
+    const result = {
       content: [
         { type: "text", text: "Keep this" },
-        { type: "audio" as never, data: "audio-data" },
-        { type: "resource_link" as never, uri: "some-uri" },
+        { type: "audio", data: "audio-data" },
+        { type: "resource_link", uri: "some-uri", name: "link" },
       ],
-    }
+    } as unknown as CallToolResult
     const converted = convertToolResult(result, "test-tool", {})
     expect(converted).toHaveLength(1)
     expect((converted[0] as { text: string }).text).toBe("Keep this")

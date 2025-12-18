@@ -1,8 +1,7 @@
 import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent, Step } from "@perstack/core"
-import { createActor } from "xstate"
 import type { RunEventEmitter } from "../events/event-emitter.js"
-import { type BaseSkillManager, closeSkillManagers } from "../skill-manager/index.js"
-import { runtimeStateMachine, StateMachineLogics } from "./machine.js"
+import type { BaseSkillManager } from "../skill-manager/index.js"
+import { StateMachineCoordinator } from "./coordinator.js"
 
 export type ExecuteStateMachineParams = {
   setting: RunSetting & { experts: Record<string, Expert> }
@@ -14,60 +13,11 @@ export type ExecuteStateMachineParams = {
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
 }
 
+/**
+ * Execute the runtime state machine.
+ * This is a convenience wrapper around StateMachineCoordinator.
+ */
 export async function executeStateMachine(params: ExecuteStateMachineParams): Promise<Checkpoint> {
-  const {
-    setting,
-    initialCheckpoint,
-    eventListener,
-    skillManagers,
-    eventEmitter,
-    storeCheckpoint,
-    shouldContinueRun,
-  } = params
-  const runActor = createActor(runtimeStateMachine, {
-    input: {
-      setting,
-      initialCheckpoint,
-      eventListener,
-      skillManagers,
-    },
-  })
-  return new Promise<Checkpoint>((resolve, reject) => {
-    runActor.subscribe(async (runState) => {
-      try {
-        if (runState.value === "Stopped") {
-          const { checkpoint, skillManagers } = runState.context
-          if (!checkpoint) {
-            throw new Error("Checkpoint is undefined")
-          }
-          await closeSkillManagers(skillManagers)
-          resolve(checkpoint)
-        } else {
-          const event = await StateMachineLogics[runState.value](runState.context)
-          if ("checkpoint" in event) {
-            await storeCheckpoint(event.checkpoint)
-          }
-          await eventEmitter.emit(event)
-          if (shouldContinueRun) {
-            const shouldContinue = await shouldContinueRun(
-              runState.context.setting,
-              runState.context.checkpoint,
-              runState.context.step,
-            )
-            if (!shouldContinue) {
-              runActor.stop()
-              await closeSkillManagers(runState.context.skillManagers)
-              resolve(runState.context.checkpoint)
-              return
-            }
-          }
-          runActor.send(event)
-        }
-      } catch (error) {
-        await closeSkillManagers(skillManagers).catch(() => {})
-        reject(error)
-      }
-    })
-    runActor.start()
-  })
+  const coordinator = new StateMachineCoordinator(params)
+  return coordinator.execute()
 }
