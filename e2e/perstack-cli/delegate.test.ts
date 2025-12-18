@@ -8,28 +8,15 @@ const LLM_TIMEOUT = 180000
 
 describe("Delegate to Expert", () => {
   /**
-   * Test: Chain delegation through multiple expert levels
-   *
-   * Flow:
-   * 1. Run e2e-delegate-chain with a test query
-   * 2. Chain expert delegates to e2e-delegate-level1
-   * 3. Level1 expert delegates to e2e-delegate-level2
-   * 4. Level2 expert processes and returns result
-   * 5. Results bubble up through the chain
-   *
-   * TOML (delegate-chain.toml):
-   * - e2e-delegate-chain → delegates to e2e-delegate-level1
-   * - e2e-delegate-level1 → delegates to e2e-delegate-level2
-   * - e2e-delegate-level2 → processes and calls attemptCompletion
-   *
-   * Expected control flow (in order):
-   * 1. startRun:chain → callDelegate:chain → stopRunByDelegate:chain
-   * 2. startRun:level1 → callDelegate:level1 → stopRunByDelegate:level1
-   * 3. startRun:level2 → completeRun:level2
-   * 4. startRun:level1 (resume) → completeRun:level1
-   * 5. startRun:chain (resume) → completeRun:chain
+   * Flow: e2e-delegate-chain → e2e-delegate-level1 → e2e-delegate-level2 → complete chain
+   * TOML: delegate-chain.toml defines 3 experts forming a delegation chain
+   * Expected:
+   *   - Chain starts at root, delegates to level1, then level2
+   *   - Each expert calls attemptCompletion with "OK"
+   *   - Control flow: chain→level1→level2→(complete)→level1→(complete)→chain→(complete)
+   *   - Total 3 completeRun events (one per expert)
    */
-  it("should chain through multiple experts and complete all runs", async () => {
+  it("should chain through multiple experts", async () => {
     const cmdResult = await runCli(
       [
         "run",
@@ -42,14 +29,16 @@ describe("Delegate to Expert", () => {
       ],
       { timeout: LLM_TIMEOUT },
     )
+    expect(cmdResult.exitCode).toBe(0)
+
     const result = withEventParsing(cmdResult)
     expect(assertNoRetry(result.events).passed).toBe(true)
-    const events = result.events as { type: string; expertKey: string }[]
-    const controlFlow = events
-      .filter((e) =>
-        ["startRun", "callDelegate", "stopRunByDelegate", "completeRun"].includes(e.type),
-      )
-      .map((e) => `${e.type}:${e.expertKey}`)
+
+    // Verify delegation chain control flow
+    const controlFlow = result.events
+      .filter((e) => ["startRun", "callDelegate", "stopRunByDelegate", "completeRun"].includes(e.type))
+      .map((e) => `${e.type}:${(e as { expertKey: string }).expertKey}`)
+
     expect(controlFlow).toEqual([
       "startRun:e2e-delegate-chain",
       "callDelegate:e2e-delegate-chain",
@@ -59,10 +48,14 @@ describe("Delegate to Expert", () => {
       "stopRunByDelegate:e2e-delegate-level1",
       "startRun:e2e-delegate-level2",
       "completeRun:e2e-delegate-level2",
-      "startRun:e2e-delegate-level1",
+      "startRun:e2e-delegate-level1", // Resume after level2 completes
       "completeRun:e2e-delegate-level1",
-      "startRun:e2e-delegate-chain",
+      "startRun:e2e-delegate-chain", // Resume after level1 completes
       "completeRun:e2e-delegate-chain",
     ])
+
+    // Verify all 3 experts completed
+    const completeEvents = result.events.filter((e) => e.type === "completeRun")
+    expect(completeEvents.length).toBe(3)
   })
 })

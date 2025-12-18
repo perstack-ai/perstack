@@ -10,10 +10,8 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for delegate chain"
 instruction = """
-You test delegate chain execution. Follow these steps EXACTLY ONCE:
-1. Immediately delegate to "e2e-delegate-level1" with the user's query
-2. When you receive the result, call attemptCompletion with "Chain complete: [result]"
-Do NOT delegate more than once. Do NOT add any extra steps.
+1. Delegate to "e2e-delegate-level1" with "test"
+2. When done, call attemptCompletion with result "OK"
 """
 delegates = ["e2e-delegate-level1"]
 
@@ -27,10 +25,8 @@ pick = ["attemptCompletion"]
 version = "1.0.0"
 description = "First level delegate expert"
 instruction = """
-You are level 1 delegate. Follow these steps EXACTLY ONCE:
-1. Immediately delegate to "e2e-delegate-level2" with the query you received
-2. When you receive the result, call attemptCompletion with "Level1 done: [result]"
-Do NOT delegate more than once. Do NOT add any extra steps.
+1. Delegate to "e2e-delegate-level2" with "test"
+2. When done, call attemptCompletion with result "OK"
 """
 delegates = ["e2e-delegate-level2"]
 
@@ -44,9 +40,7 @@ pick = ["attemptCompletion"]
 version = "1.0.0"
 description = "Second level delegate expert"
 instruction = """
-You are level 2 delegate. Follow this step EXACTLY ONCE:
-1. Immediately call attemptCompletion with "Level2 done"
-Do NOT add any extra steps.
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-delegate-level2".skills."@perstack/base"]

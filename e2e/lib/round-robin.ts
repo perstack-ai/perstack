@@ -1,41 +1,18 @@
-type ProviderConfig = {
-  provider: "openai" | "anthropic" | "google"
-  model: string
-}
-
-const CHEAP_MODELS: ProviderConfig[] = [
-  { provider: "openai", model: "gpt-5-nano" },
-  { provider: "anthropic", model: "claude-haiku-4-5" },
-  { provider: "google", model: "gemini-2.5-flash-lite" },
-]
-
-let currentIndex = 0
-
-export function getNextProvider(): ProviderConfig {
-  const config = CHEAP_MODELS[currentIndex]
-  currentIndex = (currentIndex + 1) % CHEAP_MODELS.length
-  return config
-}
-
-export function resetRoundRobin(): void {
-  currentIndex = 0
-}
-
-export function getCurrentIndex(): number {
-  return currentIndex
-}
+// Fixed provider/model for E2E tests
+// - OpenAI: excluded due to reasoning overhead (~64s vs ~17s), see #194
+// - Google: excluded due to empty text bug in delegation, see #195
+const DEFAULT_PROVIDER = "anthropic"
+const DEFAULT_MODEL = "claude-haiku-4-5"
 
 export function injectProviderArgs(args: string[]): string[] {
-  const { provider, model } = getNextProvider()
   const hasProvider = args.some((arg) => arg === "--provider")
   const hasModel = args.some((arg) => arg === "--model")
   const result = [...args]
   if (!hasProvider) {
-    result.push("--provider", provider)
+    result.push("--provider", DEFAULT_PROVIDER)
   }
   if (!hasModel) {
-    result.push("--model", model)
+    result.push("--model", DEFAULT_MODEL)
   }
   return result
 }
-

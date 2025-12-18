@@ -134,9 +134,7 @@ export function assertPartialResultsContain(
 export function assertNoRetry(events: ParsedEvent[]): AssertionResult {
   const retryEvents = events.filter((e) => e.type === "retry")
   if (retryEvents.length > 0) {
-    const reasons = retryEvents.map(
-      (e) => (e as { reason?: string }).reason ?? "unknown",
-    )
+    const reasons = retryEvents.map((e) => (e as { reason?: string }).reason ?? "unknown")
     return {
       passed: false,
       message: `Retry events detected: ${retryEvents.length}`,
