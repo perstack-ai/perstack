@@ -132,7 +132,7 @@ describe.concurrent("Continue Job", () => {
         "--continue-job",
         initialResult.jobId!,
         "e2e-parallel-delegate",
-        "Now summarize the previous results in one sentence",
+        "Complete with OK",
       ],
       { timeout: LLM_TIMEOUT },
     )
