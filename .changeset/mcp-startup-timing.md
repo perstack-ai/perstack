@@ -2,7 +2,15 @@
 "@perstack/core": minor
 "@perstack/api-client": minor
 "@perstack/base": minor
+"@perstack/claude-code": minor
+"@perstack/cursor": minor
+"@perstack/docker": minor
+"@perstack/gemini": minor
+"@perstack/mock": minor
+"@perstack/runner": minor
 "@perstack/runtime": minor
+"@perstack/storage": minor
+"@perstack/tui": minor
 "@perstack/e2e-mcp-server": minor
 "perstack": minor
 "create-expert": minor
