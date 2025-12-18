@@ -71,11 +71,12 @@ export abstract class BaseSkillManager {
   abstract close(): Promise<void>
 
   async getToolDefinitions(): Promise<ToolDefinition[]> {
-    if (!this.isInitialized() && !this.lazyInit) {
-      throw new Error(`Skill ${this.name} is not initialized`)
+    // If initialization is in progress, wait for it to complete
+    if (!this.isInitialized() && this._initializing) {
+      await this._initializing
     }
-    if (!this.isInitialized() && this.lazyInit) {
-      return []
+    if (!this.isInitialized()) {
+      throw new Error(`Skill ${this.name} is not initialized`)
     }
     return this._filterTools(this._toolDefinitions)
   }
