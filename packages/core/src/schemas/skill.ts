@@ -85,7 +85,7 @@ export const mcpStdioSkillSchema = z.object({
   packageName: z.string().optional(),
   args: z.array(z.string()).optional().default([]),
   requiredEnv: z.array(z.string()).optional().default([]),
-  lazyInit: z.boolean().optional().default(true),
+  lazyInit: z.boolean().optional().default(false),
 })
 mcpStdioSkillSchema satisfies z.ZodType<McpStdioSkill>
 

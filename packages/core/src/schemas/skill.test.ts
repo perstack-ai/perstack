@@ -13,7 +13,7 @@ describe("@perstack/core: mcpStdioSkillSchema", () => {
     expect(result.name).toBe("test-skill")
     expect(result.pick).toEqual([])
     expect(result.omit).toEqual([])
-    expect(result.lazyInit).toBe(true)
+    expect(result.lazyInit).toBe(false)
   })
 
   it("applies default values", () => {
@@ -26,7 +26,7 @@ describe("@perstack/core: mcpStdioSkillSchema", () => {
     expect(result.omit).toEqual([])
     expect(result.args).toEqual([])
     expect(result.requiredEnv).toEqual([])
-    expect(result.lazyInit).toBe(true)
+    expect(result.lazyInit).toBe(false)
   })
 })
 

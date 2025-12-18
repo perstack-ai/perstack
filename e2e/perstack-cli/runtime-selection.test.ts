@@ -133,7 +133,7 @@ describe.concurrent("Runtime Selection", () => {
 
   /**
    * Verifies Docker containerized runtime.
-   * Requires EXA_API_KEY env for exa skill inside container.
+   * Uses global-runtime config which has only @perstack/base skill.
    * Skipped if Docker is not available.
    */
   it.runIf(isDockerAvailable())("should run with docker runtime", async () => {
@@ -141,12 +141,10 @@ describe.concurrent("Runtime Selection", () => {
       [
         "run",
         "--config",
-        CONFIG,
+        GLOBAL_RUNTIME_CONFIG,
         "--runtime",
         "docker",
-        "--env",
-        "EXA_API_KEY",
-        "e2e-special-tools",
+        "e2e-global-runtime",
         "Use attemptCompletion to say hello",
       ],
       { timeout: LLM_TIMEOUT },
