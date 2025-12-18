@@ -10,7 +10,13 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for special tool parallel execution"
 instruction = """
-Follow the user's instruction and call attemptCompletion with the result.
+IMPORTANT: Call ALL 4 tools below IN PARALLEL (single tool call batch):
+- think: thought="parallel test"
+- readPdfFile: path="e2e/fixtures/test.pdf"
+- readImageFile: path="e2e/fixtures/test.gif"
+- web_search_exa: query="test"
+
+After all 4 complete, call attemptCompletion with "OK".
 """
 
 [experts."e2e-special-tools".skills."exa"]
