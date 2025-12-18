@@ -36,7 +36,9 @@ describe("Delegate to Expert", () => {
 
     // Verify delegation chain control flow
     const controlFlow = result.events
-      .filter((e) => ["startRun", "callDelegate", "stopRunByDelegate", "completeRun"].includes(e.type))
+      .filter((e) =>
+        ["startRun", "callDelegate", "stopRunByDelegate", "completeRun"].includes(e.type),
+      )
       .map((e) => `${e.type}:${(e as { expertKey: string }).expertKey}`)
 
     expect(controlFlow).toEqual([
