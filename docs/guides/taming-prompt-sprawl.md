@@ -1,8 +1,8 @@
 ---
 title: "Taming Prompt Sprawl"
-description: "Fix bloated prompts and confused behavior. Split responsibilities with delegation."
-tags: ["architecture", "best-practices"]
-order: 2
+description: "Fix bloated prompts and confused agents. Split responsibilities across focused Experts using delegation."
+tags: ["prompts", "delegation", "architecture"]
+order: 4
 ---
 
 # Taming Prompt Sprawl
