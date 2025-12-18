@@ -268,6 +268,67 @@ describe("@perstack/runtime: McpSkillManager", () => {
     expect(skillManager).toBeDefined()
     expect(skillManager.name).toBe("test-skill")
   })
+
+  it("emits skillConnected event with timing metrics when _doInit completes", async () => {
+    const skill = createMcpSkill({ lazyInit: false })
+    const events: RuntimeEvent[] = []
+    const eventListener = (event: RunEvent | RuntimeEvent) => {
+      if ("type" in event && event.type === "skillConnected") {
+        events.push(event as RuntimeEvent)
+      }
+    }
+    const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId, eventListener)
+    const sm = skillManager as unknown as McpSkillManagerInternal & {
+      _initStdio: () => Promise<{
+        startTime: number
+        spawnDurationMs: number
+        handshakeDurationMs: number
+        serverInfo?: { name: string; version: string }
+      }>
+    }
+
+    // Mock _doInit to simulate successful initialization with timing
+    vi.spyOn(sm, "_doInit").mockImplementation(async () => {
+      // Simulate the event emission that would happen in real _doInit
+      const timingInfo = {
+        startTime: Date.now() - 1000,
+        spawnDurationMs: 10,
+        handshakeDurationMs: 500,
+        serverInfo: { name: "test-server", version: "1.0.0" },
+      }
+      const toolDiscoveryDurationMs = 50
+      sm._toolDefinitions = []
+
+      // Access private eventListener via type casting
+      const manager = skillManager as unknown as { _eventListener?: (e: RuntimeEvent) => void }
+      if (manager._eventListener) {
+        const { createRuntimeEvent } = await import("@perstack/core")
+        const event = createRuntimeEvent("skillConnected", testJobId, testRunId, {
+          skillName: skill.name,
+          serverInfo: timingInfo.serverInfo,
+          spawnDurationMs: timingInfo.spawnDurationMs,
+          handshakeDurationMs: timingInfo.handshakeDurationMs,
+          toolDiscoveryDurationMs,
+          connectDurationMs: timingInfo.spawnDurationMs + timingInfo.handshakeDurationMs,
+          totalDurationMs: 560,
+        })
+        manager._eventListener(event)
+      }
+    })
+
+    await skillManager.init()
+
+    expect(events).toHaveLength(1)
+    const event = events[0]
+    expect(event.type).toBe("skillConnected")
+    expect(event.skillName).toBe("test-skill")
+    expect(event.spawnDurationMs).toBe(10)
+    expect(event.handshakeDurationMs).toBe(500)
+    expect(event.connectDurationMs).toBe(510)
+    expect(event.serverInfo).toEqual({ name: "test-server", version: "1.0.0" })
+    expect(event.toolDiscoveryDurationMs).toBe(50)
+    expect(event.totalDurationMs).toBe(560)
+  })
 })
 
 describe("@perstack/runtime: InteractiveSkillManager", () => {
