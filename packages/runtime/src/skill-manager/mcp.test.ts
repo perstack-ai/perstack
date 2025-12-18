@@ -60,17 +60,33 @@ describe("@perstack/runtime: McpSkillManager", () => {
     expect(skillManager.isInitialized()).toBe(true)
   })
 
-  it("returns empty array from getToolDefinitions when lazyInit true", async () => {
+  it("awaits initialization when getToolDefinitions called while lazyInit in progress", async () => {
     const skill = createMcpSkill()
     const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     const sm = skillManager as unknown as McpSkillManagerInternal
     vi.spyOn(sm, "_doInit").mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 10)),
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            sm._toolDefinitions = [
+              {
+                name: "lazy-tool",
+                skillName: "test-skill",
+                inputSchema: {},
+                interactive: false,
+              },
+            ]
+            resolve(undefined)
+          }, 10)
+        }),
     )
     await skillManager.init()
     expect(skillManager.isInitialized()).toBe(false)
+    // getToolDefinitions should wait for initialization to complete
     const tools = await skillManager.getToolDefinitions()
-    expect(tools).toEqual([])
+    expect(skillManager.isInitialized()).toBe(true)
+    expect(tools).toHaveLength(1)
+    expect(tools[0].name).toBe("lazy-tool")
   })
 
   it("returns array from getToolDefinitions when lazyInit false", async () => {
@@ -104,7 +120,7 @@ describe("@perstack/runtime: McpSkillManager", () => {
     expect(tools[0].name).toBe("test-tool")
   })
 
-  it("throws error from getToolDefinitions when not lazyInit and not initialized", async () => {
+  it("throws error from getToolDefinitions when init not called", async () => {
     const skill = createMcpSkill({ lazyInit: false, name: "test-eager" })
     const skillManager = new McpSkillManager(skill, {}, testJobId, testRunId)
     await expect(skillManager.getToolDefinitions()).rejects.toThrow("not initialized")
