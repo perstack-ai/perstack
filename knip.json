@@ -10,7 +10,8 @@
     "docs/**/*",
     "scripts/**/*",
     "examples/**/*",
-    "e2e/**/*"
+    "e2e/**/*",
+    "benchmarks/**/*"
   ],
   "workspaces": {
     "packages/perstack": {

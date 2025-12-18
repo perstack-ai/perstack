@@ -16,7 +16,11 @@ The `skillConnected` runtime event now includes detailed timing breakdown:
 - `handshakeDurationMs` - Time for MCP protocol handshake (connect)
 - `toolDiscoveryDurationMs` - Time for listTools() call
 
-These metrics help identify performance bottlenecks in MCP skill startup. The existing `connectDurationMs` and `totalDurationMs` fields are preserved for backward compatibility.
+These metrics help identify performance bottlenecks in MCP skill startup.
+
+**Breaking behavior change**: The semantics of existing fields have changed:
+- `connectDurationMs` now equals `spawnDurationMs + handshakeDurationMs` (previously measured only `connect()` call)
+- `totalDurationMs` now includes `toolDiscoveryDurationMs` (previously captured before `listTools()`)
 
 Example event output:
 ```json

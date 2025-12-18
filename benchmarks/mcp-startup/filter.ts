@@ -15,6 +15,7 @@ interface SkillTiming {
 }
 
 const skillTimings = new Map<string, SkillTiming>()
+let summaryPrinted = false
 
 function formatEvent(event: Record<string, unknown>): string | null {
   const type = event.type as string
@@ -73,6 +74,7 @@ function formatEvent(event: Record<string, unknown>): string | null {
 }
 
 function printSummary(): void {
+  summaryPrinted = true
   console.log(`\n${"=".repeat(60)}`)
   console.log("TIMING SUMMARY")
   console.log("=".repeat(60))
@@ -123,7 +125,7 @@ rl.on("line", (line) => {
 })
 
 rl.on("close", () => {
-  if (skillTimings.size > 0) {
+  if (skillTimings.size > 0 && !summaryPrinted) {
     printSummary()
   }
 })
