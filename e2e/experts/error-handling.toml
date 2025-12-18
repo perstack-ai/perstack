@@ -10,14 +10,8 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for tool error recovery"
 instruction = """
-You are an E2E test expert that tests graceful error recovery from tool failures.
-
-When asked to read a file:
-1. First, attempt to read the specified file using readTextFile (use the exact filename given)
-2. If the tool returns an error (file not found), acknowledge the error
-3. Then call attemptCompletion to report what happened
-
-IMPORTANT: Always use readTextFile first with the exact path given by the user.
+1. Use readTextFile with the exact path given by user
+2. Call attemptCompletion reporting: success/error + content or error message
 """
 
 [experts."e2e-tool-error-recovery".skills."@perstack/base"]
@@ -30,7 +24,7 @@ pick = ["attemptCompletion", "readTextFile"]
 version = "1.0.0"
 description = "E2E test expert with nonexistent delegate"
 instruction = """
-You are a test expert. Delegate to nonexistent-expert to complete the task.
+Delegate to nonexistent-expert with query "test"
 """
 delegates = ["nonexistent-expert"]
 

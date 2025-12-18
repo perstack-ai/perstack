@@ -10,13 +10,8 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for continue functionality"
 instruction = """
-You are an E2E test expert that tests run continuation.
-
-When given a query:
-1. First, ask the user for confirmation using askUser
-2. After receiving user input, summarize and call attemptCompletion
-
-This tests the --continue and --continue-run functionality.
+1. Call askUser with question "confirm?"
+2. After user responds, call attemptCompletion with result "OK"
 """
 
 [experts."e2e-continue".skills."user-input"]
@@ -38,14 +33,9 @@ pick = ["attemptCompletion", "think"]
 version = "1.0.0"
 description = "E2E test expert for resume-from functionality"
 instruction = """
-You are an E2E test expert that tests checkpoint resumption.
-
-When given a query:
-1. Call think tool to process the query
-2. Ask the user for confirmation using askUser
-3. After receiving user input, summarize and call attemptCompletion
-
-This tests the --resume-from functionality with specific checkpoint.
+1. Call think with thought "processing"
+2. Call askUser with question "confirm?"
+3. After user responds, call attemptCompletion with result "OK"
 """
 
 [experts."e2e-resume".skills."user-input"]

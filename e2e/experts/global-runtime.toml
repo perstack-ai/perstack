@@ -11,8 +11,7 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for global runtime configuration"
 instruction = """
-You are a simple test expert.
-When asked to say hello, respond with a friendly greeting and call attemptCompletion.
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-global-runtime".skills."@perstack/base"]

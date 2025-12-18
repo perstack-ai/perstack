@@ -1,3 +1,13 @@
+/**
+ * Continue Job E2E Tests
+ *
+ * Tests job continuation and resumption functionality:
+ * - Continue from interactive tool stop (askUser)
+ * - Resume from specific checkpoint
+ * - Continue after parallel delegation completes
+ *
+ * TOML: e2e/experts/continue-resume.toml, e2e/experts/parallel-delegate.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType, getEventSequence } from "../lib/event-parser.js"
@@ -27,13 +37,23 @@ function continueArgs(
 }
 
 describe.concurrent("Continue Job", () => {
-  it("should continue job with --continue-job from interactive stop", async () => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Interactive Tool Continuation
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Verifies job continuation from interactive tool stop.
+   * Initial run stops at askUser, continue run provides input and completes.
+   */
+  it("should continue and complete job from interactive stop", async () => {
     const initialCmdResult = await runCli(
       runArgs("e2e-continue", "Test continue/resume functionality"),
       { timeout: LLM_TIMEOUT },
     )
     const initialResult = withEventParsing(initialCmdResult)
     expect(initialResult.jobId).not.toBeNull()
+    const initialStopEvents = filterEventsByType(initialResult.events, "stopRunByInteractiveTool")
+    expect(initialStopEvents.length).toBe(1)
 
     const continueCmdResult = await runCli(
       continueArgs(initialResult.jobId!, "e2e-continue", "User confirmed the test", true),
@@ -49,24 +69,18 @@ describe.concurrent("Continue Job", () => {
             "stoppedByInteractiveTool",
       ),
     ).toBe(true)
+    const completeEvents = filterEventsByType(continueResult.events, "completeRun")
+    expect(completeEvents.length).toBe(1)
   })
 
-  it("should complete after continue from interactive stop", async () => {
-    const initialCmdResult = await runCli(
-      runArgs("e2e-continue", "Test continue/resume functionality"),
-      { timeout: LLM_TIMEOUT },
-    )
-    const initialResult = withEventParsing(initialCmdResult)
-    expect(initialResult.jobId).not.toBeNull()
+  // ─────────────────────────────────────────────────────────────────────────
+  // Parallel Delegation Continuation
+  // ─────────────────────────────────────────────────────────────────────────
 
-    const continueCmdResult = await runCli(
-      continueArgs(initialResult.jobId!, "e2e-continue", "User confirmed the test", true),
-      { timeout: LLM_TIMEOUT },
-    )
-    const continueResult = withEventParsing(continueCmdResult)
-    expect(getEventSequence(continueResult.events)).toContain("completeRun")
-  })
-
+  /**
+   * Verifies job continuation after parallel delegation completes.
+   * Initial run delegates to 2 experts in parallel, continue run adds to conversation.
+   */
   it("should continue after parallel delegation and complete", async () => {
     const initialCmdResult = await runCli(
       [
@@ -82,10 +96,16 @@ describe.concurrent("Continue Job", () => {
     )
     const initialResult = withEventParsing(initialCmdResult)
     expect(initialResult.jobId).not.toBeNull()
+    const delegateEvents = filterEventsByType(initialResult.events, "callDelegate")
+    expect(delegateEvents.length).toBe(1)
+    const delegateToolCalls = delegateEvents.flatMap(
+      (e) => (e as { toolCalls?: unknown[] }).toolCalls ?? [],
+    )
+    expect(delegateToolCalls.length).toBe(2)
     const initialCompleteCount = getEventSequence(initialResult.events).filter(
       (e) => e === "completeRun",
     ).length
-    expect(initialCompleteCount).toBeGreaterThanOrEqual(1)
+    expect(initialCompleteCount).toBe(3)
 
     const continueCmdResult = await runCli(
       [
@@ -97,7 +117,7 @@ describe.concurrent("Continue Job", () => {
         "--continue-job",
         initialResult.jobId!,
         "e2e-parallel-delegate",
-        "Now summarize the previous results in one sentence",
+        "Complete with OK",
       ],
       { timeout: LLM_TIMEOUT },
     )
@@ -106,23 +126,33 @@ describe.concurrent("Continue Job", () => {
       assertEventSequenceContains(continueResult.events, ["startRun", "completeRun"]).passed,
     ).toBe(true)
     const continueCompleteEvents = continueResult.events.filter((e) => e.type === "completeRun")
-    expect(continueCompleteEvents.length).toBeGreaterThanOrEqual(1)
+    expect(continueCompleteEvents.length).toBe(1)
     const lastCompleteEvent = continueCompleteEvents[continueCompleteEvents.length - 1]
     expect((lastCompleteEvent as { text?: string }).text).toBeDefined()
   })
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Checkpoint and Resume Tests
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Verifies checkpoint ID is captured for resume-from functionality.
+   */
   it("should capture checkpoint ID for resume-from", async () => {
     const cmdResult = await runCli(runArgs("e2e-continue", "Test continue/resume functionality"), {
       timeout: LLM_TIMEOUT,
     })
     const result = withEventParsing(cmdResult)
     const stopEvents = filterEventsByType(result.events, "stopRunByInteractiveTool")
-    expect(stopEvents.length).toBeGreaterThan(0)
+    expect(stopEvents.length).toBe(1)
     const checkpoint = (stopEvents[0] as { checkpoint?: { id?: string } }).checkpoint
     expect(checkpoint?.id).toBeDefined()
     expect(typeof checkpoint?.id).toBe("string")
   })
 
+  /**
+   * Verifies --resume-from requires --continue-job option.
+   */
   it("should fail when --resume-from is used without --continue-job", async () => {
     const result = await runCli([
       "run",

@@ -1,3 +1,12 @@
+/**
+ * Execution Limits E2E Tests (Runtime)
+ *
+ * Tests execution limit options in perstack-runtime:
+ * - --max-steps: Maximum generation steps
+ * - --max-retries: Maximum retry attempts
+ *
+ * TOML: e2e/experts/global-runtime.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
@@ -7,6 +16,7 @@ const GLOBAL_RUNTIME_CONFIG = "./e2e/experts/global-runtime.toml"
 const LLM_TIMEOUT = 120000
 
 describe.concurrent("Execution Limits", () => {
+  /** Verifies --max-steps option is accepted and run completes. */
   it(
     "should accept --max-steps option and complete within limit",
     async () => {
@@ -31,6 +41,7 @@ describe.concurrent("Execution Limits", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --max-retries option is accepted. */
   it(
     "should accept --max-retries option",
     async () => {

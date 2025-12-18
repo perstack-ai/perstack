@@ -1,8 +1,8 @@
 ---
 title: "Adding AI to Your App"
-description: "Integrate Experts into your existing application. Embed the runtime programmatically."
-tags: ["integration", "api"]
-order: 4
+description: "Embed AI capabilities into your existing application. Your app stays in control while Perstack handles execution."
+tags: ["integration", "docker", "events"]
+order: 2
 ---
 
 # Adding AI to Your App

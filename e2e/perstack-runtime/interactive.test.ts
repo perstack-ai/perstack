@@ -1,3 +1,12 @@
+/**
+ * Interactive Input E2E Tests (Runtime)
+ *
+ * Tests interactive tool handling in perstack-runtime:
+ * - Stop at interactive tool (askUser)
+ * - Checkpoint emission for resume
+ *
+ * TOML: e2e/experts/continue-resume.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
@@ -7,6 +16,7 @@ const CONTINUE_CONFIG = "./e2e/experts/continue-resume.toml"
 const LLM_TIMEOUT = 180000
 
 describe.concurrent("Interactive Input", () => {
+  /** Verifies run stops at interactive tool and emits checkpoint. */
   it(
     "should stop at interactive tool and emit checkpoint",
     async () => {

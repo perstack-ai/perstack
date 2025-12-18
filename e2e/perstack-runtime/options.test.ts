@@ -1,3 +1,13 @@
+/**
+ * CLI Options E2E Tests (Runtime)
+ *
+ * Tests CLI option handling in perstack-runtime:
+ * - --provider, --model, --temperature
+ * - --max-steps, --max-retries, --timeout
+ * - --job-id, --run-id, --env-path, --verbose
+ *
+ * TOML: e2e/experts/global-runtime.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
@@ -7,6 +17,7 @@ const GLOBAL_RUNTIME_CONFIG = "./e2e/experts/global-runtime.toml"
 const LLM_TIMEOUT = 120000
 
 describe.concurrent("CLI Options", () => {
+  /** Verifies --provider option is accepted. */
   it(
     "should accept --provider option",
     async () => {
@@ -27,6 +38,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --model option is accepted. */
   it(
     "should accept --model option",
     async () => {
@@ -47,6 +59,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --temperature option is accepted. */
   it(
     "should accept --temperature option",
     async () => {
@@ -67,6 +80,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --max-steps option is accepted. */
   it(
     "should accept --max-steps option",
     async () => {
@@ -87,6 +101,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --max-retries option is accepted. */
   it(
     "should accept --max-retries option",
     async () => {
@@ -107,6 +122,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --timeout option is accepted. */
   it(
     "should accept --timeout option",
     async () => {
@@ -127,6 +143,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --job-id option is accepted and reflected in events. */
   it(
     "should accept --job-id option",
     async () => {
@@ -150,6 +167,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --run-id option is accepted. */
   it(
     "should accept --run-id option",
     async () => {
@@ -174,6 +192,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --env-path option is accepted. */
   it(
     "should accept --env-path option",
     async () => {
@@ -195,6 +214,7 @@ describe.concurrent("CLI Options", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies --verbose option is accepted. */
   it(
     "should accept --verbose option",
     async () => {

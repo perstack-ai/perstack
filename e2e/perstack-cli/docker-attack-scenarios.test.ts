@@ -1,3 +1,20 @@
+/**
+ * Docker Attack Scenarios E2E Tests
+ *
+ * Tests that Docker sandbox properly blocks malicious activities:
+ * - Cloud metadata endpoint access (AWS, GCP, Azure)
+ * - Internal network access (SSRF attacks)
+ * - Sensitive filesystem paths (/etc/shadow, SSH keys, AWS credentials)
+ * - Symlink-based file access attacks
+ * - Environment variable exposure
+ * - Data exfiltration to unauthorized domains
+ *
+ * Each test uses an "attacker" skill (@perstack/e2e-mcp-server) that
+ * attempts the attack, verifying Docker network/filesystem isolation.
+ *
+ * TOML: e2e/experts/docker-attack-scenarios.toml
+ * Runtime: Docker (tests skipped if Docker unavailable)
+ */
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
@@ -18,14 +35,12 @@ function dockerRunArgs(expertKey: string, query: string): string[] {
   args.push(expertKey, query)
   return args
 }
-
 describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => {
   beforeAll(() => {
     workspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-e2e-"))
     if (process.env.NPM_TOKEN) {
       const npmrcContent = `//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}\n`
       fs.writeFileSync(path.join(workspaceDir, ".npmrc"), npmrcContent, { mode: 0o600 })
-      // NPM_CONFIG_USERCONFIG points to /workspace/.npmrc inside Docker container
       process.env.NPM_CONFIG_USERCONFIG = "/workspace/.npmrc"
     }
   })
@@ -37,6 +52,11 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     delete process.env.NPM_CONFIG_USERCONFIG
   })
 
+  /**
+   * Cloud Metadata Endpoint Tests
+   * Blocks access to 169.254.169.254 (AWS), metadata.google.internal (GCP),
+   * and 169.254.169.254 (Azure) to prevent credential theft.
+   */
   it("should block AWS metadata endpoint (169.254.169.254)", async () => {
     const result = await runCli(
       dockerRunArgs(
@@ -74,6 +94,11 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     expect(output).toMatch(/blocked|refused|timeout|error|failed/i)
   })
 
+  /**
+   * SSRF (Server-Side Request Forgery) Tests
+   * Blocks access to localhost, Docker host, Kubernetes services,
+   * and metadata IPs to prevent internal network scanning.
+   */
   it("should block localhost access (SSRF)", async () => {
     const result = await runCli(
       dockerRunArgs(
@@ -122,6 +147,11 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     expect(output).toMatch(/blocked|refused|timeout|error|failed/i)
   })
 
+  /**
+   * Filesystem Isolation Tests
+   * Blocks access to sensitive paths: /proc/self/environ, /etc/shadow,
+   * SSH keys, AWS credentials, and Docker socket.
+   */
   it("should block /proc/self/environ access", async () => {
     const result = await runCli(
       dockerRunArgs(
@@ -183,6 +213,11 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     expect(output).toMatch(/blocked|denied|error|ENOENT|EACCES/i)
   })
 
+  /**
+   * Symlink Attack Tests
+   * Verifies symlinks stay within container filesystem and cannot
+   * escape to host paths or access protected files like /etc/shadow.
+   */
   it("should allow symlink to container /etc/passwd (not host file)", async () => {
     const result = await runCli(
       dockerRunArgs(
@@ -220,6 +255,11 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     expect(output).toMatch(/blocked|error|ENOENT|No such file/i)
   })
 
+  /**
+   * Proxy and Environment Variable Tests
+   * Blocks proxy bypass attempts and prevents exposure of sensitive
+   * environment variables (API keys, tokens, credentials).
+   */
   it("should not allow proxy bypass via env override", async () => {
     const result = await runCli(
       dockerRunArgs(
@@ -246,6 +286,11 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     expect(output).not.toMatch(/leaked_sensitive.*AWS_SECRET/)
   })
 
+  /**
+   * Data Exfiltration Tests
+   * Blocks HTTP requests to unauthorized domains (allowedDomains enforcement)
+   * and prevents DNS-based exfiltration attempts.
+   */
   it("should block HTTP data exfiltration to arbitrary domains", async () => {
     const result = await runCli(
       dockerRunArgs(

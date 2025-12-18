@@ -25,10 +25,8 @@ export default defineConfig({
           include: ["e2e/**/*.test.ts"],
           testTimeout: 300000,
           hookTimeout: 300000,
-          // Disable file-level parallelism to avoid LLM API rate limits
-          // Tests within files can still run in parallel via describe.concurrent
           fileParallelism: false,
-          maxConcurrency: 3,
+          maxConcurrency: 6,
           bail: 1,
         },
       },

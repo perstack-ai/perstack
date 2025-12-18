@@ -10,7 +10,7 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert with broken MCP skill"
 instruction = """
-You are a test expert. Say hello and complete.
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-mcp-error".skills."broken-skill"]
@@ -28,7 +28,7 @@ pick = ["attemptCompletion"]
 version = "1.0.0"
 description = "E2E test expert for invalid provider testing"
 instruction = """
-You are a test expert. Say hello.
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-invalid-provider".skills."@perstack/base"]

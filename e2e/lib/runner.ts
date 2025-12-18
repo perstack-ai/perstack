@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process"
 import { type ParsedEvent, parseEvents } from "./event-parser.js"
+import { injectProviderArgs } from "./round-robin.js"
 
 export type CommandResult = {
   stdout: string
@@ -21,17 +22,38 @@ export function withEventParsing(result: CommandResult): RunResult {
   return { ...result, events, jobId, runId }
 }
 
-export async function runCli(
-  args: string[],
-  options?: { timeout?: number; cwd?: string; env?: Record<string, string> },
-): Promise<CommandResult> {
+type RunOptions = {
+  timeout?: number
+  cwd?: string
+  env?: Record<string, string>
+  provider?: string
+  model?: string
+}
+
+function buildFinalArgs(args: string[], options?: RunOptions): string[] {
+  if (args[0] !== "run") return args
+  if (options?.provider && options?.model) {
+    const result = [...args]
+    if (!args.some((arg) => arg === "--provider")) {
+      result.push("--provider", options.provider)
+    }
+    if (!args.some((arg) => arg === "--model")) {
+      result.push("--model", options.model)
+    }
+    return result
+  }
+  return injectProviderArgs(args)
+}
+
+export async function runCli(args: string[], options?: RunOptions): Promise<CommandResult> {
   const timeout = options?.timeout ?? 30000
   const cwd = options?.cwd ?? process.cwd()
   const env = options?.env ?? { ...process.env }
+  const finalArgs = buildFinalArgs(args, options)
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
-    const proc = spawn("npx", ["tsx", "./packages/perstack/bin/cli.ts", ...args], {
+    const proc = spawn("npx", ["tsx", "./packages/perstack/bin/cli.ts", ...finalArgs], {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],
@@ -57,17 +79,15 @@ export async function runCli(
   })
 }
 
-export async function runRuntimeCli(
-  args: string[],
-  options?: { timeout?: number; cwd?: string; env?: Record<string, string> },
-): Promise<CommandResult> {
+export async function runRuntimeCli(args: string[], options?: RunOptions): Promise<CommandResult> {
   const timeout = options?.timeout ?? 30000
   const cwd = options?.cwd ?? process.cwd()
   const env = options?.env ?? { ...process.env }
+  const finalArgs = buildFinalArgs(args, options)
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
-    const proc = spawn("npx", ["tsx", "./packages/runtime/bin/cli.ts", ...args], {
+    const proc = spawn("npx", ["tsx", "./packages/runtime/bin/cli.ts", ...finalArgs], {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],

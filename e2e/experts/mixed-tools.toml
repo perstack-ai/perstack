@@ -10,15 +10,10 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for mixed tool calls (MCP + Delegate + Interactive)"
 instruction = """
-You are an E2E test expert that tests parallel tool execution with mixed tool types.
-
-When given a test query, you MUST call ALL THREE tools in a SINGLE response:
-1. web_search_exa - Search for information (MCP tool)
-2. e2e-helper - Delegate to helper expert (Delegate tool)  
-3. askUser - Ask user for input (Interactive tool)
-
-CRITICAL: Make ALL THREE tool calls in ONE response.
-The runtime will process them in order: MCP first, then Delegate, then Interactive.
+Call ALL THREE tools in ONE response:
+1. web_search_exa with query "test"
+2. e2e-helper with query "test"
+3. askUser with question "confirm?"
 """
 delegates = ["e2e-helper"]
 
@@ -28,6 +23,7 @@ description = "Web search"
 command = "npx"
 args = ["-y", "exa-mcp-server"]
 requiredEnv = ["EXA_API_KEY"]
+lazyInit = false
 
 [experts."e2e-mixed-tools".skills."user-input"]
 type = "interactiveSkill"
@@ -48,8 +44,7 @@ pick = ["attemptCompletion", "think"]
 version = "1.0.0"
 description = "E2E test helper expert"
 instruction = """
-You are a helper expert for E2E testing.
-When given a query, respond briefly with "Helper analysis complete."
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-helper".skills."@perstack/base"]

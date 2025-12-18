@@ -1,7 +1,7 @@
 ---
 title: "Going to Production"
-description: "Deploy your agent safely and reliably. Sandbox integration, monitoring, and best practices."
-tags: ["production", "devops"]
+description: "Deploy your agent safely and reliably. Sandbox execution in containers with full observability."
+tags: ["deployment", "docker", "production"]
 order: 5
 ---
 

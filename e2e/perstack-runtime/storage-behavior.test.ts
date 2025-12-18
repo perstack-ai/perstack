@@ -1,3 +1,12 @@
+/**
+ * Storage Behavior E2E Tests (Runtime)
+ *
+ * Tests job storage functionality:
+ * - Job directory creation on run
+ * - Checkpoint file persistence
+ *
+ * TOML: e2e/experts/global-runtime.toml
+ */
 import { existsSync, readdirSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
@@ -20,6 +29,7 @@ function getJobIds(): Set<string> {
 }
 
 describe.concurrent("Storage Behavior", () => {
+  /** Verifies job directory is created after run. */
   it(
     "should create storage files when running expert via perstack CLI",
     async () => {

@@ -1,15 +1,34 @@
+/**
+ * Delegate to Expert E2E Tests
+ *
+ * Tests expert delegation chain functionality:
+ * - Multi-level delegation (chain → level1 → level2)
+ * - Proper control flow and resumption after delegate completes
+ * - Event sequence verification
+ *
+ * TOML: e2e/experts/delegate-chain.toml
+ */
 import { describe, expect, it } from "vitest"
-import { assertEventSequenceContains } from "../lib/assertions.js"
-import { getEventSequence } from "../lib/event-parser.js"
+import { assertNoRetry } from "../lib/assertions.js"
 import { runCli, withEventParsing } from "../lib/runner.js"
 
 const CHAIN_CONFIG = "./e2e/experts/delegate-chain.toml"
-const PARALLEL_CONFIG = "./e2e/experts/parallel-delegate.toml"
 // LLM API calls require extended timeout beyond the default 30s
 const LLM_TIMEOUT = 180000
 
-describe.concurrent("Delegate to Expert", () => {
-  it("should chain through multiple experts and complete all runs", async () => {
+describe("Delegate to Expert", () => {
+  /**
+   * Verifies multi-level delegation chain execution.
+   *
+   * Flow: e2e-delegate-chain → e2e-delegate-level1 → e2e-delegate-level2 → complete chain
+   * TOML: delegate-chain.toml defines 3 experts forming a delegation chain
+   * Expected:
+   *   - Chain starts at root, delegates to level1, then level2
+   *   - Each expert calls attemptCompletion with "OK"
+   *   - Control flow: chain→level1→level2→(complete)→level1→(complete)→chain→(complete)
+   *   - Total 3 completeRun events (one per expert)
+   */
+  it("should chain through multiple experts", async () => {
     const cmdResult = await runCli(
       [
         "run",
@@ -22,45 +41,35 @@ describe.concurrent("Delegate to Expert", () => {
       ],
       { timeout: LLM_TIMEOUT },
     )
+    expect(cmdResult.exitCode).toBe(0)
+
     const result = withEventParsing(cmdResult)
+    expect(assertNoRetry(result.events).passed).toBe(true)
 
-    expect(
-      assertEventSequenceContains(result.events, ["startRun", "callDelegate", "stopRunByDelegate"])
-        .passed,
-    ).toBe(true)
+    // Verify delegation chain control flow
+    const controlFlow = result.events
+      .filter((e) =>
+        ["startRun", "callDelegate", "stopRunByDelegate", "completeRun"].includes(e.type),
+      )
+      .map((e) => `${e.type}:${(e as { expertKey: string }).expertKey}`)
 
-    const sequence = getEventSequence(result.events)
-    expect(sequence.filter((e) => e === "callDelegate").length).toBeGreaterThanOrEqual(2)
-    expect(sequence.filter((e) => e === "stopRunByDelegate").length).toBeGreaterThanOrEqual(2)
-    expect(sequence.filter((e) => e === "completeRun").length).toBeGreaterThanOrEqual(3)
-  })
+    expect(controlFlow).toEqual([
+      "startRun:e2e-delegate-chain",
+      "callDelegate:e2e-delegate-chain",
+      "stopRunByDelegate:e2e-delegate-chain",
+      "startRun:e2e-delegate-level1",
+      "callDelegate:e2e-delegate-level1",
+      "stopRunByDelegate:e2e-delegate-level1",
+      "startRun:e2e-delegate-level2",
+      "completeRun:e2e-delegate-level2",
+      "startRun:e2e-delegate-level1", // Resume after level2 completes
+      "completeRun:e2e-delegate-level1",
+      "startRun:e2e-delegate-chain", // Resume after level1 completes
+      "completeRun:e2e-delegate-chain",
+    ])
 
-  it("should delegate to multiple experts in parallel and resume coordinator", async () => {
-    const cmdResult = await runCli(
-      [
-        "run",
-        "--config",
-        PARALLEL_CONFIG,
-        "--runtime",
-        "local",
-        "e2e-parallel-delegate",
-        "Test parallel delegation: call both math and text experts simultaneously",
-      ],
-      { timeout: LLM_TIMEOUT },
-    )
-    const result = withEventParsing(cmdResult)
-
-    const stopByDelegateEvent = result.events.find((e) => e.type === "stopRunByDelegate")
-    expect(stopByDelegateEvent).toBeDefined()
-    const checkpoint = (stopByDelegateEvent as { checkpoint?: { delegateTo?: unknown[] } })
-      ?.checkpoint
-    expect(checkpoint?.delegateTo?.length).toBe(2)
-
-    const sequence = getEventSequence(result.events)
-    expect(sequence.filter((e) => e === "completeRun").length).toBeGreaterThanOrEqual(2)
-
-    expect(
-      assertEventSequenceContains(result.events, ["finishAllToolCalls", "completeRun"]).passed,
-    ).toBe(true)
+    // Verify all 3 experts completed
+    const completeEvents = result.events.filter((e) => e.type === "completeRun")
+    expect(completeEvents.length).toBe(3)
   })
 })

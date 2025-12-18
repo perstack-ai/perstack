@@ -1,7 +1,7 @@
 ---
 title: "Extending with Tools"
-description: "Give your agent access to web search, databases, and APIs using MCP skills."
-tags: ["mcp", "integration"]
+description: "Give your agent access to web search, databases, and APIs using MCP skills. Declare tools in TOML, the runtime handles the rest."
+tags: ["tools", "mcp", "skills"]
 order: 3
 ---
 
