@@ -1,3 +1,13 @@
+/**
+ * Delegate to Expert E2E Tests
+ *
+ * Tests expert delegation chain functionality:
+ * - Multi-level delegation (chain → level1 → level2)
+ * - Proper control flow and resumption after delegate completes
+ * - Event sequence verification
+ *
+ * TOML: e2e/experts/delegate-chain.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertNoRetry } from "../lib/assertions.js"
 import { runCli, withEventParsing } from "../lib/runner.js"
@@ -8,6 +18,8 @@ const LLM_TIMEOUT = 180000
 
 describe("Delegate to Expert", () => {
   /**
+   * Verifies multi-level delegation chain execution.
+   *
    * Flow: e2e-delegate-chain → e2e-delegate-level1 → e2e-delegate-level2 → complete chain
    * TOML: delegate-chain.toml defines 3 experts forming a delegation chain
    * Expected:

@@ -1,3 +1,13 @@
+/**
+ * Continue Job E2E Tests
+ *
+ * Tests job continuation and resumption functionality:
+ * - Continue from interactive tool stop (askUser)
+ * - Resume from specific checkpoint
+ * - Continue after parallel delegation completes
+ *
+ * TOML: e2e/experts/continue-resume.toml, e2e/experts/parallel-delegate.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType, getEventSequence } from "../lib/event-parser.js"
@@ -27,24 +37,13 @@ function continueArgs(
 }
 
 describe.concurrent("Continue Job", () => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Interactive Tool Continuation
+  // ─────────────────────────────────────────────────────────────────────────
+
   /**
-   * Test: Continue and complete job from interactive tool stop
-   *
-   * Flow:
-   * 1. Run e2e-continue expert with a test query
-   * 2. Expert calls askUser (interactive tool) and execution stops
-   * 3. Continue the job with --continue-job and -i flag, providing user input
-   * 4. Expert receives input, summarizes, and calls attemptCompletion
-   *
-   * TOML (continue-resume.toml):
-   * - e2e-continue expert is instructed to call askUser for confirmation
-   * - askUser is defined as interactiveSkill, which stops execution
-   * - Has @perstack/base skill with attemptCompletion tool
-   *
-   * Expected:
-   * - Initial run emits exactly 1 stopRunByInteractiveTool event and returns jobId
-   * - Continue run starts with initialCheckpoint.status === "stoppedByInteractiveTool"
-   * - Continue run emits exactly 1 completeRun event
+   * Verifies job continuation from interactive tool stop.
+   * Initial run stops at askUser, continue run provides input and completes.
    */
   it("should continue and complete job from interactive stop", async () => {
     const initialCmdResult = await runCli(
@@ -74,27 +73,13 @@ describe.concurrent("Continue Job", () => {
     expect(completeEvents.length).toBe(1)
   })
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Parallel Delegation Continuation
+  // ─────────────────────────────────────────────────────────────────────────
+
   /**
-   * Test: Continue conversation after parallel delegation
-   *
-   * Flow:
-   * 1. Run e2e-parallel-delegate with "Test parallel delegation" query
-   * 2. Expert delegates to both e2e-delegate-math and e2e-delegate-text in parallel
-   * 3. Sub-experts return "Math result: 5" and "Text result: olleh"
-   * 4. Parent expert summarizes and completes (initial run finishes)
-   * 5. Continue same job with new query "summarize the previous results"
-   * 6. Expert uses conversation context to respond
-   *
-   * TOML (parallel-delegate.toml):
-   * - e2e-parallel-delegate: delegates to math and text experts simultaneously
-   * - e2e-delegate-math: calculates "2 + 3"
-   * - e2e-delegate-text: reverses "hello"
-   *
-   * Expected:
-   * - Initial run emits 1 callDelegate event with 2 toolCalls (parallel delegation)
-   * - Initial run emits 3 completeRun events (coordinator + 2 delegates)
-   * - Continue run emits exactly 1 completeRun event (coordinator only, no delegation)
-   * - Final completeRun has text response
+   * Verifies job continuation after parallel delegation completes.
+   * Initial run delegates to 2 experts in parallel, continue run adds to conversation.
    */
   it("should continue after parallel delegation and complete", async () => {
     const initialCmdResult = await runCli(
@@ -146,21 +131,12 @@ describe.concurrent("Continue Job", () => {
     expect((lastCompleteEvent as { text?: string }).text).toBeDefined()
   })
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Checkpoint and Resume Tests
+  // ─────────────────────────────────────────────────────────────────────────
+
   /**
-   * Test: Checkpoint ID is captured when stopped by interactive tool
-   *
-   * Flow:
-   * 1. Run e2e-continue expert → stops at askUser
-   * 2. Extract stopRunByInteractiveTool event
-   * 3. Verify checkpoint.id exists in the event
-   *
-   * TOML (continue-resume.toml):
-   * - e2e-continue calls askUser which triggers interactive stop
-   * - System emits checkpoint with unique ID for resume-from functionality
-   *
-   * Expected:
-   * - Exactly 1 stopRunByInteractiveTool event is emitted
-   * - Event contains checkpoint.id as a string
+   * Verifies checkpoint ID is captured for resume-from functionality.
    */
   it("should capture checkpoint ID for resume-from", async () => {
     const cmdResult = await runCli(runArgs("e2e-continue", "Test continue/resume functionality"), {
@@ -175,17 +151,7 @@ describe.concurrent("Continue Job", () => {
   })
 
   /**
-   * Test: --resume-from requires --continue-job
-   *
-   * Flow:
-   * 1. Run with --resume-from but without --continue-job
-   *
-   * TOML (continue-resume.toml):
-   * - Not relevant for this validation test
-   *
-   * Expected:
-   * - Exit code 1
-   * - stderr contains "--resume-from requires --continue-job"
+   * Verifies --resume-from requires --continue-job option.
    */
   it("should fail when --resume-from is used without --continue-job", async () => {
     const result = await runCli([

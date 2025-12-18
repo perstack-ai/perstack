@@ -1,3 +1,20 @@
+/**
+ * Docker Attack Scenarios E2E Tests
+ *
+ * Tests that Docker sandbox properly blocks malicious activities:
+ * - Cloud metadata endpoint access (AWS, GCP, Azure)
+ * - Internal network access (SSRF attacks)
+ * - Sensitive filesystem paths (/etc/shadow, SSH keys, AWS credentials)
+ * - Symlink-based file access attacks
+ * - Environment variable exposure
+ * - Data exfiltration to unauthorized domains
+ *
+ * Each test uses an "attacker" skill (@perstack/e2e-mcp-server) that
+ * attempts the attack, verifying Docker network/filesystem isolation.
+ *
+ * TOML: e2e/experts/docker-attack-scenarios.toml
+ * Runtime: Docker (tests skipped if Docker unavailable)
+ */
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
@@ -18,21 +35,6 @@ function dockerRunArgs(expertKey: string, query: string): string[] {
   args.push(expertKey, query)
   return args
 }
-
-/**
- * Docker Attack Scenarios E2E Tests
- *
- * These tests verify that Docker sandbox properly isolates experts from:
- * - Cloud metadata endpoints (AWS, GCP, Azure)
- * - Internal network access (SSRF attacks)
- * - Sensitive filesystem paths (/etc/shadow, SSH keys, AWS credentials)
- * - Symlink-based file access attacks
- * - Environment variable exposure
- * - Data exfiltration to unauthorized domains
- *
- * Each test uses a malicious "attacker" skill that attempts the attack,
- * and verifies the Docker network/filesystem isolation blocks it.
- */
 describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => {
   beforeAll(() => {
     workspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-e2e-"))
