@@ -29,7 +29,10 @@ describe("@perstack/runtime: initSkillManagersWithCleanup", () => {
         init: vi.fn().mockRejectedValue(new Error("init failed")),
         close: closeFn1,
       } as unknown as BaseSkillManager,
-      { init: vi.fn().mockResolvedValue(undefined), close: closeFn2 } as unknown as BaseSkillManager,
+      {
+        init: vi.fn().mockResolvedValue(undefined),
+        close: closeFn2,
+      } as unknown as BaseSkillManager,
     ]
     await expect(initSkillManagersWithCleanup(managers, managers)).rejects.toThrow("init failed")
     expect(closeFn1).toHaveBeenCalledTimes(1)
@@ -44,8 +47,14 @@ describe("@perstack/runtime: initSkillManagersWithCleanup", () => {
     const closeFn1 = vi.fn().mockResolvedValue(undefined)
     const closeFn2 = vi.fn().mockResolvedValue(undefined)
     const closeFn3 = vi.fn().mockResolvedValue(undefined)
-    const manager1 = { init: vi.fn().mockResolvedValue(undefined), close: closeFn1 } as unknown as BaseSkillManager
-    const manager2 = { init: vi.fn().mockRejectedValue(new Error("fail")), close: closeFn2 } as unknown as BaseSkillManager
+    const manager1 = {
+      init: vi.fn().mockResolvedValue(undefined),
+      close: closeFn1,
+    } as unknown as BaseSkillManager
+    const manager2 = {
+      init: vi.fn().mockRejectedValue(new Error("fail")),
+      close: closeFn2,
+    } as unknown as BaseSkillManager
     const allManagers = [
       manager1,
       { init: vi.fn(), close: closeFn3 } as unknown as BaseSkillManager,
