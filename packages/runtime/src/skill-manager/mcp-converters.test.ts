@@ -1,6 +1,11 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 import { describe, expect, it } from "vitest"
-import { convertPart, convertResource, convertToolResult, handleToolError } from "./mcp-converters.js"
+import {
+  convertPart,
+  convertResource,
+  convertToolResult,
+  handleToolError,
+} from "./mcp-converters.js"
 
 // Mock McpError class for testing
 class MockMcpError extends Error {
@@ -22,7 +27,9 @@ describe("@perstack/runtime: handleToolError", () => {
 
   it("re-throws non-McpError errors", () => {
     const error = new Error("Regular error")
-    expect(() => handleToolError(error, "test-tool", MockMcpError as never)).toThrow("Regular error")
+    expect(() => handleToolError(error, "test-tool", MockMcpError as never)).toThrow(
+      "Regular error",
+    )
   })
 
   it("includes tool name in error message", () => {
@@ -107,12 +114,16 @@ describe("@perstack/runtime: convertPart", () => {
 
     it("throws when image data is missing", () => {
       const part = { type: "image" as const, mimeType: "image/png" }
-      expect(() => convertPart(part as never)).toThrow("Image part must have both data and mimeType")
+      expect(() => convertPart(part as never)).toThrow(
+        "Image part must have both data and mimeType",
+      )
     })
 
     it("throws when image mimeType is missing", () => {
       const part = { type: "image" as const, data: "base64data" }
-      expect(() => convertPart(part as never)).toThrow("Image part must have both data and mimeType")
+      expect(() => convertPart(part as never)).toThrow(
+        "Image part must have both data and mimeType",
+      )
     })
   })
 
@@ -161,7 +172,12 @@ describe("@perstack/runtime: convertResource", () => {
   })
 
   it("prioritizes text over blob when both present", () => {
-    const resource = { uri: "file://test", mimeType: "text/plain", text: "text content", blob: "blob data" }
+    const resource = {
+      uri: "file://test",
+      mimeType: "text/plain",
+      text: "text content",
+      blob: "blob data",
+    }
     const result = convertResource(resource)
     expect(result.type).toBe("textPart")
     expect((result as { text: string }).text).toBe("text content")

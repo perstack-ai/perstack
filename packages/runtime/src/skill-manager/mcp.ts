@@ -18,7 +18,7 @@ import { BaseSkillManager } from "./base.js"
 import { getCommandArgs } from "./command-args.js"
 import { isPrivateOrLocalIP } from "./ip-validator.js"
 import { convertToolResult, handleToolError } from "./mcp-converters.js"
-import { type TransportFactory, defaultTransportFactory } from "./transport-factory.js"
+import { defaultTransportFactory, type TransportFactory } from "./transport-factory.js"
 
 interface InitTimingInfo {
   startTime: number

@@ -1,4 +1,11 @@
-import type { Expert, InteractiveSkill, McpSseSkill, McpStdioSkill, RunEvent, RuntimeEvent } from "@perstack/core"
+import type {
+  Expert,
+  InteractiveSkill,
+  McpSseSkill,
+  McpStdioSkill,
+  RunEvent,
+  RuntimeEvent,
+} from "@perstack/core"
 import type { BaseSkillManager } from "./base.js"
 import { DelegateSkillManager } from "./delegate.js"
 import { InteractiveSkillManager } from "./interactive.js"
@@ -17,7 +24,10 @@ export interface SkillManagerFactoryContext {
  * Allows for dependency injection and easier testing.
  */
 export interface SkillManagerFactory {
-  createMcp(skill: McpStdioSkill | McpSseSkill, context: SkillManagerFactoryContext): BaseSkillManager
+  createMcp(
+    skill: McpStdioSkill | McpSseSkill,
+    context: SkillManagerFactoryContext,
+  ): BaseSkillManager
   createInteractive(skill: InteractiveSkill, context: SkillManagerFactoryContext): BaseSkillManager
   createDelegate(expert: Expert, context: SkillManagerFactoryContext): BaseSkillManager
 }
@@ -26,7 +36,10 @@ export interface SkillManagerFactory {
  * Default implementation of SkillManagerFactory using real skill manager classes.
  */
 export class DefaultSkillManagerFactory implements SkillManagerFactory {
-  createMcp(skill: McpStdioSkill | McpSseSkill, context: SkillManagerFactoryContext): BaseSkillManager {
+  createMcp(
+    skill: McpStdioSkill | McpSseSkill,
+    context: SkillManagerFactoryContext,
+  ): BaseSkillManager {
     return new McpSkillManager(
       skill,
       context.env,
@@ -37,7 +50,10 @@ export class DefaultSkillManagerFactory implements SkillManagerFactory {
     )
   }
 
-  createInteractive(skill: InteractiveSkill, context: SkillManagerFactoryContext): BaseSkillManager {
+  createInteractive(
+    skill: InteractiveSkill,
+    context: SkillManagerFactoryContext,
+  ): BaseSkillManager {
     return new InteractiveSkillManager(skill, context.jobId, context.runId, context.eventListener)
   }
 

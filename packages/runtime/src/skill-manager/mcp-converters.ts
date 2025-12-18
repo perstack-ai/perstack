@@ -55,7 +55,9 @@ export function convertToolResult(
 /**
  * Convert a single MCP content part to internal part type.
  */
-export function convertPart(part: CallToolResultContent): TextPart | ImageInlinePart | FileInlinePart {
+export function convertPart(
+  part: CallToolResultContent,
+): TextPart | ImageInlinePart | FileInlinePart {
   switch (part.type) {
     case "text":
       if (!part.text || part.text === "") {

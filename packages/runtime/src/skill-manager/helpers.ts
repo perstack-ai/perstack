@@ -1,10 +1,18 @@
-import type { Expert, InteractiveSkill, McpSseSkill, McpStdioSkill, RunEvent, RunSetting, RuntimeEvent } from "@perstack/core"
+import type {
+  Expert,
+  InteractiveSkill,
+  McpSseSkill,
+  McpStdioSkill,
+  RunEvent,
+  RunSetting,
+  RuntimeEvent,
+} from "@perstack/core"
 import { jsonSchema, type ToolSet, tool } from "ai"
 import type { BaseSkillManager } from "./base.js"
 import {
+  defaultSkillManagerFactory,
   type SkillManagerFactory,
   type SkillManagerFactoryContext,
-  defaultSkillManagerFactory,
 } from "./skill-manager-factory.js"
 
 /**
@@ -54,8 +62,9 @@ export async function getSkillManagers(
 
   // Process MCP skills
   const mcpSkills = Object.values(skills)
-    .filter((skill): skill is McpStdioSkill | McpSseSkill =>
-      skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill"
+    .filter(
+      (skill): skill is McpStdioSkill | McpSseSkill =>
+        skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill",
     )
     .map((skill) => {
       if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
