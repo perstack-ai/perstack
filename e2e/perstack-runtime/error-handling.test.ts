@@ -61,7 +61,7 @@ describe.concurrent("Error Handling", () => {
       "Say hello",
     ])
     expect(result.exitCode).toBe(1)
-    expect(result.stderr).toMatch(/failed|error|spawn|ENOENT/i)
+    expect(result.stderr).toMatch(/has no packageName or args/i)
   })
 
   /** Verifies rejection of invalid provider name. */
