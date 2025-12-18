@@ -20,27 +20,30 @@ import {
 import { getSkillManagers } from "../skill-manager/index.js"
 import { executeStateMachine } from "../state-machine/index.js"
 
-export type StepExecutorOptions = {
+export type SingleRunExecutorOptions = {
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   resolveExpertToRun?: ResolveExpertToRunFn
 }
 
-export type StepResult = {
+export type SingleRunResult = {
   checkpoint: Checkpoint
   expertToRun: Expert
   experts: Record<string, Expert>
 }
 
 /**
- * Executes a single step (state machine execution) without any loop or delegation handling.
+ * Executes a single run (state machine execution) without any loop or delegation handling.
  * This is the core orchestration unit that should NOT call run() recursively.
+ *
+ * Note: This executes a complete state machine run until it reaches a terminal state
+ * (completed, stoppedByInteractiveTool, stoppedByDelegate, etc.), not just a single step.
  */
-export class StepExecutor {
-  constructor(private options: StepExecutorOptions = {}) {}
+export class SingleRunExecutor {
+  constructor(private options: SingleRunExecutorOptions = {}) {}
 
-  async execute(setting: RunSetting, checkpoint?: Checkpoint): Promise<StepResult> {
+  async execute(setting: RunSetting, checkpoint?: Checkpoint): Promise<SingleRunResult> {
     const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
     const { expertToRun, experts } = await setupExperts(setting, this.options.resolveExpertToRun)
 

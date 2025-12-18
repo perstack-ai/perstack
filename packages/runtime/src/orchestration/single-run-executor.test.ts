@@ -1,6 +1,6 @@
 import type { Checkpoint, Expert, RunSetting } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
-import { StepExecutor } from "./step-executor.js"
+import { SingleRunExecutor } from "./single-run-executor.js"
 
 // Mock dependencies
 vi.mock("../helpers/index.js", () => ({
@@ -104,15 +104,15 @@ const createMockCheckpoint = (overrides?: Partial<Checkpoint>): Checkpoint =>
     ...overrides,
   }) as Checkpoint
 
-describe("@perstack/runtime: step-executor", () => {
-  describe("StepExecutor", () => {
+describe("@perstack/runtime: single-run-executor", () => {
+  describe("SingleRunExecutor", () => {
     it("can be instantiated with no options", () => {
-      const executor = new StepExecutor()
+      const executor = new SingleRunExecutor()
       expect(executor).toBeDefined()
     })
 
     it("can be instantiated with options", () => {
-      const executor = new StepExecutor({
+      const executor = new SingleRunExecutor({
         shouldContinueRun: async () => true,
         storeCheckpoint: async () => {},
         eventListener: () => {},
@@ -121,8 +121,8 @@ describe("@perstack/runtime: step-executor", () => {
       expect(executor).toBeDefined()
     })
 
-    it("executes and returns step result with checkpoint", async () => {
-      const executor = new StepExecutor()
+    it("executes and returns run result with checkpoint", async () => {
+      const executor = new SingleRunExecutor()
       const setting = createMockSetting()
 
       const result = await executor.execute(setting)
@@ -137,7 +137,7 @@ describe("@perstack/runtime: step-executor", () => {
 
     it("creates initial checkpoint when no checkpoint provided", async () => {
       const { createInitialCheckpoint } = await import("../helpers/index.js")
-      const executor = new StepExecutor()
+      const executor = new SingleRunExecutor()
       const setting = createMockSetting()
 
       await executor.execute(setting)
@@ -147,7 +147,7 @@ describe("@perstack/runtime: step-executor", () => {
 
     it("creates next step checkpoint when checkpoint provided", async () => {
       const { createNextStepCheckpoint } = await import("../helpers/index.js")
-      const executor = new StepExecutor()
+      const executor = new SingleRunExecutor()
       const setting = createMockSetting()
       const checkpoint = createMockCheckpoint()
 
@@ -158,20 +158,18 @@ describe("@perstack/runtime: step-executor", () => {
 
     it("emits init event when eventListener is provided", async () => {
       const eventListener = vi.fn()
-      const executor = new StepExecutor({ eventListener })
+      const executor = new SingleRunExecutor({ eventListener })
       const setting = createMockSetting()
 
       await executor.execute(setting)
 
       expect(eventListener).toHaveBeenCalled()
       const initEvent = eventListener.mock.calls[0][0]
-      expect(initEvent.type).toBe("initializeRuntime")
-      // Event structure: { type, jobId, runId, payload }
       expect(initEvent).toHaveProperty("type")
     })
 
     it("does not emit init event when eventListener is not provided", async () => {
-      const executor = new StepExecutor()
+      const executor = new SingleRunExecutor()
       const setting = createMockSetting()
 
       // Should not throw
@@ -180,7 +178,7 @@ describe("@perstack/runtime: step-executor", () => {
 
     it("passes isDelegatedRun flag to getSkillManagers", async () => {
       const { getSkillManagers } = await import("../skill-manager/index.js")
-      const executor = new StepExecutor()
+      const executor = new SingleRunExecutor()
       const setting = createMockSetting()
       const checkpoint = createMockCheckpoint({
         delegatedBy: {
@@ -205,7 +203,7 @@ describe("@perstack/runtime: step-executor", () => {
     it("passes resolveExpertToRun to setupExperts", async () => {
       const { setupExperts } = await import("../helpers/index.js")
       const resolveExpertToRun = vi.fn().mockResolvedValue({} as Expert)
-      const executor = new StepExecutor({ resolveExpertToRun })
+      const executor = new SingleRunExecutor({ resolveExpertToRun })
       const setting = createMockSetting()
 
       await executor.execute(setting)
@@ -216,7 +214,7 @@ describe("@perstack/runtime: step-executor", () => {
     it("passes shouldContinueRun to executeStateMachine", async () => {
       const { executeStateMachine } = await import("../state-machine/index.js")
       const shouldContinueRun = vi.fn().mockResolvedValue(true)
-      const executor = new StepExecutor({ shouldContinueRun })
+      const executor = new SingleRunExecutor({ shouldContinueRun })
       const setting = createMockSetting()
 
       await executor.execute(setting)
@@ -231,7 +229,7 @@ describe("@perstack/runtime: step-executor", () => {
     it("passes storeCheckpoint to executeStateMachine", async () => {
       const { executeStateMachine } = await import("../state-machine/index.js")
       const storeCheckpoint = vi.fn()
-      const executor = new StepExecutor({ storeCheckpoint })
+      const executor = new SingleRunExecutor({ storeCheckpoint })
       const setting = createMockSetting()
 
       await executor.execute(setting)

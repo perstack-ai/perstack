@@ -5,6 +5,7 @@ import type {
   Expert,
   RunParamsInput,
   RunSetting,
+  ToolCall,
   ToolResult,
   Usage,
 } from "@perstack/core"
@@ -31,6 +32,26 @@ export type DelegationExecutionResult = {
 }
 
 /**
+ * Minimal checkpoint context required for delegation.
+ * Intentionally excludes messages and other context to enforce
+ * the principle that child runs don't inherit parent context.
+ */
+export type DelegationContext = {
+  /** Checkpoint ID for delegatedBy reference */
+  id: string
+  /** Current step number */
+  stepNumber: number
+  /** Context window size (optional, inherited from parent) */
+  contextWindow?: number
+  /** Current usage for aggregation */
+  usage: Usage
+  /** Pending tool calls to filter */
+  pendingToolCalls?: ToolCall[]
+  /** Partial tool results to append to */
+  partialToolResults?: ToolResult[]
+}
+
+/**
  * Strategy interface for handling delegations.
  * Implementations differ in how they execute delegations (single vs parallel).
  */
@@ -41,7 +62,7 @@ export interface DelegationStrategy {
   execute(
     delegations: DelegationTarget[],
     setting: RunSetting,
-    checkpoint: Checkpoint,
+    context: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     runFn: (
       params: RunParamsInput,
@@ -58,15 +79,20 @@ export class SingleDelegationStrategy implements DelegationStrategy {
   async execute(
     delegations: DelegationTarget[],
     setting: RunSetting,
-    checkpoint: Checkpoint,
+    _context: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     _runFn: (params: RunParamsInput) => Promise<Checkpoint>,
+    // For single delegation, we need the full checkpoint to pass to buildDelegateToState
+    resultCheckpoint?: Checkpoint,
   ): Promise<DelegationExecutionResult> {
     if (delegations.length !== 1) {
       throw new Error("SingleDelegationStrategy requires exactly one delegation")
     }
+    if (!resultCheckpoint) {
+      throw new Error("SingleDelegationStrategy requires resultCheckpoint")
+    }
 
-    const result = buildDelegateToState(setting, checkpoint, parentExpert)
+    const result = buildDelegateToState(setting, resultCheckpoint, parentExpert)
     return {
       nextSetting: result.setting,
       nextCheckpoint: result.checkpoint,
@@ -81,7 +107,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
   async execute(
     delegations: DelegationTarget[],
     setting: RunSetting,
-    checkpoint: Checkpoint,
+    context: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     runFn: (
       params: RunParamsInput,
@@ -100,7 +126,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     // Execute all delegations in parallel
     const allResults = await Promise.all(
       delegations.map((delegation) =>
-        this.executeSingleDelegation(delegation, setting, checkpoint, parentExpert, runFn),
+        this.executeSingleDelegation(delegation, setting, context, parentExpert, runFn),
       ),
     )
 
@@ -112,7 +138,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     // Aggregate results
     const aggregatedUsage = allResults.reduce(
       (acc, result) => sumUsage(acc, result.deltaUsage),
-      checkpoint.usage,
+      context.usage,
     )
 
     const maxStepNumber = Math.max(...allResults.map((r) => r.stepNumber))
@@ -125,7 +151,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     }))
 
     const processedToolCallIds = new Set(remainingDelegations.map((d) => d.toolCallId))
-    const remainingPendingToolCalls = checkpoint.pendingToolCalls?.filter(
+    const remainingPendingToolCalls = context.pendingToolCalls?.filter(
       (tc) => !processedToolCallIds.has(tc.id) && tc.id !== firstDelegation.toolCallId,
     )
 
@@ -142,14 +168,24 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       },
     }
 
+    // Build minimal next checkpoint - only fields needed for next iteration
     const nextCheckpoint: Checkpoint = {
-      ...checkpoint,
+      id: context.id,
+      jobId: setting.jobId,
+      runId: setting.runId,
       status: "stoppedByDelegate",
-      delegateTo: undefined,
       stepNumber: maxStepNumber,
+      messages: [], // Child doesn't inherit parent messages
+      expert: {
+        key: parentExpert.key,
+        name: parentExpert.name,
+        version: parentExpert.version,
+      },
       usage: aggregatedUsage,
+      contextWindow: context.contextWindow,
+      delegateTo: undefined,
       pendingToolCalls: remainingPendingToolCalls?.length ? remainingPendingToolCalls : undefined,
-      partialToolResults: [...(checkpoint.partialToolResults ?? []), ...restToolResults],
+      partialToolResults: [...(context.partialToolResults ?? []), ...restToolResults],
     }
 
     return { nextSetting, nextCheckpoint }
@@ -158,7 +194,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
   private async executeSingleDelegation(
     delegation: DelegationTarget,
     parentSetting: RunSetting,
-    parentCheckpoint: Checkpoint,
+    parentContext: DelegationContext,
     parentExpert: Pick<Expert, "key" | "name" | "version">,
     runFn: (
       params: RunParamsInput,
@@ -180,8 +216,8 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       jobId: parentSetting.jobId,
       runId: delegateRunId,
       status: "init",
-      stepNumber: parentCheckpoint.stepNumber,
-      messages: [],
+      stepNumber: parentContext.stepNumber,
+      messages: [], // Child starts fresh - no parent context inheritance
       expert: {
         key: expert.key,
         name: expert.name,
@@ -195,10 +231,10 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
         },
         toolCallId,
         toolName,
-        checkpointId: parentCheckpoint.id,
+        checkpointId: parentContext.id,
       },
       usage: createEmptyUsage(),
-      contextWindow: parentCheckpoint.contextWindow,
+      contextWindow: parentContext.contextWindow,
     }
 
     const resultCheckpoint = await runFn(
@@ -255,4 +291,18 @@ export function buildReturnFromDelegation(
   parentCheckpoint: Checkpoint,
 ): DelegationStateResult {
   return buildDelegationReturnState(currentSetting, resultCheckpoint, parentCheckpoint)
+}
+
+/**
+ * Extract DelegationContext from a Checkpoint.
+ */
+export function extractDelegationContext(checkpoint: Checkpoint): DelegationContext {
+  return {
+    id: checkpoint.id,
+    stepNumber: checkpoint.stepNumber,
+    contextWindow: checkpoint.contextWindow,
+    usage: checkpoint.usage,
+    pendingToolCalls: checkpoint.pendingToolCalls,
+    partialToolResults: checkpoint.partialToolResults,
+  }
 }

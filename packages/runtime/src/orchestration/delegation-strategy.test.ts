@@ -1,6 +1,8 @@
 import type { Checkpoint, DelegationTarget, RunSetting, Usage } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import {
+  type DelegationContext,
+  extractDelegationContext,
   ParallelDelegationStrategy,
   SingleDelegationStrategy,
   selectDelegationStrategy,
@@ -43,6 +45,14 @@ const createMockCheckpoint = (overrides?: Partial<Checkpoint>): Checkpoint =>
     ...overrides,
   }) as Checkpoint
 
+const createMockContext = (overrides?: Partial<DelegationContext>): DelegationContext => ({
+  id: "cp-1",
+  stepNumber: 1,
+  contextWindow: 100000,
+  usage: createMockUsage(),
+  ...overrides,
+})
+
 const createMockDelegation = (overrides?: Partial<DelegationTarget>): DelegationTarget => ({
   expert: { key: "child-expert", name: "Child Expert", version: "1.0.0" },
   toolCallId: "tc-1",
@@ -56,28 +66,43 @@ describe("@perstack/runtime: delegation-strategy", () => {
     it("throws error when delegations.length !== 1", async () => {
       const strategy = new SingleDelegationStrategy()
       const setting = createMockSetting()
+      const context = createMockContext()
       const checkpoint = createMockCheckpoint()
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
       const runFn = vi.fn()
 
-      await expect(strategy.execute([], setting, checkpoint, parentExpert, runFn)).rejects.toThrow(
-        "SingleDelegationStrategy requires exactly one delegation",
-      )
+      await expect(
+        strategy.execute([], setting, context, parentExpert, runFn, checkpoint),
+      ).rejects.toThrow("SingleDelegationStrategy requires exactly one delegation")
 
       await expect(
         strategy.execute(
           [createMockDelegation(), createMockDelegation()],
           setting,
-          checkpoint,
+          context,
           parentExpert,
           runFn,
+          checkpoint,
         ),
       ).rejects.toThrow("SingleDelegationStrategy requires exactly one delegation")
+    })
+
+    it("throws error when resultCheckpoint is not provided", async () => {
+      const strategy = new SingleDelegationStrategy()
+      const setting = createMockSetting()
+      const context = createMockContext()
+      const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
+      const runFn = vi.fn()
+
+      await expect(
+        strategy.execute([createMockDelegation()], setting, context, parentExpert, runFn),
+      ).rejects.toThrow("SingleDelegationStrategy requires resultCheckpoint")
     })
 
     it("builds delegation state for single delegation without executing runFn", async () => {
       const strategy = new SingleDelegationStrategy()
       const setting = createMockSetting()
+      const context = createMockContext()
       const delegation = createMockDelegation()
       const checkpoint = createMockCheckpoint({
         delegateTo: [delegation],
@@ -85,7 +110,14 @@ describe("@perstack/runtime: delegation-strategy", () => {
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
       const runFn = vi.fn()
 
-      const result = await strategy.execute([delegation], setting, checkpoint, parentExpert, runFn)
+      const result = await strategy.execute(
+        [delegation],
+        setting,
+        context,
+        parentExpert,
+        runFn,
+        checkpoint,
+      )
 
       expect(runFn).not.toHaveBeenCalled()
       expect(result.nextSetting).toBeDefined()
@@ -98,16 +130,16 @@ describe("@perstack/runtime: delegation-strategy", () => {
     it("throws error when delegations.length < 2", async () => {
       const strategy = new ParallelDelegationStrategy()
       const setting = createMockSetting()
-      const checkpoint = createMockCheckpoint()
+      const context = createMockContext()
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
       const runFn = vi.fn()
 
-      await expect(strategy.execute([], setting, checkpoint, parentExpert, runFn)).rejects.toThrow(
+      await expect(strategy.execute([], setting, context, parentExpert, runFn)).rejects.toThrow(
         "ParallelDelegationStrategy requires at least two delegations",
       )
 
       await expect(
-        strategy.execute([createMockDelegation()], setting, checkpoint, parentExpert, runFn),
+        strategy.execute([createMockDelegation()], setting, context, parentExpert, runFn),
       ).rejects.toThrow("ParallelDelegationStrategy requires at least two delegations")
     })
 
@@ -124,9 +156,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
           expert: { key: "expert-b", name: "B", version: "1" },
         }),
       ]
-      const checkpoint = createMockCheckpoint({
-        delegateTo: delegations,
-      })
+      const context = createMockContext()
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
 
       const createMockResultCheckpoint = (expertKey: string, stepNumber: number): Checkpoint => ({
@@ -147,7 +177,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
         .mockResolvedValueOnce(createMockResultCheckpoint("expert-a", 3))
         .mockResolvedValueOnce(createMockResultCheckpoint("expert-b", 5))
 
-      const result = await strategy.execute(delegations, setting, checkpoint, parentExpert, runFn)
+      const result = await strategy.execute(delegations, setting, context, parentExpert, runFn)
 
       expect(runFn).toHaveBeenCalledTimes(2)
       expect(result.nextSetting.input.interactiveToolCallResult?.toolCallId).toBe("tc-1")
@@ -169,8 +199,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
           expert: { key: "expert-b", name: "B", version: "1" },
         }),
       ]
-      const checkpoint = createMockCheckpoint({
-        delegateTo: delegations,
+      const context = createMockContext({
         usage: {
           inputTokens: 10,
           outputTokens: 5,
@@ -214,7 +243,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
           }),
         )
 
-      const result = await strategy.execute(delegations, setting, checkpoint, parentExpert, runFn)
+      const result = await strategy.execute(delegations, setting, context, parentExpert, runFn)
 
       // Original: 10+5+0+15+0, plus two delegations
       expect(result.nextCheckpoint.usage.inputTokens).toBe(310) // 10 + 100 + 200
@@ -229,16 +258,16 @@ describe("@perstack/runtime: delegation-strategy", () => {
         createMockDelegation({ toolCallId: "tc-1" }),
         createMockDelegation({ toolCallId: "tc-2" }),
       ]
-      const checkpoint = createMockCheckpoint({ delegateTo: delegations })
+      const context = createMockContext()
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
 
       const runFn = vi.fn().mockResolvedValue({
         ...createMockCheckpoint(),
-        messages: [{ type: "userMessage", contents: [] }],
+        messages: [{ id: "msg-1", type: "userMessage", contents: [] }],
       })
 
       await expect(
-        strategy.execute(delegations, setting, checkpoint, parentExpert, runFn),
+        strategy.execute(delegations, setting, context, parentExpert, runFn),
       ).rejects.toThrow("Delegation error: delegation result message is incorrect")
     })
 
@@ -249,7 +278,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
         createMockDelegation({ toolCallId: "tc-1" }),
         createMockDelegation({ toolCallId: "tc-2" }),
       ]
-      const checkpoint = createMockCheckpoint({ delegateTo: delegations })
+      const context = createMockContext()
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
 
       const runFn = vi.fn().mockResolvedValue({
@@ -260,7 +289,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
       })
 
       await expect(
-        strategy.execute(delegations, setting, checkpoint, parentExpert, runFn),
+        strategy.execute(delegations, setting, context, parentExpert, runFn),
       ).rejects.toThrow("Delegation error: delegation result message does not contain text")
     })
   })
@@ -280,6 +309,38 @@ describe("@perstack/runtime: delegation-strategy", () => {
     it("returns ParallelDelegationStrategy for count = 0 (edge case)", () => {
       const strategy = selectDelegationStrategy(0)
       expect(strategy).toBeInstanceOf(ParallelDelegationStrategy)
+    })
+  })
+
+  describe("extractDelegationContext()", () => {
+    it("extracts only required fields from checkpoint", () => {
+      const checkpoint = createMockCheckpoint({
+        id: "test-id",
+        stepNumber: 5,
+        contextWindow: 200000,
+        usage: {
+          inputTokens: 50,
+          outputTokens: 25,
+          reasoningTokens: 5,
+          totalTokens: 80,
+          cachedInputTokens: 10,
+        },
+        pendingToolCalls: [{ id: "tc-1", skillName: "s", toolName: "t", args: {} }],
+        partialToolResults: [{ id: "tr-1", skillName: "s", toolName: "t", result: [] }],
+        // These should NOT be included in context
+        messages: [{ id: "m", type: "userMessage", contents: [] }],
+      })
+
+      const context = extractDelegationContext(checkpoint)
+
+      expect(context.id).toBe("test-id")
+      expect(context.stepNumber).toBe(5)
+      expect(context.contextWindow).toBe(200000)
+      expect(context.usage.inputTokens).toBe(50)
+      expect(context.pendingToolCalls).toHaveLength(1)
+      expect(context.partialToolResults).toHaveLength(1)
+      // Verify messages is NOT included
+      expect("messages" in context).toBe(false)
     })
   })
 

@@ -1,10 +1,16 @@
 export {
   buildReturnFromDelegation,
+  type DelegationContext,
   type DelegationExecutionResult,
   type DelegationResult,
   type DelegationStrategy,
+  extractDelegationContext,
   ParallelDelegationStrategy,
   SingleDelegationStrategy,
   selectDelegationStrategy,
 } from "./delegation-strategy.js"
-export { StepExecutor, type StepExecutorOptions, type StepResult } from "./step-executor.js"
+export {
+  SingleRunExecutor,
+  type SingleRunExecutorOptions,
+  type SingleRunResult,
+} from "./single-run-executor.js"
