@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process"
 import { type ParsedEvent, parseEvents } from "./event-parser.js"
+import { injectProviderArgs } from "./round-robin.js"
 
 export type CommandResult = {
   stdout: string
@@ -28,10 +29,11 @@ export async function runCli(
   const timeout = options?.timeout ?? 30000
   const cwd = options?.cwd ?? process.cwd()
   const env = options?.env ?? { ...process.env }
+  const finalArgs = args[0] === "run" ? injectProviderArgs(args) : args
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
-    const proc = spawn("npx", ["tsx", "./packages/perstack/bin/cli.ts", ...args], {
+    const proc = spawn("npx", ["tsx", "./packages/perstack/bin/cli.ts", ...finalArgs], {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],
@@ -64,10 +66,11 @@ export async function runRuntimeCli(
   const timeout = options?.timeout ?? 30000
   const cwd = options?.cwd ?? process.cwd()
   const env = options?.env ?? { ...process.env }
+  const finalArgs = args[0] === "run" ? injectProviderArgs(args) : args
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
-    const proc = spawn("npx", ["tsx", "./packages/runtime/bin/cli.ts", ...args], {
+    const proc = spawn("npx", ["tsx", "./packages/runtime/bin/cli.ts", ...finalArgs], {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],
