@@ -3,6 +3,7 @@ export {
   type DelegationContext,
   type DelegationExecutionResult,
   type DelegationResult,
+  type DelegationRunOptions,
   type DelegationStrategy,
   extractDelegationContext,
   ParallelDelegationStrategy,

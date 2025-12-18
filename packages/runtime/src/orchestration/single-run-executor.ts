@@ -23,6 +23,7 @@ import { executeStateMachine } from "../state-machine/index.js"
 export type SingleRunExecutorOptions = {
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  storeEvent?: (event: RunEvent) => Promise<void>
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   resolveExpertToRun?: ResolveExpertToRunFn
 }
@@ -86,7 +87,12 @@ export class SingleRunExecutor {
 
   private createEventListener(): (event: RunEvent | RuntimeEvent) => Promise<void> {
     const userListener = this.options.eventListener
+    const storeEvent = this.options.storeEvent
     return async (event: RunEvent | RuntimeEvent) => {
+      // Store RunEvents (events with stepNumber) if storeEvent is provided
+      if ("stepNumber" in event && storeEvent) {
+        await storeEvent(event as RunEvent)
+      }
       userListener?.(event)
     }
   }

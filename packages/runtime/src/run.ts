@@ -12,7 +12,6 @@ import { createEmptyUsage, type ResolveExpertToRunFn } from "./helpers/index.js"
 import {
   buildReturnFromDelegation,
   extractDelegationContext,
-  SingleDelegationStrategy,
   SingleRunExecutor,
   selectDelegationStrategy,
 } from "./orchestration/index.js"
@@ -74,6 +73,7 @@ export async function run(runInput: RunParamsInput, options?: RunOptions): Promi
   const runExecutor = new SingleRunExecutor({
     shouldContinueRun: options?.shouldContinueRun,
     storeCheckpoint: options?.storeCheckpoint,
+    storeEvent: options?.storeEvent,
     eventListener: options?.eventListener,
     resolveExpertToRun: options?.resolveExpertToRun,
   })
@@ -123,18 +123,14 @@ export async function run(runInput: RunParamsInput, options?: RunOptions): Promi
         const strategy = selectDelegationStrategy(delegateTo.length)
         const context = extractDelegationContext(resultCheckpoint)
 
-        // SingleDelegationStrategy needs the full checkpoint for buildDelegateToState
-        const delegationResult =
-          strategy instanceof SingleDelegationStrategy
-            ? await strategy.execute(
-                delegateTo,
-                setting,
-                context,
-                runResult.expertToRun,
-                run,
-                resultCheckpoint,
-              )
-            : await strategy.execute(delegateTo, setting, context, runResult.expertToRun, run)
+        // All strategies now use the same interface - delegations parameter is used directly
+        const delegationResult = await strategy.execute(
+          delegateTo,
+          setting,
+          context,
+          runResult.expertToRun,
+          run,
+        )
 
         setting = delegationResult.nextSetting
         checkpoint = delegationResult.nextCheckpoint

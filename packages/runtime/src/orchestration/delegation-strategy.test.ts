@@ -67,13 +67,12 @@ describe("@perstack/runtime: delegation-strategy", () => {
       const strategy = new SingleDelegationStrategy()
       const setting = createMockSetting()
       const context = createMockContext()
-      const checkpoint = createMockCheckpoint()
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
       const runFn = vi.fn()
 
-      await expect(
-        strategy.execute([], setting, context, parentExpert, runFn, checkpoint),
-      ).rejects.toThrow("SingleDelegationStrategy requires exactly one delegation")
+      await expect(strategy.execute([], setting, context, parentExpert, runFn)).rejects.toThrow(
+        "SingleDelegationStrategy requires exactly one delegation",
+      )
 
       await expect(
         strategy.execute(
@@ -82,21 +81,8 @@ describe("@perstack/runtime: delegation-strategy", () => {
           context,
           parentExpert,
           runFn,
-          checkpoint,
         ),
       ).rejects.toThrow("SingleDelegationStrategy requires exactly one delegation")
-    })
-
-    it("throws error when resultCheckpoint is not provided", async () => {
-      const strategy = new SingleDelegationStrategy()
-      const setting = createMockSetting()
-      const context = createMockContext()
-      const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
-      const runFn = vi.fn()
-
-      await expect(
-        strategy.execute([createMockDelegation()], setting, context, parentExpert, runFn),
-      ).rejects.toThrow("SingleDelegationStrategy requires resultCheckpoint")
     })
 
     it("builds delegation state for single delegation without executing runFn", async () => {
@@ -104,25 +90,56 @@ describe("@perstack/runtime: delegation-strategy", () => {
       const setting = createMockSetting()
       const context = createMockContext()
       const delegation = createMockDelegation()
-      const checkpoint = createMockCheckpoint({
-        delegateTo: [delegation],
-      })
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
       const runFn = vi.fn()
 
-      const result = await strategy.execute(
-        [delegation],
-        setting,
-        context,
-        parentExpert,
-        runFn,
-        checkpoint,
-      )
+      const result = await strategy.execute([delegation], setting, context, parentExpert, runFn)
 
       expect(runFn).not.toHaveBeenCalled()
       expect(result.nextSetting).toBeDefined()
       expect(result.nextCheckpoint).toBeDefined()
       expect(result.nextSetting.expertKey).toBe("child-expert")
+      expect(result.nextSetting.input.text).toBe("child query")
+    })
+
+    it("uses delegations parameter directly, not checkpoint.delegateTo", async () => {
+      const strategy = new SingleDelegationStrategy()
+      const setting = createMockSetting()
+      const context = createMockContext()
+      const delegation = createMockDelegation({
+        expert: { key: "correct-expert", name: "Correct", version: "1.0" },
+        query: "correct query",
+      })
+      const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
+      const runFn = vi.fn()
+
+      const result = await strategy.execute([delegation], setting, context, parentExpert, runFn)
+
+      // Should use the delegation parameter, not any other source
+      expect(result.nextSetting.expertKey).toBe("correct-expert")
+      expect(result.nextSetting.input.text).toBe("correct query")
+    })
+
+    it("sets delegatedBy with parent expert info", async () => {
+      const strategy = new SingleDelegationStrategy()
+      const setting = createMockSetting()
+      const context = createMockContext({ id: "parent-cp-id" })
+      const delegation = createMockDelegation()
+      const parentExpert = { key: "parent-key", name: "Parent Name", version: "2.0" }
+      const runFn = vi.fn()
+
+      const result = await strategy.execute([delegation], setting, context, parentExpert, runFn)
+
+      expect(result.nextCheckpoint.delegatedBy).toEqual({
+        expert: {
+          key: "parent-key",
+          name: "Parent Name",
+          version: "2.0",
+        },
+        toolCallId: "tc-1",
+        toolName: "delegateTo",
+        checkpointId: "parent-cp-id",
+      })
     })
   })
 
@@ -184,6 +201,50 @@ describe("@perstack/runtime: delegation-strategy", () => {
       expect(result.nextCheckpoint.stepNumber).toBe(5) // max step number
       expect(result.nextCheckpoint.partialToolResults).toHaveLength(1)
       expect(result.nextCheckpoint.partialToolResults?.[0].id).toBe("tc-2")
+    })
+
+    it("preserves delegatedBy for nested delegations", async () => {
+      const strategy = new ParallelDelegationStrategy()
+      const setting = createMockSetting()
+      const delegations = [
+        createMockDelegation({
+          toolCallId: "tc-1",
+          expert: { key: "expert-a", name: "A", version: "1" },
+        }),
+        createMockDelegation({
+          toolCallId: "tc-2",
+          expert: { key: "expert-b", name: "B", version: "1" },
+        }),
+      ]
+      const parentDelegatedBy = {
+        expert: { key: "grandparent", name: "Grandparent", version: "1.0" },
+        toolCallId: "gp-tc-1",
+        toolName: "delegateTo",
+        checkpointId: "gp-cp-id",
+      }
+      const context = createMockContext({ delegatedBy: parentDelegatedBy })
+      const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
+
+      const createMockResultCheckpoint = (expertKey: string): Checkpoint => ({
+        ...createMockCheckpoint(),
+        messages: [
+          {
+            id: `msg-${expertKey}`,
+            type: "expertMessage",
+            contents: [{ type: "textPart", id: "txt-1", text: `Result` }],
+          },
+        ],
+      })
+
+      const runFn = vi
+        .fn()
+        .mockResolvedValueOnce(createMockResultCheckpoint("expert-a"))
+        .mockResolvedValueOnce(createMockResultCheckpoint("expert-b"))
+
+      const result = await strategy.execute(delegations, setting, context, parentExpert, runFn)
+
+      // Should preserve the parent's delegatedBy reference
+      expect(result.nextCheckpoint.delegatedBy).toEqual(parentDelegatedBy)
     })
 
     it("aggregates usage from all delegations", async () => {
@@ -327,6 +388,12 @@ describe("@perstack/runtime: delegation-strategy", () => {
         },
         pendingToolCalls: [{ id: "tc-1", skillName: "s", toolName: "t", args: {} }],
         partialToolResults: [{ id: "tr-1", skillName: "s", toolName: "t", result: [] }],
+        delegatedBy: {
+          expert: { key: "parent", name: "Parent", version: "1.0" },
+          toolCallId: "p-tc-1",
+          toolName: "delegateTo",
+          checkpointId: "p-cp-id",
+        },
         // These should NOT be included in context
         messages: [{ id: "m", type: "userMessage", contents: [] }],
       })
@@ -339,6 +406,8 @@ describe("@perstack/runtime: delegation-strategy", () => {
       expect(context.usage.inputTokens).toBe(50)
       expect(context.pendingToolCalls).toHaveLength(1)
       expect(context.partialToolResults).toHaveLength(1)
+      expect(context.delegatedBy).toBeDefined()
+      expect(context.delegatedBy?.expert.key).toBe("parent")
       // Verify messages is NOT included
       expect("messages" in context).toBe(false)
     })
