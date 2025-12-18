@@ -1,3 +1,13 @@
+/**
+ * Error Handling E2E Tests (Runtime)
+ *
+ * Tests graceful error handling in perstack-runtime:
+ * - Tool error recovery (file not found)
+ * - Invalid MCP skill command
+ * - Invalid provider name
+ *
+ * TOML: e2e/experts/error-handling.toml, e2e/experts/errors.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains } from "../lib/assertions.js"
 import { filterEventsByType } from "../lib/event-parser.js"
@@ -10,6 +20,7 @@ const GLOBAL_RUNTIME_CONFIG = "./e2e/experts/global-runtime.toml"
 const LLM_TIMEOUT = 180000
 
 describe.concurrent("Error Handling", () => {
+  /** Verifies expert can recover from tool errors and complete. */
   it(
     "should recover from file not found error and complete successfully",
     async () => {
@@ -40,6 +51,7 @@ describe.concurrent("Error Handling", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies graceful failure for broken MCP skill. */
   it("should fail gracefully when MCP skill command is invalid", async () => {
     const result = await runRuntimeCli([
       "run",
@@ -52,6 +64,7 @@ describe.concurrent("Error Handling", () => {
     expect(result.stderr).toMatch(/failed|error|spawn|ENOENT/i)
   })
 
+  /** Verifies rejection of invalid provider name. */
   it("should fail with invalid provider name", async () => {
     const result = await runRuntimeCli([
       "run",

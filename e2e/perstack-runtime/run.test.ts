@@ -1,3 +1,14 @@
+/**
+ * Run Expert E2E Tests (Runtime)
+ *
+ * Tests core expert execution in perstack-runtime:
+ * - Simple question answering
+ * - Multi-tool parallel execution
+ * - PDF reading and summarization
+ * - Image reading and description
+ *
+ * TOML: e2e/experts/global-runtime.toml, special-tools.toml, multi-modal.toml
+ */
 import { describe, expect, it } from "vitest"
 import { assertEventSequenceContains, assertToolCallCount } from "../lib/assertions.js"
 import { filterEventsByType } from "../lib/event-parser.js"
@@ -11,6 +22,7 @@ const LLM_TIMEOUT = 120000
 const LLM_EXTENDED_TIMEOUT = 180000
 
 describe.concurrent("Run Expert", () => {
+  /** Verifies simple query completes with text response. */
   it(
     "should answer a simple question and complete",
     async () => {
@@ -30,6 +42,7 @@ describe.concurrent("Run Expert", () => {
     LLM_TIMEOUT,
   )
 
+  /** Verifies 4 tools execute in parallel (think, PDF, image, search). */
   it(
     "should execute multiple tools in parallel and complete",
     async () => {
@@ -70,6 +83,7 @@ describe.concurrent("Run Expert", () => {
     LLM_EXTENDED_TIMEOUT,
   )
 
+  /** Verifies PDF file reading and content extraction. */
   it(
     "should read and summarize PDF content",
     async () => {
@@ -100,6 +114,7 @@ describe.concurrent("Run Expert", () => {
     LLM_EXTENDED_TIMEOUT,
   )
 
+  /** Verifies image file reading and visual description. */
   it(
     "should read and describe image content",
     async () => {

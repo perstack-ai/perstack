@@ -10,10 +10,8 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert with picked tools only"
 instruction = """
-You are a test expert with limited tools.
-You can ONLY use attemptCompletion and think.
-Try to read a file - you should NOT have readTextFile available.
-If you cannot read files, just say so and call attemptCompletion.
+If asked to read a file, report that readTextFile is not available.
+Call attemptCompletion with the result.
 """
 
 [experts."e2e-pick-tools".skills."@perstack/base"]
@@ -26,9 +24,7 @@ pick = ["attemptCompletion", "think"]
 version = "1.0.0"
 description = "E2E test expert with omitted tools"
 instruction = """
-You are a test expert.
-The think tool is NOT available to you (it was omitted).
-Just say hello and call attemptCompletion.
+Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-omit-tools".skills."@perstack/base"]
@@ -41,12 +37,8 @@ omit = ["think"]
 version = "1.0.0"
 description = "E2E test expert with multiple skills"
 instruction = """
-You are a test expert with multiple skills.
-1. Use think to think about the query
-2. Use web_search_exa to search if needed
-3. Call attemptCompletion when done
-
-You have both @perstack/base and exa skills available.
+1. Use think with the query
+2. Call attemptCompletion with result "OK"
 """
 
 [experts."e2e-multi-skill".skills."exa"]
@@ -55,6 +47,7 @@ description = "Web search"
 command = "npx"
 args = ["-y", "exa-mcp-server"]
 requiredEnv = ["EXA_API_KEY"]
+lazyInit = false
 
 [experts."e2e-multi-skill".skills."@perstack/base"]
 type = "mcpStdioSkill"
