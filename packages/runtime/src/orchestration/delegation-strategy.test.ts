@@ -50,6 +50,7 @@ const createMockContext = (overrides?: Partial<DelegationContext>): DelegationCo
   stepNumber: 1,
   contextWindow: 100000,
   usage: createMockUsage(),
+  messages: [],
   ...overrides,
 })
 
@@ -247,6 +248,52 @@ describe("@perstack/runtime: delegation-strategy", () => {
       expect(result.nextCheckpoint.delegatedBy).toEqual(parentDelegatedBy)
     })
 
+    it("restores parent messages after parallel delegation", async () => {
+      const strategy = new ParallelDelegationStrategy()
+      const setting = createMockSetting()
+      const delegations = [
+        createMockDelegation({
+          toolCallId: "tc-1",
+          expert: { key: "expert-a", name: "A", version: "1" },
+        }),
+        createMockDelegation({
+          toolCallId: "tc-2",
+          expert: { key: "expert-b", name: "B", version: "1" },
+        }),
+      ]
+      const parentMessages = [
+        { id: "msg-1", type: "userMessage" as const, contents: [] },
+        {
+          id: "msg-2",
+          type: "expertMessage" as const,
+          contents: [{ type: "textPart" as const, id: "txt-1", text: "Hello" }],
+        },
+      ]
+      const context = createMockContext({ messages: parentMessages })
+      const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
+
+      const createMockResultCheckpoint = (expertKey: string): Checkpoint => ({
+        ...createMockCheckpoint(),
+        messages: [
+          {
+            id: `msg-${expertKey}`,
+            type: "expertMessage",
+            contents: [{ type: "textPart", id: "txt-1", text: "Result" }],
+          },
+        ],
+      })
+
+      const runFn = vi
+        .fn()
+        .mockResolvedValueOnce(createMockResultCheckpoint("expert-a"))
+        .mockResolvedValueOnce(createMockResultCheckpoint("expert-b"))
+
+      const result = await strategy.execute(delegations, setting, context, parentExpert, runFn)
+
+      // Should restore parent's conversation history, not empty or child messages
+      expect(result.nextCheckpoint.messages).toEqual(parentMessages)
+    })
+
     it("aggregates usage from all delegations", async () => {
       const strategy = new ParallelDelegationStrategy()
       const setting = createMockSetting()
@@ -408,8 +455,9 @@ describe("@perstack/runtime: delegation-strategy", () => {
       expect(context.partialToolResults).toHaveLength(1)
       expect(context.delegatedBy).toBeDefined()
       expect(context.delegatedBy?.expert.key).toBe("parent")
-      // Verify messages is NOT included
-      expect("messages" in context).toBe(false)
+      // Messages are included for parent continuation after delegation
+      expect(context.messages).toBeDefined()
+      expect(context.messages).toHaveLength(1)
     })
   })
 

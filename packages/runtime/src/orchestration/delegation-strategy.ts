@@ -3,6 +3,7 @@ import type {
   Checkpoint,
   DelegationTarget,
   Expert,
+  Message,
   RunParamsInput,
   RunSetting,
   ToolCall,
@@ -42,9 +43,9 @@ export type DelegationRunOptions = {
 }
 
 /**
- * Minimal checkpoint context required for delegation.
- * Intentionally excludes messages and other context to enforce
- * the principle that child runs don't inherit parent context.
+ * Checkpoint context required for delegation.
+ * Note: messages are included so the PARENT can resume its conversation
+ * after parallel delegation completes. Child runs start with empty messages.
  */
 export type DelegationContext = {
   /** Checkpoint ID for delegatedBy reference */
@@ -61,6 +62,8 @@ export type DelegationContext = {
   partialToolResults?: ToolResult[]
   /** Parent delegation reference (preserved for nested delegations) */
   delegatedBy?: DelegatedBy
+  /** Parent's message history (restored when parent resumes after delegation) */
+  messages: Message[]
 }
 
 /**
@@ -203,14 +206,14 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       },
     }
 
-    // Build next checkpoint - preserve delegatedBy for nested delegations
+    // Build next checkpoint - restore parent's messages for continuation
     const nextCheckpoint: Checkpoint = {
       id: context.id,
       jobId: setting.jobId,
       runId: setting.runId,
       status: "stoppedByDelegate",
       stepNumber: maxStepNumber,
-      messages: [], // Child doesn't inherit parent messages
+      messages: context.messages, // Restore parent's conversation history
       expert: {
         key: parentExpert.key,
         name: parentExpert.name,
@@ -339,5 +342,6 @@ export function extractDelegationContext(checkpoint: Checkpoint): DelegationCont
     pendingToolCalls: checkpoint.pendingToolCalls,
     partialToolResults: checkpoint.partialToolResults,
     delegatedBy: checkpoint.delegatedBy, // Preserve for nested delegations
+    messages: checkpoint.messages, // Preserve for parent continuation after delegation
   }
 }
