@@ -10,14 +10,8 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "Tests network isolation in Docker sandbox"
 instruction = """
-You are a security tester. Your job is to verify network isolation.
-
-Test 1: Try to access api.anthropic.com (should succeed - auto-included from provider)
-Test 2: Try to access google.com (should FAIL - not in allowlist)
-Test 3: Try to access example.com on port 80 (should FAIL - only 443 allowed)
-
-Use the exec tool to run curl commands for each test.
-Report the results of each test, then call attemptCompletion with a summary.
+1. Use exec tool to run the curl command as specified by user
+2. Call attemptCompletion reporting: succeeded/failed + output or error message
 """
 
 [experts."docker-security-network".skills."@perstack/base"]
@@ -29,15 +23,8 @@ packageName = "@perstack/base"
 version = "1.0.0"
 description = "Tests filesystem isolation in Docker sandbox"
 instruction = """
-You are a security tester. Your job is to verify filesystem isolation.
-
-Test 1: Read a file in the current workspace (should succeed)
-Test 2: Try to read /etc/shadow (should FAIL or show container's file, not host)
-Test 3: Try path traversal with /../../../etc/passwd (should FAIL)
-Test 4: Try to access ~/.ssh/id_rsa (should FAIL - not mounted)
-
-Use readTextFile and exec tools to perform these tests.
-Report the results of each test, then call attemptCompletion with a summary.
+1. Use readTextFile or exec tool to attempt the file access as specified by user
+2. Call attemptCompletion reporting: succeeded/failed + file content or error message
 """
 
 [experts."docker-security-filesystem".skills."@perstack/base"]
@@ -49,15 +36,8 @@ packageName = "@perstack/base"
 version = "1.0.0"
 description = "Tests command execution restrictions in Docker sandbox"
 instruction = """
-You are a security tester. Your job is to verify command execution restrictions.
-
-Test 1: Run a simple echo command (should succeed)
-Test 2: Try to run sudo whoami (should FAIL - no sudo)
-Test 3: Try to run docker ps (should FAIL - no docker socket)
-Test 4: Try to access /proc/1/root (should FAIL - restricted)
-
-Use the exec tool to perform these tests.
-Report the results of each test, then call attemptCompletion with a summary.
+1. Use exec tool to run the command as specified by user
+2. Call attemptCompletion reporting: succeeded/failed + output or error message
 """
 
 [experts."docker-security-commands".skills."@perstack/base"]
@@ -69,15 +49,8 @@ packageName = "@perstack/base"
 version = "1.0.0"
 description = "Tests environment variable isolation in Docker sandbox"
 instruction = """
-You are a security tester. Your job is to verify environment variable isolation.
-
-Test 1: Check if ANTHROPIC_API_KEY is available (should be available)
-Test 2: Run 'env' command and check what variables are exposed
-Test 3: Try to access HOME directory path
-
-Use the exec tool to run 'env' and 'printenv' commands.
-Report what environment variables are visible, then call attemptCompletion.
-The test passes if ONLY expected variables are visible (no host secrets leaked).
+1. Use exec tool to run 'env' command
+2. Call attemptCompletion with the full output of environment variables
 """
 
 [experts."docker-security-env".skills."@perstack/base"]
@@ -89,14 +62,8 @@ packageName = "@perstack/base"
 version = "1.0.0"
 description = "Tests skill-level allowedDomains in Docker sandbox"
 instruction = """
-You are a security tester. Your job is to verify skill-level network allowlist.
-
-Test 1: Try to access api.github.com (should succeed - in skill allowlist)
-Test 2: Try to access api.example.com (should FAIL - not in any allowlist)
-Test 3: Try to access api.anthropic.com (should succeed - auto-included from provider)
-
-Use the exec tool to run curl commands for each test.
-Report the results of each test, then call attemptCompletion with a summary.
+1. Use exec tool to run the curl command as specified by user
+2. Call attemptCompletion reporting: succeeded/failed + output or error message
 """
 
 [experts."docker-security-skill-allowlist".skills."@perstack/base"]
@@ -109,14 +76,8 @@ allowedDomains = ["api.github.com", "*.github.com"]
 version = "1.0.0"
 description = "Tests multiple skills with different allowedDomains"
 instruction = """
-You are a security tester. Your job is to verify that multiple skills' allowedDomains are merged.
-
-Test 1: Use the http_get tool to access https://api.github.com (should succeed - from network-github skill)
-Test 2: Use the http_get tool to access https://httpbin.org/get (should succeed - from network-httpbin skill)
-Test 3: Use the http_get tool to access https://api.example.com (should FAIL - not in any skill's allowlist)
-
-Use http_get tool for each test.
-Report the results of each test, then call attemptCompletion with a summary.
+1. Use http_get tool to access the URLs as specified by user
+2. Call attemptCompletion reporting: succeeded/failed + any error message
 """
 
 [experts."docker-security-multi-skill".skills."@perstack/base"]
@@ -130,9 +91,11 @@ type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/e2e-mcp-server"
 allowedDomains = ["api.github.com"]
+lazyInit = false
 
 [experts."docker-security-multi-skill".skills."network-httpbin"]
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/e2e-mcp-server"
 allowedDomains = ["httpbin.org"]
+lazyInit = false
