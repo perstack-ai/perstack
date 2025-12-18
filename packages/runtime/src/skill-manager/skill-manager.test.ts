@@ -5,7 +5,16 @@ import type {
   RuntimeEvent,
   ToolDefinition,
 } from "@perstack/core"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+// Mock the MCP SDK
+vi.mock("@modelcontextprotocol/sdk/client/index.js", () => {
+  const mockClient = vi.fn()
+  mockClient.prototype.listTools = vi.fn().mockResolvedValue({ tools: [] })
+  mockClient.prototype.connect = vi.fn().mockResolvedValue(undefined)
+  mockClient.prototype.close = vi.fn().mockResolvedValue(undefined)
+  return { Client: mockClient }
+})
 import {
   type BaseSkillManager,
   closeSkillManagers,
@@ -287,33 +296,12 @@ describe("@perstack/runtime: McpSkillManager", () => {
       }>
     }
 
-    // Mock _doInit to simulate successful initialization with timing
-    vi.spyOn(sm, "_doInit").mockImplementation(async () => {
-      // Simulate the event emission that would happen in real _doInit
-      const timingInfo = {
-        startTime: Date.now() - 1000,
-        spawnDurationMs: 10,
-        handshakeDurationMs: 500,
-        serverInfo: { name: "test-server", version: "1.0.0" },
-      }
-      const toolDiscoveryDurationMs = 50
-      sm._toolDefinitions = []
-
-      // Access private eventListener via type casting
-      const manager = skillManager as unknown as { _eventListener?: (e: RuntimeEvent) => void }
-      if (manager._eventListener) {
-        const { createRuntimeEvent } = await import("@perstack/core")
-        const event = createRuntimeEvent("skillConnected", testJobId, testRunId, {
-          skillName: skill.name,
-          serverInfo: timingInfo.serverInfo,
-          spawnDurationMs: timingInfo.spawnDurationMs,
-          handshakeDurationMs: timingInfo.handshakeDurationMs,
-          toolDiscoveryDurationMs,
-          connectDurationMs: timingInfo.spawnDurationMs + timingInfo.handshakeDurationMs,
-          totalDurationMs: 560,
-        })
-        manager._eventListener(event)
-      }
+    // Mock _initStdio to return timing info (this allows _doInit to run its real logic)
+    vi.spyOn(sm, "_initStdio").mockResolvedValue({
+      startTime: Date.now() - 1000,
+      spawnDurationMs: 10,
+      handshakeDurationMs: 500,
+      serverInfo: { name: "test-server", version: "1.0.0" },
     })
 
     await skillManager.init()
@@ -327,8 +315,8 @@ describe("@perstack/runtime: McpSkillManager", () => {
       expect(event.handshakeDurationMs).toBe(500)
       expect(event.connectDurationMs).toBe(510)
       expect(event.serverInfo).toEqual({ name: "test-server", version: "1.0.0" })
-      expect(event.toolDiscoveryDurationMs).toBe(50)
-      expect(event.totalDurationMs).toBe(560)
+      expect(typeof event.toolDiscoveryDurationMs).toBe("number")
+      expect(typeof event.totalDurationMs).toBe("number")
     }
   })
 })
