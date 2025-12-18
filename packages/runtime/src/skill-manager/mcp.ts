@@ -1,17 +1,13 @@
 import { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js"
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import type { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { type CallToolResult, McpError } from "@modelcontextprotocol/sdk/types.js"
-import { createId } from "@paralleldrive/cuid2"
 import {
-  type CallToolResultContent,
   createRuntimeEvent,
   type FileInlinePart,
   getFilteredEnv,
   type ImageInlinePart,
   type McpSseSkill,
   type McpStdioSkill,
-  type Resource,
   type RunEvent,
   type RuntimeEvent,
   type SkillType,
@@ -19,12 +15,20 @@ import {
   type ToolDefinition,
 } from "@perstack/core"
 import { BaseSkillManager } from "./base.js"
+import { getCommandArgs } from "./command-args.js"
+import { isPrivateOrLocalIP } from "./ip-validator.js"
+import { convertToolResult, handleToolError } from "./mcp-converters.js"
+import { defaultTransportFactory, type TransportFactory } from "./transport-factory.js"
 
 interface InitTimingInfo {
   startTime: number
   spawnDurationMs: number
   handshakeDurationMs: number
   serverInfo?: { name: string; version: string }
+}
+
+export interface McpSkillManagerOptions {
+  transportFactory?: TransportFactory
 }
 
 export class McpSkillManager extends BaseSkillManager {
@@ -34,6 +38,7 @@ export class McpSkillManager extends BaseSkillManager {
   override readonly skill: McpStdioSkill | McpSseSkill
   private _mcpClient?: McpClient
   private _env: Record<string, string>
+  private _transportFactory: TransportFactory
 
   constructor(
     skill: McpStdioSkill | McpSseSkill,
@@ -41,11 +46,13 @@ export class McpSkillManager extends BaseSkillManager {
     jobId: string,
     runId: string,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
+    options?: McpSkillManagerOptions,
   ) {
     super(jobId, runId, eventListener)
     this.name = skill.name
     this.skill = skill
     this._env = env
+    this._transportFactory = options?.transportFactory ?? defaultTransportFactory
     this.lazyInit =
       skill.type === "mcpStdioSkill" && skill.lazyInit && skill.name !== "@perstack/base"
   }
@@ -99,7 +106,7 @@ export class McpSkillManager extends BaseSkillManager {
     }
     const env = getFilteredEnv(requiredEnv)
     const startTime = Date.now()
-    const { command, args } = this._getCommandArgs(skill)
+    const { command, args } = getCommandArgs(skill)
     if (this._eventListener) {
       const event = createRuntimeEvent("skillStarting", this._jobId, this._runId, {
         skillName: skill.name,
@@ -108,10 +115,10 @@ export class McpSkillManager extends BaseSkillManager {
       })
       this._eventListener(event)
     }
-    const transport = new StdioClientTransport({ command, args, env, stderr: "pipe" })
+    const transport = this._transportFactory.createStdio({ command, args, env, stderr: "pipe" })
     const spawnDurationMs = Date.now() - startTime
-    if (transport.stderr) {
-      transport.stderr.on("data", (chunk: Buffer) => {
+    if ((transport as StdioClientTransport).stderr) {
+      ;(transport as StdioClientTransport).stderr!.on("data", (chunk: Buffer) => {
         if (this._eventListener) {
           const event = createRuntimeEvent("skillStderr", this._jobId, this._runId, {
             skillName: skill.name,
@@ -143,62 +150,13 @@ export class McpSkillManager extends BaseSkillManager {
     if (url.protocol !== "https:") {
       throw new Error(`Skill ${skill.name} SSE endpoint must use HTTPS: ${skill.endpoint}`)
     }
-    if (this._isPrivateOrLocalIP(url.hostname)) {
+    if (isPrivateOrLocalIP(url.hostname)) {
       throw new Error(
         `Skill ${skill.name} SSE endpoint cannot use private/local IP: ${skill.endpoint}`,
       )
     }
-    const transport = new SSEClientTransport(url)
+    const transport = this._transportFactory.createSse({ url })
     await this._mcpClient!.connect(transport)
-  }
-
-  private _isPrivateOrLocalIP(hostname: string): boolean {
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "::1" ||
-      hostname === "0.0.0.0"
-    ) {
-      return true
-    }
-    const ipv4Match = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
-    if (ipv4Match) {
-      const [, a, b] = ipv4Match.map(Number)
-      if (a === 10) return true
-      if (a === 172 && b >= 16 && b <= 31) return true
-      if (a === 192 && b === 168) return true
-      if (a === 169 && b === 254) return true
-      if (a === 127) return true
-    }
-    if (hostname.includes(":")) {
-      if (hostname.startsWith("fe80:") || hostname.startsWith("fc") || hostname.startsWith("fd")) {
-        return true
-      }
-    }
-    if (hostname.startsWith("::ffff:")) {
-      const ipv4Part = hostname.slice(7)
-      if (this._isPrivateOrLocalIP(ipv4Part)) {
-        return true
-      }
-    }
-    return false
-  }
-
-  private _getCommandArgs(skill: McpStdioSkill): { command: string; args: string[] } {
-    const { name, command, packageName, args } = skill
-    if (!packageName && (!args || args.length === 0)) {
-      throw new Error(`Skill ${name} has no packageName or args. Please provide one of them.`)
-    }
-    if (packageName && args && args.length > 0) {
-      throw new Error(
-        `Skill ${name} has both packageName and args. Please provide only one of them.`,
-      )
-    }
-    let newArgs = args && args.length > 0 ? args : [packageName!]
-    if (command === "npx" && !newArgs.includes("-y")) {
-      newArgs = ["-y", ...newArgs]
-    }
-    return { command, args: newArgs }
   }
 
   override async close(): Promise<void> {
@@ -233,84 +191,9 @@ export class McpSkillManager extends BaseSkillManager {
         name: toolName,
         arguments: input,
       })) as CallToolResult
-      return this._convertToolResult(result, toolName, input)
+      return convertToolResult(result, toolName, input)
     } catch (error) {
-      return this._handleToolError(error, toolName)
+      return handleToolError(error, toolName, McpError)
     }
-  }
-
-  private _handleToolError(error: unknown, toolName: string): Array<TextPart> {
-    if (error instanceof McpError) {
-      return [
-        {
-          type: "textPart",
-          text: `Error calling tool ${toolName}: ${error.message}`,
-          id: createId(),
-        },
-      ]
-    }
-    throw error
-  }
-
-  private _convertToolResult(
-    result: CallToolResult,
-    toolName: string,
-    input: Record<string, unknown>,
-  ): Array<TextPart | ImageInlinePart | FileInlinePart> {
-    if (!result.content || result.content.length === 0) {
-      return [
-        {
-          type: "textPart",
-          text: `Tool ${toolName} returned nothing with arguments: ${JSON.stringify(input)}`,
-          id: createId(),
-        },
-      ]
-    }
-    return result.content
-      .filter((part) => part.type !== "audio" && part.type !== "resource_link")
-      .map((part) => this._convertPart(part as CallToolResultContent))
-  }
-
-  private _convertPart(part: CallToolResultContent): TextPart | ImageInlinePart | FileInlinePart {
-    switch (part.type) {
-      case "text":
-        if (!part.text || part.text === "") {
-          return { type: "textPart", text: "Error: No content", id: createId() }
-        }
-        return { type: "textPart", text: part.text, id: createId() }
-      case "image":
-        if (!part.data || !part.mimeType) {
-          throw new Error("Image part must have both data and mimeType")
-        }
-        return {
-          type: "imageInlinePart",
-          encodedData: part.data,
-          mimeType: part.mimeType,
-          id: createId(),
-        }
-      case "resource":
-        if (!part.resource) {
-          throw new Error("Resource part must have resource content")
-        }
-        return this._convertResource(part.resource)
-    }
-  }
-
-  private _convertResource(resource: Resource): TextPart | FileInlinePart {
-    if (!resource.mimeType) {
-      throw new Error(`Resource ${JSON.stringify(resource)} has no mimeType`)
-    }
-    if (resource.text && typeof resource.text === "string") {
-      return { type: "textPart", text: resource.text, id: createId() }
-    }
-    if (resource.blob && typeof resource.blob === "string") {
-      return {
-        type: "fileInlinePart",
-        encodedData: resource.blob,
-        mimeType: resource.mimeType,
-        id: createId(),
-      }
-    }
-    throw new Error(`Unsupported resource type: ${JSON.stringify(resource)}`)
   }
 }
