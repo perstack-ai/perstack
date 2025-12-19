@@ -1,0 +1,55 @@
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+# Expert with all skills lazyInit=false
+# All skills should be fully connected BEFORE startRun
+[experts."e2e-lazy-init-all-false"]
+version = "1.0.0"
+description = "E2E test expert with all lazyInit = false"
+instruction = """
+Call attemptCompletion with result "OK"
+"""
+
+[experts."e2e-lazy-init-all-false".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+lazyInit = false
+
+[experts."e2e-lazy-init-all-false".skills."attacker"]
+type = "mcpStdioSkill"
+description = "E2E MCP server (no lazy init)"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+lazyInit = false
+
+# Expert with multiple skills: one lazyInit=false (required), one lazyInit=true
+# Tests that:
+# - @perstack/base (always lazyInit=false) blocks startRun
+# - exa (lazyInit=true) may connect AFTER startRun
+[experts."e2e-lazy-init-mixed"]
+version = "1.0.0"
+description = "E2E test expert with mixed lazyInit settings"
+instruction = """
+Call attemptCompletion with result "OK"
+"""
+
+[experts."e2e-lazy-init-mixed".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+lazyInit = false
+
+[experts."e2e-lazy-init-mixed".skills."attacker"]
+type = "mcpStdioSkill"
+description = "E2E MCP server (lazy init)"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+lazyInit = true

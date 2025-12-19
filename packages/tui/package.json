@@ -29,14 +29,14 @@
   "dependencies": {
     "@perstack/core": "workspace:*",
     "ink": "^6.5.1",
-    "react": "^19.2.0"
+    "react": "^19.2.3"
   },
   "devDependencies": {
     "@sindresorhus/tsconfig": "^8.1.0",
     "@types/react": "^19.2.7",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.16"
   },
   "engines": {
     "node": ">=22.0.0"
