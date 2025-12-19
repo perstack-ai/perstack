@@ -3,11 +3,12 @@ import {
   callTools,
   type RunEvent,
   retry,
+  stopRunByError,
   type TextPart,
   type ToolCall,
   type ToolCallPart,
 } from "@perstack/core"
-import { type GenerateTextResult, generateText, type ToolSet } from "ai"
+import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
 import { getModel } from "../../helpers/model.js"
 import { createEmptyUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 import {
@@ -72,6 +73,7 @@ function buildToolCalls(toolCalls: ClassifiedToolCall[]): ToolCall[] {
 export async function generatingToolCallLogic({
   setting,
   checkpoint,
+  step,
   skillManagers,
 }: RunSnapshot["context"]): Promise<RunEvent> {
   const { messages } = checkpoint
@@ -88,6 +90,24 @@ export async function generatingToolCallLogic({
       abortSignal: AbortSignal.timeout(setting.timeout),
     })
   } catch (error) {
+    if (error instanceof APICallError && !error.isRetryable) {
+      return stopRunByError(setting, checkpoint, {
+        checkpoint: {
+          ...checkpoint,
+          status: "stoppedByError",
+        },
+        step: {
+          ...step,
+          finishedAt: Date.now(),
+        },
+        error: {
+          name: error.name,
+          message: error.message,
+          statusCode: error.statusCode,
+          isRetryable: false,
+        },
+      })
+    }
     if (error instanceof Error) {
       const reason = JSON.stringify({ error: error.name, message: error.message })
       return retry(setting, checkpoint, {

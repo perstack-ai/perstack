@@ -1,0 +1,15 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: auto
+
+ignore:
+  - "**/*.tsx"
+  - "apps/perstack/**"
+  - "apps/create-expert/**"
+  - "**/test/**"
+  - "e2e/**"

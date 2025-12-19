@@ -50,6 +50,13 @@ export type LogEntry =
       port: number
       reason?: string
     }
+  | {
+      id: string
+      type: "error"
+      errorName: string
+      message: string
+      statusCode?: number
+    }
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
   runtimeVersion?: string

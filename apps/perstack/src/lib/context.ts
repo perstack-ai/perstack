@@ -52,7 +52,11 @@ export async function resolveRunContext(input: ResolveRunContextInput): Promise<
     )
   }
 
-  const env = getEnv(input.envPath ?? perstackConfig.envPath ?? [".env", ".env.local"])
+  const envPath =
+    input.envPath && input.envPath.length > 0
+      ? input.envPath
+      : (perstackConfig.envPath ?? [".env", ".env.local"])
+  const env = getEnv(envPath)
   const provider = (input.provider ??
     perstackConfig.provider?.providerName ??
     defaultProvider) as ProviderName

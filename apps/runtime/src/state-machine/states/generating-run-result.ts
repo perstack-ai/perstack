@@ -1,5 +1,5 @@
-import { completeRun, type RunEvent, retry } from "@perstack/core"
-import { type GenerateTextResult, generateText, type ToolSet } from "ai"
+import { completeRun, type RunEvent, retry, stopRunByError } from "@perstack/core"
+import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
 import { calculateContextWindowUsage, getModel } from "../../helpers/model.js"
 import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 import {
@@ -45,6 +45,24 @@ export async function generatingRunResultLogic({
       abortSignal: AbortSignal.timeout(setting.timeout),
     })
   } catch (error) {
+    if (error instanceof APICallError && !error.isRetryable) {
+      return stopRunByError(setting, checkpoint, {
+        checkpoint: {
+          ...checkpoint,
+          status: "stoppedByError",
+        },
+        step: {
+          ...step,
+          finishedAt: Date.now(),
+        },
+        error: {
+          name: error.name,
+          message: error.message,
+          statusCode: error.statusCode,
+          isRetryable: false,
+        },
+      })
+    }
     if (error instanceof Error) {
       const reason = JSON.stringify({ error: error.name, message: error.message })
       return retry(setting, checkpoint, {

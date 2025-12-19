@@ -178,6 +178,21 @@ const processEventToLogs = (
     }
     return
   }
+  if (event.type === "stopRunByError") {
+    const errorEvent = event as {
+      error: { name: string; message: string; statusCode?: number }
+    }
+    addLog({
+      id: `error-${event.id}`,
+      type: "error",
+      errorName: errorEvent.error.name,
+      message: errorEvent.error.message,
+      statusCode: errorEvent.error.statusCode,
+    })
+    state.isComplete = true
+    state.streamingText = undefined
+    return
+  }
   if (isDelegation) return
   if (event.type === "startRun") {
     const query = extractQuery(event)

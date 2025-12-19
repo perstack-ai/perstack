@@ -7,6 +7,7 @@ import {
   ActionRow,
   ActionRowSimple,
   CompletionRow,
+  ErrorRow,
   QueryRow,
   type StatusColor,
 } from "./action-row.js"
@@ -482,5 +483,13 @@ export const LogEntryRow = ({ entry }: LogEntryRowProps) => {
       return <Box>{renderDockerContainer(entry.status, entry.service, entry.message)}</Box>
     case "proxy-access":
       return <Box>{renderProxyAccess(entry.action, entry.domain, entry.port, entry.reason)}</Box>
+    case "error":
+      return (
+        <ErrorRow
+          errorName={entry.errorName}
+          message={entry.message}
+          statusCode={entry.statusCode}
+        />
+      )
   }
 }

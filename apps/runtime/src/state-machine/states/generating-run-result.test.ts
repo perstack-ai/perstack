@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2"
+import { APICallError } from "ai"
 import { MockLanguageModelV2 } from "ai/test"
 import { describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
@@ -92,6 +93,105 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
       },
     })
     mockGetModel.mockReturnValue(errorModel)
+    const event = await StateMachineLogics.GeneratingRunResult({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(event.type).toBe("retry")
+  })
+
+  it("returns stopRunByError event on non-retryable API error (401)", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          args: {},
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
+        },
+      ],
+    })
+    const apiError = new APICallError({
+      message: "Unauthorized",
+      url: "https://api.anthropic.com/v1/messages",
+      requestBodyValues: {},
+      statusCode: 401,
+      responseHeaders: {},
+      responseBody: "Invalid API key",
+      isRetryable: false,
+    })
+    mockGetModel.mockReturnValue(
+      new MockLanguageModelV2({
+        doGenerate: async () => {
+          throw apiError
+        },
+      }),
+    )
+    const event = await StateMachineLogics.GeneratingRunResult({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+    })
+    expect(event.type).toBe("stopRunByError")
+    if (event.type === "stopRunByError") {
+      expect(event.error.statusCode).toBe(401)
+      expect(event.error.isRetryable).toBe(false)
+      expect(event.checkpoint.status).toBe("stoppedByError")
+    }
+  })
+
+  it("returns retry event on retryable API error (429)", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          args: {},
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
+        },
+      ],
+    })
+    const apiError = new APICallError({
+      message: "Rate limited",
+      url: "https://api.anthropic.com/v1/messages",
+      requestBodyValues: {},
+      statusCode: 429,
+      responseHeaders: {},
+      responseBody: "Too many requests",
+      isRetryable: true,
+    })
+    mockGetModel.mockReturnValue(
+      new MockLanguageModelV2({
+        doGenerate: async () => {
+          throw apiError
+        },
+      }),
+    )
     const event = await StateMachineLogics.GeneratingRunResult({
       setting,
       checkpoint,
