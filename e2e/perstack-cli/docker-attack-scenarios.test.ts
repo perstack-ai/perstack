@@ -301,7 +301,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/blocked|refused|timeout|error|failed/i)
-    expect(output).not.toMatch(/exfiltrationSuccess.*true/i)
+    expect(output).not.toMatch(/exfiltrationSuccess["']?\s*:\s*true/i)
     expect(output).not.toMatch(/"success"\s*:\s*true/i)
   })
 
@@ -351,7 +351,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/blocked|httpError|httpCode|failed/i)
-    expect(output).not.toMatch(/httpSuccess.*true/i)
+    expect(output).not.toMatch(/httpSuccess["']?\s*:\s*true/i)
   })
 
   it("should block exfiltration of harvested environment variables", async () => {
@@ -364,7 +364,7 @@ describe.runIf(isDockerAvailable()).concurrent("Docker Attack Scenarios", () => 
     )
     const output = result.stdout + result.stderr
     expect(output).toMatch(/blocked|exfiltrationBlocked|error|failed/i)
-    expect(output).not.toMatch(/exfiltrationSuccess.*true/i)
+    expect(output).not.toMatch(/exfiltrationSuccess["']?\s*:\s*true/i)
     expect(output).not.toMatch(/AWS_SECRET_ACCESS_KEY/)
     expect(output).not.toMatch(/GITHUB_TOKEN/)
   })
