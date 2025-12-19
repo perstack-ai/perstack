@@ -149,12 +149,12 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@perstack/filesystem-storage':
+        specifier: workspace:*
+        version: link:../../packages/storages/filesystem
       '@perstack/runner':
         specifier: workspace:*
         version: link:../../packages/runner
-      '@perstack/storage':
-        specifier: workspace:*
-        version: link:../../packages/storage
       '@perstack/tui':
         specifier: workspace:*
         version: link:../../packages/tui
@@ -294,31 +294,6 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
-  packages/claude-code:
-    dependencies:
-      '@paralleldrive/cuid2':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
   packages/core:
     dependencies:
       '@paralleldrive/cuid2':
@@ -327,81 +302,6 @@ importers:
       zod:
         specifier: ^4.2.1
         version: 4.2.1
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/cursor:
-    dependencies:
-      '@paralleldrive/cuid2':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/docker:
-    dependencies:
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-      smol-toml:
-        specifier: ^1.5.2
-        version: 1.5.2
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/gemini:
-    dependencies:
-      '@paralleldrive/cuid2':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5
@@ -448,25 +348,25 @@ importers:
         version: 3.0.4
       '@perstack/claude-code':
         specifier: workspace:*
-        version: link:../claude-code
+        version: link:../runtimes/claude-code
       '@perstack/core':
         specifier: workspace:*
         version: link:../core
       '@perstack/cursor':
         specifier: workspace:*
-        version: link:../cursor
+        version: link:../runtimes/cursor
       '@perstack/docker':
         specifier: workspace:*
-        version: link:../docker
+        version: link:../runtimes/docker
+      '@perstack/filesystem-storage':
+        specifier: workspace:*
+        version: link:../storages/filesystem
       '@perstack/gemini':
         specifier: workspace:*
-        version: link:../gemini
+        version: link:../runtimes/gemini
       '@perstack/runtime':
         specifier: workspace:*
         version: link:../../apps/runtime
-      '@perstack/storage':
-        specifier: workspace:*
-        version: link:../storage
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5
@@ -484,14 +384,114 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
-  packages/storage:
+  packages/runtimes/claude-code:
     dependencies:
       '@paralleldrive/cuid2':
         specifier: ^3.0.4
         version: 3.0.4
       '@perstack/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../core
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtimes/cursor:
+    dependencies:
+      '@paralleldrive/cuid2':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtimes/docker:
+    dependencies:
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      smol-toml:
+        specifier: ^1.5.2
+        version: 1.5.2
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtimes/gemini:
+    dependencies:
+      '@paralleldrive/cuid2':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/storages/filesystem:
+    dependencies:
+      '@paralleldrive/cuid2':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5

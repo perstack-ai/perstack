@@ -45,13 +45,13 @@ major.minor.patch
 ```
 @perstack/core (schemas, types)
     │
-    ├─→ @perstack/storage (persistence)
+    ├─→ @perstack/filesystem-storage (persistence)
     ├─→ @perstack/api-client (API layer)
     ├─→ @perstack/tui (terminal UI)
     │
     └─→ @perstack/runtime (execution)
             │
-            └─→ @perstack/storage
+            └─→ @perstack/filesystem-storage
 
 @perstack/base (tool schemas defined inline, not exported)
 

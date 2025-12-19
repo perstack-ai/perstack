@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "@perstack/docker",
+  "name": "@perstack/filesystem-storage",
   "version": "0.0.2",
-  "description": "Perstack Docker Runtime Adapter",
+  "description": "Perstack Storage - Job, Checkpoint, Event persistence",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,13 +23,12 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "build": "pnpm run clean && tsup --config ../../../tsup.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@perstack/core": "workspace:*",
-    "smol-toml": "^1.5.2"
+    "@paralleldrive/cuid2": "^3.0.4",
+    "@perstack/core": "workspace:*"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",

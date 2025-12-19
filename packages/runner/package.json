@@ -34,7 +34,7 @@
     "@perstack/docker": "workspace:*",
     "@perstack/gemini": "workspace:*",
     "@perstack/runtime": "workspace:*",
-    "@perstack/storage": "workspace:*"
+    "@perstack/filesystem-storage": "workspace:*"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",

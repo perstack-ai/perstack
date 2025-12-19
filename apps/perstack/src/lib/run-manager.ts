@@ -8,7 +8,7 @@ import {
   getAllRuns as runtimeGetAllRuns,
   getCheckpointsByJobId as runtimeGetCheckpointsByJobId,
   getEventContents as runtimeGetEventContents,
-} from "@perstack/storage"
+} from "@perstack/filesystem-storage"
 
 export function getAllJobs(): Job[] {
   return runtimeGetAllJobs()

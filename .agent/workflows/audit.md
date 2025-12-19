@@ -51,7 +51,7 @@ The security layers described in this document (container isolation, Squid proxy
 Core:
   @perstack/core        - Schemas, types (source of truth)
   @perstack/runtime     - Execution engine, state machine, skill managers
-  @perstack/storage     - Checkpoint and event persistence
+  @perstack/filesystem-storage - Checkpoint and event persistence
 
 Skills:
   @perstack/base        - Built-in MCP tools (file ops, exec, think, todo)
