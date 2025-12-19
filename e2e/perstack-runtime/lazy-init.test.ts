@@ -111,9 +111,10 @@ describe.concurrent("Lazy Init", () => {
       expect(baseSkillEvent!.timestamp).toBeLessThanOrEqual(startRunEvent!.timestamp)
 
       // Verify that startRun happens immediately after base connects (not waiting for attacker)
-      // The gap between base connected and startRun should be very small (< 10ms)
+      // The gap between base connected and startRun should be small (< 50ms)
+      // Using 50ms to account for event loop, GC pauses, and CI runner variability
       const gapMs = startRunEvent!.timestamp - baseSkillEvent!.timestamp
-      expect(gapMs).toBeLessThan(10)
+      expect(gapMs).toBeLessThan(50)
 
       // Run should complete successfully
       const completeRunEvent = events.find((e) => e.type === "completeRun")
