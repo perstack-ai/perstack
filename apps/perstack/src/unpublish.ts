@@ -1,7 +1,7 @@
 import { ApiV1Client } from "@perstack/api-client/v1"
-import { renderUnpublish, type WizardVersionInfo } from "@perstack/tui"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
+import { renderUnpublish, type WizardVersionInfo } from "./tui/index.js"
 export const unpublishCommand = new Command()
   .command("unpublish")
   .description("Remove an Expert version from the registry")

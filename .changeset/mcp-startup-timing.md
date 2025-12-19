@@ -10,7 +10,6 @@
 "@perstack/runner": minor
 "@perstack/runtime": minor
 "@perstack/filesystem-storage": minor
-"@perstack/tui": minor
 "@perstack/e2e-mcp-server": minor
 "perstack": minor
 "create-expert": minor

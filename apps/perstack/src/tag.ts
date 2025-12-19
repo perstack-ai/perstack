@@ -1,7 +1,7 @@
 import { ApiV1Client } from "@perstack/api-client/v1"
-import { renderTag, type WizardVersionInfo } from "@perstack/tui"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
+import { renderTag, type WizardVersionInfo } from "./tui/index.js"
 
 export const tagCommand = new Command()
   .command("tag")

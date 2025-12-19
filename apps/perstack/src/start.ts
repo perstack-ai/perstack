@@ -6,8 +6,6 @@ import {
   startCommandInputSchema,
 } from "@perstack/core"
 import { getRuntimeVersion } from "@perstack/runner"
-import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "@perstack/tui"
-import { renderStart } from "@perstack/tui"
 import { Command } from "commander"
 import { resolveRunContext } from "./lib/context.js"
 import { parseInteractiveToolCallResult } from "./lib/interactive.js"
@@ -20,6 +18,8 @@ import {
   getRecentExperts,
 } from "./lib/run-manager.js"
 import { dispatchToRuntime } from "./lib/runtime-dispatcher.js"
+import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "./tui/index.js"
+import { renderStart } from "./tui/index.js"
 
 const CONTINUE_TIMEOUT_MS = 60_000
 

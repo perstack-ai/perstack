@@ -1,7 +1,7 @@
 import { Box, Static, Text } from "ink"
-import { BrowserRouter, LogEntryRow, RunSetting } from "../../src/components/index.js"
-import { InputAreaProvider } from "../../src/context/index.js"
-import { useAppState } from "../../src/hooks/index.js"
+import { BrowserRouter, LogEntryRow, RunSetting } from "../components/index.js"
+import { InputAreaProvider } from "../context/index.js"
+import { useAppState } from "../hooks/index.js"
 import type {
   CheckpointHistoryItem,
   EventHistoryItem,
@@ -9,7 +9,7 @@ import type {
   InitialRuntimeConfig,
   JobHistoryItem,
   PerstackEvent,
-} from "../../src/types/index.js"
+} from "../types/index.js"
 
 type AppProps = {
   needsQueryInput?: boolean

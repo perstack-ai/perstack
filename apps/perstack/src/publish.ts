@@ -1,8 +1,8 @@
 import { ApiV1Client, type CreateRegistryExpertInput } from "@perstack/api-client/v1"
 import type { PerstackConfig } from "@perstack/core"
-import { renderPublish } from "@perstack/tui"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
+import { renderPublish } from "./tui/index.js"
 
 type ConfigSkills = NonNullable<NonNullable<PerstackConfig["experts"]>[string]["skills"]>
 type ApiSkills = CreateRegistryExpertInput["skills"]

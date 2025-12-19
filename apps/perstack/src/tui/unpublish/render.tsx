@@ -1,17 +1,18 @@
 import { render } from "ink"
-import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
-import { TagApp, type TagWizardResult } from "./app.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../types/wizard.js"
+import { UnpublishApp, type UnpublishWizardResult } from "./app.js"
 
-type RenderTagWizardOptions = {
+type RenderUnpublishOptions = {
   experts: WizardExpertChoice[]
   onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
 }
-
-export async function renderTag(options: RenderTagWizardOptions): Promise<TagWizardResult | null> {
+export async function renderUnpublish(
+  options: RenderUnpublishOptions,
+): Promise<UnpublishWizardResult | null> {
   return new Promise((resolve) => {
-    let result: TagWizardResult | null = null
+    let result: UnpublishWizardResult | null = null
     const { waitUntilExit } = render(
-      <TagApp
+      <UnpublishApp
         experts={options.experts}
         onFetchVersions={options.onFetchVersions}
         onComplete={(r) => {
@@ -27,6 +28,5 @@ export async function renderTag(options: RenderTagWizardOptions): Promise<TagWiz
     })
   })
 }
-
-export type { TagWizardResult }
-export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+export type { UnpublishWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../types/wizard.js"

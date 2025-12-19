@@ -1,8 +1,8 @@
 import { Box, Static, Text, useApp } from "ink"
 import { useCallback, useEffect } from "react"
-import { LogEntryRow } from "../../src/components/index.js"
-import { useEventStore } from "../../src/hooks/state/use-event-store.js"
-import type { PerstackEvent } from "../../src/types/index.js"
+import { LogEntryRow } from "../components/index.js"
+import { useEventStore } from "../hooks/state/use-event-store.js"
+import type { PerstackEvent } from "../types/index.js"
 
 type ProgressAppProps = {
   title?: string

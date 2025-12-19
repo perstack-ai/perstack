@@ -47,7 +47,6 @@ major.minor.patch
     │
     ├─→ @perstack/filesystem-storage (persistence)
     ├─→ @perstack/api-client (API layer)
-    ├─→ @perstack/tui (terminal UI)
     │
     └─→ @perstack/runtime (execution)
             │

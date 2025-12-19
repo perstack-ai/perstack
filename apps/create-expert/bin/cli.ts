@@ -2,8 +2,6 @@
 import { spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import type { LLMProvider } from "@perstack/tui"
-import { renderWizard } from "@perstack/tui"
 import { Command } from "commander"
 import { config } from "dotenv"
 import {
@@ -13,6 +11,8 @@ import {
   generateCreateExpertToml,
   getDefaultModel,
 } from "../src/index.js"
+import type { LLMProvider } from "../src/tui/index.js"
+import { renderWizard } from "../src/tui/index.js"
 
 config()
 

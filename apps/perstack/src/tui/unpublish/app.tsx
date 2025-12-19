@@ -1,8 +1,8 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
-import { ErrorStep, VersionSelector, WizardExpertSelector } from "../../src/components/index.js"
-import { KEY_HINTS } from "../../src/constants.js"
-import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+import { ErrorStep, VersionSelector, WizardExpertSelector } from "../components/index.js"
+import { KEY_HINTS } from "../constants.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../types/wizard.js"
 
 type WizardStep =
   | { type: "selectExpert" }
@@ -170,4 +170,4 @@ export function UnpublishApp({
   }
 }
 export type { UnpublishWizardResult }
-export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+export type { WizardExpertChoice, WizardVersionInfo } from "../types/wizard.js"
