@@ -53,7 +53,7 @@ export async function runCli(args: string[], options?: RunOptions): Promise<Comm
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
-    const proc = spawn("npx", ["tsx", "./packages/perstack/bin/cli.ts", ...finalArgs], {
+    const proc = spawn("npx", ["tsx", "./apps/perstack/bin/cli.ts", ...finalArgs], {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],
@@ -87,7 +87,7 @@ export async function runRuntimeCli(args: string[], options?: RunOptions): Promi
   return new Promise((resolve, reject) => {
     let stdout = ""
     let stderr = ""
-    const proc = spawn("npx", ["tsx", "./packages/runtime/bin/cli.ts", ...finalArgs], {
+    const proc = spawn("npx", ["tsx", "./apps/runtime/bin/cli.ts", ...finalArgs], {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],

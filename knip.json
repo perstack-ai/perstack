@@ -14,7 +14,7 @@
     "benchmarks/**/*"
   ],
   "workspaces": {
-    "packages/perstack": {
+    "apps/perstack": {
       "entry": ["bin/cli.ts", "src/**/*.ts"]
     },
     "packages/tui": {

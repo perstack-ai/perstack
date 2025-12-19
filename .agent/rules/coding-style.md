@@ -102,7 +102,7 @@ describe("functionName", () => {
 Test files are located next to source files:
 
 ```
-packages/runtime/src/
+apps/runtime/src/
 ├── executor.ts
 ├── executor.test.ts
 ```

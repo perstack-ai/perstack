@@ -360,10 +360,10 @@ These tests verify that sensitive environment variables are not exposed.
 
 ### Two CLIs
 
-| CLI                | Package             | Storage                           | Use Case                     |
-| ------------------ | ------------------- | --------------------------------- | ---------------------------- |
-| `perstack`         | `packages/perstack` | Creates files in `perstack/jobs/` | Primary user-facing CLI      |
-| `perstack-runtime` | `packages/runtime`  | No storage (JSON events only)     | Standalone runtime execution |
+| CLI                | Package         | Storage                           | Use Case                     |
+| ------------------ | --------------- | --------------------------------- | ---------------------------- |
+| `perstack`         | `apps/perstack` | Creates files in `perstack/jobs/` | Primary user-facing CLI      |
+| `perstack-runtime` | `apps/runtime`  | No storage (JSON events only)     | Standalone runtime execution |
 
 ### Key Differences
 

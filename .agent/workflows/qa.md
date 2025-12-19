@@ -36,7 +36,7 @@ pnpm test -- --coverage
 Tests are located next to the source files:
 
 ```
-packages/runtime/src/
+apps/runtime/src/
 ├── executor.ts
 ├── executor.test.ts
 ```
