@@ -51,42 +51,14 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
-  packages/api-client:
-    dependencies:
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-      zod:
-        specifier: ^4.2.1
-        version: 4.2.1
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      msw:
-        specifier: ^2.12.4
-        version: 2.12.4(@types/node@25.0.3)(typescript@5.9.3)
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/base:
+  apps/base:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.1
         version: 1.25.1(hono@4.11.1)(zod@4.2.1)
       '@perstack/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../packages/core
       commander:
         specifier: ^14.0.2
         version: 14.0.2
@@ -109,6 +81,209 @@ importers:
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  apps/create-expert:
+    dependencies:
+      '@perstack/tui':
+        specifier: workspace:*
+        version: link:../../packages/tui
+      commander:
+        specifier: ^14.0.2
+        version: 14.0.2
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+    devDependencies:
+      '@sindresorhus/tsconfig':
+        specifier: ^8.1.0
+        version: 8.1.0
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  apps/e2e-mcp-server:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.25.1
+        version: 1.25.1(hono@4.11.1)(zod@4.2.1)
+      zod:
+        specifier: ^4.2.1
+        version: 4.2.1
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  apps/perstack:
+    dependencies:
+      '@perstack/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@perstack/runner':
+        specifier: workspace:*
+        version: link:../../packages/runner
+      '@perstack/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
+      '@perstack/tui':
+        specifier: workspace:*
+        version: link:../../packages/tui
+      commander:
+        specifier: ^14.0.2
+        version: 14.0.2
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      smol-toml:
+        specifier: ^1.5.2
+        version: 1.5.2
+      ts-dedent:
+        specifier: ^2.2.0
+        version: 2.2.0
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  apps/runtime:
+    dependencies:
+      '@ai-sdk/amazon-bedrock':
+        specifier: ^3.0.71
+        version: 3.0.71(zod@4.2.1)
+      '@ai-sdk/anthropic':
+        specifier: ^2.0.56
+        version: 2.0.56(zod@4.2.1)
+      '@ai-sdk/azure':
+        specifier: ^2.0.90
+        version: 2.0.90(zod@4.2.1)
+      '@ai-sdk/deepseek':
+        specifier: ^1.0.32
+        version: 1.0.32(zod@4.2.1)
+      '@ai-sdk/google':
+        specifier: ^2.0.49
+        version: 2.0.49(zod@4.2.1)
+      '@ai-sdk/google-vertex':
+        specifier: ^3.0.94
+        version: 3.0.94(zod@4.2.1)
+      '@ai-sdk/openai':
+        specifier: ^2.0.88
+        version: 2.0.88(zod@4.2.1)
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.25.1
+        version: 1.25.1(hono@4.11.1)(zod@4.2.1)
+      '@paralleldrive/cuid2':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@perstack/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      ai:
+        specifier: ^5.0.115
+        version: 5.0.115(zod@4.2.1)
+      commander:
+        specifier: ^14.0.2
+        version: 14.0.2
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      ollama-ai-provider-v2:
+        specifier: ^1.5.5
+        version: 1.5.5(zod@4.2.1)
+      smol-toml:
+        specifier: ^1.5.2
+        version: 1.5.2
+      ts-dedent:
+        specifier: ^2.2.0
+        version: 2.2.0
+      undici:
+        specifier: ^7.16.0
+        version: 7.16.0
+      xstate:
+        specifier: ^5.25.0
+        version: 5.25.0
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      memfs:
+        specifier: ^4.51.1
+        version: 4.51.1
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/api-client:
+    dependencies:
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.2.1
+        version: 4.2.1
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      msw:
+        specifier: ^2.12.4
+        version: 2.12.4(@types/node@25.0.3)(typescript@5.9.3)
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -156,34 +331,6 @@ importers:
       '@tsconfig/node22':
         specifier: ^22.0.5
         version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/create-expert:
-    dependencies:
-      '@perstack/tui':
-        specifier: workspace:*
-        version: link:../tui
-      commander:
-        specifier: ^14.0.2
-        version: 14.0.2
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
-    devDependencies:
-      '@sindresorhus/tsconfig':
-        specifier: ^8.1.0
-        version: 8.1.0
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
@@ -247,28 +394,6 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
-  packages/e2e-mcp-server:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.25.1
-        version: 1.25.1(hono@4.11.1)(zod@4.2.1)
-      zod:
-        specifier: ^4.2.1
-        version: 4.2.1
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   packages/gemini:
     dependencies:
       '@paralleldrive/cuid2':
@@ -316,52 +441,6 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
-  packages/perstack:
-    dependencies:
-      '@perstack/api-client':
-        specifier: workspace:*
-        version: link:../api-client
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-      '@perstack/runner':
-        specifier: workspace:*
-        version: link:../runner
-      '@perstack/storage':
-        specifier: workspace:*
-        version: link:../storage
-      '@perstack/tui':
-        specifier: workspace:*
-        version: link:../tui
-      commander:
-        specifier: ^14.0.2
-        version: 14.0.2
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
-      smol-toml:
-        specifier: ^1.5.2
-        version: 1.5.2
-      ts-dedent:
-        specifier: ^2.2.0
-        version: 2.2.0
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
   packages/runner:
     dependencies:
       '@paralleldrive/cuid2':
@@ -384,7 +463,7 @@ importers:
         version: link:../gemini
       '@perstack/runtime':
         specifier: workspace:*
-        version: link:../runtime
+        version: link:../../apps/runtime
       '@perstack/storage':
         specifier: workspace:*
         version: link:../storage
@@ -395,85 +474,6 @@ importers:
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/runtime:
-    dependencies:
-      '@ai-sdk/amazon-bedrock':
-        specifier: ^3.0.71
-        version: 3.0.71(zod@4.2.1)
-      '@ai-sdk/anthropic':
-        specifier: ^2.0.56
-        version: 2.0.56(zod@4.2.1)
-      '@ai-sdk/azure':
-        specifier: ^2.0.90
-        version: 2.0.90(zod@4.2.1)
-      '@ai-sdk/deepseek':
-        specifier: ^1.0.32
-        version: 1.0.32(zod@4.2.1)
-      '@ai-sdk/google':
-        specifier: ^2.0.49
-        version: 2.0.49(zod@4.2.1)
-      '@ai-sdk/google-vertex':
-        specifier: ^3.0.94
-        version: 3.0.94(zod@4.2.1)
-      '@ai-sdk/openai':
-        specifier: ^2.0.88
-        version: 2.0.88(zod@4.2.1)
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.25.1
-        version: 1.25.1(hono@4.11.1)(zod@4.2.1)
-      '@paralleldrive/cuid2':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@perstack/api-client':
-        specifier: workspace:*
-        version: link:../api-client
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-      ai:
-        specifier: ^5.0.115
-        version: 5.0.115(zod@4.2.1)
-      commander:
-        specifier: ^14.0.2
-        version: 14.0.2
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
-      ollama-ai-provider-v2:
-        specifier: ^1.5.5
-        version: 1.5.5(zod@4.2.1)
-      smol-toml:
-        specifier: ^1.5.2
-        version: 1.5.2
-      ts-dedent:
-        specifier: ^2.2.0
-        version: 2.2.0
-      undici:
-        specifier: ^7.16.0
-        version: 7.16.0
-      xstate:
-        specifier: ^5.25.0
-        version: 5.25.0
-    devDependencies:
-      '@tsconfig/node22':
-        specifier: ^22.0.5
-        version: 22.0.5
-      '@types/node':
-        specifier: ^25.0.3
-        version: 25.0.3
-      memfs:
-        specifier: ^4.51.1
-        version: 4.51.1
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)

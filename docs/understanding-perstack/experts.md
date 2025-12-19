@@ -88,7 +88,7 @@ packageName = "@eslint/mcp"
 When you run an Expert:
 
 1. The runtime creates a **Job** and starts the first **Run** with your Expert (the Coordinator)
-2. The instruction becomes the system prompt (with [runtime meta-instructions](https://github.com/perstack-ai/perstack/blob/main/packages/runtime/src/messages/instruction-message.ts))
+2. The instruction becomes the system prompt (with [runtime meta-instructions](https://github.com/perstack-ai/perstack/blob/main/apps/runtime/src/messages/instruction-message.ts))
 3. Your query becomes the user message
 4. The LLM reasons and calls tools (skills) as needed
 5. Each step produces a checkpoint — a complete snapshot of the Run's state

@@ -212,11 +212,11 @@ SECURITY.md
 packages/docker/src/dockerfile-generator.ts
 packages/docker/src/docker-compose-generator.ts
 packages/docker/src/squid-config-generator.ts
-packages/base/src/lib/safe-file.ts
-packages/base/src/lib/path.ts
-packages/base/src/tools/exec.ts
-packages/runtime/src/skill-manager/
-packages/perstack/src/lib/get-env.ts
+apps/base/src/lib/safe-file.ts
+apps/base/src/lib/path.ts
+apps/base/src/tools/exec.ts
+apps/runtime/src/skill-manager/
+apps/perstack/src/lib/get-env.ts
 packages/core/src/schemas/
 ```
 

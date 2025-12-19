@@ -23,5 +23,5 @@ perstack.toml
 !examples/**/perstack.toml
 !benchmarks/**/perstack.toml
 perstack/
-!packages/perstack
+!apps/perstack
 Thumbs.db
