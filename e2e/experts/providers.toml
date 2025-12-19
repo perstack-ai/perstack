@@ -1,0 +1,14 @@
+runtime = "local"
+
+[experts."e2e-providers"]
+version = "1.0.0"
+description = "E2E test expert for multi-provider testing"
+instruction = """
+You are a test expert. Reply with "Provider test completed successfully." and nothing else.
+"""
+
+[experts."e2e-providers".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
