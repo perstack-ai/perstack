@@ -35,3 +35,15 @@ export function isGeminiAvailable(): boolean {
     return false
   }
 }
+
+export function hasOpenAIKey(): boolean {
+  return !!process.env.OPENAI_API_KEY
+}
+
+export function hasAnthropicKey(): boolean {
+  return !!process.env.ANTHROPIC_API_KEY
+}
+
+export function hasGoogleKey(): boolean {
+  return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
+}
