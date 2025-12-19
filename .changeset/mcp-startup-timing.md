@@ -9,7 +9,7 @@
 "@perstack/mock": minor
 "@perstack/runner": minor
 "@perstack/runtime": minor
-"@perstack/storage": minor
+"@perstack/filesystem-storage": minor
 "@perstack/tui": minor
 "@perstack/e2e-mcp-server": minor
 "perstack": minor

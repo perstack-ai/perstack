@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "@perstack/storage",
+  "name": "@perstack/cursor",
   "version": "0.0.2",
-  "description": "Perstack Storage - Job, Checkpoint, Event persistence",
+  "description": "Perstack Cursor Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
+    "build": "pnpm run clean && tsup --config ../../../tsup.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

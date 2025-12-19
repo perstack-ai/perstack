@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "@perstack/claude-code",
+  "name": "@perstack/docker",
   "version": "0.0.2",
-  "description": "Perstack Claude Code Runtime Adapter",
+  "description": "Perstack Docker Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,12 +23,13 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
-    "typecheck": "tsc --noEmit"
+    "build": "pnpm run clean && tsup --config ../../../tsup.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@paralleldrive/cuid2": "^3.0.4",
-    "@perstack/core": "workspace:*"
+    "@perstack/core": "workspace:*",
+    "smol-toml": "^1.5.2"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",

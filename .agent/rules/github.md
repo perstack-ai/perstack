@@ -552,7 +552,7 @@ gh pr merge <number> --squash --delete-branch
 - `@perstack/gemini`
 - `@perstack/runner`
 - `@perstack/runtime`
-- `@perstack/storage`
+- `@perstack/filesystem-storage`
 - `@perstack/tui`
 - `create-expert`
 - `perstack` (CLI)

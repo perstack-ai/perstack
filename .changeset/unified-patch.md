@@ -15,7 +15,7 @@ Features:
 - Add multi-runtime support (cursor, claude-code, gemini)
 - Add create-expert interactive wizard
 - Add @perstack/runner for centralized adapter dispatch
-- Add @perstack/storage for modular storage layer
+- Add @perstack/filesystem-storage for modular storage layer
 - Add @perstack/e2e-mcp-server for security testing
 - Add --workspace option for Docker runtime volume mounting
 - Support GitHub URL for --config option
