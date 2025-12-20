@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () => {
   it("handles interactive tool calls correctly", async () => {
@@ -23,6 +27,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "stopRunByInteractiveTool",
@@ -63,6 +68,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("No pending tool calls found")
   })
@@ -78,6 +84,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("No pending tool calls found")
   })
@@ -97,6 +104,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(result.type).toBe("stopRunByInteractiveTool")
     if (result.type === "stopRunByInteractiveTool") {
@@ -120,6 +128,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingInteractiveTool']", () =>
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(result.type).toBe("stopRunByInteractiveTool")
     if (result.type === "stopRunByInteractiveTool") {

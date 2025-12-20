@@ -1,5 +1,7 @@
 import type { Checkpoint, RunSetting } from "@perstack/core"
 import { describe, expect, it } from "vitest"
+import type { LLMExecutor } from "../llm/index.js"
+import { createMockLLMExecutor } from "../llm/index.js"
 import { DefaultActorFactory, defaultActorFactory } from "./actor-factory.js"
 
 describe("@perstack/runtime: DefaultActorFactory", () => {
@@ -38,6 +40,7 @@ describe("@perstack/runtime: DefaultActorFactory", () => {
         } as unknown as Checkpoint,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: createMockLLMExecutor() as unknown as LLMExecutor,
       },
     })
 

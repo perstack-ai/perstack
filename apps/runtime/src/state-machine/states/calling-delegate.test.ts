@@ -7,8 +7,12 @@ type StopRunByDelegateResult = {
 }
 
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
   it("processes delegate call correctly", async () => {
@@ -50,6 +54,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "stopRunByDelegate",
@@ -97,6 +102,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("No pending tool calls found")
   })
@@ -136,6 +142,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow('Delegation error: skill manager "@perstack/math-expert" not found')
   })
@@ -179,6 +186,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Delegation error: query is undefined")
   })
@@ -244,6 +252,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })) as StopRunByDelegateResult
     expect(result.type).toBe("stopRunByDelegate")
     expect(result.checkpoint.delegateTo).toHaveLength(2)
@@ -334,6 +343,7 @@ describe("@perstack/runtime: StateMachineLogic['CallingDelegate']", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })) as StopRunByDelegateResult
     expect(result.type).toBe("stopRunByDelegate")
     expect(result.checkpoint.delegateTo).toHaveLength(1)

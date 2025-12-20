@@ -2,8 +2,12 @@ import { APICallError } from "ai"
 import { MockLanguageModelV2 } from "ai/test"
 import { describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 const mockGetModel = vi.fn()
 vi.mock("../../helpers/model.js", async (importOriginal) => ({
@@ -93,6 +97,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
     expect(event.expertKey).toBe("test-expert")
@@ -109,6 +114,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -139,6 +145,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("stopRunByError")
     if (event.type === "stopRunByError") {
@@ -175,6 +182,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -190,6 +198,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.id).toBeDefined()
     expect(typeof event.id).toBe("string")
@@ -207,6 +216,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
     expect(event.runId).toBe(setting.runId)
@@ -223,6 +233,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
     expect((event as { usage?: { inputTokens: number } }).usage).toBeDefined()
@@ -252,6 +263,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })
@@ -280,6 +292,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "interactive-skill": skillManager },
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })
@@ -308,6 +321,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "delegate-skill": skillManager },
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })
@@ -347,6 +361,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
         "delegate-skill": delegateSkillManager,
         "interactive-skill": interactiveSkillManager,
       },
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("callTools")
     if (event.type === "callTools") {
@@ -373,6 +388,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -395,6 +411,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
         step,
         eventListener: async () => {},
         skillManagers: { "test-skill": skillManager },
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Unexpected finish reason: error")
   })
@@ -417,6 +434,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })

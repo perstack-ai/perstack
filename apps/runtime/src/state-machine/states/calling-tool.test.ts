@@ -1,8 +1,12 @@
 import { createId } from "@paralleldrive/cuid2"
 import { describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { callingToolLogic } from "./calling-tool.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 type CallToolResult = Array<{ type: string; text?: string; id: string }>
 type CallToolFn = (toolName: string, args: unknown) => Promise<CallToolResult>
@@ -105,6 +109,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("resolveToolResults")
       if (event.type === "resolveToolResults") {
@@ -141,6 +146,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("resolveToolResults")
       if (event.type === "resolveToolResults") {
@@ -178,6 +184,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       const elapsed = Date.now() - start
       expect(elapsed).toBeLessThan(DELAY_MS * 2)
@@ -202,6 +209,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("resolveToolResults")
       expect(event.expertKey).toBe(setting.expertKey)
@@ -221,6 +229,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
           step,
           eventListener: async () => {},
           skillManagers: {},
+          llmExecutor: mockLLMExecutor,
         }),
       ).rejects.toThrow("No tool calls found")
     })
@@ -242,6 +251,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("callDelegate")
     })
@@ -266,6 +276,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("callInteractiveTool")
     })
@@ -285,6 +296,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
           step,
           eventListener: async () => {},
           skillManagers: {},
+          llmExecutor: mockLLMExecutor,
         }),
       ).rejects.toThrow("Tool unknownTool not found")
     })
@@ -312,6 +324,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("resolveToolResults")
   })
@@ -343,6 +356,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("attemptCompletion")
   })
@@ -380,6 +394,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("resolveToolResults")
   })
@@ -407,6 +422,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("resolveToolResults")
   })
@@ -436,6 +452,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("resolveToolResults")
   })
@@ -462,6 +479,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("resolveToolResults")
   })
@@ -486,6 +504,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Tool unknownTool not found")
   })
@@ -535,6 +554,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
       step,
       eventListener: async () => {},
       skillManagers,
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("resolveToolResults")
     if (event.type === "resolveToolResults") {
@@ -562,6 +582,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("callDelegate")
       expect(step.partialToolResults).toHaveLength(1)
@@ -595,6 +616,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("callInteractiveTool")
       expect(step.partialToolResults).toHaveLength(1)
@@ -628,6 +650,7 @@ describe("@perstack/runtime: callingToolLogic", () => {
         step,
         eventListener: async () => {},
         skillManagers,
+        llmExecutor: mockLLMExecutor,
       })
       expect(event.type).toBe("callDelegate")
       expect(step.pendingToolCalls).toHaveLength(2)

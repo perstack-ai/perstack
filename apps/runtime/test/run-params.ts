@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2"
 import {
   type Checkpoint,
   checkpointSchema,
+  type RunEvent,
   type RunParamsInput,
   type RunSetting,
   runParamsSchema,
@@ -9,6 +10,10 @@ import {
   stepSchema,
 } from "@perstack/core"
 import { createEmptyUsage } from "../src/helpers/usage.js"
+import type { LLMExecutor } from "../src/llm/index.js"
+import { createMockLLMExecutor } from "../src/llm/index.js"
+import type { BaseSkillManager } from "../src/skill-manager/index.js"
+import type { RunSnapshot } from "../src/state-machine/machine.js"
 
 export function createRunSetting(overrides: Partial<RunParamsInput["setting"]> = {}): RunSetting {
   return runParamsSchema.shape.setting.parse({
@@ -79,4 +84,24 @@ export function createStep(overrides: Partial<Step> = {}): Step {
     finishedAt: undefined,
     ...overrides,
   })
+}
+
+export interface CreateTestContextOptions {
+  setting?: Partial<RunParamsInput["setting"]>
+  checkpoint?: Partial<Checkpoint>
+  step?: Partial<Step>
+  eventListener?: (event: RunEvent) => Promise<void>
+  skillManagers?: Record<string, BaseSkillManager>
+  llmExecutor?: LLMExecutor
+}
+
+export function createTestContext(options: CreateTestContextOptions = {}): RunSnapshot["context"] {
+  return {
+    setting: createRunSetting(options.setting),
+    checkpoint: createCheckpoint(options.checkpoint),
+    step: createStep(options.step),
+    eventListener: options.eventListener ?? (async () => {}),
+    skillManagers: options.skillManagers ?? {},
+    llmExecutor: options.llmExecutor ?? (createMockLLMExecutor() as unknown as LLMExecutor),
+  }
 }

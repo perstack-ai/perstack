@@ -1,5 +1,6 @@
 import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent, Step } from "@perstack/core"
 import type { RunEventEmitter } from "../events/event-emitter.js"
+import type { LLMExecutor } from "../llm/index.js"
 import { type BaseSkillManager, closeSkillManagers } from "../skill-manager/index.js"
 import { type ActorFactory, defaultActorFactory } from "./actor-factory.js"
 import { type RunActor, type RunSnapshot, StateMachineLogics } from "./machine.js"
@@ -9,6 +10,7 @@ export type StateMachineParams = {
   initialCheckpoint: Checkpoint
   eventListener: (event: RunEvent | RuntimeEvent) => Promise<void>
   skillManagers: Record<string, BaseSkillManager>
+  llmExecutor: LLMExecutor
   eventEmitter: RunEventEmitter
   storeCheckpoint: (checkpoint: Checkpoint) => Promise<void>
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>
@@ -48,7 +50,7 @@ export class StateMachineCoordinator {
    * Execute the state machine and return the final checkpoint.
    */
   async execute(): Promise<Checkpoint> {
-    const { setting, initialCheckpoint, eventListener, skillManagers } = this.params
+    const { setting, initialCheckpoint, eventListener, skillManagers, llmExecutor } = this.params
 
     this.actor = this.actorFactory.create({
       input: {
@@ -56,6 +58,7 @@ export class StateMachineCoordinator {
         initialCheckpoint,
         eventListener,
         skillManagers,
+        llmExecutor,
       },
     })
 

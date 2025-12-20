@@ -2,7 +2,11 @@ import { createId } from "@paralleldrive/cuid2"
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
 import { createEmptyUsage } from "../../helpers/usage.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
   it("processes tool result correctly", async () => {
@@ -39,6 +43,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "finishToolCall",
@@ -88,6 +93,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("No tool calls or tool results found")
   })
@@ -133,6 +139,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingToolResult']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(result.type).toBe("finishToolCall")
     if (result.type !== "finishToolCall") throw new Error("Expected finishToolCall")

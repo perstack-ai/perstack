@@ -1,7 +1,11 @@
 import { createId } from "@paralleldrive/cuid2"
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 describe("@perstack/runtime: StateMachineLogic['ResolvingThought']", () => {
   it("processes thought tool result correctly", async () => {
@@ -38,6 +42,7 @@ describe("@perstack/runtime: StateMachineLogic['ResolvingThought']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "finishToolCall",

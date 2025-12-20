@@ -17,6 +17,9 @@ import {
   type ResolveExpertToRunFn,
   setupExperts,
 } from "../helpers/index.js"
+import { ProviderAdapterFactory } from "../helpers/provider-adapter-factory.js"
+import "../helpers/register-providers.js"
+import { LLMExecutor } from "../llm/index.js"
 import { getSkillManagers } from "../skill-manager/index.js"
 import { executeStateMachine } from "../state-machine/index.js"
 
@@ -45,6 +48,12 @@ export class SingleRunExecutor {
   constructor(private options: SingleRunExecutorOptions = {}) {}
 
   async execute(setting: RunSetting, checkpoint?: Checkpoint): Promise<SingleRunResult> {
+    const adapter = await ProviderAdapterFactory.create(setting.providerConfig, {
+      proxyUrl: setting.proxyUrl,
+    })
+    const model = adapter.createModel(setting.model)
+    const llmExecutor = new LLMExecutor(adapter, model)
+
     const contextWindow = getContextWindow(setting.providerConfig.providerName, setting.model)
     const { expertToRun, experts } = await setupExperts(setting, this.options.resolveExpertToRun)
 
@@ -77,6 +86,7 @@ export class SingleRunExecutor {
       initialCheckpoint,
       eventListener,
       skillManagers,
+      llmExecutor,
       eventEmitter,
       storeCheckpoint: this.options.storeCheckpoint ?? (async () => {}),
       shouldContinueRun: this.options.shouldContinueRun,
