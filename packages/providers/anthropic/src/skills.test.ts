@@ -14,12 +14,12 @@ describe("buildProviderOptions", () => {
   })
 
   it("builds provider options for builtin skill", () => {
-    const skills: AnthropicProviderSkill[] = [{ type: "builtin", skillId: "computer_use" }]
+    const skills: AnthropicProviderSkill[] = [{ type: "builtin", skillId: "pdf" }]
     const result = buildProviderOptions(skills)
     expect(result).toEqual({
       anthropic: {
         container: {
-          skills: [{ type: "builtin", name: "computer_use" }],
+          skills: [{ type: "builtin", name: "pdf" }],
         },
       },
     })
@@ -73,7 +73,7 @@ describe("hasCustomProviderSkills", () => {
   })
 
   it("returns false for only builtin skills", () => {
-    const skills: AnthropicProviderSkill[] = [{ type: "builtin", skillId: "computer_use" }]
+    const skills: AnthropicProviderSkill[] = [{ type: "builtin", skillId: "pdf" }]
     expect(hasCustomProviderSkills(skills)).toBe(false)
   })
 
@@ -84,7 +84,7 @@ describe("hasCustomProviderSkills", () => {
 
   it("returns true for mixed skills with at least one custom", () => {
     const skills: AnthropicProviderSkill[] = [
-      { type: "builtin", skillId: "computer_use" },
+      { type: "builtin", skillId: "pdf" },
       { type: "custom", name: "my-tool", definition: "{}" },
     ]
     expect(hasCustomProviderSkills(skills)).toBe(true)
