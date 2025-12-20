@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process"
-import type { RuntimeInfo } from "@perstack/tui"
+import type { RuntimeInfo } from "../tui/index.js"
 
 function checkCommand(command: string): { available: boolean; version?: string } {
   try {

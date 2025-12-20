@@ -57,8 +57,7 @@ Skills:
   @perstack/base        - Built-in MCP tools (file ops, exec, think, todo)
 
 CLI:
-  @perstack/perstack    - CLI package (perstack start/run/publish)
-  @perstack/tui         - Terminal UI
+  perstack              - CLI package (perstack start/run/publish)
 
 Adapters:
   @perstack/docker      - Docker adapter with network isolation

@@ -1,4 +1,4 @@
-import type { LLMProvider, RuntimeType } from "@perstack/tui"
+import type { LLMProvider, RuntimeType } from "../tui/index.js"
 
 interface AgentsMdOptions {
   provider: LLMProvider

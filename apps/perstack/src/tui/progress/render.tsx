@@ -1,6 +1,6 @@
 import { render } from "ink"
-import type { PerstackEvent } from "../../src/types/index.js"
-import { EventQueue } from "../../src/utils/event-queue.js"
+import type { PerstackEvent } from "../types/index.js"
+import { EventQueue } from "../utils/event-queue.js"
 import { ProgressApp } from "./app.js"
 
 type RenderProgressOptions = {

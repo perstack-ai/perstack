@@ -1,5 +1,5 @@
 import { render } from "ink"
-import type { WizardExpertChoice } from "../../src/types/wizard.js"
+import type { WizardExpertChoice } from "../types/wizard.js"
 import { PublishApp } from "./app.js"
 
 type RenderPublishSelectOptions = {

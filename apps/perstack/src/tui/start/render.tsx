@@ -5,8 +5,8 @@ import type {
   InitialRuntimeConfig,
   JobHistoryItem,
   PerstackEvent,
-} from "../../src/types/index.js"
-import { EventQueue } from "../../src/utils/event-queue.js"
+} from "../types/index.js"
+import { EventQueue } from "../utils/event-queue.js"
 import { App } from "./app.js"
 
 const createEventEmitter = () => {

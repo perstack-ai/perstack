@@ -1,90 +1,93 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useState } from "react"
-import { ErrorStep, VersionSelector, WizardExpertSelector } from "../../src/components/index.js"
-import { KEY_HINTS } from "../../src/constants.js"
-import type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+import { ErrorStep, VersionSelector, WizardExpertSelector } from "../components/index.js"
+import { KEY_HINTS } from "../constants.js"
+import type { WizardExpertChoice, WizardVersionInfo } from "../types/wizard.js"
+import { getStatusColor } from "../utils/index.js"
 
 type WizardStep =
   | { type: "selectExpert" }
   | { type: "loadingVersions"; expertName: string }
   | { type: "selectVersion"; expertName: string; versions: WizardVersionInfo[] }
-  | { type: "inputTags"; expertKey: string; currentTags: string[] }
-  | { type: "confirm"; expertKey: string; tags: string[]; currentTags: string[] }
+  | { type: "selectStatus"; expertKey: string; currentStatus: string }
+  | { type: "confirm"; expertKey: string; status: string; currentStatus: string }
   | { type: "error"; message: string }
-type TagWizardResult = {
+type StatusWizardResult = {
   expertKey: string
-  tags: string[]
+  status: "available" | "deprecated" | "disabled"
 }
-type TagAppProps = {
+type StatusAppProps = {
   experts: WizardExpertChoice[]
   onFetchVersions: (expertName: string) => Promise<WizardVersionInfo[]>
-  onComplete: (result: TagWizardResult) => void
+  onComplete: (result: StatusWizardResult) => void
   onCancel: () => void
 }
+function getAvailableStatusTransitions(currentStatus: string): string[] {
+  switch (currentStatus) {
+    case "available":
+      return ["available", "deprecated", "disabled"]
+    case "deprecated":
+      return ["deprecated", "disabled"]
+    case "disabled":
+      return ["disabled"]
+    default:
+      return [currentStatus]
+  }
+}
 
-function TagInput({
+function StatusSelector({
   expertKey,
-  currentTags,
-  onSubmit,
+  currentStatus,
+  onSelect,
   onBack,
 }: {
   expertKey: string
-  currentTags: string[]
-  onSubmit: (tags: string[]) => void
+  currentStatus: string
+  onSelect: (status: string) => void
   onBack: () => void
 }) {
   const { exit } = useApp()
-  const customTags = currentTags.filter((t) => t !== "latest")
-  const [input, setInput] = useState(customTags.join(", "))
-  const [warning, setWarning] = useState("")
-  useInput((char, key) => {
-    if (key.return) {
-      const rawTags = input
-        .split(",")
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0)
-      const hasLatest = rawTags.includes("latest")
-      const tags = rawTags.filter((t) => t !== "latest")
-      if (hasLatest) {
-        setWarning("'latest' tag is managed automatically and was removed")
-        setInput(tags.join(", "))
-        return
+  const availableStatuses = getAvailableStatusTransitions(currentStatus)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  useInput((input, key) => {
+    if (key.upArrow) {
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : availableStatuses.length - 1))
+    } else if (key.downArrow) {
+      setSelectedIndex((prev) => (prev < availableStatuses.length - 1 ? prev + 1 : 0))
+    } else if (key.return) {
+      const status = availableStatuses[selectedIndex]
+      if (status) {
+        onSelect(status)
       }
-      setWarning("")
-      onSubmit(tags)
     } else if (key.escape) {
       onBack()
-    } else if (key.backspace || key.delete) {
-      setInput((prev) => prev.slice(0, -1))
-      setWarning("")
-    } else if (char === "q" && key.ctrl) {
+    } else if (input === "q") {
       exit()
-    } else if (char && !key.ctrl && !key.meta) {
-      setInput((prev) => prev + char)
-      setWarning("")
     }
   })
-  const hasLatestInCurrent = currentTags.includes("latest")
   return (
     <Box flexDirection="column">
-      <Text bold>Enter tags for {expertKey}:</Text>
-      <Text dimColor>
-        Current: {customTags.length > 0 ? customTags.join(", ") : "(none)"}
-        {hasLatestInCurrent && <Text color="magenta"> [latest - auto-managed]</Text>}
-      </Text>
-      <Box marginTop={1}>
-        <Text>Tags: </Text>
-        <Text color="cyan">{input}</Text>
-        <Text color="gray">│</Text>
+      <Text bold>Select status for {expertKey}:</Text>
+      <Text dimColor>Current: {currentStatus}</Text>
+      <Box flexDirection="column" marginTop={1}>
+        {availableStatuses.map((status, index) => (
+          <Box key={status}>
+            <Text color={index === selectedIndex ? "cyan" : getStatusColor(status)}>
+              {index === selectedIndex ? "❯ " : "  "}
+              {status}
+              {status === currentStatus && <Text dimColor> (current)</Text>}
+            </Text>
+          </Box>
+        ))}
       </Box>
-      {warning && (
+      {currentStatus === "disabled" && (
         <Box marginTop={1}>
-          <Text color="yellow">⚠ {warning}</Text>
+          <Text color="yellow">⚠ disabled status cannot be changed</Text>
         </Box>
       )}
       <Box marginTop={1}>
         <Text dimColor>
-          comma-separated {KEY_HINTS.CONFIRM} {KEY_HINTS.ESC_BACK} {KEY_HINTS.CTRL_QUIT}
+          {KEY_HINTS.NAVIGATE} {KEY_HINTS.SELECT} {KEY_HINTS.ESC_BACK} {KEY_HINTS.QUIT}
         </Text>
       </Box>
     </Box>
@@ -93,14 +96,14 @@ function TagInput({
 
 function ConfirmStep({
   expertKey,
-  tags,
-  currentTags,
+  status,
+  currentStatus,
   onConfirm,
   onBack,
 }: {
   expertKey: string
-  tags: string[]
-  currentTags: string[]
+  status: string
+  currentStatus: string
   onConfirm: () => void
   onBack: () => void
 }) {
@@ -122,23 +125,20 @@ function ConfirmStep({
       exit()
     }
   })
-  const customCurrentTags = currentTags.filter((t) => t !== "latest")
-  const tagsChanged =
-    tags.length !== customCurrentTags.length ||
-    [...tags].sort().join(",") !== [...customCurrentTags].sort().join(",")
+  const statusChanged = status !== currentStatus
   return (
     <Box flexDirection="column">
-      <Text bold>Confirm update for {expertKey}:</Text>
+      <Text bold>Confirm status change for {expertKey}:</Text>
       <Box flexDirection="column" marginTop={1} marginLeft={2}>
-        {tagsChanged ? (
+        {statusChanged ? (
           <Text>
-            Tags: <Text color="yellow">{customCurrentTags.join(", ") || "(none)"}</Text>
+            Status: <Text color={getStatusColor(currentStatus)}>{currentStatus}</Text>
             <Text> → </Text>
-            <Text color="cyan">{tags.join(", ") || "(none)"}</Text>
+            <Text color={getStatusColor(status)}>{status}</Text>
           </Text>
         ) : (
           <Text>
-            Tags: <Text color="cyan">{tags.join(", ") || "(none)"}</Text>
+            Status: <Text color={getStatusColor(status)}>{status}</Text>
             <Text dimColor> (unchanged)</Text>
           </Text>
         )}
@@ -160,7 +160,7 @@ function ConfirmStep({
   )
 }
 
-export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAppProps) {
+export function StatusApp({ experts, onFetchVersions, onComplete, onCancel }: StatusAppProps) {
   const { exit } = useApp()
   const [step, setStep] = useState<WizardStep>({ type: "selectExpert" })
   const handleExpertSelect = async (expertName: string) => {
@@ -181,18 +181,18 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
   }
   const handleVersionSelect = (version: WizardVersionInfo) => {
     setStep({
-      type: "inputTags",
+      type: "selectStatus",
       expertKey: version.key,
-      currentTags: version.tags,
+      currentStatus: version.status,
     })
   }
-  const handleTagsSubmit = (tags: string[]) => {
-    if (step.type === "inputTags") {
+  const handleStatusSelect = (status: string) => {
+    if (step.type === "selectStatus") {
       setStep({
         type: "confirm",
         expertKey: step.expertKey,
-        tags,
-        currentTags: step.currentTags,
+        status,
+        currentStatus: step.currentStatus,
       })
     }
   }
@@ -200,7 +200,7 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
     if (step.type === "confirm") {
       onComplete({
         expertKey: step.expertKey,
-        tags: step.tags,
+        status: step.status as "available" | "deprecated" | "disabled",
       })
       exit()
     }
@@ -210,14 +210,14 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
       case "selectVersion":
         setStep({ type: "selectExpert" })
         break
-      case "inputTags":
+      case "selectStatus":
         setStep({ type: "selectExpert" })
         break
       case "confirm":
         setStep({
-          type: "inputTags",
+          type: "selectStatus",
           expertKey: step.expertKey,
-          currentTags: step.currentTags,
+          currentStatus: step.currentStatus,
         })
         break
       case "error":
@@ -232,7 +232,7 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
     case "selectExpert":
       return (
         <WizardExpertSelector
-          title="Select an Expert to tag:"
+          title="Select an Expert to change status:"
           experts={experts}
           onSelect={handleExpertSelect}
         />
@@ -252,12 +252,12 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
           onBack={handleBack}
         />
       )
-    case "inputTags":
+    case "selectStatus":
       return (
-        <TagInput
+        <StatusSelector
           expertKey={step.expertKey}
-          currentTags={step.currentTags}
-          onSubmit={handleTagsSubmit}
+          currentStatus={step.currentStatus}
+          onSelect={handleStatusSelect}
           onBack={handleBack}
         />
       )
@@ -265,8 +265,8 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
       return (
         <ConfirmStep
           expertKey={step.expertKey}
-          tags={step.tags}
-          currentTags={step.currentTags}
+          status={step.status}
+          currentStatus={step.currentStatus}
           onConfirm={handleConfirm}
           onBack={handleBack}
         />
@@ -278,5 +278,5 @@ export function TagApp({ experts, onFetchVersions, onComplete, onCancel }: TagAp
   }
 }
 
-export type { TagWizardResult }
-export type { WizardExpertChoice, WizardVersionInfo } from "../../src/types/wizard.js"
+export type { StatusWizardResult }
+export type { WizardExpertChoice, WizardVersionInfo } from "../types/wizard.js"

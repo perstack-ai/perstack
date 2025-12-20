@@ -1,4 +1,4 @@
-import type { LLMInfo, LLMProvider } from "@perstack/tui"
+import type { LLMInfo, LLMProvider } from "../tui/index.js"
 
 const LLM_CONFIGS: Record<
   LLMProvider,

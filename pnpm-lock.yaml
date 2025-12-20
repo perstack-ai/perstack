@@ -93,22 +93,28 @@ importers:
 
   apps/create-expert:
     dependencies:
-      '@perstack/tui':
-        specifier: workspace:*
-        version: link:../../packages/tui
       commander:
         specifier: ^14.0.2
         version: 14.0.2
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      ink:
+        specifier: ^6.5.1
+        version: 6.5.1(@types/react@19.2.7)(react@19.2.3)
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
     devDependencies:
-      '@sindresorhus/tsconfig':
-        specifier: ^8.1.0
-        version: 8.1.0
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
+      '@types/react':
+        specifier: ^19.2.7
+        version: 19.2.7
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -155,15 +161,18 @@ importers:
       '@perstack/runner':
         specifier: workspace:*
         version: link:../../packages/runner
-      '@perstack/tui':
-        specifier: workspace:*
-        version: link:../../packages/tui
       commander:
         specifier: ^14.0.2
         version: 14.0.2
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      ink:
+        specifier: ^6.5.1
+        version: 6.5.1(@types/react@19.2.7)(react@19.2.3)
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
       smol-toml:
         specifier: ^1.5.2
         version: 1.5.2
@@ -177,6 +186,9 @@ importers:
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
+      '@types/react':
+        specifier: ^19.2.7
+        version: 19.2.7
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -499,34 +511,6 @@ importers:
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.16
-        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/tui:
-    dependencies:
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../core
-      ink:
-        specifier: ^6.5.1
-        version: 6.5.1(@types/react@19.2.7)(react@19.2.3)
-      react:
-        specifier: ^19.2.3
-        version: 19.2.3
-    devDependencies:
-      '@sindresorhus/tsconfig':
-        specifier: ^8.1.0
-        version: 8.1.0
-      '@types/react':
-        specifier: ^19.2.7
-        version: 19.2.7
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -1288,10 +1272,6 @@ packages:
     resolution: {integrity: sha512-JRpZUhCfhZ4keB5v0fe02gQJy05GqboPOaxvjugW04RLSYYoB/9t2lx2u/tMs/Na/1NXfY8QYjgRljRpN+MjTQ==}
     cpu: [x64]
     os: [win32]
-
-  '@sindresorhus/tsconfig@8.1.0':
-    resolution: {integrity: sha512-MggpguA4jNdtyoUy2Hs54nb4lP4rbhH34CsOiFId1q6fmFPnipqeo70ZRkjp5p4Z7wdyspALtSAcKaxL2/3waQ==}
-    engines: {node: '>=20'}
 
   '@smithy/eventstream-codec@4.2.7':
     resolution: {integrity: sha512-DrpkEoM3j9cBBWhufqBwnbbn+3nf1N9FP6xuVJ+e220jbactKuQgaZwjwP5CP1t+O94brm2JgVMD2atMGX3xIQ==}
@@ -3752,8 +3732,6 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.53.5':
     optional: true
-
-  '@sindresorhus/tsconfig@8.1.0': {}
 
   '@smithy/eventstream-codec@4.2.7':
     dependencies:

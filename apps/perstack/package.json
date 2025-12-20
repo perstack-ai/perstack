@@ -24,15 +24,17 @@
     "@perstack/core": "workspace:*",
     "@perstack/runner": "workspace:*",
     "@perstack/filesystem-storage": "workspace:*",
-    "@perstack/tui": "workspace:*",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
+    "ink": "^6.5.1",
+    "react": "^19.2.3",
     "smol-toml": "^1.5.2",
     "ts-dedent": "^2.2.0"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",
     "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"

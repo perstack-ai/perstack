@@ -1,6 +1,6 @@
 import { useApp } from "ink"
-import { WizardExpertSelector } from "../../src/components/index.js"
-import type { WizardExpertChoice } from "../../src/types/wizard.js"
+import { WizardExpertSelector } from "../components/index.js"
+import type { WizardExpertChoice } from "../types/wizard.js"
 
 type PublishAppProps = {
   experts: WizardExpertChoice[]
