@@ -10,6 +10,9 @@
 "@perstack/bedrock-provider": minor
 "@perstack/vertex-provider": minor
 "@perstack/deepseek-provider": minor
+"@perstack/api-client": minor
+"@perstack/mock": minor
+"@perstack/runner": minor
 ---
 
 Add pluggable LLM provider architecture with ProviderAdapter pattern
