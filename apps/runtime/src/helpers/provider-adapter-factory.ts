@@ -58,11 +58,14 @@ export class ProviderAdapterFactory {
 
     // Create adapter and track the pending promise
     const creationPromise = (async () => {
-      const AdapterClass = await loader()
-      const adapter = new AdapterClass(config, options)
-      ProviderAdapterFactory.instances.set(cacheKey, adapter)
-      ProviderAdapterFactory.pendingCreations.delete(cacheKey)
-      return adapter
+      try {
+        const AdapterClass = await loader()
+        const adapter = new AdapterClass(config, options)
+        ProviderAdapterFactory.instances.set(cacheKey, adapter)
+        return adapter
+      } finally {
+        ProviderAdapterFactory.pendingCreations.delete(cacheKey)
+      }
     })()
 
     ProviderAdapterFactory.pendingCreations.set(cacheKey, creationPromise)
