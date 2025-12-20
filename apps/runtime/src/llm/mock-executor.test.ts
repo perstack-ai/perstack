@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { MockLLMExecutor, createMockLLMExecutor } from "./mock-executor.js"
+import { createMockLLMExecutor, MockLLMExecutor } from "./mock-executor.js"
 
 describe("MockLLMExecutor", () => {
   it("returns default success response", async () => {
