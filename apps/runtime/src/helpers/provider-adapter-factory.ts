@@ -31,6 +31,7 @@ export class ProviderNotInstalledError extends Error {
 export class ProviderAdapterFactory {
   private static registry = new Map<ProviderName, AdapterLoader>()
   private static instances = new Map<string, ProviderAdapter>()
+  private static pendingCreations = new Map<string, Promise<ProviderAdapter>>()
 
   static register(providerName: ProviderName, loader: AdapterLoader): void {
     ProviderAdapterFactory.registry.set(providerName, loader)
@@ -41,22 +42,36 @@ export class ProviderAdapterFactory {
     options?: ProviderAdapterOptions,
   ): Promise<ProviderAdapter> {
     const cacheKey = ProviderAdapterFactory.getCacheKey(config, options)
+
+    // Check cache first
     const cached = ProviderAdapterFactory.instances.get(cacheKey)
     if (cached) return cached
+
+    // Check if creation is already in progress to prevent race condition
+    const pending = ProviderAdapterFactory.pendingCreations.get(cacheKey)
+    if (pending) return pending
 
     const loader = ProviderAdapterFactory.registry.get(config.providerName)
     if (!loader) {
       throw new ProviderNotInstalledError(config.providerName)
     }
 
-    const AdapterClass = await loader()
-    const adapter = new AdapterClass(config, options)
-    ProviderAdapterFactory.instances.set(cacheKey, adapter)
-    return adapter
+    // Create adapter and track the pending promise
+    const creationPromise = (async () => {
+      const AdapterClass = await loader()
+      const adapter = new AdapterClass(config, options)
+      ProviderAdapterFactory.instances.set(cacheKey, adapter)
+      ProviderAdapterFactory.pendingCreations.delete(cacheKey)
+      return adapter
+    })()
+
+    ProviderAdapterFactory.pendingCreations.set(cacheKey, creationPromise)
+    return creationPromise
   }
 
   static clearCache(): void {
     ProviderAdapterFactory.instances.clear()
+    ProviderAdapterFactory.pendingCreations.clear()
   }
 
   private static getCacheKey(config: ProviderConfig, options?: ProviderAdapterOptions): string {
