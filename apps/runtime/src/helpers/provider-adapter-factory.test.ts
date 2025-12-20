@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeEach } from "vitest"
 import type { AnthropicProviderConfig } from "@perstack/core"
+import { beforeEach, describe, expect, it } from "vitest"
 import { ProviderAdapterFactory, ProviderNotInstalledError } from "./provider-adapter-factory.js"
 
 describe("ProviderAdapterFactory", () => {
@@ -41,9 +41,7 @@ describe("ProviderAdapterFactory", () => {
 
       // Clear all registrations by creating fresh state
       // Note: This test verifies error handling for unregistered providers
-      await expect(ProviderAdapterFactory.create(config)).rejects.toThrow(
-        ProviderNotInstalledError,
-      )
+      await expect(ProviderAdapterFactory.create(config)).rejects.toThrow(ProviderNotInstalledError)
     })
   })
 

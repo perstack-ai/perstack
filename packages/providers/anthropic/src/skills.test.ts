@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest"
 import type { AnthropicProviderSkill } from "@perstack/provider-core"
+import { describe, expect, it } from "vitest"
 import { buildProviderOptions, hasCustomProviderSkills } from "./skills.js"
 
 describe("buildProviderOptions", () => {
@@ -14,9 +14,7 @@ describe("buildProviderOptions", () => {
   })
 
   it("builds provider options for builtin skill", () => {
-    const skills: AnthropicProviderSkill[] = [
-      { type: "builtin", skillId: "computer_use" },
-    ]
+    const skills: AnthropicProviderSkill[] = [{ type: "builtin", skillId: "computer_use" }]
     const result = buildProviderOptions(skills)
     expect(result).toEqual({
       anthropic: {
@@ -75,16 +73,12 @@ describe("hasCustomProviderSkills", () => {
   })
 
   it("returns false for only builtin skills", () => {
-    const skills: AnthropicProviderSkill[] = [
-      { type: "builtin", skillId: "computer_use" },
-    ]
+    const skills: AnthropicProviderSkill[] = [{ type: "builtin", skillId: "computer_use" }]
     expect(hasCustomProviderSkills(skills)).toBe(false)
   })
 
   it("returns true for custom skills", () => {
-    const skills: AnthropicProviderSkill[] = [
-      { type: "custom", name: "my-tool", definition: "{}" },
-    ]
+    const skills: AnthropicProviderSkill[] = [{ type: "custom", name: "my-tool", definition: "{}" }]
     expect(hasCustomProviderSkills(skills)).toBe(true)
   })
 
