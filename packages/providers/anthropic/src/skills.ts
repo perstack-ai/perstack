@@ -23,10 +23,16 @@ function convertSkill(skill: AnthropicProviderSkill): AnthropicSkillConfig {
       name: skill.skillId,
     }
   }
-  return {
-    type: "custom",
-    name: skill.name,
-    mcp_config: JSON.parse(skill.definition) as Record<string, JSONValue>,
+  try {
+    return {
+      type: "custom",
+      name: skill.name,
+      mcp_config: JSON.parse(skill.definition) as Record<string, JSONValue>,
+    }
+  } catch (error) {
+    throw new Error(
+      `Invalid JSON in custom skill definition for "${skill.name}": ${error instanceof Error ? error.message : String(error)}`,
+    )
   }
 }
 

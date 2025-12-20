@@ -34,8 +34,6 @@ export const googleProviderToolNameSchema = z.enum([
   "googleSearch",
   "codeExecution",
   "urlContext",
-  "fileSearch",
-  "googleMaps",
 ])
 export type GoogleProviderToolName = z.infer<typeof googleProviderToolNameSchema>
 
