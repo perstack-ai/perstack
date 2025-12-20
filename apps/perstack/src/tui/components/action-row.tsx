@@ -24,6 +24,29 @@ export const CompletionRow = ({ text }: CompletionRowProps) => (
   </Box>
 )
 
+type ErrorRowProps = {
+  errorName: string
+  message: string
+  statusCode?: number
+}
+export const ErrorRow = ({ errorName, message, statusCode }: ErrorRowProps) => (
+  <Box flexDirection="column">
+    <Box flexDirection="row" gap={1}>
+      <Text color="red">{INDICATOR.BULLET}</Text>
+      <Text color="red" bold>
+        Error: {errorName}
+        {statusCode ? ` (${statusCode})` : ""}
+      </Text>
+    </Box>
+    <Box flexDirection="row">
+      <Box paddingRight={1}>
+        <Text dimColor>{INDICATOR.TREE}</Text>
+      </Box>
+      <Text color="red">{message}</Text>
+    </Box>
+  </Box>
+)
+
 type ActionRowSimpleProps = {
   indicatorColor: StatusColor
   text: string

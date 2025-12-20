@@ -146,6 +146,21 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
+        stopRunByError: {
+          target: "Stopped",
+          actions: assign({
+            checkpoint: ({ event }) =>
+              ({
+                ...event.checkpoint,
+                error: event.error,
+              }) satisfies Checkpoint,
+            step: ({ event }) =>
+              ({
+                ...event.step,
+                inputMessages: undefined,
+              }) satisfies Step,
+          }),
+        },
         callTools: {
           target: "CallingTool",
           actions: assign({
@@ -332,6 +347,21 @@ export const runtimeStateMachine = setup({
                 toolCalls: event.toolCalls,
                 toolResults: event.toolResults,
                 usage: sumUsage(context.step.usage, event.usage),
+              }) satisfies Step,
+          }),
+        },
+        stopRunByError: {
+          target: "Stopped",
+          actions: assign({
+            checkpoint: ({ event }) =>
+              ({
+                ...event.checkpoint,
+                error: event.error,
+              }) satisfies Checkpoint,
+            step: ({ event }) =>
+              ({
+                ...event.step,
+                inputMessages: undefined,
               }) satisfies Step,
           }),
         },

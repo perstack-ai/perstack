@@ -302,6 +302,16 @@ type ExpertEventPayloads = {
     checkpoint: Checkpoint
     step: Step
   }
+  stopRunByError: {
+    checkpoint: Checkpoint
+    step: Step
+    error: {
+      name: string
+      message: string
+      statusCode?: number
+      isRetryable: boolean
+    }
+  }
   completeRun: {
     checkpoint: Checkpoint
     step: Step
@@ -376,6 +386,7 @@ export const completeRun = createEvent("completeRun")
 export const stopRunByInteractiveTool = createEvent("stopRunByInteractiveTool")
 export const stopRunByDelegate = createEvent("stopRunByDelegate")
 export const stopRunByExceededMaxSteps = createEvent("stopRunByExceededMaxSteps")
+export const stopRunByError = createEvent("stopRunByError")
 export const continueToNextStep = createEvent("continueToNextStep")
 
 /** Base properties for runtime events */

@@ -102,6 +102,13 @@ export interface Checkpoint {
     /** Additional runtime-specific data */
     [key: string]: unknown
   }
+  /** Error information when status is stoppedByError */
+  error?: {
+    name: string
+    message: string
+    statusCode?: number
+    isRetryable: boolean
+  }
 }
 
 export const delegationTargetSchema = z.object({
@@ -151,6 +158,14 @@ export const checkpointSchema = z.object({
       runtime: runtimeNameSchema.optional(),
     })
     .passthrough()
+    .optional(),
+  error: z
+    .object({
+      name: z.string(),
+      message: z.string(),
+      statusCode: z.number().optional(),
+      isRetryable: z.boolean(),
+    })
     .optional(),
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>
