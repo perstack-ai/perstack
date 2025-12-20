@@ -30,11 +30,7 @@ export const openaiProviderToolNameSchema = z.enum([
 ])
 export type OpenAIProviderToolName = z.infer<typeof openaiProviderToolNameSchema>
 
-export const googleProviderToolNameSchema = z.enum([
-  "googleSearch",
-  "codeExecution",
-  "urlContext",
-])
+export const googleProviderToolNameSchema = z.enum(["googleSearch", "codeExecution", "urlContext"])
 export type GoogleProviderToolName = z.infer<typeof googleProviderToolNameSchema>
 
 export const webSearchOptionsSchema = z.object({
