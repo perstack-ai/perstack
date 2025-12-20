@@ -38,7 +38,10 @@ export class LLMExecutor {
   }
 
   async generateTextWithoutTools(
-    params: Omit<GenerateTextParams, "tools" | "toolChoice" | "providerToolNames" | "providerToolOptions">,
+    params: Omit<
+      GenerateTextParams,
+      "tools" | "toolChoice" | "providerToolNames" | "providerToolOptions"
+    >,
   ): Promise<LLMExecutionResult> {
     const providerOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
 
