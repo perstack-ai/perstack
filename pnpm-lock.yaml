@@ -43,7 +43,7 @@ importers:
         version: 4.21.0
       turbo:
         specifier: latest
-        version: 2.6.3
+        version: 2.7.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -201,39 +201,45 @@ importers:
 
   apps/runtime:
     dependencies:
-      '@ai-sdk/amazon-bedrock':
-        specifier: ^3.0.71
-        version: 3.0.71(zod@4.2.1)
-      '@ai-sdk/anthropic':
-        specifier: ^2.0.56
-        version: 2.0.56(zod@4.2.1)
-      '@ai-sdk/azure':
-        specifier: ^2.0.90
-        version: 2.0.90(zod@4.2.1)
-      '@ai-sdk/deepseek':
-        specifier: ^1.0.32
-        version: 1.0.32(zod@4.2.1)
-      '@ai-sdk/google':
-        specifier: ^2.0.49
-        version: 2.0.49(zod@4.2.1)
-      '@ai-sdk/google-vertex':
-        specifier: ^3.0.94
-        version: 3.0.94(zod@4.2.1)
-      '@ai-sdk/openai':
-        specifier: ^2.0.88
-        version: 2.0.88(zod@4.2.1)
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.1
         version: 1.25.1(hono@4.11.1)(zod@4.2.1)
       '@paralleldrive/cuid2':
         specifier: ^3.0.4
         version: 3.0.4
+      '@perstack/anthropic-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/anthropic
       '@perstack/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@perstack/azure-openai-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/azure-openai
+      '@perstack/bedrock-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/bedrock
       '@perstack/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@perstack/deepseek-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/deepseek
+      '@perstack/google-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/google
+      '@perstack/ollama-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/ollama
+      '@perstack/openai-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/openai
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../../packages/providers/core
+      '@perstack/vertex-provider':
+        specifier: workspace:*
+        version: link:../../packages/providers/vertex
       ai:
         specifier: ^5.0.115
         version: 5.0.115(zod@4.2.1)
@@ -243,9 +249,6 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
-      ollama-ai-provider-v2:
-        specifier: ^1.5.5
-        version: 1.5.5(zod@4.2.1)
       smol-toml:
         specifier: ^1.5.2
         version: 1.5.2
@@ -336,6 +339,282 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/anthropic:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^2.0.56
+        version: 2.0.56(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/azure-openai:
+    dependencies:
+      '@ai-sdk/azure':
+        specifier: ^2.0.90
+        version: 2.0.90(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/bedrock:
+    dependencies:
+      '@ai-sdk/amazon-bedrock':
+        specifier: ^3.0.71
+        version: 3.0.71(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/core:
+    dependencies:
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+      undici:
+        specifier: ^7.16.0
+        version: 7.16.0
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/deepseek:
+    dependencies:
+      '@ai-sdk/deepseek':
+        specifier: ^1.0.32
+        version: 1.0.32(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/google:
+    dependencies:
+      '@ai-sdk/google':
+        specifier: ^2.0.49
+        version: 2.0.49(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/ollama:
+    dependencies:
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+      ollama-ai-provider-v2:
+        specifier: ^1.5.5
+        version: 1.5.5(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/openai:
+    dependencies:
+      '@ai-sdk/openai':
+        specifier: ^2.0.88
+        version: 2.0.88(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/providers/vertex:
+    dependencies:
+      '@ai-sdk/google-vertex':
+        specifier: ^3.0.94
+        version: 3.0.94(zod@4.2.1)
+      '@perstack/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
+      ai:
+        specifier: ^5.0.0
+        version: 5.0.115(zod@4.2.1)
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5
@@ -2776,38 +3055,38 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  turbo-darwin-64@2.6.3:
-    resolution: {integrity: sha512-BlJJDc1CQ7SK5Y5qnl7AzpkvKSnpkfPmnA+HeU/sgny3oHZckPV2776ebO2M33CYDSor7+8HQwaodY++IINhYg==}
+  turbo-darwin-64@2.7.0:
+    resolution: {integrity: sha512-gwqL7cJOSYrV/jNmhXM8a2uzSFn7GcUASOuen6OgmUsafUj9SSWcgXZ/q0w9hRoL917hpidkdI//UpbxbZbwwg==}
     cpu: [x64]
     os: [darwin]
 
-  turbo-darwin-arm64@2.6.3:
-    resolution: {integrity: sha512-MwVt7rBKiOK7zdYerenfCRTypefw4kZCue35IJga9CH1+S50+KTiCkT6LBqo0hHeoH2iKuI0ldTF2a0aB72z3w==}
+  turbo-darwin-arm64@2.7.0:
+    resolution: {integrity: sha512-f3F5DYOnfE6lR6v/rSld7QGZgartKsnlIYY7jcF/AA7Wz27za9XjxMHzb+3i4pvRhAkryFgf2TNq7eCFrzyTpg==}
     cpu: [arm64]
     os: [darwin]
 
-  turbo-linux-64@2.6.3:
-    resolution: {integrity: sha512-cqpcw+dXxbnPtNnzeeSyWprjmuFVpHJqKcs7Jym5oXlu/ZcovEASUIUZVN3OGEM6Y/OTyyw0z09tOHNt5yBAVg==}
+  turbo-linux-64@2.7.0:
+    resolution: {integrity: sha512-KsC+UuKlhjCL+lom10/IYoxUsdhJOsuEki72YSr7WGYUSRihcdJQnaUyIDTlm0nPOb+gVihVNBuVP4KsNg1UnA==}
     cpu: [x64]
     os: [linux]
 
-  turbo-linux-arm64@2.6.3:
-    resolution: {integrity: sha512-MterpZQmjXyr4uM7zOgFSFL3oRdNKeflY7nsjxJb2TklsYqiu3Z9pQ4zRVFFH8n0mLGna7MbQMZuKoWqqHb45w==}
+  turbo-linux-arm64@2.7.0:
+    resolution: {integrity: sha512-1tjIYULeJtpmE/ovoI9qPBFJCtUEM7mYfeIMOIs4bXR6t/8u+rHPwr3j+vRHcXanIc42V1n3Pz52VqmJtIAviw==}
     cpu: [arm64]
     os: [linux]
 
-  turbo-windows-64@2.6.3:
-    resolution: {integrity: sha512-biDU70v9dLwnBdLf+daoDlNJVvqOOP8YEjqNipBHzgclbQlXbsi6Gqqelp5er81Qo3BiRgmTNx79oaZQTPb07Q==}
+  turbo-windows-64@2.7.0:
+    resolution: {integrity: sha512-KThkAeax46XiH+qICCQm7R8V2pPdeTTP7ArCSRrSLqnlO75ftNm8Ljx4VAllwIZkILrq/GDM8PlyhZdPeUdDxQ==}
     cpu: [x64]
     os: [win32]
 
-  turbo-windows-arm64@2.6.3:
-    resolution: {integrity: sha512-dDHVKpSeukah3VsI/xMEKeTnV9V9cjlpFSUs4bmsUiLu3Yv2ENlgVEZv65wxbeE0bh0jjpmElDT+P1KaCxArQQ==}
+  turbo-windows-arm64@2.7.0:
+    resolution: {integrity: sha512-kzI6rsQ3Ejs+CkM9HEEP3Z4h5YMCRxwIlQXFQmgXSG3BIgorCkRF2Xr7iQ2i9AGwY/6jbiAYeJbvi3yCp+noFw==}
     cpu: [arm64]
     os: [win32]
 
-  turbo@2.6.3:
-    resolution: {integrity: sha512-bf6YKUv11l5Xfcmg76PyWoy/e2vbkkxFNBGJSnfdSXQC33ZiUfutYh6IXidc5MhsnrFkWfdNNLyaRk+kHMLlwA==}
+  turbo@2.7.0:
+    resolution: {integrity: sha512-1dUGwi6cSSVZts1BwJa/Gh7w5dPNNGsNWZEAuRKxXWME44hTKWpQZrgiPnqMc5jJJOovzPK5N6tL+PHYRYL5Wg==}
     hasBin: true
 
   type-fest@4.41.0:
@@ -5250,32 +5529,32 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  turbo-darwin-64@2.6.3:
+  turbo-darwin-64@2.7.0:
     optional: true
 
-  turbo-darwin-arm64@2.6.3:
+  turbo-darwin-arm64@2.7.0:
     optional: true
 
-  turbo-linux-64@2.6.3:
+  turbo-linux-64@2.7.0:
     optional: true
 
-  turbo-linux-arm64@2.6.3:
+  turbo-linux-arm64@2.7.0:
     optional: true
 
-  turbo-windows-64@2.6.3:
+  turbo-windows-64@2.7.0:
     optional: true
 
-  turbo-windows-arm64@2.6.3:
+  turbo-windows-arm64@2.7.0:
     optional: true
 
-  turbo@2.6.3:
+  turbo@2.7.0:
     optionalDependencies:
-      turbo-darwin-64: 2.6.3
-      turbo-darwin-arm64: 2.6.3
-      turbo-linux-64: 2.6.3
-      turbo-linux-arm64: 2.6.3
-      turbo-windows-64: 2.6.3
-      turbo-windows-arm64: 2.6.3
+      turbo-darwin-64: 2.7.0
+      turbo-darwin-arm64: 2.7.0
+      turbo-linux-64: 2.7.0
+      turbo-linux-arm64: 2.7.0
+      turbo-windows-64: 2.7.0
+      turbo-windows-arm64: 2.7.0
 
   type-fest@4.41.0: {}
 

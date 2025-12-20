@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 describe("@perstack/runtime: StateMachineLogic['Init']", () => {
   it("initializes correctly", async () => {
@@ -18,6 +22,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "startRun",
@@ -59,6 +64,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Input message is undefined")
   })
@@ -84,6 +90,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -109,6 +116,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Interactive tool call result is undefined")
   })
@@ -134,6 +142,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("startRun")
     if (event.type === "startRun") {
@@ -159,6 +168,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Interactive tool call result is undefined")
   })
@@ -178,6 +188,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "startRun",
@@ -213,6 +224,7 @@ describe("@perstack/runtime: StateMachineLogic['Init']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("Input message is undefined")
   })

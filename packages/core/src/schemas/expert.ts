@@ -6,6 +6,8 @@ import {
   maxExpertNameLength,
   tagNameRegex,
 } from "../constants/constants.js"
+import type { AnthropicProviderSkill, ProviderToolOptions } from "./provider-tools.js"
+import { anthropicProviderSkillSchema, providerToolOptionsSchema } from "./provider-tools.js"
 import type { InteractiveSkill, McpSseSkill, McpStdioSkill, Skill } from "./skill.js"
 import { interactiveSkillSchema, mcpSseSkillSchema, mcpStdioSkillSchema } from "./skill.js"
 
@@ -30,6 +32,12 @@ export interface Expert {
   delegates: string[]
   /** Tags for categorization and discovery */
   tags: string[]
+  /** Provider-specific tool names to enable (e.g., "webSearch", "codeExecution") */
+  providerTools?: string[]
+  /** Anthropic Agent Skills configuration */
+  providerSkills?: AnthropicProviderSkill[]
+  /** Provider tool options (e.g., webSearch maxUses, allowedDomains) */
+  providerToolOptions?: ProviderToolOptions
 }
 
 type SkillWithoutName =
@@ -88,4 +96,7 @@ export const expertSchema = z.object({
     }),
   delegates: z.array(z.string().regex(expertKeyRegex).min(1)).optional().default([]),
   tags: z.array(z.string().regex(tagNameRegex).min(1)).optional().default([]),
+  providerTools: z.array(z.string()).optional(),
+  providerSkills: z.array(anthropicProviderSkillSchema).optional(),
+  providerToolOptions: providerToolOptionsSchema,
 })

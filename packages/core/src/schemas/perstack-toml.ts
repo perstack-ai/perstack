@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { headersSchema } from "./provider-config.js"
+import { anthropicProviderSkillSchema, providerToolOptionsSchema } from "./provider-tools.js"
 import type { RuntimeName } from "./runtime-name.js"
 import { runtimeNameSchema } from "./runtime-name.js"
 
@@ -212,6 +213,19 @@ export interface PerstackConfigExpert {
   delegates?: string[]
   /** Tags for categorization */
   tags?: string[]
+  /** Provider-specific tool names to enable */
+  providerTools?: string[]
+  /** Anthropic Agent Skills configuration */
+  providerSkills?: Array<
+    | { type: "builtin"; skillId: "pdf" | "docx" | "pptx" | "xlsx" }
+    | { type: "custom"; name: string; definition: string }
+  >
+  /** Provider tool options */
+  providerToolOptions?: {
+    webSearch?: { maxUses?: number; allowedDomains?: string[] }
+    webFetch?: { maxUses?: number }
+    fileSearch?: { vectorStoreIds?: string[]; maxNumResults?: number }
+  }
 }
 
 /**
@@ -302,6 +316,9 @@ export const perstackConfigSchema = z.object({
           .optional(),
         delegates: z.array(z.string()).optional(),
         tags: z.array(z.string()).optional(),
+        providerTools: z.array(z.string()).optional(),
+        providerSkills: z.array(anthropicProviderSkillSchema).optional(),
+        providerToolOptions: providerToolOptionsSchema,
       }),
     )
     .optional(),

@@ -1,5 +1,6 @@
 import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent, Step } from "@perstack/core"
 import type { RunEventEmitter } from "../events/event-emitter.js"
+import type { LLMExecutor } from "../llm/index.js"
 import type { BaseSkillManager } from "../skill-manager/index.js"
 import { StateMachineCoordinator } from "./coordinator.js"
 
@@ -8,6 +9,7 @@ export type ExecuteStateMachineParams = {
   initialCheckpoint: Checkpoint
   eventListener: (event: RunEvent | RuntimeEvent) => Promise<void>
   skillManagers: Record<string, BaseSkillManager>
+  llmExecutor: LLMExecutor
   eventEmitter: RunEventEmitter
   storeCheckpoint: (checkpoint: Checkpoint) => Promise<void>
   shouldContinueRun?: (setting: RunSetting, checkpoint: Checkpoint, step: Step) => Promise<boolean>

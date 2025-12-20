@@ -2,6 +2,7 @@ import type { Checkpoint, RunEvent, RunSetting, Step } from "@perstack/core"
 import { type ActorRefFrom, assign, type SnapshotFrom, setup } from "xstate"
 import { calculateContextWindowUsage } from "../helpers/model.js"
 import { createEmptyUsage, sumUsage } from "../helpers/usage.js"
+import type { LLMExecutor } from "../llm/index.js"
 import type { BaseSkillManager } from "../skill-manager/index.js"
 import { callingDelegateLogic } from "./states/calling-delegate.js"
 import { callingInteractiveToolLogic } from "./states/calling-interactive-tool.js"
@@ -21,6 +22,7 @@ export const runtimeStateMachine = setup({
       initialCheckpoint: Checkpoint
       eventListener: (event: RunEvent) => Promise<void>
       skillManagers: Record<string, BaseSkillManager>
+      llmExecutor: LLMExecutor
     },
     context: {} as {
       setting: RunSetting
@@ -28,6 +30,7 @@ export const runtimeStateMachine = setup({
       checkpoint: Checkpoint
       eventListener: (event: RunEvent) => Promise<void>
       skillManagers: Record<string, BaseSkillManager>
+      llmExecutor: LLMExecutor
     },
     events: {} as RunEvent,
   },
@@ -47,6 +50,7 @@ export const runtimeStateMachine = setup({
     },
     eventListener: input.eventListener,
     skillManagers: input.skillManagers,
+    llmExecutor: input.llmExecutor,
   }),
   states: {
     Init: {

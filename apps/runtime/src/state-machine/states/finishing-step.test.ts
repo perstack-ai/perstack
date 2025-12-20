@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import { StateMachineLogics } from "../machine.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
   it("finishes steps correctly when within max steps", async () => {
@@ -14,6 +18,7 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "continueToNextStep",
@@ -49,6 +54,7 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "stopRunByExceededMaxSteps",
@@ -80,6 +86,7 @@ describe("@perstack/runtime: StateMachineLogic['FinishingStep']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).resolves.toStrictEqual({
       type: "stopRunByExceededMaxSteps",

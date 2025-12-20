@@ -3,7 +3,11 @@ import { APICallError } from "ai"
 import { MockLanguageModelV2 } from "ai/test"
 import { describe, expect, it, vi } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
+import type { LLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor } from "../../llm/index.js"
 import { StateMachineLogics } from "../index.js"
+
+const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
 
 const mockGetModel = vi.fn()
 vi.mock("../../helpers/model.js", async (importOriginal) => ({
@@ -58,6 +62,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("completeRun")
     expect(mockGetModel).toHaveBeenCalled()
@@ -99,6 +104,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -146,6 +152,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("stopRunByError")
     if (event.type === "stopRunByError") {
@@ -198,6 +205,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -213,6 +221,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
         step,
         eventListener: async () => {},
         skillManagers: {},
+        llmExecutor: mockLLMExecutor,
       }),
     ).rejects.toThrow("No tool calls or tool results found")
   })
@@ -245,6 +254,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
+      llmExecutor: mockLLMExecutor,
     })
     expect(event.id).toBeDefined()
     expect(typeof event.id).toBe("string")
