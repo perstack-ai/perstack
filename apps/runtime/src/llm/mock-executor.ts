@@ -39,7 +39,10 @@ export class MockLLMExecutor {
   }
 
   async generateTextWithoutTools(
-    params: Omit<GenerateTextParams, "tools" | "toolChoice" | "providerToolNames" | "providerToolOptions">,
+    params: Omit<
+      GenerateTextParams,
+      "tools" | "toolChoice" | "providerToolNames" | "providerToolOptions"
+    >,
   ): Promise<LLMExecutionResult> {
     return this.generateText(params as GenerateTextParams)
   }
