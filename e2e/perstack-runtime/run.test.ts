@@ -134,7 +134,6 @@ describe.concurrent("Run Expert", () => {
       ).toBe(true)
       const completeEvent = result.events.find((e) => e.type === "completeRun")
       const text = completeEvent && "text" in completeEvent ? (completeEvent.text as string) : ""
-      console.log("\n=== Image Description ===\n", text, "\n=== END ===\n")
       expect(
         text.toLowerCase().includes("perstack") ||
           text.toLowerCase().includes("demo") ||
