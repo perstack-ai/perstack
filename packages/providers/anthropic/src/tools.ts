@@ -17,19 +17,19 @@ export function buildAnthropicTools(
           maxUses: options?.webSearch?.maxUses,
           allowedDomains: options?.webSearch?.allowedDomains,
         })
-        tools.web_search = webSearchTool
+        tools["web_search"] = webSearchTool
         break
       }
       case "webFetch": {
         const webFetchTool = client.tools.webFetch_20250910({
           maxUses: options?.webFetch?.maxUses,
         })
-        tools.web_fetch = webFetchTool
+        tools["web_fetch"] = webFetchTool
         break
       }
       case "codeExecution": {
         const codeExecutionTool = client.tools.codeExecution_20250522()
-        tools.code_execution = codeExecutionTool
+        tools["code_execution"] = codeExecutionTool
         break
       }
     }

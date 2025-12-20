@@ -14,17 +14,17 @@ export function buildGoogleTools(
     switch (name) {
       case "googleSearch": {
         const googleSearchTool = client.tools.googleSearch({})
-        tools.google_search = googleSearchTool
+        tools["google_search"] = googleSearchTool
         break
       }
       case "codeExecution": {
         const codeExecutionTool = client.tools.codeExecution({})
-        tools.code_execution = codeExecutionTool
+        tools["code_execution"] = codeExecutionTool
         break
       }
       case "urlContext": {
         const urlContextTool = client.tools.urlContext({})
-        tools.url_context = urlContextTool
+        tools["url_context"] = urlContextTool
         break
       }
     }
