@@ -18,7 +18,7 @@ export class AnthropicProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createAnthropic>
 
   constructor(
-    private readonly config: AnthropicProviderConfig,
+    readonly config: AnthropicProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

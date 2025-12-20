@@ -8,7 +8,7 @@ export class BedrockProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createAmazonBedrock>
 
   constructor(
-    private readonly config: AmazonBedrockProviderConfig,
+    readonly config: AmazonBedrockProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

@@ -8,7 +8,7 @@ export class VertexProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createVertex>
 
   constructor(
-    private readonly config: GoogleVertexProviderConfig,
+    readonly config: GoogleVertexProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

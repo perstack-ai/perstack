@@ -15,7 +15,7 @@ export class GoogleProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createGoogleGenerativeAI>
 
   constructor(
-    private readonly config: GoogleGenerativeAiProviderConfig,
+    readonly config: GoogleGenerativeAiProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

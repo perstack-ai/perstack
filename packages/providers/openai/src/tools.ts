@@ -14,7 +14,7 @@ export function buildOpenAITools(
     switch (name) {
       case "webSearch": {
         const webSearchTool = client.tools.webSearch()
-        tools["web_search"] = webSearchTool
+        tools.web_search = webSearchTool
         break
       }
       case "fileSearch": {
@@ -24,18 +24,18 @@ export function buildOpenAITools(
             vectorStoreIds,
             maxNumResults: options?.fileSearch?.maxNumResults,
           })
-          tools["file_search"] = fileSearchTool
+          tools.file_search = fileSearchTool
         }
         break
       }
       case "codeInterpreter": {
         const codeInterpreterTool = client.tools.codeInterpreter()
-        tools["code_interpreter"] = codeInterpreterTool
+        tools.code_interpreter = codeInterpreterTool
         break
       }
       case "imageGeneration": {
         const imageGenerationTool = client.tools.imageGeneration()
-        tools["image_generation"] = imageGenerationTool
+        tools.image_generation = imageGenerationTool
         break
       }
     }

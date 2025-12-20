@@ -8,7 +8,7 @@ export class DeepseekProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createDeepSeek>
 
   constructor(
-    private readonly config: DeepseekProviderConfig,
+    readonly config: DeepseekProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

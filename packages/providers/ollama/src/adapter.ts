@@ -8,7 +8,7 @@ export class OllamaProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createOllama>
 
   constructor(
-    private readonly config: OllamaProviderConfig,
+    readonly config: OllamaProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

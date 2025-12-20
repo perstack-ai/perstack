@@ -32,6 +32,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^2.2.26",
+    "@ai-sdk/anthropic": "^2.2.27",
+    "@ai-sdk/azure": "^2.1.4",
+    "@ai-sdk/deepseek": "^1.1.7",
+    "@ai-sdk/google": "^2.2.21",
+    "@ai-sdk/google-vertex": "^2.2.21",
+    "@ai-sdk/openai": "^2.2.23",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "@paralleldrive/cuid2": "^3.0.4",
     "@perstack/anthropic-provider": "workspace:*",
@@ -46,6 +53,7 @@
     "@perstack/provider-core": "workspace:*",
     "@perstack/vertex-provider": "workspace:*",
     "ai": "^5.0.115",
+    "ollama-ai-provider-v2": "^0.18.0",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
     "smol-toml": "^1.5.2",

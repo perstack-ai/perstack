@@ -15,7 +15,7 @@ export class OpenAIProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createOpenAI>
 
   constructor(
-    private readonly config: OpenAiProviderConfig,
+    readonly config: OpenAiProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

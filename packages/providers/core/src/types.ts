@@ -1,4 +1,4 @@
-import type { ProviderConfig, ProviderName } from "@perstack/core"
+import type { ProviderName } from "@perstack/core"
 import type { JSONValue, LanguageModel, ToolSet } from "ai"
 
 export type ProviderOptions = Record<string, Record<string, JSONValue>>

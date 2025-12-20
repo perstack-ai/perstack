@@ -7,11 +7,22 @@ interface AdapterConstructor {
 
 type AdapterLoader = () => Promise<AdapterConstructor>
 
+const PROVIDER_PACKAGE_NAMES: Record<ProviderName, string> = {
+  anthropic: "anthropic-provider",
+  openai: "openai-provider",
+  google: "google-provider",
+  ollama: "ollama-provider",
+  "azure-openai": "azure-openai-provider",
+  "amazon-bedrock": "bedrock-provider",
+  "google-vertex": "vertex-provider",
+  deepseek: "deepseek-provider",
+}
+
 export class ProviderNotInstalledError extends Error {
   constructor(providerName: ProviderName) {
+    const packageName = PROVIDER_PACKAGE_NAMES[providerName]
     super(
-      `Provider "${providerName}" is not installed. ` +
-        `Run: npm install @perstack/${providerName}-provider`,
+      `Provider "${providerName}" is not installed. ` + `Run: npm install @perstack/${packageName}`,
     )
     this.name = "ProviderNotInstalledError"
   }
@@ -49,6 +60,11 @@ export class ProviderAdapterFactory {
   }
 
   private static getCacheKey(config: ProviderConfig, options?: ProviderAdapterOptions): string {
-    return JSON.stringify({ providerName: config.providerName, proxyUrl: options?.proxyUrl })
+    return JSON.stringify({
+      providerName: config.providerName,
+      apiKey: config.apiKey,
+      baseUrl: "baseUrl" in config ? config.baseUrl : undefined,
+      proxyUrl: options?.proxyUrl,
+    })
   }
 }

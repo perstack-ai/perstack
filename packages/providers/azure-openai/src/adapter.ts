@@ -8,7 +8,7 @@ export class AzureOpenAIProviderAdapter extends BaseProviderAdapter {
   private readonly client: ReturnType<typeof createAzure>
 
   constructor(
-    private readonly config: AzureOpenAiProviderConfig,
+    readonly config: AzureOpenAiProviderConfig,
     options?: ProviderAdapterOptions,
   ) {
     super(options)

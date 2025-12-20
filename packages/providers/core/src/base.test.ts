@@ -1,14 +1,9 @@
 import type { LanguageModel } from "ai"
 import { describe, expect, it } from "vitest"
 import { BaseProviderAdapter } from "./base.js"
-import type { ProviderAdapterOptions } from "./types.js"
 
 class TestProviderAdapter extends BaseProviderAdapter {
   readonly providerName = "anthropic" as const
-
-  constructor(options?: ProviderAdapterOptions) {
-    super(options)
-  }
 
   createModel(_modelId: string): LanguageModel {
     throw new Error("Not implemented")
