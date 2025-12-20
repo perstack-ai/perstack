@@ -19,13 +19,18 @@ export function buildOpenAITools(
       }
       case "fileSearch": {
         const vectorStoreIds = options?.fileSearch?.vectorStoreIds
-        if (vectorStoreIds && vectorStoreIds.length > 0) {
-          const fileSearchTool = client.tools.fileSearch({
-            vectorStoreIds,
-            maxNumResults: options?.fileSearch?.maxNumResults,
-          })
-          tools["file_search"] = fileSearchTool
+        if (!vectorStoreIds || vectorStoreIds.length === 0) {
+          console.warn(
+            "OpenAI fileSearch tool requires vectorStoreIds. " +
+              "Set providerToolOptions.fileSearch.vectorStoreIds to use this tool.",
+          )
+          break
         }
+        const fileSearchTool = client.tools.fileSearch({
+          vectorStoreIds,
+          maxNumResults: options?.fileSearch?.maxNumResults,
+        })
+        tools["file_search"] = fileSearchTool
         break
       }
       case "codeInterpreter": {
