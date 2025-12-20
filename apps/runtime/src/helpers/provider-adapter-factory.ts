@@ -62,7 +62,7 @@ export class ProviderAdapterFactory {
   private static getCacheKey(config: ProviderConfig, options?: ProviderAdapterOptions): string {
     return JSON.stringify({
       providerName: config.providerName,
-      apiKey: config.apiKey,
+      apiKey: "apiKey" in config ? config.apiKey : undefined,
       baseUrl: "baseUrl" in config ? config.baseUrl : undefined,
       proxyUrl: options?.proxyUrl,
     })

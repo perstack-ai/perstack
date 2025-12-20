@@ -33,27 +33,27 @@ describe("AnthropicProviderAdapter", () => {
     it("returns web_search tool when webSearch is requested", () => {
       const adapter = new AnthropicProviderAdapter(mockConfig)
       const tools = adapter.getProviderTools(["webSearch"])
-      expect(tools.web_search).toBeDefined()
+      expect(tools["web_search"]).toBeDefined()
     })
 
     it("returns web_fetch tool when webFetch is requested", () => {
       const adapter = new AnthropicProviderAdapter(mockConfig)
       const tools = adapter.getProviderTools(["webFetch"])
-      expect(tools.web_fetch).toBeDefined()
+      expect(tools["web_fetch"]).toBeDefined()
     })
 
     it("returns code_execution tool when codeExecution is requested", () => {
       const adapter = new AnthropicProviderAdapter(mockConfig)
       const tools = adapter.getProviderTools(["codeExecution"])
-      expect(tools.code_execution).toBeDefined()
+      expect(tools["code_execution"]).toBeDefined()
     })
 
     it("returns multiple tools when multiple are requested", () => {
       const adapter = new AnthropicProviderAdapter(mockConfig)
       const tools = adapter.getProviderTools(["webSearch", "webFetch", "codeExecution"])
-      expect(tools.web_search).toBeDefined()
-      expect(tools.web_fetch).toBeDefined()
-      expect(tools.code_execution).toBeDefined()
+      expect(tools["web_search"]).toBeDefined()
+      expect(tools["web_fetch"]).toBeDefined()
+      expect(tools["code_execution"]).toBeDefined()
     })
 
     it("ignores unknown tool names", () => {
