@@ -47,12 +47,6 @@ async function runReasoningTest(
     { timeout: LLM_TIMEOUT },
   )
   const result = withEventParsing(cmdResult)
-
-  // Debug: log stderr if test fails
-  if (result.exitCode !== 0) {
-    console.log(`[${provider}/${budget}] stderr:`, result.stderr)
-  }
-
   const completeEvents = filterEventsByType(result.events, "completeRun")
   const completeEvent = completeEvents[0] as
     | {
@@ -86,33 +80,6 @@ async function runReasoningTest(
       }
       if (thinking) break
     }
-  }
-
-  // Debug: check if completeRun exists
-  if (!completeEvent) {
-    console.log(`[${provider}/${budget}] No completeRun event found!`)
-    // Check for error event
-    const errorEvents = filterEventsByType(result.events, "stopRunByError")
-    if (errorEvents.length > 0) {
-      const errorEvent = errorEvents[0] as { error?: { message?: string; name?: string } }
-      console.log(`[${provider}/${budget}] Error:`, JSON.stringify(errorEvent?.error))
-    }
-    // Check for retry events to understand why retries are happening
-    const retryEvents = filterEventsByType(result.events, "retry") as Array<{ reason?: string }>
-    if (retryEvents.length > 0) {
-      console.log(
-        `[${provider}/${budget}] First retry reason:`,
-        retryEvents[0]?.reason?.slice(0, 200),
-      )
-    }
-    // Also log stderr for more context
-    if (result.stderr) {
-      console.log(`[${provider}/${budget}] stderr:`, result.stderr.slice(0, 500))
-    }
-    // Log all events for debugging
-    console.log(`[${provider}/${budget}] All events:`, result.events.map((e) => e.type).join(", "))
-  } else {
-    console.log(`[${provider}/${budget}] reasoningTokens:`, reasoningTokens)
   }
 
   return {
