@@ -1,10 +1,10 @@
 ---
 "@perstack/runtime": minor
 "@perstack/core": minor
-"@perstack/perstack": minor
-"@perstack/provider-anthropic": minor
-"@perstack/provider-openai": minor
-"@perstack/provider-google": minor
+"perstack": minor
+"@perstack/anthropic-provider": minor
+"@perstack/openai-provider": minor
+"@perstack/google-provider": minor
 "@perstack/provider-core": minor
 ---
 
