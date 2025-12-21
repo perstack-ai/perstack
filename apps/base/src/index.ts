@@ -1,5 +1,11 @@
 export { validatePath } from "./lib/path.js"
 export { errorToolResult, successToolResult } from "./lib/tool-result.js"
+export {
+  BASE_SKILL_NAME,
+  BASE_SKILL_VERSION,
+  createBaseServer,
+  registerAllTools,
+} from "./server.js"
 export * from "./tools/append-text-file.js"
 export * from "./tools/attempt-completion.js"
 export * from "./tools/create-directory.js"

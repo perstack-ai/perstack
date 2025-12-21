@@ -8,6 +8,7 @@ import type {
 } from "@perstack/core"
 import type { BaseSkillManager } from "./base.js"
 import { DelegateSkillManager } from "./delegate.js"
+import { InMemoryBaseSkillManager } from "./in-memory-base.js"
 import { InteractiveSkillManager } from "./interactive.js"
 import { McpSkillManager, type McpSkillManagerOptions } from "./mcp.js"
 
@@ -28,6 +29,11 @@ export interface SkillManagerFactory {
     skill: McpStdioSkill | McpSseSkill,
     context: SkillManagerFactoryContext,
   ): BaseSkillManager
+  /**
+   * Create an in-memory base skill manager using InMemoryTransport.
+   * This provides near-zero initialization latency for the bundled base skill.
+   */
+  createInMemoryBase(context: SkillManagerFactoryContext): BaseSkillManager
   createInteractive(skill: InteractiveSkill, context: SkillManagerFactoryContext): BaseSkillManager
   createDelegate(expert: Expert, context: SkillManagerFactoryContext): BaseSkillManager
 }
@@ -48,6 +54,10 @@ export class DefaultSkillManagerFactory implements SkillManagerFactory {
       context.eventListener,
       context.mcpOptions,
     )
+  }
+
+  createInMemoryBase(context: SkillManagerFactoryContext): BaseSkillManager {
+    return new InMemoryBaseSkillManager(context.jobId, context.runId, context.eventListener)
   }
 
   createInteractive(

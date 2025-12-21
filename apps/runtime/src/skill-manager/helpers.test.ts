@@ -1,11 +1,14 @@
-import type { ToolDefinition } from "@perstack/core"
+import type { McpSseSkill, McpStdioSkill, ToolDefinition } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import type { BaseSkillManager } from "./base.js"
 import {
   closeSkillManagers,
   getSkillManagerByToolName,
   getToolSet,
+  hasExplicitBaseVersion,
   initSkillManagersWithCleanup,
+  isBaseSkill,
+  shouldUseBundledBase,
 } from "./helpers.js"
 
 describe("@perstack/runtime: initSkillManagersWithCleanup", () => {
@@ -209,5 +212,208 @@ describe("@perstack/runtime: getToolSet", () => {
     }
     const toolSet = await getToolSet(skillManagers)
     expect(toolSet["my-tool"]).toBeDefined()
+  })
+})
+
+describe("@perstack/runtime: hasExplicitBaseVersion", () => {
+  it("returns true when packageName has version", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      packageName: "@perstack/base@0.0.34",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(hasExplicitBaseVersion(skill)).toBe(true)
+  })
+
+  it("returns true when args contain versioned package", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      args: ["@perstack/base@1.2.3"],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(hasExplicitBaseVersion(skill)).toBe(true)
+  })
+
+  it("returns false when packageName has no version", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      packageName: "@perstack/base",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(hasExplicitBaseVersion(skill)).toBe(false)
+  })
+
+  it("returns false when args contain unversioned package", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      args: ["@perstack/base"],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(hasExplicitBaseVersion(skill)).toBe(false)
+  })
+
+  it("returns false when args is empty", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(hasExplicitBaseVersion(skill)).toBe(false)
+  })
+})
+
+describe("@perstack/runtime: isBaseSkill", () => {
+  it("returns true when skill name is @perstack/base", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(isBaseSkill(skill)).toBe(true)
+  })
+
+  it("returns true when packageName starts with @perstack/base", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "base-skill",
+      command: "npx",
+      packageName: "@perstack/base@1.0.0",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(isBaseSkill(skill)).toBe(true)
+  })
+
+  it("returns true when args contain @perstack/base", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "base-skill",
+      command: "npx",
+      args: ["-y", "@perstack/base"],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(isBaseSkill(skill)).toBe(true)
+  })
+
+  it("returns false for non-base skill", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "other-skill",
+      command: "npx",
+      packageName: "@other/package",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(isBaseSkill(skill)).toBe(false)
+  })
+
+  it("returns false for SSE skill with non-base name", () => {
+    const skill: McpSseSkill = {
+      type: "mcpSseSkill",
+      name: "other-skill",
+      endpoint: "https://example.com/sse",
+      pick: [],
+      omit: [],
+    }
+    expect(isBaseSkill(skill)).toBe(false)
+  })
+})
+
+describe("@perstack/runtime: shouldUseBundledBase", () => {
+  it("returns true for default base skill without version", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      packageName: "@perstack/base",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(shouldUseBundledBase(skill)).toBe(true)
+  })
+
+  it("returns false when perstackBaseSkillCommand is set", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      packageName: "@perstack/base",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(shouldUseBundledBase(skill, ["node", "custom-base.js"])).toBe(false)
+  })
+
+  it("returns false when explicit version is specified", () => {
+    const skill: McpStdioSkill = {
+      type: "mcpStdioSkill",
+      name: "@perstack/base",
+      command: "npx",
+      packageName: "@perstack/base@0.0.34",
+      args: [],
+      pick: [],
+      omit: [],
+      requiredEnv: [],
+      lazyInit: false,
+    }
+    expect(shouldUseBundledBase(skill)).toBe(false)
+  })
+
+  it("returns false for SSE skill", () => {
+    const skill: McpSseSkill = {
+      type: "mcpSseSkill",
+      name: "@perstack/base",
+      endpoint: "https://example.com/sse",
+      pick: [],
+      omit: [],
+    }
+    expect(shouldUseBundledBase(skill)).toBe(false)
   })
 })

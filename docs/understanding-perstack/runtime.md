@@ -174,6 +174,42 @@ Experts use tools through MCP (Model Context Protocol). The runtime handles:
 
 For skill configuration, see [Skills](../making-experts/skills.md).
 
+### Base skill optimization
+
+The `@perstack/base` skill provides essential tools (file operations, exec, think, etc.) required by every Expert. To minimize startup latency, the runtime bundles this skill and uses in-process communication:
+
+| Configuration                               | Transport              | Latency |
+| ------------------------------------------- | ---------------------- | ------- |
+| Default (no version specified)              | InMemoryTransport      | <50ms   |
+| Explicit version (`@perstack/base@1.0.0`)   | StdioTransport via npx | ~500ms  |
+| Custom command (`perstackBaseSkillCommand`) | StdioTransport         | Varies  |
+
+**How it works:**
+
+- **InMemoryTransport**: The bundled base skill runs in the same process as the runtime, using MCP SDK's `InMemoryTransport` for zero-IPC communication
+- **Version pinning fallback**: When you specify an explicit version (e.g., `@perstack/base@0.0.34`), the runtime falls back to spawning via `npx` to ensure reproducibility
+
+**When to pin versions:**
+
+Pin a specific base skill version when:
+- You need reproducible builds across environments
+- You're debugging version-specific behavior
+- Your deployment requires exact version control
+
+```toml
+# Default: uses bundled base (fastest)
+[experts.my-expert.skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+
+# Pinned version: uses npx (slower but reproducible)
+[experts.my-expert.skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base@0.0.34"
+```
+
 ## Providers and models
 
 Perstack uses standard LLM features available from most providers:
