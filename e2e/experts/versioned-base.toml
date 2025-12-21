@@ -1,0 +1,26 @@
+# E2E test configuration for versioned base skill with StdioTransport
+# Tests that pinning a version falls back to npx (StdioTransport)
+
+model = "claude-sonnet-4-5"
+temperature = 0.3
+runtime = "local"
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+# Versioned base - uses StdioTransport (npx fallback)
+[experts."e2e-versioned-base"]
+version = "1.0.0"
+description = "E2E test expert for versioned base with StdioTransport"
+instruction = """
+Call healthCheck and then call attemptCompletion with result "OK"
+"""
+
+[experts."e2e-versioned-base".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+# Explicit version triggers StdioTransport fallback
+packageName = "@perstack/base@0.0.34"
+pick = ["attemptCompletion", "healthCheck"]
