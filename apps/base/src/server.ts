@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import packageJson from "../package.json" with { type: "json" }
 import { registerAppendTextFile } from "./tools/append-text-file.js"
 import { registerAttemptCompletion } from "./tools/attempt-completion.js"
 import { registerCreateDirectory } from "./tools/create-directory.js"
@@ -18,12 +19,10 @@ import { registerClearTodo, registerTodo } from "./tools/todo.js"
 import { registerWriteTextFile } from "./tools/write-text-file.js"
 
 /** Base skill name */
-export const BASE_SKILL_NAME = "@perstack/base"
+export const BASE_SKILL_NAME = packageJson.name
 
-/** Base skill version - read from package.json at runtime */
-// Using a constant here as the version is managed by changesets
-// The actual version comes from package.json in the published package
-export const BASE_SKILL_VERSION = "0.0.34"
+/** Base skill version */
+export const BASE_SKILL_VERSION = packageJson.version
 
 /**
  * Register all base skill tools on an MCP server.
