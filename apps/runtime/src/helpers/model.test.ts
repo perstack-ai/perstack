@@ -1,6 +1,11 @@
 import type { Usage } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
-import { calculateContextWindowUsage, getContextWindow, getModel } from "./model.js"
+import {
+  calculateContextWindowUsage,
+  getContextWindow,
+  getModel,
+  getReasoningProviderOptions,
+} from "./model.js"
 
 vi.mock("@ai-sdk/anthropic", () => ({
   createAnthropic: vi.fn(() => vi.fn(() => ({ provider: "anthropic" }))),
@@ -160,6 +165,105 @@ describe("@perstack/runtime: model", () => {
       const contextWindow = 10000
       const result = calculateContextWindowUsage(usage, contextWindow)
       expect(result).toBe(1.0)
+    })
+  })
+
+  describe("getReasoningProviderOptions", () => {
+    it("returns undefined when reasoningBudget is undefined", () => {
+      expect(getReasoningProviderOptions("anthropic", undefined)).toBeUndefined()
+    })
+
+    it("returns anthropic thinking config for string budget", () => {
+      const result = getReasoningProviderOptions("anthropic", "medium")
+      expect(result).toEqual({
+        anthropic: {
+          thinking: { type: "enabled", budgetTokens: 5000 },
+        },
+      })
+    })
+
+    it("returns anthropic thinking config for numeric budget", () => {
+      const result = getReasoningProviderOptions("anthropic", 3000)
+      expect(result).toEqual({
+        anthropic: {
+          thinking: { type: "enabled", budgetTokens: 3000 },
+        },
+      })
+    })
+
+    it("returns openai reasoning effort for string budget", () => {
+      const result = getReasoningProviderOptions("openai", "high")
+      expect(result).toEqual({
+        openai: { reasoningEffort: "high" },
+      })
+    })
+
+    it("maps minimal to low for openai (o3-mini compatibility)", () => {
+      const result = getReasoningProviderOptions("openai", "minimal")
+      expect(result).toEqual({
+        openai: { reasoningEffort: "low" },
+      })
+    })
+
+    it("returns openai reasoning effort for numeric budget", () => {
+      const result = getReasoningProviderOptions("openai", 1000)
+      expect(result).toEqual({
+        openai: { reasoningEffort: "low" },
+      })
+
+      const resultMedium = getReasoningProviderOptions("openai", 3000)
+      expect(resultMedium).toEqual({
+        openai: { reasoningEffort: "medium" },
+      })
+
+      const resultHigh = getReasoningProviderOptions("openai", 10000)
+      expect(resultHigh).toEqual({
+        openai: { reasoningEffort: "high" },
+      })
+    })
+
+    it("returns google thinking config for string budget", () => {
+      const result = getReasoningProviderOptions("google", "low")
+      expect(result).toEqual({
+        google: {
+          thinkingConfig: {
+            thinkingBudget: 2048,
+            includeThoughts: true,
+          },
+        },
+      })
+    })
+
+    it("returns google thinking config for numeric budget", () => {
+      const result = getReasoningProviderOptions("google", 4000)
+      expect(result).toEqual({
+        google: {
+          thinkingConfig: {
+            thinkingBudget: 4000,
+            includeThoughts: true,
+          },
+        },
+      })
+    })
+
+    it("returns undefined for unsupported providers", () => {
+      expect(getReasoningProviderOptions("ollama", "medium")).toBeUndefined()
+      expect(getReasoningProviderOptions("azure-openai", "high")).toBeUndefined()
+      expect(getReasoningProviderOptions("amazon-bedrock", "low")).toBeUndefined()
+      expect(getReasoningProviderOptions("google-vertex", "minimal")).toBeUndefined()
+      expect(getReasoningProviderOptions("deepseek", "medium")).toBeUndefined()
+    })
+
+    it("converts all string budget levels to tokens correctly", () => {
+      const minimal = getReasoningProviderOptions("anthropic", "minimal")
+      const low = getReasoningProviderOptions("anthropic", "low")
+      const medium = getReasoningProviderOptions("anthropic", "medium")
+      const high = getReasoningProviderOptions("anthropic", "high")
+
+      expect(minimal?.anthropic?.thinking).toEqual({ type: "enabled", budgetTokens: 1024 })
+      expect(low?.anthropic?.thinking).toEqual({ type: "enabled", budgetTokens: 2048 })
+      expect(medium?.anthropic?.thinking).toEqual({ type: "enabled", budgetTokens: 5000 })
+      expect(high?.anthropic?.thinking).toEqual({ type: "enabled", budgetTokens: 10000 })
     })
   })
 })
