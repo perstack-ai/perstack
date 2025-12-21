@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2"
 import type { ThinkingPart } from "@perstack/core"
 
 /**
@@ -52,15 +51,3 @@ export function extractThinkingText(reasoning: ReasoningPart[] | undefined): str
 
 // Re-export for backwards compatibility
 export type { ReasoningPart as ReasoningDetail }
-
-/**
- * Create ThinkingPart with auto-generated ID.
- */
-export function createThinkingPart(thinking: string, signature?: string): ThinkingPart {
-  return {
-    type: "thinkingPart",
-    id: createId(),
-    thinking,
-    signature,
-  }
-}
