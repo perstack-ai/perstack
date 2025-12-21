@@ -1,11 +1,25 @@
 ---
-"@perstack/runtime": minor
-"@perstack/core": minor
-"perstack": minor
 "@perstack/anthropic-provider": minor
-"@perstack/openai-provider": minor
+"@perstack/api-client": minor
+"@perstack/azure-openai-provider": minor
+"@perstack/base": minor
+"@perstack/bedrock-provider": minor
+"@perstack/claude-code": minor
+"@perstack/core": minor
+"@perstack/cursor": minor
+"@perstack/deepseek-provider": minor
+"@perstack/docker": minor
+"@perstack/filesystem-storage": minor
+"@perstack/gemini": minor
 "@perstack/google-provider": minor
+"@perstack/mock": minor
+"@perstack/ollama-provider": minor
+"@perstack/openai-provider": minor
 "@perstack/provider-core": minor
+"@perstack/runner": minor
+"@perstack/runtime": minor
+"@perstack/vertex-provider": minor
+"perstack": minor
 ---
 
 Add native LLM reasoning support (Extended Thinking/Reasoning)
