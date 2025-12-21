@@ -100,7 +100,10 @@ async function runReasoningTest(
     // Check for retry events to understand why retries are happening
     const retryEvents = filterEventsByType(result.events, "retry") as Array<{ reason?: string }>
     if (retryEvents.length > 0) {
-      console.log(`[${provider}/${budget}] First retry reason:`, retryEvents[0]?.reason?.slice(0, 200))
+      console.log(
+        `[${provider}/${budget}] First retry reason:`,
+        retryEvents[0]?.reason?.slice(0, 200),
+      )
     }
     // Also log stderr for more context
     if (result.stderr) {
@@ -134,7 +137,8 @@ describe("Reasoning Budget", () => {
         // Extended thinking should produce reasoning tokens or thinking text
         // Note: AI SDK currently doesn't report reasoningTokens for Anthropic,
         // but we can verify thinking content is generated
-        const hasThinking = result.reasoningTokens > 0 || (result.thinking && result.thinking.length > 0)
+        const hasThinking =
+          result.reasoningTokens > 0 || (result.thinking && result.thinking.length > 0)
         expect(hasThinking).toBe(true)
       },
       LLM_TIMEOUT,
@@ -153,7 +157,8 @@ describe("Reasoning Budget", () => {
         // Both should produce reasoning tokens or thinking text
         // Note: AI SDK currently doesn't report reasoningTokens for Anthropic
         const minimalHasThinking =
-          minimalResult.reasoningTokens > 0 || (minimalResult.thinking && minimalResult.thinking.length > 0)
+          minimalResult.reasoningTokens > 0 ||
+          (minimalResult.thinking && minimalResult.thinking.length > 0)
         const highHasThinking =
           highResult.reasoningTokens > 0 || (highResult.thinking && highResult.thinking.length > 0)
         expect(minimalHasThinking).toBe(true)
@@ -261,7 +266,8 @@ describe("Reasoning Budget", () => {
 
         expect(result.success).toBe(true)
         // Flash thinking should produce reasoning tokens or thinking text
-        const hasThinking = result.reasoningTokens > 0 || (result.thinking && result.thinking.length > 0)
+        const hasThinking =
+          result.reasoningTokens > 0 || (result.thinking && result.thinking.length > 0)
         expect(hasThinking).toBe(true)
       },
       LLM_TIMEOUT,
@@ -279,7 +285,8 @@ describe("Reasoning Budget", () => {
 
         // Both should produce reasoning tokens or thinking text
         const minimalHasThinking =
-          minimalResult.reasoningTokens > 0 || (minimalResult.thinking && minimalResult.thinking.length > 0)
+          minimalResult.reasoningTokens > 0 ||
+          (minimalResult.thinking && minimalResult.thinking.length > 0)
         const highHasThinking =
           highResult.reasoningTokens > 0 || (highResult.thinking && highResult.thinking.length > 0)
         expect(minimalHasThinking).toBe(true)
