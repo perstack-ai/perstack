@@ -146,9 +146,9 @@ export async function getSkillManagers(
     shouldUseBundledBase(baseSkill, perstackBaseSkillCommand)
 
   // Process base skill first
-  if (useBundledBase) {
+  if (useBundledBase && baseSkill.type === "mcpStdioSkill") {
     // Use InMemoryTransport for bundled base (near-zero latency)
-    const baseManager = factory.createInMemoryBase(factoryContext)
+    const baseManager = factory.createInMemoryBase(baseSkill, factoryContext)
     allManagers.push(baseManager)
     await initSkillManagersWithCleanup([baseManager], allManagers)
   }

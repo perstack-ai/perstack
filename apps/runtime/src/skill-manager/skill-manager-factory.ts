@@ -33,7 +33,7 @@ export interface SkillManagerFactory {
    * Create an in-memory base skill manager using InMemoryTransport.
    * This provides near-zero initialization latency for the bundled base skill.
    */
-  createInMemoryBase(context: SkillManagerFactoryContext): BaseSkillManager
+  createInMemoryBase(skill: McpStdioSkill, context: SkillManagerFactoryContext): BaseSkillManager
   createInteractive(skill: InteractiveSkill, context: SkillManagerFactoryContext): BaseSkillManager
   createDelegate(expert: Expert, context: SkillManagerFactoryContext): BaseSkillManager
 }
@@ -56,8 +56,8 @@ export class DefaultSkillManagerFactory implements SkillManagerFactory {
     )
   }
 
-  createInMemoryBase(context: SkillManagerFactoryContext): BaseSkillManager {
-    return new InMemoryBaseSkillManager(context.jobId, context.runId, context.eventListener)
+  createInMemoryBase(skill: McpStdioSkill, context: SkillManagerFactoryContext): BaseSkillManager {
+    return new InMemoryBaseSkillManager(skill, context.jobId, context.runId, context.eventListener)
   }
 
   createInteractive(

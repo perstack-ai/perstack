@@ -11,7 +11,6 @@
  */
 
 import { spawn } from "node:child_process"
-import * as readline from "node:readline"
 
 interface SkillTiming {
   skillName: string

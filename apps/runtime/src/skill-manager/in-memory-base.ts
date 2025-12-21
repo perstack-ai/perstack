@@ -5,10 +5,12 @@ import {
   createRuntimeEvent,
   type FileInlinePart,
   type ImageInlinePart,
+  type McpStdioSkill,
   type RunEvent,
   type RuntimeEvent,
   type SkillType,
   type TextPart,
+  type ToolDefinition,
 } from "@perstack/core"
 import { BaseSkillManager } from "./base.js"
 import { convertToolResult, handleToolError } from "./mcp-converters.js"
@@ -26,17 +28,28 @@ export class InMemoryBaseSkillManager extends BaseSkillManager {
   readonly name = BASE_SKILL_NAME
   readonly type: SkillType = "mcp"
   readonly lazyInit = false
+  override readonly skill: McpStdioSkill
   private _mcpClient?: McpClient
   private _transportFactory: TransportFactory
 
   constructor(
+    skill: McpStdioSkill,
     jobId: string,
     runId: string,
     eventListener?: (event: RunEvent | RuntimeEvent) => void,
     options?: InMemoryBaseSkillManagerOptions,
   ) {
     super(jobId, runId, eventListener)
+    this.skill = skill
     this._transportFactory = options?.transportFactory ?? defaultTransportFactory
+  }
+
+  protected override _filterTools(tools: ToolDefinition[]): ToolDefinition[] {
+    const omit = this.skill.omit ?? []
+    const pick = this.skill.pick ?? []
+    return tools
+      .filter((tool) => (omit.length > 0 ? !omit.includes(tool.name) : true))
+      .filter((tool) => (pick.length > 0 ? pick.includes(tool.name) : true))
   }
 
   protected override async _doInit(): Promise<void> {

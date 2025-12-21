@@ -1,21 +1,37 @@
 import { BASE_SKILL_NAME } from "@perstack/base"
+import type { McpStdioSkill } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import { InMemoryBaseSkillManager } from "./in-memory-base.js"
+
+function createBaseSkill(overrides: Partial<McpStdioSkill> = {}): McpStdioSkill {
+  return {
+    type: "mcpStdioSkill",
+    name: "@perstack/base",
+    command: "npx",
+    packageName: "@perstack/base",
+    args: [],
+    requiredEnv: [],
+    lazyInit: false,
+    pick: [],
+    omit: [],
+    ...overrides,
+  }
+}
 
 describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
   describe("constructor", () => {
     it("creates manager with correct name", () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       expect(manager.name).toBe(BASE_SKILL_NAME)
     })
 
     it("creates manager with mcp type", () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       expect(manager.type).toBe("mcp")
     })
 
     it("creates manager with lazyInit false", () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       expect(manager.lazyInit).toBe(false)
     })
   })
@@ -23,7 +39,12 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
   describe("init", () => {
     it("emits skillConnected event on successful init", async () => {
       const eventListener = vi.fn()
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1", eventListener)
+      const manager = new InMemoryBaseSkillManager(
+        createBaseSkill(),
+        "job-1",
+        "run-1",
+        eventListener,
+      )
 
       await manager.init()
 
@@ -35,7 +56,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
     })
 
     it("sets initialized state after init", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
 
       expect(manager.isInitialized()).toBe(false)
       await manager.init()
@@ -45,7 +66,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
 
   describe("getToolDefinitions", () => {
     it("returns tool definitions after init", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       await manager.init()
 
       const tools = await manager.getToolDefinitions()
@@ -60,7 +81,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
     })
 
     it("all tools have skillName set to @perstack/base", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       await manager.init()
 
       const tools = await manager.getToolDefinitions()
@@ -69,11 +90,44 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
         expect(tool.skillName).toBe(BASE_SKILL_NAME)
       }
     })
+
+    it("applies pick filter to tool definitions", async () => {
+      const manager = new InMemoryBaseSkillManager(
+        createBaseSkill({ pick: ["think", "exec"] }),
+        "job-1",
+        "run-1",
+      )
+      await manager.init()
+
+      const tools = await manager.getToolDefinitions()
+      const toolNames = tools.map((t) => t.name)
+
+      expect(toolNames).toContain("think")
+      expect(toolNames).toContain("exec")
+      expect(toolNames).not.toContain("readTextFile")
+      expect(tools.length).toBe(2)
+    })
+
+    it("applies omit filter to tool definitions", async () => {
+      const manager = new InMemoryBaseSkillManager(
+        createBaseSkill({ omit: ["think", "exec"] }),
+        "job-1",
+        "run-1",
+      )
+      await manager.init()
+
+      const tools = await manager.getToolDefinitions()
+      const toolNames = tools.map((t) => t.name)
+
+      expect(toolNames).not.toContain("think")
+      expect(toolNames).not.toContain("exec")
+      expect(toolNames).toContain("readTextFile")
+    })
   })
 
   describe("callTool", () => {
     it("throws error if not initialized", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
 
       await expect(manager.callTool("think", { thought: "test" })).rejects.toThrow(
         "@perstack/base is not initialized",
@@ -81,7 +135,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
     })
 
     it("can call think tool after init", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       await manager.init()
 
       const result = await manager.callTool("think", {
@@ -94,7 +148,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
     })
 
     it("can call healthCheck tool after init", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
       await manager.init()
 
       const result = await manager.callTool("healthCheck", {})
@@ -107,7 +161,12 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
   describe("close", () => {
     it("emits skillDisconnected event on close", async () => {
       const eventListener = vi.fn()
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1", eventListener)
+      const manager = new InMemoryBaseSkillManager(
+        createBaseSkill(),
+        "job-1",
+        "run-1",
+        eventListener,
+      )
       await manager.init()
       eventListener.mockClear()
 
@@ -120,7 +179,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
     })
 
     it("does not throw when closing without init", async () => {
-      const manager = new InMemoryBaseSkillManager("job-1", "run-1")
+      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
 
       await expect(manager.close()).resolves.toBeUndefined()
     })
