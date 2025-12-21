@@ -4,7 +4,9 @@ import {
   BaseProviderAdapter,
   type ProviderAdapterOptions,
   type ProviderError,
+  type ProviderOptions,
   type ProviderToolOptions,
+  type ReasoningBudget,
 } from "@perstack/provider-core"
 import type { LanguageModel, ToolSet } from "ai"
 import { isGoogleRetryable, normalizeGoogleError } from "./errors.js"
@@ -41,5 +43,28 @@ export class GoogleProviderAdapter extends BaseProviderAdapter {
 
   override isRetryable(error: unknown): boolean {
     return isGoogleRetryable(error)
+  }
+
+  override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
+    const budgetTokens = this.budgetToTokens(budget)
+    return {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: budgetTokens,
+          includeThoughts: true,
+        },
+      },
+    }
+  }
+
+  private budgetToTokens(budget: ReasoningBudget): number {
+    if (typeof budget === "number") return budget
+    const map: Record<string, number> = {
+      minimal: 1024,
+      low: 2048,
+      medium: 5000,
+      high: 10000,
+    }
+    return map[budget] ?? 5000
   }
 }

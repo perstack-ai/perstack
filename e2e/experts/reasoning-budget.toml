@@ -1,0 +1,184 @@
+# E2E tests for reasoning budget configuration
+# Tests that different budget levels produce different reasoning token counts
+
+envPath = [".env", ".env.local"]
+
+# =============================================================================
+# Anthropic provider tests (Extended Thinking)
+# =============================================================================
+
+[experts."e2e-reasoning-anthropic-minimal"]
+version = "1.0.0"
+description = "E2E test expert for Anthropic reasoning with minimal budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-anthropic-minimal".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-anthropic-low"]
+version = "1.0.0"
+description = "E2E test expert for Anthropic reasoning with low budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-anthropic-low".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-anthropic-medium"]
+version = "1.0.0"
+description = "E2E test expert for Anthropic reasoning with medium budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-anthropic-medium".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-anthropic-high"]
+version = "1.0.0"
+description = "E2E test expert for Anthropic reasoning with high budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-anthropic-high".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+# =============================================================================
+# OpenAI provider tests (Reasoning Effort)
+# =============================================================================
+
+[experts."e2e-reasoning-openai-minimal"]
+version = "1.0.0"
+description = "E2E test expert for OpenAI reasoning with minimal budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-openai-minimal".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-openai-low"]
+version = "1.0.0"
+description = "E2E test expert for OpenAI reasoning with low budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-openai-low".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-openai-medium"]
+version = "1.0.0"
+description = "E2E test expert for OpenAI reasoning with medium budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-openai-medium".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-openai-high"]
+version = "1.0.0"
+description = "E2E test expert for OpenAI reasoning with high budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-openai-high".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+# =============================================================================
+# Google provider tests (Flash Thinking)
+# =============================================================================
+
+[experts."e2e-reasoning-google-minimal"]
+version = "1.0.0"
+description = "E2E test expert for Google reasoning with minimal budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-google-minimal".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-google-low"]
+version = "1.0.0"
+description = "E2E test expert for Google reasoning with low budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-google-low".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-google-medium"]
+version = "1.0.0"
+description = "E2E test expert for Google reasoning with medium budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-google-medium".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."e2e-reasoning-google-high"]
+version = "1.0.0"
+description = "E2E test expert for Google reasoning with high budget"
+instruction = """
+Solve this step by step: What is 23 * 47?
+Show your reasoning, then call attemptCompletion with the answer.
+"""
+
+[experts."e2e-reasoning-google-high".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]

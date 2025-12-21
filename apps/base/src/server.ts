@@ -14,7 +14,6 @@ import { registerMoveFile } from "./tools/move-file.js"
 import { registerReadImageFile } from "./tools/read-image-file.js"
 import { registerReadPdfFile } from "./tools/read-pdf-file.js"
 import { registerReadTextFile } from "./tools/read-text-file.js"
-import { registerThink } from "./tools/think.js"
 import { registerClearTodo, registerTodo } from "./tools/todo.js"
 import { registerWriteTextFile } from "./tools/write-text-file.js"
 
@@ -30,7 +29,6 @@ export const BASE_SKILL_VERSION = packageJson.version
  */
 export function registerAllTools(server: McpServer): void {
   registerAttemptCompletion(server)
-  registerThink(server)
   registerTodo(server)
   registerClearTodo(server)
   registerExec(server)

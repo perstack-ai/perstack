@@ -10,20 +10,7 @@ Every Expert automatically has access to `@perstack/base` — a built-in skill t
 
 Base Skill is the **only** skill tightly coupled with `@perstack/runtime`. The name "base" reflects this fundamental role — Perstack cannot operate without it, and the runtime assumes Base Skill is always present.
 
-This coupling enables MCP-native runtime control. Rather than implementing special control mechanisms outside MCP, runtime operations (task completion, thinking, todos) are exposed as standard MCP tools.
-
-### Thinking Tools and Observability
-
-The `think` and `todo` tools serve two purposes:
-
-1. **Test-time scaling for any model** — These tools enable extended reasoning for models that don't natively support it, allowing step-by-step problem solving regardless of the underlying model.
-
-2. **Observable reasoning** — For reasoning models that already have test-time scaling, these tools don't interfere with native capabilities. Instead, they ensure thought processes are recorded in checkpoints rather than hidden internally.
-
-This design guarantees:
-- All reasoning steps are visible in execution history
-- Debugging and auditing are always possible
-- No hidden Chain-of-Thought that cannot be inspected
+This coupling enables MCP-native runtime control. Rather than implementing special control mechanisms outside MCP, runtime operations (task completion, todos) are exposed as standard MCP tools.
 
 ### Binary Data Handling
 
@@ -58,7 +45,6 @@ All file operations are restricted to the workspace directory (where `perstack r
 | Tool                                      | Category  | Description                             |
 | ----------------------------------------- | --------- | --------------------------------------- |
 | [`attemptCompletion`](#attemptcompletion) | Runtime   | Signal task completion                  |
-| [`think`](#think)                         | Runtime   | Record step-by-step reasoning           |
 | [`todo`](#todo)                           | Runtime   | Manage task list                        |
 | [`clearTodo`](#cleartodo)                 | Runtime   | Clear task list                         |
 | [`healthCheck`](#healthcheck)             | System    | Check MCP server health                 |
@@ -181,31 +167,6 @@ For delegated Experts, the run result is returned to the delegating Expert as th
 - Mark all todos as complete before calling `attemptCompletion`
 - Use `clearTodo` if you want to reset and start fresh
 - The tool prevents premature completion by surfacing forgotten tasks
-
----
-
-### think
-
-Sequential thinking tool for step-by-step problem analysis.
-
-**Parameters:**
-| Name                | Type    | Required | Description                             |
-| ------------------- | ------- | -------- | --------------------------------------- |
-| `thought`           | string  | Yes      | Current reasoning step                  |
-| `nextThoughtNeeded` | boolean | No       | Whether additional thinking is required |
-
-**Returns:**
-```json
-{ "nextThoughtNeeded": true, "thoughtHistoryLength": 3 }
-```
-
-**Behavior:**
-- Records each thinking step sequentially
-- Maintains thought history across calls within the session
-- Returns current thought count and continuation status
-
-**Observability:**
-The runtime records all tool calls (including think) into checkpoints, making thought processes visible in execution history.
 
 ---
 
@@ -592,16 +553,7 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  1. THINK                                                       │
-│  ─────────────────────────────────────────────────────────────  │
-│  tool: think                                                    │
-│  input: { thought: "I need to scan the directory first..." }   │
-│  output: { nextThoughtNeeded: false, thoughtHistoryLength: 1 } │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  2. LIST DIRECTORY                                              │
+│  1. LIST DIRECTORY                                              │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: listDirectory                                            │
 │  input: { path: "." }                                           │
@@ -614,7 +566,7 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  3. TODO                                                        │
+│  2. TODO                                                        │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: todo                                                     │
 │  input: { newTodos: [                                           │
@@ -627,7 +579,7 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  4. CREATE DIRECTORIES                                          │
+│  3. CREATE DIRECTORIES                                          │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: createDirectory                                          │
 │  input: { path: "images" }                                      │
@@ -640,7 +592,7 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  5. MOVE FILES                                                  │
+│  4. MOVE FILES                                                  │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: moveFile                                                 │
 │  input: { source: "photo.jpg", destination: "images/photo.jpg" }│
@@ -653,7 +605,7 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  6. MARK TODOS COMPLETE                                         │
+│  5. MARK TODOS COMPLETE                                         │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: todo                                                     │
 │  input: { completedTodos: [0, 1, 2] }                           │
@@ -662,7 +614,7 @@ Here's how an Expert uses Base Skill tools in a typical agent loop:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  7. COMPLETE                                                    │
+│  6. COMPLETE                                                    │
 │  ─────────────────────────────────────────────────────────────  │
 │  tool: attemptCompletion                                        │
 │  input: {}                                                      │

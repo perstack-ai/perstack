@@ -1,6 +1,22 @@
-import { completeRun, type RunEvent, retry, stopRunByError } from "@perstack/core"
+import {
+  completeRun,
+  type RunEvent,
+  retry,
+  stopRunByError,
+  type TextPart,
+  type ThinkingPart,
+} from "@perstack/core"
 import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
-import { calculateContextWindowUsage, getModel } from "../../helpers/model.js"
+import {
+  calculateContextWindowUsage,
+  getModel,
+  getReasoningProviderOptions,
+} from "../../helpers/model.js"
+import {
+  extractThinkingParts,
+  extractThinkingText,
+  type ReasoningPart,
+} from "../../helpers/thinking.js"
 import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 import {
   createExpertMessage,
@@ -34,15 +50,22 @@ export async function generatingRunResultLogic({
   })
   const toolMessage = createToolMessage(toolResultParts)
   const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
+  // Extended Thinking must be enabled for all requests in a conversation once enabled
+  const providerOptions = getReasoningProviderOptions(
+    setting.providerConfig.providerName,
+    setting.reasoningBudget,
+  )
   const { messages } = checkpoint
   let generationResult: GenerateTextResult<ToolSet, never>
+  const coreMessages = [...messages, toolMessage].map(messageToCoreMessage)
   try {
     generationResult = await generateText({
       model,
-      messages: [...messages, toolMessage].map(messageToCoreMessage),
+      messages: coreMessages,
       temperature: setting.temperature,
       maxRetries: setting.maxRetries,
       abortSignal: AbortSignal.timeout(setting.timeout),
+      providerOptions,
     })
   } catch (error) {
     if (error instanceof APICallError && !error.isRetryable) {
@@ -74,8 +97,19 @@ export async function generatingRunResultLogic({
     throw error
   }
   const usage = usageFromGenerateTextResult(generationResult)
-  const { text } = generationResult
-  const newMessages = [toolMessage, createExpertMessage(text ? [{ type: "textPart", text }] : [])]
+  const { text, reasoning } = generationResult
+
+  // Extract thinking from reasoning (Anthropic, Google)
+  const thinkingParts = extractThinkingParts(reasoning as ReasoningPart[] | undefined)
+  const thinkingText = extractThinkingText(reasoning as ReasoningPart[] | undefined)
+
+  // Build ExpertMessage with ThinkingPart + TextPart
+  const expertContents: Array<Omit<ThinkingPart, "id"> | Omit<TextPart, "id">> = [
+    ...thinkingParts,
+    ...(text ? [{ type: "textPart" as const, text }] : []),
+  ]
+  const newMessages = [toolMessage, createExpertMessage(expertContents)]
+
   return completeRun(setting, checkpoint, {
     checkpoint: {
       ...checkpoint,
@@ -93,6 +127,7 @@ export async function generatingRunResultLogic({
       usage: sumUsage(step.usage, usage),
     },
     text,
+    thinking: thinkingText || undefined,
     usage,
   })
 }

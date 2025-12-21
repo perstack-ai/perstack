@@ -3,11 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { UI_CONSTANTS } from "../../constants.js"
 import type { LogEntry, PerstackEvent } from "../../types/index.js"
 
-const TOOL_RESULT_EVENT_TYPES = new Set([
-  "resolveToolResults",
-  "resolveThought",
-  "attemptCompletion",
-])
+const TOOL_RESULT_EVENT_TYPES = new Set(["resolveToolResults", "attemptCompletion"])
 const isToolCallsEvent = (event: PerstackEvent): event is RunEvent & { toolCalls: ToolCall[] } =>
   "type" in event && event.type === "callTools" && "toolCalls" in event
 const isToolCallEvent = (event: PerstackEvent): event is RunEvent & { toolCall: ToolCall } =>

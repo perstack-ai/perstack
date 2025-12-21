@@ -18,7 +18,7 @@ Call attemptCompletion with the result.
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
-pick = ["attemptCompletion", "think"]
+pick = ["attemptCompletion", "todo"]
 
 [experts."e2e-omit-tools"]
 version = "1.0.0"
@@ -31,13 +31,13 @@ Call attemptCompletion with result "OK"
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
-omit = ["think"]
+omit = ["exec"]
 
 [experts."e2e-multi-skill"]
 version = "1.0.0"
 description = "E2E test expert with multiple skills"
 instruction = """
-1. Use think with the query
+1. Use todo to track tasks
 2. Call attemptCompletion with result "OK"
 """
 
@@ -53,4 +53,4 @@ lazyInit = false
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
-pick = ["attemptCompletion", "think"]
+pick = ["attemptCompletion", "todo"]

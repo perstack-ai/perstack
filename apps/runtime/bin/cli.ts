@@ -36,6 +36,10 @@ program
   .option("--model <model>", "Model to use")
   .option("--temperature <temperature>", "Temperature for the model, default is 0.3")
   .option(
+    "--reasoning-budget <budget>",
+    "Reasoning budget for native LLM reasoning (minimal, low, medium, high, or token count)",
+  )
+  .option(
     "--max-steps <maxSteps>",
     "Maximum number of steps to run, default is undefined (no limit)",
   )
@@ -73,6 +77,7 @@ program
             model,
             providerConfig,
             temperature: input.options.temperature ?? perstackConfig.temperature,
+            reasoningBudget: input.options.reasoningBudget ?? perstackConfig.reasoningBudget,
             maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
             maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,
             timeout: input.options.timeout ?? perstackConfig.timeout,

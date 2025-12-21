@@ -8,6 +8,7 @@ import type {
   ProviderOptions,
   ProviderOptionsConfig,
   ProviderToolOptions,
+  ReasoningBudget,
 } from "./types.js"
 
 export abstract class BaseProviderAdapter implements ProviderAdapter {
@@ -25,6 +26,10 @@ export abstract class BaseProviderAdapter implements ProviderAdapter {
   }
 
   getProviderOptions(_config?: ProviderOptionsConfig): ProviderOptions | undefined {
+    return undefined
+  }
+
+  getReasoningOptions(_budget: ReasoningBudget): ProviderOptions | undefined {
     return undefined
   }
 

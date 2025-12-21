@@ -28,12 +28,6 @@ export function defaultEventListener(e: RunEvent): void {
       for (const toolCall of e.toolCalls) {
         if (toolCall.skillName === "@perstack/base") {
           switch (toolCall.toolName) {
-            case "think": {
-              const thought = toolCall.args.thought
-              log(`${header(e)} Thought Updated:`)
-              debug(thought)
-              break
-            }
             case "readPdfFile": {
               const path = toolCall.args.path
               log(`${header(e)} Reading PDF: ${path}`)
@@ -102,10 +96,6 @@ export function defaultEventListener(e: RunEvent): void {
           debug(`${header(e)} Result: ${JSON.stringify(toolResult.result, null, 2)}`)
         }
       }
-      break
-    }
-    case "resolveThought": {
-      log(`${header(e)} Resolved Thought:`, e.toolResult)
       break
     }
     case "attemptCompletion": {

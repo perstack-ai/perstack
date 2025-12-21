@@ -176,7 +176,7 @@ For skill configuration, see [Skills](../making-experts/skills.md).
 
 ### Base skill optimization
 
-The `@perstack/base` skill provides essential tools (file operations, exec, think, etc.) required by every Expert. To minimize startup latency, the runtime bundles this skill and uses in-process communication:
+The `@perstack/base` skill provides essential tools (file operations, exec, etc.) required by every Expert. To minimize startup latency, the runtime bundles this skill and uses in-process communication:
 
 | Configuration                               | Transport              | Latency |
 | ------------------------------------------- | ---------------------- | ------- |
@@ -210,10 +210,31 @@ command = "npx"
 packageName = "@perstack/base@0.0.34"
 ```
 
+## Native reasoning
+
+Perstack supports native LLM reasoning (extended thinking / test-time scaling) for providers that support it. Configure via `reasoningBudget`:
+
+```toml
+reasoningBudget = "medium"  # minimal, low, medium, high, or token count
+```
+
+Native reasoning is applied during the final result generation (after tool execution), not during tool selection. This ensures reasoning depth is used where it matters most — synthesizing results.
+
+| Provider  | Support | Implementation                       |
+| --------- | ------- | ------------------------------------ |
+| Anthropic | Yes     | Extended thinking (`budgetTokens`)   |
+| OpenAI    | Yes     | Reasoning effort (`reasoningEffort`) |
+| Google    | Planned | Flash Thinking mode                  |
+| DeepSeek  | Partial | Use `deepseek-reasoner` model        |
+
+> [!NOTE]
+> When `reasoningBudget` is set for Anthropic, `temperature` is ignored (fixed at 1.0 by the API).
+
 ## Providers and models
 
 Perstack uses standard LLM features available from most providers:
 - Chat completion (including PDF/image in messages)
 - Tool calling
+- Native reasoning (where supported)
 
 For supported providers and models, see [Providers and Models](../references/providers-and-models.md).

@@ -19,7 +19,8 @@ import type {
   ToolMessage,
   UserMessage,
 } from "./message.js"
-import type { PerstackConfigSkill } from "./perstack-toml.js"
+import type { PerstackConfigSkill, ReasoningBudget } from "./perstack-toml.js"
+import { reasoningBudgetSchema } from "./perstack-toml.js"
 import type { ProviderConfig } from "./provider-config.js"
 import { providerConfigSchema } from "./provider-config.js"
 import type { Step } from "./step.js"
@@ -76,6 +77,8 @@ export interface RunSetting {
   experts: Record<string, Expert>
   /** Temperature for generation (0-1) */
   temperature: number
+  /** Reasoning budget for native LLM reasoning (extended thinking) */
+  reasoningBudget?: ReasoningBudget
   /** Maximum steps before stopping (applies to Job's totalSteps) */
   maxSteps: number
   /** Maximum retries on generation failure */
@@ -130,6 +133,7 @@ export type RunParamsInput = {
     input: RunInput
     experts?: Record<string, ExpertInput>
     temperature?: number
+    reasoningBudget?: ReasoningBudget
     maxSteps?: number
     maxRetries?: number
     timeout?: number
@@ -164,6 +168,7 @@ export const runSettingSchema = z.object({
   }),
   experts: z.record(z.string(), expertSchema),
   temperature: z.number().min(0).max(1),
+  reasoningBudget: reasoningBudgetSchema.optional(),
   maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
   maxRetries: z.number().min(0),
   timeout: z.number().min(0),
@@ -217,6 +222,7 @@ export const runParamsSchema = z.object({
         ),
       ),
     temperature: z.number().min(0).max(1).optional().default(defaultTemperature),
+    reasoningBudget: reasoningBudgetSchema.optional(),
     maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
     maxRetries: z.number().min(0).optional().default(defaultMaxRetries),
     timeout: z.number().min(0).optional().default(defaultTimeout),
@@ -269,9 +275,6 @@ type ExpertEventPayloads = {
   resolveToolResults: {
     toolResults: ToolResult[]
   }
-  resolveThought: {
-    toolResult: ToolResult
-  }
   attemptCompletion: {
     toolResult: ToolResult
   }
@@ -316,6 +319,8 @@ type ExpertEventPayloads = {
     checkpoint: Checkpoint
     step: Step
     text: string
+    /** Thinking content from extended thinking / reasoning models */
+    thinking?: string
     usage: Usage
   }
 }
@@ -377,7 +382,6 @@ export const callTools = createEvent("callTools")
 export const callInteractiveTool = createEvent("callInteractiveTool")
 export const callDelegate = createEvent("callDelegate")
 export const resolveToolResults = createEvent("resolveToolResults")
-export const resolveThought = createEvent("resolveThought")
 export const attemptCompletion = createEvent("attemptCompletion")
 export const finishToolCall = createEvent("finishToolCall")
 export const resumeToolCalls = createEvent("resumeToolCalls")
@@ -466,6 +470,11 @@ type RuntimeEventPayloads = {
     domain: string
     port: number
     reason?: string
+  }
+  /** Native LLM reasoning output (extended thinking) */
+  reasoning: {
+    content: string
+    reasoningTokens?: number
   }
 }
 

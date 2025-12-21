@@ -42,7 +42,7 @@ describe.concurrent("Run Expert", () => {
     LLM_TIMEOUT,
   )
 
-  /** Verifies 4 tools execute in parallel (think, PDF, image, search). */
+  /** Verifies 3 tools execute in parallel (PDF, image, search). */
   it(
     "should execute multiple tools in parallel and complete",
     async () => {
@@ -51,17 +51,12 @@ describe.concurrent("Run Expert", () => {
         { timeout: LLM_EXTENDED_TIMEOUT },
       )
       const result = withEventParsing(cmdResult)
-      expect(assertToolCallCount(result.events, "callTools", 4).passed).toBe(true)
+      expect(assertToolCallCount(result.events, "callTools", 3).passed).toBe(true)
       expect(
         assertEventSequenceContains(result.events, ["startRun", "callTools", "resolveToolResults"])
           .passed,
       ).toBe(true)
       const resolveEvents = filterEventsByType(result.events, "resolveToolResults")
-      const hasThinkResult = resolveEvents.some((e) => {
-        const toolResults = (e as { toolResults?: { toolName: string }[] }).toolResults ?? []
-        return toolResults.some((tr) => tr.toolName === "think")
-      })
-      expect(hasThinkResult).toBe(true)
       const hasPdfResult = resolveEvents.some((e) => {
         const toolResults = (e as { toolResults?: { toolName: string }[] }).toolResults ?? []
         return toolResults.some((tr) => tr.toolName === "readPdfFile")

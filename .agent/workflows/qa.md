@@ -55,16 +55,7 @@ describe("functionName", () => {
 
 ## E2E Tests
 
-### Running E2E Tests
-
-```bash
-pnpm test:e2e
-pnpm test:e2e -- --grep "test name"
-```
-
-### E2E Test Location
-
-E2E tests are in the `e2e/` directory at the repository root.
+See [.agent/rules/e2e.md](../rules/e2e.md) for detailed E2E testing rules.
 
 ## Coverage Requirements
 
@@ -172,8 +163,4 @@ If tests are flaky:
 
 ### E2E Failures
 
-If E2E tests fail:
-
-1. Check console output for errors
-2. Verify Docker is running (if using `--runtime docker`)
-3. Check environment variables are set
+See [.agent/rules/e2e.md](../rules/e2e.md) for debugging E2E test failures.

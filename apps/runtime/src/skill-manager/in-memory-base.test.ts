@@ -75,7 +75,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
       expect(tools.length).toBeGreaterThan(0)
       // Check for expected base skill tools
       const toolNames = tools.map((t) => t.name)
-      expect(toolNames).toContain("think")
+      expect(toolNames).toContain("todo")
       expect(toolNames).toContain("exec")
       expect(toolNames).toContain("readTextFile")
     })
@@ -93,7 +93,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
 
     it("applies pick filter to tool definitions", async () => {
       const manager = new InMemoryBaseSkillManager(
-        createBaseSkill({ pick: ["think", "exec"] }),
+        createBaseSkill({ pick: ["todo", "exec"] }),
         "job-1",
         "run-1",
       )
@@ -102,7 +102,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
       const tools = await manager.getToolDefinitions()
       const toolNames = tools.map((t) => t.name)
 
-      expect(toolNames).toContain("think")
+      expect(toolNames).toContain("todo")
       expect(toolNames).toContain("exec")
       expect(toolNames).not.toContain("readTextFile")
       expect(tools.length).toBe(2)
@@ -110,7 +110,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
 
     it("applies omit filter to tool definitions", async () => {
       const manager = new InMemoryBaseSkillManager(
-        createBaseSkill({ omit: ["think", "exec"] }),
+        createBaseSkill({ omit: ["todo", "exec"] }),
         "job-1",
         "run-1",
       )
@@ -119,7 +119,7 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
       const tools = await manager.getToolDefinitions()
       const toolNames = tools.map((t) => t.name)
 
-      expect(toolNames).not.toContain("think")
+      expect(toolNames).not.toContain("todo")
       expect(toolNames).not.toContain("exec")
       expect(toolNames).toContain("readTextFile")
     })
@@ -129,22 +129,9 @@ describe("@perstack/runtime: InMemoryBaseSkillManager", () => {
     it("throws error if not initialized", async () => {
       const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
 
-      await expect(manager.callTool("think", { thought: "test" })).rejects.toThrow(
+      await expect(manager.callTool("healthCheck", {})).rejects.toThrow(
         "@perstack/base is not initialized",
       )
-    })
-
-    it("can call think tool after init", async () => {
-      const manager = new InMemoryBaseSkillManager(createBaseSkill(), "job-1", "run-1")
-      await manager.init()
-
-      const result = await manager.callTool("think", {
-        thought: "test thought",
-        nextThoughtNeeded: false,
-      })
-
-      expect(Array.isArray(result)).toBe(true)
-      expect(result.length).toBeGreaterThan(0)
     })
 
     it("can call healthCheck tool after init", async () => {

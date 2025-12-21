@@ -16,8 +16,9 @@ export function parseInteractiveToolCallResult(
   if (lastMessage.type !== "expertMessage") {
     throw new Error("Last message is not a expert message")
   }
-  const content = lastMessage.contents[0]
-  if (content.type !== "toolCallPart") {
+  // Find the first toolCallPart (may not be contents[0] if thinkingPart is present)
+  const content = lastMessage.contents.find((c) => c.type === "toolCallPart")
+  if (!content || content.type !== "toolCallPart") {
     throw new Error("Last message content is not a tool call part")
   }
   const toolCallId = content.toolCallId

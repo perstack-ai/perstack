@@ -11,6 +11,7 @@
 # Runtime configuration
 model = "claude-sonnet-4-5"
 temperature = 0.3
+reasoningBudget = "medium"
 runtime = "docker"
 maxSteps = 50
 maxRetries = 3
@@ -87,6 +88,7 @@ Top-level settings that apply to all Experts in the file.
 ```toml
 model = "claude-sonnet-4-5"
 temperature = 0.3
+reasoningBudget = "medium"
 runtime = "docker"
 maxSteps = 100
 maxRetries = 10
@@ -99,14 +101,18 @@ baseUrl = "https://custom-endpoint.example.com"
 headers = { "X-Custom-Header" = "value" }
 ```
 
-| Field         | Type   | Description                                                              |
-| ------------- | ------ | ------------------------------------------------------------------------ |
-| `model`       | string | Model name                                                               |
-| `temperature` | number | Temperature (0.0-1.0)                                                    |
-| `runtime`     | string | Execution runtime (`docker`, `local`, `cursor`, `claude-code`, `gemini`) |
-| `maxSteps`    | number | Maximum steps per run                                                    |
-| `maxRetries`  | number | Maximum retry attempts                                                   |
-| `timeout`     | number | Timeout per generation (ms)                                              |
+| Field             | Type             | Description                                                                      |
+| ----------------- | ---------------- | -------------------------------------------------------------------------------- |
+| `model`           | string           | Model name                                                                       |
+| `temperature`     | number           | Temperature (0.0-1.0)                                                            |
+| `reasoningBudget` | string or number | Native LLM reasoning budget (`minimal`, `low`, `medium`, `high`, or token count) |
+| `runtime`         | string           | Execution runtime (`docker`, `local`, `cursor`, `claude-code`, `gemini`)         |
+| `maxSteps`        | number           | Maximum steps per run                                                            |
+| `maxRetries`      | number           | Maximum retry attempts                                                           |
+| `timeout`         | number           | Timeout per generation (ms)                                                      |
+
+> [!NOTE]
+> When `reasoningBudget` is set for Anthropic provider, `temperature` is ignored (fixed at 1.0 by the API).
 
 ### Provider Configuration
 

@@ -1,5 +1,7 @@
-import type { ProviderName } from "@perstack/core"
+import type { ProviderName, ReasoningBudget } from "@perstack/core"
 import type { JSONValue, LanguageModel, ToolSet } from "ai"
+
+export type { ReasoningBudget }
 
 export type ProviderOptions = Record<string, Record<string, JSONValue>>
 
@@ -63,6 +65,12 @@ export interface ProviderAdapter {
   getProviderTools(toolNames: string[], options?: ProviderToolOptions): ToolSet
 
   getProviderOptions(config?: ProviderOptionsConfig): ProviderOptions | undefined
+
+  /**
+   * Get provider-specific reasoning options for native LLM reasoning (extended thinking).
+   * Returns undefined if the provider doesn't support reasoning or budget is not set.
+   */
+  getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined
 
   normalizeError(error: unknown): ProviderError
 

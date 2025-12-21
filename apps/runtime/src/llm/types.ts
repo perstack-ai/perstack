@@ -1,3 +1,4 @@
+import type { ReasoningBudget } from "@perstack/core"
 import type {
   ProviderError,
   ProviderOptionsConfig,
@@ -8,6 +9,7 @@ import type { GenerateTextResult, ModelMessage, ToolSet } from "ai"
 export interface GenerateTextParams {
   messages: ModelMessage[]
   temperature: number
+  reasoningBudget?: ReasoningBudget
   maxRetries: number
   tools: ToolSet
   toolChoice?: "auto" | "none" | "required" | { type: "tool"; toolName: string }

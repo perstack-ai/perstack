@@ -7,6 +7,7 @@ import {
   type ProviderOptions,
   type ProviderOptionsConfig,
   type ProviderToolOptions,
+  type ReasoningBudget,
 } from "@perstack/provider-core"
 import type { LanguageModel, ToolSet } from "ai"
 import { isAnthropicRetryable, normalizeAnthropicError } from "./errors.js"
@@ -40,6 +41,26 @@ export class AnthropicProviderAdapter extends BaseProviderAdapter {
 
   override getProviderOptions(config?: ProviderOptionsConfig): ProviderOptions | undefined {
     return buildProviderOptions(config?.skills)
+  }
+
+  override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
+    const budgetTokens = this.budgetToTokens(budget)
+    return {
+      anthropic: {
+        thinking: { type: "enabled", budgetTokens },
+      },
+    }
+  }
+
+  private budgetToTokens(budget: ReasoningBudget): number {
+    if (typeof budget === "number") return budget
+    const map: Record<string, number> = {
+      minimal: 1024,
+      low: 2048,
+      medium: 5000,
+      high: 10000,
+    }
+    return map[budget] ?? 5000
   }
 
   override normalizeError(error: unknown): ProviderError {

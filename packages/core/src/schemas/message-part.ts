@@ -139,6 +139,22 @@ export const toolCallPartSchema = basePartSchema.extend({
 })
 toolCallPartSchema satisfies z.ZodType<ToolCallPart>
 
+/** Thinking block from extended thinking / reasoning models */
+export interface ThinkingPart extends BasePart {
+  type: "thinkingPart"
+  /** The thinking content */
+  thinking: string
+  /** Signature for redacted thinking blocks (Anthropic) */
+  signature?: string
+}
+
+export const thinkingPartSchema = basePartSchema.extend({
+  type: z.literal("thinkingPart"),
+  thinking: z.string(),
+  signature: z.string().optional(),
+})
+thinkingPartSchema satisfies z.ZodType<ThinkingPart>
+
 /** Result of a tool call */
 export interface ToolResultPart extends BasePart {
   type: "toolResultPart"
@@ -172,6 +188,7 @@ export type MessagePart =
   | FileBinaryPart
   | ToolCallPart
   | ToolResultPart
+  | ThinkingPart
 
 export const messagePartSchema = z.discriminatedUnion("type", [
   textPartSchema,
@@ -183,4 +200,5 @@ export const messagePartSchema = z.discriminatedUnion("type", [
   fileBinaryPartSchema,
   toolCallPartSchema,
   toolResultPartSchema,
+  thinkingPartSchema,
 ])
