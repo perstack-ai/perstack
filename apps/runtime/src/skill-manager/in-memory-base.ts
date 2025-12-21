@@ -1,4 +1,5 @@
 import { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js"
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { type CallToolResult, McpError } from "@modelcontextprotocol/sdk/types.js"
 import { BASE_SKILL_NAME, BASE_SKILL_VERSION, createBaseServer } from "@perstack/base"
 import {
@@ -29,6 +30,7 @@ export class InMemoryBaseSkillManager extends BaseSkillManager {
   readonly type: SkillType = "mcp"
   readonly lazyInit = false
   override readonly skill: McpStdioSkill
+  private _mcpServer?: McpServer
   private _mcpClient?: McpClient
   private _transportFactory: TransportFactory
 
@@ -59,8 +61,8 @@ export class InMemoryBaseSkillManager extends BaseSkillManager {
     const [clientTransport, serverTransport] = this._transportFactory.createInMemoryPair()
 
     // Create and connect the base server
-    const server = createBaseServer()
-    await server.connect(serverTransport)
+    this._mcpServer = createBaseServer()
+    await this._mcpServer.connect(serverTransport)
 
     // Create and connect the client
     this._mcpClient = new McpClient({
@@ -104,12 +106,15 @@ export class InMemoryBaseSkillManager extends BaseSkillManager {
   override async close(): Promise<void> {
     if (this._mcpClient) {
       await this._mcpClient.close()
-      if (this._eventListener) {
-        const event = createRuntimeEvent("skillDisconnected", this._jobId, this._runId, {
-          skillName: BASE_SKILL_NAME,
-        })
-        this._eventListener(event)
-      }
+    }
+    if (this._mcpServer) {
+      await this._mcpServer.close()
+    }
+    if (this._eventListener && (this._mcpClient || this._mcpServer)) {
+      const event = createRuntimeEvent("skillDisconnected", this._jobId, this._runId, {
+        skillName: BASE_SKILL_NAME,
+      })
+      this._eventListener(event)
     }
   }
 
