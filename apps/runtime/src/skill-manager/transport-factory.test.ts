@@ -45,6 +45,29 @@ describe("@perstack/runtime: DefaultTransportFactory", () => {
       expect(typeof transport.close).toBe("function")
     })
   })
+
+  describe("createInMemoryPair", () => {
+    it("creates a linked pair of transports", () => {
+      const factory = new DefaultTransportFactory()
+
+      const [clientTransport, serverTransport] = factory.createInMemoryPair()
+
+      expect(clientTransport).toBeDefined()
+      expect(serverTransport).toBeDefined()
+      expect(typeof clientTransport.start).toBe("function")
+      expect(typeof clientTransport.close).toBe("function")
+      expect(typeof serverTransport.start).toBe("function")
+      expect(typeof serverTransport.close).toBe("function")
+    })
+
+    it("returns two distinct transport instances", () => {
+      const factory = new DefaultTransportFactory()
+
+      const [clientTransport, serverTransport] = factory.createInMemoryPair()
+
+      expect(clientTransport).not.toBe(serverTransport)
+    })
+  })
 })
 
 describe("@perstack/runtime: defaultTransportFactory", () => {

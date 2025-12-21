@@ -43,6 +43,7 @@
     "@paralleldrive/cuid2": "^3.0.4",
     "@perstack/anthropic-provider": "workspace:*",
     "@perstack/api-client": "workspace:*",
+    "@perstack/base": "workspace:*",
     "@perstack/azure-openai-provider": "workspace:*",
     "@perstack/bedrock-provider": "workspace:*",
     "@perstack/core": "workspace:*",

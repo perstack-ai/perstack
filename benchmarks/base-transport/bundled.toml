@@ -1,0 +1,19 @@
+# Benchmark configuration for bundled @perstack/base with InMemoryTransport
+# This uses the in-process base skill for near-zero latency
+
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+[experts."bundled-base-benchmark"]
+version = "1.0.0"
+description = "Benchmark Expert using bundled base with InMemoryTransport"
+instruction = "You are a benchmark Expert. Call healthCheck once and respond with 'Ready'."
+
+[experts."bundled-base-benchmark".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["healthCheck", "attemptCompletion"]

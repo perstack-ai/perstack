@@ -7,8 +7,15 @@ export {
   getSkillManagerByToolName,
   getSkillManagers,
   getToolSet,
+  hasExplicitBaseVersion,
   initSkillManagersWithCleanup,
+  isBaseSkill,
+  shouldUseBundledBase,
 } from "./helpers.js"
+export {
+  InMemoryBaseSkillManager,
+  type InMemoryBaseSkillManagerOptions,
+} from "./in-memory-base.js"
 export { InteractiveSkillManager } from "./interactive.js"
 export { isPrivateOrLocalIP } from "./ip-validator.js"
 export { McpSkillManager, type McpSkillManagerOptions } from "./mcp.js"

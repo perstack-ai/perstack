@@ -1,5 +1,6 @@
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js"
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
 
 export interface StdioTransportOptions {
@@ -20,6 +21,11 @@ export interface SseTransportOptions {
 export interface TransportFactory {
   createStdio(options: StdioTransportOptions): StdioClientTransport
   createSse(options: SseTransportOptions): Transport
+  /**
+   * Create a linked pair of in-memory transports for in-process MCP communication.
+   * Returns [clientTransport, serverTransport].
+   */
+  createInMemoryPair(): [Transport, Transport]
 }
 
 /**
@@ -37,6 +43,10 @@ export class DefaultTransportFactory implements TransportFactory {
 
   createSse(options: SseTransportOptions): Transport {
     return new SSEClientTransport(options.url)
+  }
+
+  createInMemoryPair(): [Transport, Transport] {
+    return InMemoryTransport.createLinkedPair()
   }
 }
 

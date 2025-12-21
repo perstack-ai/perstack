@@ -36,6 +36,85 @@ export interface GetSkillManagersOptions {
   factory?: SkillManagerFactory
 }
 
+/**
+ * Check if a base skill has an explicit version specified.
+ * Examples of versioned packages:
+ * - packageName: "@perstack/base@0.0.34"
+ * - args: ["@perstack/base@0.0.34"]
+ */
+export function hasExplicitBaseVersion(skill: McpStdioSkill): boolean {
+  // Check packageName for version: @perstack/base@1.2.3
+  // The @ symbol appears twice: once at the start of the scope, once before the version
+  if (skill.packageName) {
+    const atSignIndex = skill.packageName.indexOf("@", 1) // Skip the leading @ in @perstack
+    if (atSignIndex > 0) {
+      return true
+    }
+  }
+
+  // Check args for versioned package
+  if (skill.args) {
+    for (const arg of skill.args) {
+      if (arg.startsWith("@perstack/base@")) {
+        // Check if there's a version after @perstack/base@
+        const versionStart = "@perstack/base@".length
+        if (arg.length > versionStart) {
+          return true
+        }
+      }
+    }
+  }
+
+  return false
+}
+
+/**
+ * Check if a skill is the @perstack/base skill (by name or package).
+ */
+export function isBaseSkill(skill: McpStdioSkill | McpSseSkill): boolean {
+  if (skill.name === "@perstack/base") {
+    return true
+  }
+  if (skill.type === "mcpStdioSkill") {
+    const stdioSkill = skill as McpStdioSkill
+    if (stdioSkill.packageName?.startsWith("@perstack/base")) {
+      return true
+    }
+    if (stdioSkill.args?.some((arg) => arg.startsWith("@perstack/base"))) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Determine if the bundled in-memory base should be used.
+ * Returns true if:
+ * - No perstackBaseSkillCommand override is set
+ * - The base skill doesn't have an explicit version pinned
+ */
+export function shouldUseBundledBase(
+  baseSkill: McpStdioSkill | McpSseSkill,
+  perstackBaseSkillCommand?: string[],
+): boolean {
+  // If a custom command is specified, don't use bundled base
+  if (perstackBaseSkillCommand && perstackBaseSkillCommand.length > 0) {
+    return false
+  }
+
+  // SSE skills can't use bundled base
+  if (baseSkill.type === "mcpSseSkill") {
+    return false
+  }
+
+  // If explicit version is specified, use npx instead of bundled
+  if (hasExplicitBaseVersion(baseSkill)) {
+    return false
+  }
+
+  return true
+}
+
 export async function getSkillManagers(
   expert: Expert,
   experts: Record<string, Expert>,
@@ -59,13 +138,40 @@ export async function getSkillManagers(
   }
 
   const allManagers: BaseSkillManager[] = []
+  const baseSkill = skills["@perstack/base"]
 
-  // Process MCP skills
+  // Determine if we should use bundled in-memory base
+  const useBundledBase =
+    (baseSkill.type === "mcpStdioSkill" || baseSkill.type === "mcpSseSkill") &&
+    shouldUseBundledBase(baseSkill, perstackBaseSkillCommand)
+
+  // Process base skill first
+  if (useBundledBase && baseSkill.type === "mcpStdioSkill") {
+    // Warn if requiredEnv is set (has no effect with bundled base)
+    if (baseSkill.requiredEnv.length > 0) {
+      console.warn(
+        `[perstack] requiredEnv is ignored for bundled @perstack/base. Pin a version to enable it.`,
+      )
+    }
+    // Use InMemoryTransport for bundled base (near-zero latency)
+    const baseManager = factory.createInMemoryBase(baseSkill, factoryContext)
+    allManagers.push(baseManager)
+    await initSkillManagersWithCleanup([baseManager], allManagers)
+  }
+
+  // Process MCP skills (excluding base if using bundled)
   const mcpSkills = Object.values(skills)
     .filter(
       (skill): skill is McpStdioSkill | McpSseSkill =>
         skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill",
     )
+    .filter((skill) => {
+      // Skip base skill if we're using bundled base
+      if (useBundledBase && isBaseSkill(skill)) {
+        return false
+      }
+      return true
+    })
     .map((skill) => {
       if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
         const matchesBaseByPackage =

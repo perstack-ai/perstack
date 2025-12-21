@@ -1,0 +1,25 @@
+# E2E test configuration for bundled base skill with InMemoryTransport
+# Tests that the bundled @perstack/base uses in-memory transport (no process spawn)
+
+model = "claude-sonnet-4-5"
+temperature = 0.3
+runtime = "local"
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+# Default bundled base - uses InMemoryTransport
+[experts."e2e-bundled-base"]
+version = "1.0.0"
+description = "E2E test expert for bundled base with InMemoryTransport"
+instruction = """
+Call healthCheck and then call attemptCompletion with result "OK"
+"""
+
+[experts."e2e-bundled-base".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "healthCheck"]
