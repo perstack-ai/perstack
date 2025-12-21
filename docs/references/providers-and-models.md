@@ -61,6 +61,8 @@ headers = { "X-Custom-Header" = "value" }        # Optional
 | `baseUrl` | string | Custom API endpoint |
 | `headers` | object | Custom HTTP headers |
 
+**Native reasoning:** Supported via extended thinking. When `reasoningBudget` is set, `temperature` is fixed at 1.0.
+
 **Models:**
 | Model                        | Context | Max Output |
 | ---------------------------- | ------- | ---------- |
@@ -142,6 +144,8 @@ headers = { "X-Custom-Header" = "value" }         # Optional
 | `project`      | string | OpenAI project ID      |
 | `name`         | string | Custom provider name   |
 | `headers`      | object | Custom HTTP headers    |
+
+**Native reasoning:** Supported via `reasoningEffort`. Works with o-series models (o1, o3, o4-mini).
 
 **Models:**
 | Model               | Context | Max Output |

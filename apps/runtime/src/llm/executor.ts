@@ -1,4 +1,4 @@
-import type { ProviderAdapter } from "@perstack/provider-core"
+import type { ProviderAdapter, ProviderOptions } from "@perstack/provider-core"
 import { generateText, type LanguageModel } from "ai"
 import type { GenerateTextParams, LLMExecutionResult } from "./types.js"
 
@@ -13,7 +13,11 @@ export class LLMExecutor {
       params.providerToolNames ?? [],
       params.providerToolOptions,
     )
-    const providerOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
+    const baseProviderOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
+    const reasoningOptions = params.reasoningBudget
+      ? this.adapter.getReasoningOptions(params.reasoningBudget)
+      : undefined
+    const providerOptions = this.mergeProviderOptions(baseProviderOptions, reasoningOptions)
 
     try {
       const result = await generateText({
@@ -37,13 +41,31 @@ export class LLMExecutor {
     }
   }
 
+  private mergeProviderOptions(
+    ...options: (ProviderOptions | undefined)[]
+  ): ProviderOptions | undefined {
+    const defined = options.filter(Boolean) as ProviderOptions[]
+    if (defined.length === 0) return undefined
+    const result: ProviderOptions = {}
+    for (const opt of defined) {
+      for (const [provider, settings] of Object.entries(opt)) {
+        result[provider] = { ...result[provider], ...settings }
+      }
+    }
+    return result
+  }
+
   async generateTextWithoutTools(
     params: Omit<
       GenerateTextParams,
       "tools" | "toolChoice" | "providerToolNames" | "providerToolOptions"
     >,
   ): Promise<LLMExecutionResult> {
-    const providerOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
+    const baseProviderOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
+    const reasoningOptions = params.reasoningBudget
+      ? this.adapter.getReasoningOptions(params.reasoningBudget)
+      : undefined
+    const providerOptions = this.mergeProviderOptions(baseProviderOptions, reasoningOptions)
 
     try {
       const result = await generateText({

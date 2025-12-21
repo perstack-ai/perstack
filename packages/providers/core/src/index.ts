@@ -10,4 +10,5 @@ export type {
   ProviderOptions,
   ProviderOptionsConfig,
   ProviderToolOptions,
+  ReasoningBudget,
 } from "./types.js"

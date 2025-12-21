@@ -47,31 +47,31 @@ describe.concurrent("Skills", () => {
     LLM_TIMEOUT,
   )
 
-  /** Verifies picked tools (think, attemptCompletion) are usable. */
+  /** Verifies picked tools (todo, attemptCompletion) are usable. */
   it(
     "should be able to use picked tools",
     async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", SKILLS_CONFIG, "e2e-pick-tools", "Think about something and complete"],
+        ["run", "--config", SKILLS_CONFIG, "e2e-pick-tools", "Track a task and complete"],
         { timeout: LLM_TIMEOUT },
       )
       const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       const callToolsEvents = filterEventsByType(result.events, "callTools")
-      const hasThink = callToolsEvents.some((e) => {
+      const hasTodo = callToolsEvents.some((e) => {
         const calls = (e as { toolCalls?: { toolName: string }[] }).toolCalls ?? []
-        return calls.some((c) => c.toolName === "think")
+        return calls.some((c) => c.toolName === "todo")
       })
       const hasAttemptCompletion = callToolsEvents.some((e) => {
         const calls = (e as { toolCalls?: { toolName: string }[] }).toolCalls ?? []
         return calls.some((c) => c.toolName === "attemptCompletion")
       })
-      expect(hasThink || hasAttemptCompletion).toBe(true)
+      expect(hasTodo || hasAttemptCompletion).toBe(true)
     },
     LLM_TIMEOUT,
   )
 
-  /** Verifies omitted tools (think) are not available. */
+  /** Verifies omitted tools (exec) are not available. */
   it(
     "should not have access to omitted tools",
     async () => {
@@ -82,11 +82,11 @@ describe.concurrent("Skills", () => {
       const result = withEventParsing(cmdResult)
       expect(result.exitCode).toBe(0)
       const callToolsEvents = filterEventsByType(result.events, "callTools")
-      const hasThink = callToolsEvents.some((e) => {
+      const hasExec = callToolsEvents.some((e) => {
         const calls = (e as { toolCalls?: { toolName: string }[] }).toolCalls ?? []
-        return calls.some((c) => c.toolName === "think")
+        return calls.some((c) => c.toolName === "exec")
       })
-      expect(hasThink).toBe(false)
+      expect(hasExec).toBe(false)
     },
     LLM_TIMEOUT,
   )
@@ -96,7 +96,7 @@ describe.concurrent("Skills", () => {
     "should have access to tools from multiple skills",
     async () => {
       const cmdResult = await runRuntimeCli(
-        ["run", "--config", SKILLS_CONFIG, "e2e-multi-skill", "Think about AI and complete"],
+        ["run", "--config", SKILLS_CONFIG, "e2e-multi-skill", "Track a task and complete"],
         { timeout: LLM_TIMEOUT },
       )
       const result = withEventParsing(cmdResult)

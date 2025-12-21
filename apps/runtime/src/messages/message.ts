@@ -10,6 +10,7 @@ import type {
   InstructionMessage,
   Message,
   TextPart,
+  ThinkingPart,
   ToolCallPart,
   ToolMessage,
   ToolResultPart,
@@ -51,7 +52,7 @@ export function createUserMessage(
 }
 
 export function createExpertMessage(
-  contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">>,
+  contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id"> | Omit<ThinkingPart, "id">>,
 ): ExpertMessage {
   return {
     type: "expertMessage",
@@ -171,6 +172,8 @@ function expertContentsToCoreContent(
         return textPartToCoreTextPart(part)
       case "toolCallPart":
         return toolCallPartToCoreToolCallPart(part)
+      case "thinkingPart":
+        return thinkingPartToCoreThinkingPart(part)
       default:
         throw new Error(`Unknown expert content type: ${(part as { type: string }).type}`)
     }
@@ -240,6 +243,17 @@ function toolCallPartToCoreToolCallPart(part: ToolCallPart): ToolCallModelPart {
     toolCallId: part.toolCallId,
     toolName: part.toolName,
     input: part.args,
+  }
+}
+function thinkingPartToCoreThinkingPart(part: ThinkingPart): {
+  type: "reasoning"
+  text: string
+  providerOptions?: Record<string, Record<string, string>>
+} {
+  return {
+    type: "reasoning",
+    text: part.thinking,
+    providerOptions: part.signature ? { anthropic: { signature: part.signature } } : undefined,
   }
 }
 function toolResultPartToCoreToolResultPart(part: ToolResultPart): ToolResultModelPart {

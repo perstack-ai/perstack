@@ -12,7 +12,6 @@ import { generatingRunResultLogic } from "./states/generating-run-result.js"
 import { generatingToolCallLogic } from "./states/generating-tool-call.js"
 import { initLogic } from "./states/init.js"
 import { preparingForStepLogic } from "./states/preparing-for-step.js"
-import { resolvingThoughtLogic } from "./states/resolving-thought.js"
 import { resolvingToolResultLogic } from "./states/resolving-tool-result.js"
 
 export const runtimeStateMachine = setup({
@@ -165,6 +164,16 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
+        completeRun: {
+          target: "Stopped",
+          actions: assign({
+            checkpoint: ({ event }) => event.checkpoint,
+            step: ({ event }) => ({
+              ...event.step,
+              inputMessages: undefined,
+            }),
+          }),
+        },
         callTools: {
           target: "CallingTool",
           actions: assign({
@@ -244,16 +253,6 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
-        resolveThought: {
-          target: "ResolvingThought",
-          actions: assign({
-            step: ({ context, event }) =>
-              ({
-                ...context.step,
-                toolResults: [event.toolResult],
-              }) satisfies Step,
-          }),
-        },
         attemptCompletion: {
           target: "GeneratingRunResult",
           actions: assign({
@@ -294,26 +293,6 @@ export const runtimeStateMachine = setup({
     },
 
     ResolvingToolResult: {
-      on: {
-        finishToolCall: {
-          target: "FinishingStep",
-          actions: assign({
-            checkpoint: ({ context, event }) =>
-              ({
-                ...context.checkpoint,
-                messages: [...context.checkpoint.messages, ...event.newMessages],
-              }) satisfies Checkpoint,
-            step: ({ context, event }) =>
-              ({
-                ...context.step,
-                newMessages: [...context.step.newMessages, ...event.newMessages],
-              }) satisfies Step,
-          }),
-        },
-      },
-    },
-
-    ResolvingThought: {
       on: {
         finishToolCall: {
           target: "FinishingStep",
@@ -453,7 +432,6 @@ export const StateMachineLogics: Record<
   GeneratingToolCall: generatingToolCallLogic,
   CallingTool: callingToolLogic,
   ResolvingToolResult: resolvingToolResultLogic,
-  ResolvingThought: resolvingThoughtLogic,
   GeneratingRunResult: generatingRunResultLogic,
   CallingInteractiveTool: callingInteractiveToolLogic,
   CallingDelegate: callingDelegateLogic,

@@ -86,11 +86,31 @@ function createMockSkillManager(
 }
 
 describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
-  it("returns retry event when no tool call generated", async () => {
+  it("returns completeRun event when text-only is generated (implicit completion)", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
     mockGetModel.mockReturnValue(createMockLanguageModel())
+    const event = await StateMachineLogics.GeneratingToolCall({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+      llmExecutor: mockLLMExecutor,
+    })
+    expect(event.type).toBe("completeRun")
+    expect(event.expertKey).toBe("test-expert")
+    if (event.type === "completeRun") {
+      expect(event.text).toBe("Generated text")
+    }
+  })
+
+  it("returns retry event when no tool call and no text generated", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep()
+    mockGetModel.mockReturnValue(createMockLanguageModel({ text: "" }))
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
@@ -205,7 +225,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     expect(event.runId).toBe(setting.runId)
   })
 
-  it("handles different finish reasons", async () => {
+  it("handles text-only response with stop finish reason", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
@@ -218,11 +238,12 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       skillManagers: {},
       llmExecutor: mockLLMExecutor,
     })
-    expect(event.type).toBe("retry")
+    // Text-only with stop = implicit completion
+    expect(event.type).toBe("completeRun")
     expect(event.runId).toBe(setting.runId)
   })
 
-  it("returns retry with usage information", async () => {
+  it("returns completeRun with usage information for text-only response", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
@@ -235,7 +256,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       skillManagers: {},
       llmExecutor: mockLLMExecutor,
     })
-    expect(event.type).toBe("retry")
+    expect(event.type).toBe("completeRun")
     expect((event as { usage?: { inputTokens: number } }).usage).toBeDefined()
   })
 

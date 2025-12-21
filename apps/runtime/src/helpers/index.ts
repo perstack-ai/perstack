@@ -13,4 +13,10 @@ export {
   type SetupExpertsResult,
   setupExperts,
 } from "./setup-experts.js"
+export {
+  createThinkingPart,
+  extractThinkingParts,
+  extractThinkingText,
+  type ReasoningPart,
+} from "./thinking.js"
 export { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "./usage.js"

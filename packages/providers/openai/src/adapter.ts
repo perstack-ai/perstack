@@ -4,7 +4,9 @@ import {
   BaseProviderAdapter,
   type ProviderAdapterOptions,
   type ProviderError,
+  type ProviderOptions,
   type ProviderToolOptions,
+  type ReasoningBudget,
 } from "@perstack/provider-core"
 import type { LanguageModel, ToolSet } from "ai"
 import { isOpenAIRetryable, normalizeOpenAIError } from "./errors.js"
@@ -36,6 +38,23 @@ export class OpenAIProviderAdapter extends BaseProviderAdapter {
 
   override getProviderTools(toolNames: string[], options?: ProviderToolOptions): ToolSet {
     return buildOpenAITools(this.client, toolNames, options)
+  }
+
+  override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
+    const effort = this.budgetToEffort(budget)
+    return {
+      openai: { reasoningEffort: effort },
+    }
+  }
+
+  private budgetToEffort(budget: ReasoningBudget): string {
+    if (typeof budget === "number") {
+      if (budget <= 1024) return "minimal"
+      if (budget <= 2048) return "low"
+      if (budget <= 5000) return "medium"
+      return "high"
+    }
+    return budget
   }
 
   override normalizeError(error: unknown): ProviderError {

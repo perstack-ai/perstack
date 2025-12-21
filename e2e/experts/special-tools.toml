@@ -10,13 +10,12 @@ envPath = [".env", ".env.local"]
 version = "1.0.0"
 description = "E2E test expert for special tool parallel execution"
 instruction = """
-IMPORTANT: Call ALL 4 tools below IN PARALLEL (single tool call batch):
-- think: thought="parallel test"
+IMPORTANT: Call ALL 3 tools below IN PARALLEL (single tool call batch):
 - readPdfFile: path="e2e/fixtures/test.pdf"
 - readImageFile: path="e2e/fixtures/test.gif"
 - web_search_exa: query="test"
 
-After all 4 complete, call attemptCompletion with "OK".
+After all 3 complete, call attemptCompletion with "OK".
 """
 
 [experts."e2e-special-tools".skills."exa"]
@@ -31,4 +30,4 @@ lazyInit = false
 type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
-pick = ["attemptCompletion", "think", "readPdfFile", "readImageFile"]
+pick = ["attemptCompletion", "readPdfFile", "readImageFile"]

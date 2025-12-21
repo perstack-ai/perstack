@@ -1,16 +1,23 @@
 import { createId } from "@paralleldrive/cuid2"
 import {
   callTools,
+  completeRun,
   type RunEvent,
   retry,
   stopRunByError,
   type TextPart,
+  type ThinkingPart,
   type ToolCall,
   type ToolCallPart,
 } from "@perstack/core"
 import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
-import { getModel } from "../../helpers/model.js"
-import { createEmptyUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
+import { getModel, getReasoningProviderOptions } from "../../helpers/model.js"
+import {
+  extractThinkingParts,
+  extractThinkingText,
+  type ReasoningPart,
+} from "../../helpers/thinking.js"
+import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
 import {
   createExpertMessage,
   createToolMessage,
@@ -78,6 +85,10 @@ export async function generatingToolCallLogic({
 }: RunSnapshot["context"]): Promise<RunEvent> {
   const { messages } = checkpoint
   const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
+  const providerOptions = getReasoningProviderOptions(
+    setting.providerConfig.providerName,
+    setting.reasoningBudget,
+  )
   let result: GenerateTextResult<ToolSet, never>
   try {
     result = await generateText({
@@ -86,7 +97,8 @@ export async function generatingToolCallLogic({
       temperature: setting.temperature,
       maxRetries: setting.maxRetries,
       tools: await getToolSet(skillManagers),
-      toolChoice: "required",
+      toolChoice: "auto",
+      providerOptions,
       abortSignal: AbortSignal.timeout(setting.timeout),
     })
   } catch (error) {
@@ -119,11 +131,41 @@ export async function generatingToolCallLogic({
     throw error
   }
   const usage = usageFromGenerateTextResult(result)
-  const { text, toolCalls, finishReason } = result
+  const { text, toolCalls, finishReason, reasoning } = result
+  // Extract thinking from reasoning (Anthropic, Google)
+  const thinkingParts = extractThinkingParts(reasoning as ReasoningPart[] | undefined)
+  const thinkingText = extractThinkingText(reasoning as ReasoningPart[] | undefined)
+
+  // Text only = implicit completion (no tool calls)
+  if (toolCalls.length === 0 && text) {
+    const contents: Array<
+      Omit<TextPart, "id"> | Omit<ToolCallPart, "id"> | Omit<ThinkingPart, "id">
+    > = [...thinkingParts, { type: "textPart", text }]
+    const newMessage = createExpertMessage(contents)
+    return completeRun(setting, checkpoint, {
+      checkpoint: {
+        ...checkpoint,
+        messages: [...messages, newMessage],
+        usage: sumUsage(checkpoint.usage, usage),
+        status: "completed",
+      },
+      step: {
+        ...step,
+        newMessages: [...step.newMessages, newMessage],
+        finishedAt: Date.now(),
+        usage: sumUsage(step.usage, usage),
+      },
+      text,
+      thinking: thinkingText || undefined,
+      usage,
+    })
+  }
+
+  // Nothing generated = retry
   if (toolCalls.length === 0) {
     const reason = JSON.stringify({
-      error: "Error: No tool call generated",
-      message: "You must generate a tool call. Try again.",
+      error: "Error: No tool call or text generated",
+      message: "You must generate a tool call or provide a response. Try again.",
     })
     return retry(setting, checkpoint, {
       reason,
@@ -135,10 +177,11 @@ export async function generatingToolCallLogic({
   const sorted = sortToolCallsByPriority(classified)
   if (finishReason === "tool-calls" || finishReason === "stop") {
     const toolCallParts = buildToolCallParts(sorted)
-    const contents: Array<Omit<TextPart, "id"> | Omit<ToolCallPart, "id">> = [...toolCallParts]
-    if (text) {
-      contents.push({ type: "textPart", text })
-    }
+    // Order matters for Anthropic Extended Thinking: thinking → text → tool_use
+    // text must come BEFORE tool_use, not after, to avoid breaking tool_result matching
+    const contents: Array<
+      Omit<TextPart, "id"> | Omit<ToolCallPart, "id"> | Omit<ThinkingPart, "id">
+    > = [...thinkingParts, ...(text ? [{ type: "textPart" as const, text }] : []), ...toolCallParts]
     const allToolCalls = buildToolCalls(sorted)
     return callTools(setting, checkpoint, {
       newMessage: createExpertMessage(contents),
