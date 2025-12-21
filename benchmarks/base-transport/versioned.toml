@@ -1,0 +1,20 @@
+# Benchmark configuration for versioned @perstack/base with StdioTransport
+# This spawns a separate process via npx for reproducibility
+
+model = "claude-sonnet-4-5"
+temperature = 0.3
+
+[provider]
+providerName = "anthropic"
+
+[experts."versioned-base-benchmark"]
+version = "1.0.0"
+description = "Benchmark Expert using versioned base with StdioTransport"
+instruction = "You are a benchmark Expert. Call healthCheck once and respond with 'Ready'."
+
+[experts."versioned-base-benchmark".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+# Explicit version triggers StdioTransport fallback
+packageName = "@perstack/base@0.0.34"
+pick = ["healthCheck", "attemptCompletion"]
