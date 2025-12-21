@@ -11,7 +11,11 @@ import {
   type ToolCallPart,
 } from "@perstack/core"
 import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
-import { getModel, getReasoningProviderOptions } from "../../helpers/model.js"
+import {
+  calculateContextWindowUsage,
+  getModel,
+  getReasoningProviderOptions,
+} from "../../helpers/model.js"
 import {
   extractThinkingParts,
   extractThinkingText,
@@ -142,11 +146,15 @@ export async function generatingToolCallLogic({
       Omit<TextPart, "id"> | Omit<ToolCallPart, "id"> | Omit<ThinkingPart, "id">
     > = [...thinkingParts, { type: "textPart", text }]
     const newMessage = createExpertMessage(contents)
+    const newUsage = sumUsage(checkpoint.usage, usage)
     return completeRun(setting, checkpoint, {
       checkpoint: {
         ...checkpoint,
         messages: [...messages, newMessage],
-        usage: sumUsage(checkpoint.usage, usage),
+        usage: newUsage,
+        contextWindowUsage: checkpoint.contextWindow
+          ? calculateContextWindowUsage(newUsage, checkpoint.contextWindow)
+          : undefined,
         status: "completed",
       },
       step: {
