@@ -431,6 +431,69 @@ describe("@perstack/messages: message", () => {
           providerOptions: undefined,
         })
       })
+
+      it("converts expert message with thinking parts", () => {
+        const result = messageToCoreMessage({
+          type: "expertMessage" as const,
+          id: "msg-1",
+          cache: false,
+          contents: [
+            {
+              id: "thinking-1",
+              type: "thinkingPart" as const,
+              thinking: "Let me think about this...",
+              signature: "sig-abc123",
+            },
+            { id: "content-1", type: "textPart" as const, text: "Here is my answer." },
+          ],
+        })
+        expect(result).toEqual({
+          role: "assistant",
+          content: [
+            {
+              type: "reasoning",
+              text: "Let me think about this...",
+              providerOptions: { anthropic: { signature: "sig-abc123" } },
+            },
+            {
+              type: "text",
+              text: "Here is my answer.",
+            },
+          ],
+          providerOptions: undefined,
+        })
+      })
+
+      it("converts expert message with thinking part without signature", () => {
+        const result = messageToCoreMessage({
+          type: "expertMessage" as const,
+          id: "msg-1",
+          cache: false,
+          contents: [
+            {
+              id: "thinking-1",
+              type: "thinkingPart" as const,
+              thinking: "Thinking without signature",
+            },
+            { id: "content-1", type: "textPart" as const, text: "Answer" },
+          ],
+        })
+        expect(result).toEqual({
+          role: "assistant",
+          content: [
+            {
+              type: "reasoning",
+              text: "Thinking without signature",
+              providerOptions: undefined,
+            },
+            {
+              type: "text",
+              text: "Answer",
+            },
+          ],
+          providerOptions: undefined,
+        })
+      })
     })
   })
 })
