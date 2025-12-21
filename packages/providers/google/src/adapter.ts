@@ -46,30 +46,25 @@ export class GoogleProviderAdapter extends BaseProviderAdapter {
   }
 
   override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
-    const level = this.budgetToThinkingLevel(budget)
+    const budgetTokens = this.budgetToTokens(budget)
     return {
       google: {
         thinkingConfig: {
-          thinkingLevel: level,
+          thinkingBudget: budgetTokens,
           includeThoughts: true,
         },
       },
     }
   }
 
-  private budgetToThinkingLevel(budget: ReasoningBudget): string {
-    if (typeof budget === "number") {
-      if (budget <= 1024) return "MINIMAL"
-      if (budget <= 2048) return "LOW"
-      if (budget <= 5000) return "MEDIUM"
-      return "HIGH"
+  private budgetToTokens(budget: ReasoningBudget): number {
+    if (typeof budget === "number") return budget
+    const map: Record<string, number> = {
+      minimal: 1024,
+      low: 2048,
+      medium: 5000,
+      high: 10000,
     }
-    const map: Record<string, string> = {
-      minimal: "MINIMAL",
-      low: "LOW",
-      medium: "MEDIUM",
-      high: "HIGH",
-    }
-    return map[budget] ?? "MEDIUM"
+    return map[budget] ?? 5000
   }
 }

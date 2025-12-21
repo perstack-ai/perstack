@@ -49,11 +49,13 @@ export class OpenAIProviderAdapter extends BaseProviderAdapter {
 
   private budgetToEffort(budget: ReasoningBudget): string {
     if (typeof budget === "number") {
-      if (budget <= 1024) return "minimal"
+      // o3-mini only supports 'low', 'medium', 'high' (not 'minimal')
       if (budget <= 2048) return "low"
       if (budget <= 5000) return "medium"
       return "high"
     }
+    // Map 'minimal' to 'low' for o3-mini compatibility
+    if (budget === "minimal") return "low"
     return budget
   }
 
