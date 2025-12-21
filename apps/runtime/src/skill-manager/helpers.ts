@@ -147,6 +147,12 @@ export async function getSkillManagers(
 
   // Process base skill first
   if (useBundledBase && baseSkill.type === "mcpStdioSkill") {
+    // Warn if requiredEnv is set (has no effect with bundled base)
+    if (baseSkill.requiredEnv.length > 0) {
+      console.warn(
+        `[perstack] requiredEnv is ignored for bundled @perstack/base. Pin a version to enable it.`,
+      )
+    }
     // Use InMemoryTransport for bundled base (near-zero latency)
     const baseManager = factory.createInMemoryBase(baseSkill, factoryContext)
     allManagers.push(baseManager)
