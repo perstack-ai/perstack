@@ -156,6 +156,47 @@ describe("@perstack/core: commandOptionsSchema - envPath options", () => {
     expect(result.options.envPath).toBeUndefined()
   })
 })
+describe("@perstack/core: commandOptionsSchema - reasoningBudget options", () => {
+  it("transforms named reasoning budget levels", () => {
+    const levels = ["minimal", "low", "medium", "high"] as const
+    for (const level of levels) {
+      const result = runCommandInputSchema.parse({
+        expertKey: "test-expert",
+        query: "test",
+        options: { reasoningBudget: level },
+      })
+      expect(result.options.reasoningBudget).toBe(level)
+    }
+  })
+
+  it("transforms numeric reasoning budget", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { reasoningBudget: "5000" },
+    })
+    expect(result.options.reasoningBudget).toBe(5000)
+  })
+
+  it("returns undefined for invalid reasoning budget string", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { reasoningBudget: "invalid" },
+    })
+    expect(result.options.reasoningBudget).toBeUndefined()
+  })
+
+  it("handles undefined reasoning budget", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { reasoningBudget: undefined },
+    })
+    expect(result.options.reasoningBudget).toBeUndefined()
+  })
+})
+
 describe("@perstack/core: commandOptionsSchema - Job options", () => {
   it("parses jobId option", () => {
     const result = runCommandInputSchema.parse({

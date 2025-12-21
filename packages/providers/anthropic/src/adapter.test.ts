@@ -90,4 +90,30 @@ describe("AnthropicProviderAdapter", () => {
       })
     })
   })
+
+  describe("getReasoningOptions", () => {
+    it("returns thinking config for string budget levels", () => {
+      const adapter = new AnthropicProviderAdapter(mockConfig)
+
+      expect(adapter.getReasoningOptions("minimal")).toEqual({
+        anthropic: { thinking: { type: "enabled", budgetTokens: 1024 } },
+      })
+      expect(adapter.getReasoningOptions("low")).toEqual({
+        anthropic: { thinking: { type: "enabled", budgetTokens: 2048 } },
+      })
+      expect(adapter.getReasoningOptions("medium")).toEqual({
+        anthropic: { thinking: { type: "enabled", budgetTokens: 5000 } },
+      })
+      expect(adapter.getReasoningOptions("high")).toEqual({
+        anthropic: { thinking: { type: "enabled", budgetTokens: 10000 } },
+      })
+    })
+
+    it("returns thinking config for numeric budget", () => {
+      const adapter = new AnthropicProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions(3000)).toEqual({
+        anthropic: { thinking: { type: "enabled", budgetTokens: 3000 } },
+      })
+    })
+  })
 })
