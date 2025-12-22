@@ -5,6 +5,7 @@ import { parseWithFriendlyError, runCommandInputSchema } from "@perstack/core"
 import { Command } from "commander"
 import pkg from "../package.json" with { type: "json" }
 import { resolveRunContext } from "../src/cli/context.js"
+import { findLockfile, loadLockfile } from "../src/helpers/lockfile.js"
 import { run } from "../src/run.js"
 
 const defaultEventListener = (event: RunEvent | RuntimeEvent) => console.log(JSON.stringify(event))
@@ -65,6 +66,8 @@ program
         model: input.options.model,
         envPath: input.options.envPath,
       })
+      const lockfilePath = findLockfile(input.options.config)
+      const lockfile = lockfilePath ? (loadLockfile(lockfilePath) ?? undefined) : undefined
       await run(
         {
           setting: {
@@ -87,7 +90,7 @@ program
             verbose: input.options.verbose,
           },
         },
-        { eventListener: defaultEventListener, storeCheckpoint, retrieveCheckpoint },
+        { eventListener: defaultEventListener, storeCheckpoint, retrieveCheckpoint, lockfile },
       )
     } catch (error) {
       if (error instanceof Error) {

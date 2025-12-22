@@ -191,6 +191,38 @@ toolDefinitions = []
       expect(result).toBe(path.join("/some/nonexistent", "perstack.lock"))
     })
 
+    it("returns null for remote config URLs (https://)", () => {
+      const configPath = "https://raw.githubusercontent.com/org/repo/main/perstack.toml"
+
+      const result = findLockfile(configPath)
+
+      expect(result).toBeNull()
+    })
+
+    it("returns null for remote config URLs (http://)", () => {
+      const configPath = "http://example.com/perstack.toml"
+
+      const result = findLockfile(configPath)
+
+      expect(result).toBeNull()
+    })
+
+    it("returns null for remote config URLs with uppercase scheme (HTTPS://)", () => {
+      const configPath = "HTTPS://example.com/perstack.toml"
+
+      const result = findLockfile(configPath)
+
+      expect(result).toBeNull()
+    })
+
+    it("returns null for remote config URLs with mixed case scheme (HtTpS://)", () => {
+      const configPath = "HtTpS://raw.githubusercontent.com/org/repo/main/perstack.toml"
+
+      const result = findLockfile(configPath)
+
+      expect(result).toBeNull()
+    })
+
     it("finds lockfile recursively from nested directory", () => {
       // Create lockfile in parent directory
       const lockfilePath = path.join(testDir, "perstack.lock")

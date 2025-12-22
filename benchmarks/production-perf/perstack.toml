@@ -1,0 +1,33 @@
+# Benchmark configuration for production performance metrics
+# Measures TTFLC (Time to First LLM Call) and TTFT (Time to First Token)
+#
+# This config includes @perstack/e2e-mcp-server to simulate realistic
+# skill initialization overhead in production scenarios.
+
+model = "claude-sonnet-4-5"
+runtime = "local"
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+# Production benchmark with bundled base + external MCP skill
+# Uses InMemoryTransport for @perstack/base
+# Uses StdioTransport for @perstack/e2e-mcp-server (realistic overhead)
+[experts."perf-production"]
+version = "1.0.0"
+description = "Production performance benchmark with realistic skill setup"
+instruction = "Respond with a simple greeting. Do not use any tools."
+
+[experts."perf-production".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]
+
+[experts."perf-production".skills."@perstack/e2e-mcp-server"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/e2e-mcp-server"
+lazyInit = false
