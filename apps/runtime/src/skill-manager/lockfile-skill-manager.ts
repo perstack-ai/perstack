@@ -120,12 +120,9 @@ export class LockfileSkillManager extends BaseSkillManager {
     if (!this._perstackBaseSkillCommand || skill.type !== "mcpStdioSkill") {
       return skill
     }
-    const matchesBaseByPackage =
-      skill.command === "npx" && skill.packageName === "@perstack/base"
+    const matchesBaseByPackage = skill.command === "npx" && skill.packageName === "@perstack/base"
     const matchesBaseByArgs =
-      skill.command === "npx" &&
-      Array.isArray(skill.args) &&
-      skill.args.includes("@perstack/base")
+      skill.command === "npx" && Array.isArray(skill.args) && skill.args.includes("@perstack/base")
     if (matchesBaseByPackage || matchesBaseByArgs) {
       const [overrideCommand, ...overrideArgs] = this._perstackBaseSkillCommand
       if (!overrideCommand) {
