@@ -95,12 +95,15 @@ export class FileSystemStorage implements Storage {
       .filter((file) => file.startsWith("event-"))
       .map((file) => {
         const parts = file.split(".")[0].split("-")
+        const timestamp = Number(parts[1])
+        const stepNumber = Number(parts[2])
         return {
-          timestamp: Number(parts[1]),
-          stepNumber: Number(parts[2]),
+          timestamp,
+          stepNumber,
           type: parts.slice(3).join("-"),
         }
       })
+      .filter((e) => !Number.isNaN(e.timestamp) && !Number.isNaN(e.stepNumber))
       .sort((a, b) => a.stepNumber - b.stepNumber)
   }
 
@@ -113,14 +116,21 @@ export class FileSystemStorage implements Storage {
       .filter((file) => file.startsWith("event-"))
       .map((file) => {
         const parts = file.split(".")[0].split("-")
+        const timestamp = Number(parts[1])
+        const stepNumber = Number(parts[2])
         return {
           file,
-          timestamp: Number(parts[1]),
-          stepNumber: Number(parts[2]),
+          timestamp,
+          stepNumber,
           type: parts.slice(3).join("-"),
         }
       })
-      .filter((e) => maxStep === undefined || e.stepNumber <= maxStep)
+      .filter(
+        (e) =>
+          !Number.isNaN(e.timestamp) &&
+          !Number.isNaN(e.stepNumber) &&
+          (maxStep === undefined || e.stepNumber <= maxStep),
+      )
       .sort((a, b) => a.timestamp - b.timestamp)
     const events: RunEvent[] = []
     for (const { file } of eventFiles) {
