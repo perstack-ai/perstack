@@ -3,12 +3,17 @@ import { describe, expect, it } from "vitest"
 import { LockfileSkillManager } from "./lockfile-skill-manager.js"
 
 describe("LockfileSkillManager", () => {
-  const createMockSkill = (): McpStdioSkill => ({
+  const createMockSkill = (overrides: Partial<McpStdioSkill> = {}): McpStdioSkill => ({
     name: "@perstack/base",
     type: "mcpStdioSkill",
     command: "npx",
     packageName: "@perstack/base",
+    args: [],
+    pick: [],
+    omit: [],
     requiredEnv: [],
+    lazyInit: false,
+    ...overrides,
   })
 
   const createMockToolDefinitions = (): LockfileToolDefinition[] => [
@@ -56,8 +61,7 @@ describe("LockfileSkillManager", () => {
   })
 
   it("should filter tools based on pick option", async () => {
-    const skill = createMockSkill()
-    skill.pick = ["readFile"]
+    const skill = createMockSkill({ pick: ["readFile"] })
 
     const manager = new LockfileSkillManager({
       skill,
@@ -75,8 +79,7 @@ describe("LockfileSkillManager", () => {
   })
 
   it("should filter tools based on omit option", async () => {
-    const skill = createMockSkill()
-    skill.omit = ["writeFile"]
+    const skill = createMockSkill({ omit: ["writeFile"] })
 
     const manager = new LockfileSkillManager({
       skill,

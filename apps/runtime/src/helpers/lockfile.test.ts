@@ -1,34 +1,45 @@
+import type { LockfileExpert, LockfileToolDefinition } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import { getLockfileExpertToolDefinitions } from "./lockfile.js"
+
+const createLockfileExpert = (
+  toolDefinitions: LockfileToolDefinition[],
+  overrides: Partial<LockfileExpert> = {},
+): LockfileExpert => ({
+  key: "test-expert",
+  name: "Test Expert",
+  version: "1.0.0",
+  instruction: "Test instruction",
+  skills: {},
+  delegates: [],
+  tags: [],
+  toolDefinitions,
+  ...overrides,
+})
 
 describe("lockfile", () => {
   describe("getLockfileExpertToolDefinitions", () => {
     it("groups tool definitions by skill name", () => {
-      const lockfileExpert = {
-        key: "test-expert",
-        name: "Test Expert",
-        version: "1.0.0",
-        toolDefinitions: [
-          {
-            skillName: "@perstack/base",
-            name: "readFile",
-            description: "Read a file",
-            inputSchema: { type: "object", properties: { path: { type: "string" } } },
-          },
-          {
-            skillName: "@perstack/base",
-            name: "writeFile",
-            description: "Write a file",
-            inputSchema: { type: "object", properties: { path: { type: "string" } } },
-          },
-          {
-            skillName: "other-skill",
-            name: "otherTool",
-            description: "Other tool",
-            inputSchema: { type: "object" },
-          },
-        ],
-      }
+      const lockfileExpert = createLockfileExpert([
+        {
+          skillName: "@perstack/base",
+          name: "readFile",
+          description: "Read a file",
+          inputSchema: { type: "object", properties: { path: { type: "string" } } },
+        },
+        {
+          skillName: "@perstack/base",
+          name: "writeFile",
+          description: "Write a file",
+          inputSchema: { type: "object", properties: { path: { type: "string" } } },
+        },
+        {
+          skillName: "other-skill",
+          name: "otherTool",
+          description: "Other tool",
+          inputSchema: { type: "object" },
+        },
+      ])
 
       const result = getLockfileExpertToolDefinitions(lockfileExpert)
 
@@ -40,12 +51,7 @@ describe("lockfile", () => {
     })
 
     it("returns empty object for expert with no tool definitions", () => {
-      const lockfileExpert = {
-        key: "empty-expert",
-        name: "Empty Expert",
-        version: "1.0.0",
-        toolDefinitions: [],
-      }
+      const lockfileExpert = createLockfileExpert([], { key: "empty-expert", name: "Empty Expert" })
 
       const result = getLockfileExpertToolDefinitions(lockfileExpert)
 
@@ -53,23 +59,18 @@ describe("lockfile", () => {
     })
 
     it("preserves tool definition properties", () => {
-      const lockfileExpert = {
-        key: "test-expert",
-        name: "Test Expert",
-        version: "1.0.0",
-        toolDefinitions: [
-          {
-            skillName: "test-skill",
-            name: "testTool",
-            description: "A test tool",
-            inputSchema: {
-              type: "object",
-              properties: { param: { type: "string" } },
-              required: ["param"],
-            },
+      const lockfileExpert = createLockfileExpert([
+        {
+          skillName: "test-skill",
+          name: "testTool",
+          description: "A test tool",
+          inputSchema: {
+            type: "object",
+            properties: { param: { type: "string" } },
+            required: ["param"],
           },
-        ],
-      }
+        },
+      ])
 
       const result = getLockfileExpertToolDefinitions(lockfileExpert)
 
