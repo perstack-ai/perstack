@@ -32,6 +32,7 @@ export class LockfileSkillManager extends BaseSkillManager {
   override readonly skill: McpStdioSkill | McpSseSkill
   private _cachedToolDefinitions: ToolDefinition[]
   private _realManager?: BaseSkillManager
+  private _pendingInit?: Promise<BaseSkillManager>
   private _env: Record<string, string>
   private _perstackBaseSkillCommand?: string[]
 
@@ -67,31 +68,78 @@ export class LockfileSkillManager extends BaseSkillManager {
   }
 
   private async _ensureRealManager(): Promise<BaseSkillManager> {
+    // Return existing manager if already initialized
     if (this._realManager) {
       return this._realManager
     }
+    // Wait for pending initialization to avoid race condition
+    if (this._pendingInit) {
+      return this._pendingInit
+    }
+    // Start initialization and track the pending promise
+    this._pendingInit = this._initRealManager()
+    try {
+      this._realManager = await this._pendingInit
+      return this._realManager
+    } finally {
+      this._pendingInit = undefined
+    }
+  }
+
+  private async _initRealManager(): Promise<BaseSkillManager> {
     const useBundledBase =
       this.skill.type === "mcpStdioSkill" &&
       isBaseSkill(this.skill) &&
       shouldUseBundledBase(this.skill, this._perstackBaseSkillCommand)
+    let manager: BaseSkillManager
     if (useBundledBase && this.skill.type === "mcpStdioSkill") {
-      this._realManager = new InMemoryBaseSkillManager(
+      manager = new InMemoryBaseSkillManager(
         this.skill,
         this._jobId,
         this._runId,
         this._eventListener,
       )
     } else {
-      this._realManager = new McpSkillManager(
-        this.skill,
+      // Apply perstackBaseSkillCommand override if applicable
+      const skillToUse = this._applyBaseSkillCommandOverride(this.skill)
+      manager = new McpSkillManager(
+        skillToUse,
         this._env,
         this._jobId,
         this._runId,
         this._eventListener,
       )
     }
-    await this._realManager.init()
-    return this._realManager
+    await manager.init()
+    return manager
+  }
+
+  private _applyBaseSkillCommandOverride(
+    skill: McpStdioSkill | McpSseSkill,
+  ): McpStdioSkill | McpSseSkill {
+    if (!this._perstackBaseSkillCommand || skill.type !== "mcpStdioSkill") {
+      return skill
+    }
+    const matchesBaseByPackage =
+      skill.command === "npx" && skill.packageName === "@perstack/base"
+    const matchesBaseByArgs =
+      skill.command === "npx" &&
+      Array.isArray(skill.args) &&
+      skill.args.includes("@perstack/base")
+    if (matchesBaseByPackage || matchesBaseByArgs) {
+      const [overrideCommand, ...overrideArgs] = this._perstackBaseSkillCommand
+      if (!overrideCommand) {
+        return skill
+      }
+      return {
+        ...skill,
+        command: overrideCommand,
+        packageName: undefined,
+        args: overrideArgs,
+        lazyInit: false,
+      } as McpStdioSkill
+    }
+    return skill
   }
 
   override async callTool(
