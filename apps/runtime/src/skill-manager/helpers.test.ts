@@ -1,15 +1,24 @@
-import type { McpSseSkill, McpStdioSkill, ToolDefinition } from "@perstack/core"
+import type {
+  Expert,
+  McpSseSkill,
+  McpStdioSkill,
+  RunSetting,
+  ToolDefinition,
+} from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import type { BaseSkillManager } from "./base.js"
 import {
   closeSkillManagers,
+  collectToolDefinitionsForExpert,
   getSkillManagerByToolName,
+  getSkillManagersFromLockfile,
   getToolSet,
   hasExplicitBaseVersion,
   initSkillManagersWithCleanup,
   isBaseSkill,
   shouldUseBundledBase,
 } from "./helpers.js"
+import type { SkillManagerFactory, SkillManagerFactoryContext } from "./skill-manager-factory.js"
 
 const createMcpStdioSkill = (overrides: Partial<McpStdioSkill> = {}): McpStdioSkill => ({
   name: "@perstack/base",
@@ -341,6 +350,282 @@ describe("skill-manager helpers", () => {
       const toolset = await getToolSet(managers)
 
       expect(Object.keys(toolset)).toHaveLength(0)
+    })
+  })
+
+  describe("collectToolDefinitionsForExpert", () => {
+    const createMockExpert = (overrides: Partial<Expert> = {}): Expert => ({
+      key: "test-expert",
+      name: "Test Expert",
+      version: "1.0.0",
+      instruction: "Test instruction",
+      skills: {
+        "@perstack/base": createMcpStdioSkill({ name: "@perstack/base" }),
+      },
+      delegates: [],
+      tags: [],
+      ...overrides,
+    })
+
+    const createMockFactory = (): SkillManagerFactory => {
+      const mockManager = {
+        name: "mock-skill",
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill(),
+        init: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue([
+          {
+            skillName: "@perstack/base",
+            name: "readFile",
+            description: "Read a file",
+            inputSchema: { type: "object" },
+            interactive: false,
+          },
+        ]),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      return {
+        createMcp: vi.fn().mockReturnValue(mockManager),
+        createInMemoryBase: vi.fn().mockReturnValue(mockManager),
+        createInteractive: vi.fn().mockReturnValue(mockManager),
+        createDelegate: vi.fn().mockReturnValue(mockManager),
+      } as unknown as SkillManagerFactory
+    }
+
+    it("throws when base skill is not defined", async () => {
+      const expert = createMockExpert({ skills: {} })
+
+      await expect(
+        collectToolDefinitionsForExpert(expert, { env: {}, factory: createMockFactory() }),
+      ).rejects.toThrow("Base skill is not defined")
+    })
+
+    it("collects tool definitions from managers", async () => {
+      const expert = createMockExpert()
+      const factory = createMockFactory()
+
+      const result = await collectToolDefinitionsForExpert(expert, { env: {}, factory })
+
+      expect(result).toHaveLength(1)
+      expect(result[0].name).toBe("readFile")
+    })
+
+    it("uses bundled base for base skill without version", async () => {
+      const expert = createMockExpert()
+      const factory = createMockFactory()
+
+      await collectToolDefinitionsForExpert(expert, { env: {}, factory })
+
+      expect(factory.createInMemoryBase).toHaveBeenCalled()
+    })
+
+    it("handles perstackBaseSkillCommand override", async () => {
+      const expert = createMockExpert({
+        skills: {
+          "@perstack/base": createMcpStdioSkill({
+            name: "@perstack/base",
+            command: "npx",
+            packageName: "@perstack/base",
+          }),
+          "other-skill": createMcpStdioSkill({ name: "other-skill", packageName: "other" }),
+        },
+      })
+      const factory = createMockFactory()
+
+      await collectToolDefinitionsForExpert(expert, {
+        env: {},
+        factory,
+        perstackBaseSkillCommand: ["node", "custom.js"],
+      })
+
+      // When perstackBaseSkillCommand is set, bundled base is not used
+      expect(factory.createInMemoryBase).not.toHaveBeenCalled()
+    })
+
+    it("closes all managers in finally block", async () => {
+      const expert = createMockExpert()
+      const mockManager = {
+        name: "mock-skill",
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill(),
+        init: vi.fn().mockRejectedValue(new Error("Init failed")),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue([]),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      const factory = {
+        createMcp: vi.fn().mockReturnValue(mockManager),
+        createInMemoryBase: vi.fn().mockReturnValue(mockManager),
+        createInteractive: vi.fn().mockReturnValue(mockManager),
+        createDelegate: vi.fn().mockReturnValue(mockManager),
+      } as unknown as SkillManagerFactory
+
+      await expect(
+        collectToolDefinitionsForExpert(expert, { env: {}, factory }),
+      ).rejects.toThrow()
+
+      // close should still be called due to finally block
+      expect(mockManager.close).toHaveBeenCalled()
+    })
+  })
+
+  describe("getSkillManagersFromLockfile", () => {
+    const createMockExpert = (overrides: Partial<Expert> = {}): Expert => ({
+      key: "test-expert",
+      name: "Test Expert",
+      version: "1.0.0",
+      instruction: "Test instruction",
+      skills: {
+        "@perstack/base": createMcpStdioSkill({ name: "@perstack/base" }),
+      },
+      delegates: [],
+      tags: [],
+      ...overrides,
+    })
+
+    const createMockRunSetting = (): RunSetting => ({
+      expertKey: "test-expert",
+      input: { text: "test" },
+      maxSteps: 10,
+      maxRetries: 3,
+      timeout: 60000,
+      env: {},
+      jobId: "test-job",
+      runId: "test-run",
+      providerConfig: { providerName: "anthropic", apiKey: "test-key" },
+      model: "claude-sonnet-4-5",
+      reasoningBudget: "low",
+      experts: {},
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+      perstackApiBaseUrl: "https://api.perstack.ai",
+    })
+
+    const createMockFactory = (): SkillManagerFactory => {
+      const mockManager = {
+        name: "mock-skill",
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill(),
+        init: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue([]),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      return {
+        createMcp: vi.fn().mockReturnValue(mockManager),
+        createInMemoryBase: vi.fn().mockReturnValue(mockManager),
+        createInteractive: vi.fn().mockReturnValue(mockManager),
+        createDelegate: vi.fn().mockReturnValue(mockManager),
+      } as unknown as SkillManagerFactory
+    }
+
+    it("throws when base skill is not defined", async () => {
+      const expert = createMockExpert({ skills: {} })
+      const setting = createMockRunSetting()
+
+      await expect(
+        getSkillManagersFromLockfile(expert, {}, setting, {}, undefined, {
+          factory: createMockFactory(),
+        }),
+      ).rejects.toThrow("Base skill is not defined")
+    })
+
+    it("creates LockfileSkillManager for MCP skills", async () => {
+      const expert = createMockExpert()
+      const setting = createMockRunSetting()
+      const lockfileToolDefinitions = {
+        "@perstack/base": [
+          { skillName: "@perstack/base", name: "readFile", inputSchema: { type: "object" } },
+        ],
+      }
+
+      const managers = await getSkillManagersFromLockfile(
+        expert,
+        {},
+        setting,
+        lockfileToolDefinitions,
+        undefined,
+        { factory: createMockFactory() },
+      )
+
+      expect(Object.keys(managers)).toContain("@perstack/base")
+    })
+
+    it("throws when delegate expert is not found", async () => {
+      const expert = createMockExpert({ delegates: ["nonexistent-expert"] })
+      const setting = createMockRunSetting()
+
+      await expect(
+        getSkillManagersFromLockfile(expert, {}, setting, {}, undefined, {
+          factory: createMockFactory(),
+        }),
+      ).rejects.toThrow('Delegate expert "nonexistent-expert" not found in experts')
+    })
+
+    it("creates delegate managers for delegate experts", async () => {
+      const expert = createMockExpert({ delegates: ["delegate-expert"] })
+      const delegateExpert = createMockExpert({ key: "delegate-expert", name: "Delegate" })
+      const setting = createMockRunSetting()
+      const factory = createMockFactory()
+
+      await getSkillManagersFromLockfile(
+        expert,
+        { "delegate-expert": delegateExpert },
+        setting,
+        {},
+        undefined,
+        { factory },
+      )
+
+      expect(factory.createDelegate).toHaveBeenCalled()
+    })
+
+    it("skips interactive skills for delegated runs", async () => {
+      const expert = createMockExpert({
+        skills: {
+          "@perstack/base": createMcpStdioSkill({ name: "@perstack/base" }),
+          interactive: {
+            type: "interactiveSkill",
+            name: "interactive",
+            tools: {},
+          },
+        },
+      })
+      const setting = createMockRunSetting()
+      const factory = createMockFactory()
+
+      await getSkillManagersFromLockfile(expert, {}, setting, {}, undefined, {
+        factory,
+        isDelegatedRun: true,
+      })
+
+      expect(factory.createInteractive).not.toHaveBeenCalled()
+    })
+
+    it("creates interactive skill managers for non-delegated runs", async () => {
+      const expert = createMockExpert({
+        skills: {
+          "@perstack/base": createMcpStdioSkill({ name: "@perstack/base" }),
+          interactive: {
+            type: "interactiveSkill",
+            name: "interactive",
+            tools: {},
+          },
+        },
+      })
+      const setting = createMockRunSetting()
+      const factory = createMockFactory()
+
+      await getSkillManagersFromLockfile(expert, {}, setting, {}, undefined, {
+        factory,
+        isDelegatedRun: false,
+      })
+
+      expect(factory.createInteractive).toHaveBeenCalled()
     })
   })
 })
