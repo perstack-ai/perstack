@@ -136,6 +136,8 @@ The runtime stores execution history in `perstack/jobs/` within the workspace:
 
 This directory is managed automatically — don't modify it manually.
 
+For cloud deployments, see [Storage Backends](../operating-experts/storage-backends.md) to configure S3 or R2 storage.
+
 ## Event notification
 
 The runtime emits events for every state change. Two options:

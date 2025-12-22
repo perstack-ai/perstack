@@ -64,15 +64,46 @@ export const apiExpertSchema = expertSchema.omit({
     - `AdapterRunParams`, `AdapterRunResult` - Adapter execution types
     - Event creators for normalized checkpoint/event handling
 
+5. **Storage Abstractions**: Abstract interface for data persistence:
+    - `Storage` - Interface for storage backends (filesystem, S3, R2)
+    - `EventMeta` - Metadata type for event listings
+
 ### Execution Hierarchy
 
-| Schema       | Description                                         |
-| ------------ | --------------------------------------------------- |
-| `Job`        | Top-level execution unit. Contains all Runs.        |
-| `Run`        | Single Expert execution within a Job.               |
-| `Checkpoint` | Snapshot at step end within a Run.                  |
+| Schema       | Description                                  |
+| ------------ | -------------------------------------------- |
+| `Job`        | Top-level execution unit. Contains all Runs. |
+| `Run`        | Single Expert execution within a Job.        |
+| `Checkpoint` | Snapshot at step end within a Run.           |
 
 For the full hierarchy and execution model, see [State Management](https://github.com/perstack-ai/perstack/blob/main/docs/using-experts/state-management.md).
+
+### Storage Interface
+
+The `Storage` interface provides an abstraction for persisting Perstack data:
+
+```typescript
+import type { Storage, EventMeta } from "@perstack/core"
+
+interface Storage {
+  storeCheckpoint(checkpoint: Checkpoint): Promise<void>
+  retrieveCheckpoint(jobId: string, checkpointId: string): Promise<Checkpoint>
+  getCheckpointsByJobId(jobId: string): Promise<Checkpoint[]>
+  storeEvent(event: RunEvent): Promise<void>
+  getEventsByRun(jobId: string, runId: string): Promise<EventMeta[]>
+  getEventContents(jobId: string, runId: string, maxStep?: number): Promise<RunEvent[]>
+  storeJob(job: Job): Promise<void>
+  retrieveJob(jobId: string): Promise<Job | undefined>
+  getAllJobs(): Promise<Job[]>
+  storeRunSetting(setting: RunSetting): Promise<void>
+  getAllRuns(): Promise<RunSetting[]>
+}
+```
+
+Available implementations:
+- `@perstack/filesystem-storage` - Local filesystem storage (default)
+- `@perstack/s3-storage` - AWS S3 storage
+- `@perstack/r2-storage` - Cloudflare R2 storage
 
 ### What Core Should NOT Contain
 
