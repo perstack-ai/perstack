@@ -30,8 +30,31 @@ export const openaiProviderToolNameSchema = z.enum([
 ])
 export type OpenAIProviderToolName = z.infer<typeof openaiProviderToolNameSchema>
 
-export const googleProviderToolNameSchema = z.enum(["googleSearch", "codeExecution", "urlContext"])
+export const googleProviderToolNameSchema = z.enum([
+  "googleSearch",
+  "codeExecution",
+  "urlContext",
+  "fileSearch",
+  "googleMaps",
+])
 export type GoogleProviderToolName = z.infer<typeof googleProviderToolNameSchema>
+
+export const azureOpenAIProviderToolNameSchema = z.enum([
+  "webSearchPreview",
+  "fileSearch",
+  "codeInterpreter",
+  "imageGeneration",
+])
+export type AzureOpenAIProviderToolName = z.infer<typeof azureOpenAIProviderToolNameSchema>
+
+export const vertexProviderToolNameSchema = z.enum([
+  "codeExecution",
+  "urlContext",
+  "googleSearch",
+  "enterpriseWebSearch",
+  "googleMaps",
+])
+export type VertexProviderToolName = z.infer<typeof vertexProviderToolNameSchema>
 
 export const webSearchOptionsSchema = z.object({
   maxUses: z.number().int().positive().optional(),

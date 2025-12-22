@@ -1,7 +1,12 @@
 import { createDeepSeek } from "@ai-sdk/deepseek"
 import type { DeepseekProviderConfig } from "@perstack/core"
-import { BaseProviderAdapter, type ProviderAdapterOptions } from "@perstack/provider-core"
+import {
+  BaseProviderAdapter,
+  type ProviderAdapterOptions,
+  type ProviderError,
+} from "@perstack/provider-core"
 import type { LanguageModel } from "ai"
+import { isDeepSeekRetryable, normalizeDeepSeekError } from "./errors.js"
 
 export class DeepseekProviderAdapter extends BaseProviderAdapter {
   readonly providerName = "deepseek" as const
@@ -22,5 +27,13 @@ export class DeepseekProviderAdapter extends BaseProviderAdapter {
 
   override createModel(modelId: string): LanguageModel {
     return this.client(modelId)
+  }
+
+  override normalizeError(error: unknown): ProviderError {
+    return normalizeDeepSeekError(error)
+  }
+
+  override isRetryable(error: unknown): boolean {
+    return isDeepSeekRetryable(error)
   }
 }
