@@ -4,7 +4,6 @@ import {
   defaultMaxRetries,
   defaultMaxSteps,
   defaultPerstackApiBaseUrl,
-  defaultTemperature,
   defaultTimeout,
   expertKeyRegex,
 } from "../constants/constants.js"
@@ -20,7 +19,7 @@ import type {
   UserMessage,
 } from "./message.js"
 import type { PerstackConfigSkill, ReasoningBudget } from "./perstack-toml.js"
-import { reasoningBudgetSchema } from "./perstack-toml.js"
+import { defaultReasoningBudget, reasoningBudgetSchema } from "./perstack-toml.js"
 import type { ProviderConfig } from "./provider-config.js"
 import { providerConfigSchema } from "./provider-config.js"
 import type { Step } from "./step.js"
@@ -75,10 +74,8 @@ export interface RunSetting {
   input: RunInput
   /** Map of expert keys to Expert definitions */
   experts: Record<string, Expert>
-  /** Temperature for generation (0-1) */
-  temperature: number
-  /** Reasoning budget for native LLM reasoning (extended thinking) */
-  reasoningBudget?: ReasoningBudget
+  /** Reasoning budget for native LLM reasoning (extended thinking). Defaults to "low". Use "none" or 0 to disable. */
+  reasoningBudget: ReasoningBudget
   /** Maximum steps before stopping (applies to Job's totalSteps) */
   maxSteps: number
   /** Maximum retries on generation failure */
@@ -132,7 +129,6 @@ export type RunParamsInput = {
     expertKey: string
     input: RunInput
     experts?: Record<string, ExpertInput>
-    temperature?: number
     reasoningBudget?: ReasoningBudget
     maxSteps?: number
     maxRetries?: number
@@ -167,8 +163,7 @@ export const runSettingSchema = z.object({
       .optional(),
   }),
   experts: z.record(z.string(), expertSchema),
-  temperature: z.number().min(0).max(1),
-  reasoningBudget: reasoningBudgetSchema.optional(),
+  reasoningBudget: reasoningBudgetSchema.default(defaultReasoningBudget),
   maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
   maxRetries: z.number().min(0),
   timeout: z.number().min(0),
@@ -221,8 +216,7 @@ export const runParamsSchema = z.object({
           ]),
         ),
       ),
-    temperature: z.number().min(0).max(1).optional().default(defaultTemperature),
-    reasoningBudget: reasoningBudgetSchema.optional(),
+    reasoningBudget: reasoningBudgetSchema.optional().default(defaultReasoningBudget),
     maxSteps: z.number().min(1).optional().default(defaultMaxSteps),
     maxRetries: z.number().min(0).optional().default(defaultMaxRetries),
     timeout: z.number().min(0).optional().default(defaultTimeout),
@@ -319,8 +313,6 @@ type ExpertEventPayloads = {
     checkpoint: Checkpoint
     step: Step
     text: string
-    /** Thinking content from extended thinking / reasoning models */
-    thinking?: string
     usage: Usage
   }
 }
@@ -413,7 +405,6 @@ type RuntimeEventPayloads = {
     expertName: string
     experts: string[]
     model: string
-    temperature: number
     maxSteps?: number
     maxRetries: number
     timeout: number
@@ -471,10 +462,9 @@ type RuntimeEventPayloads = {
     port: number
     reason?: string
   }
-  /** Native LLM reasoning output (extended thinking) */
-  reasoning: {
-    content: string
-    reasoningTokens?: number
+  /** Reasoning completion event (extended thinking / test-time scaling) */
+  completeReasoning: {
+    text: string
   }
 }
 

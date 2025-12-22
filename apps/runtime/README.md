@@ -25,7 +25,6 @@ perstack-runtime run <expertKey> <query> [options]
 | `--config <path>`       | Path to perstack.toml   |
 | `--provider <provider>` | LLM provider            |
 | `--model <model>`       | Model name              |
-| `--temperature <temp>`  | Temperature (0.0-1.0)   |
 | `--max-steps <n>`       | Maximum steps           |
 | `--max-retries <n>`     | Maximum retries         |
 | `--timeout <ms>`        | Timeout in milliseconds |

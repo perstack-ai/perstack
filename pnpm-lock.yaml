@@ -161,6 +161,9 @@ importers:
       '@perstack/runner':
         specifier: workspace:*
         version: link:../../packages/runner
+      '@perstack/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       commander:
         specifier: ^14.0.2
         version: 14.0.2

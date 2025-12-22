@@ -39,7 +39,7 @@ export function extractThinkingParts(
 
 /**
  * Extract thinking text from AI SDK reasoning as a single string.
- * Used for the completeRun event's thinking field.
+ * Used for the completeReasoning event.
  */
 export function extractThinkingText(reasoning: ReasoningPart[] | undefined): string {
   if (!reasoning) return ""

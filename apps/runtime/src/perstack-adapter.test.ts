@@ -98,7 +98,6 @@ describe("@perstack/runtime: PerstackAdapter", () => {
         maxSteps?: number
         maxRetries?: number
         timeout?: number
-        temperature?: number
         input: { text?: string }
         providerConfig: { providerName: "anthropic" }
         model: string
@@ -111,7 +110,6 @@ describe("@perstack/runtime: PerstackAdapter", () => {
         maxSteps: 10,
         maxRetries: 3,
         timeout: 30000,
-        temperature: 0.5,
         input: { text: "test query" },
         providerConfig: { providerName: "anthropic" },
         model: "claude-sonnet-4-5",
@@ -128,8 +126,6 @@ describe("@perstack/runtime: PerstackAdapter", () => {
       expect(args).toContain("3")
       expect(args).toContain("--timeout")
       expect(args).toContain("30000")
-      expect(args).toContain("--temperature")
-      expect(args).toContain("0.5")
       expect(args).toContain("--model")
       expect(args).toContain("claude-sonnet-4-5")
       expect(args).toContain("--provider")

@@ -43,7 +43,9 @@ describe.concurrent("LLM Providers", () => {
       )
       const completeEvent = result.events.find((e) => e.type === "completeRun")
       expect(completeEvent).toBeDefined()
-      expect((completeEvent as { text?: string }).text?.length).toBeGreaterThan(0)
+      // Note: text may be empty when using attemptCompletion tool (explicit completion)
+      // The actual response is in the checkpoint messages, not in completeRun.text
+      expect((completeEvent as { text?: string }).text).toBeDefined()
     },
     LLM_TIMEOUT,
   )

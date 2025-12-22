@@ -43,7 +43,6 @@ perstack run <expert> <query>
 | `--config <path>`                    | Path to `perstack.toml`                | Auto-discover        |
 | `--provider <provider>`              | LLM provider                           | `anthropic`          |
 | `--model <model>`                    | Model name                             | `claude-sonnet-4-5`  |
-| `--temperature <temp>`               | Temperature (0.0-1.0)                  | `0.3`                |
 | `--max-steps <n>`                    | Maximum steps                          | unlimited            |
 | `--max-retries <n>`                  | Max retry attempts                     | `5`                  |
 | `--timeout <ms>`                     | Timeout per generation                 | `60000`              |

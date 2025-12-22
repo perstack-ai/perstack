@@ -35,7 +35,7 @@ describe("@perstack/storage: storeRunSetting", () => {
     expertKey: "test-expert",
     input: { text: "hello" },
     experts: {},
-    temperature: 0.7,
+    reasoningBudget: "low",
     maxSteps: 100,
     maxRetries: 3,
     timeout: 30000,
@@ -80,11 +80,11 @@ describe("@perstack/storage: storeRunSetting", () => {
   })
 
   it("preserves original setting data when updating", async () => {
-    const originalSetting = { ...baseSetting, temperature: 0.5 }
+    const originalSetting = { ...baseSetting, maxRetries: 10 }
     const fs = createMockFs(true)
     fs.readFile = vi.fn().mockResolvedValue(JSON.stringify(originalSetting))
     await storeRunSetting(baseSetting, fs, mockGetRunDir)
     const writtenData = JSON.parse((fs.writeFile as ReturnType<typeof vi.fn>).mock.calls[0][1])
-    expect(writtenData.temperature).toBe(0.5)
+    expect(writtenData.maxRetries).toBe(10)
   })
 })

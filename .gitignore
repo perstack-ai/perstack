@@ -19,6 +19,7 @@ coverage/
 dist/
 node_modules/
 npm-debug.log*
+perstack.lock
 perstack.toml
 !examples/**/perstack.toml
 !benchmarks/**/perstack.toml

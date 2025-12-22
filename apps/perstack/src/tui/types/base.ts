@@ -57,12 +57,16 @@ export type LogEntry =
       message: string
       statusCode?: number
     }
+  | {
+      id: string
+      type: "completeReasoning"
+      text: string
+    }
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
   runtimeVersion?: string
   expertName?: string
   model: string
-  temperature: number
   currentStep?: number
   maxSteps?: number
   maxRetries: number
@@ -79,7 +83,6 @@ export type RuntimeInfo = {
 export type InitialRuntimeConfig = {
   runtimeVersion: string
   model: string
-  temperature: number
   maxSteps?: number
   maxRetries: number
   timeout: number

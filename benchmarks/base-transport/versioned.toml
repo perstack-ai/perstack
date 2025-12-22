@@ -2,7 +2,6 @@
 # This spawns a separate process via npx for reproducibility
 
 model = "claude-sonnet-4-5"
-temperature = 0.3
 
 [provider]
 providerName = "anthropic"

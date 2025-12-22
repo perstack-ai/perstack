@@ -1,6 +1,5 @@
 import {
   defaultMaxRetries,
-  defaultTemperature,
   defaultTimeout,
   parseWithFriendlyError,
   startCommandInputSchema,
@@ -31,7 +30,6 @@ export const startCommand = new Command()
   .option("--config <configPath>", "Path to perstack.toml config file")
   .option("--provider <provider>", "Provider to use")
   .option("--model <model>", "Model to use")
-  .option("--temperature <temperature>", "Temperature for the model, default is 0.3")
   .option(
     "--reasoning-budget <budget>",
     "Reasoning budget for native LLM reasoning (minimal, low, medium, high, or token count)",
@@ -103,8 +101,6 @@ export const startCommand = new Command()
         : []
       const resumeState: { checkpoint: CheckpointHistoryItem | null } = { checkpoint: null }
       let resolveContinueQuery: ((query: string | null) => void) | null = null
-      const temperature =
-        input.options.temperature ?? perstackConfig.temperature ?? defaultTemperature
       const maxSteps = input.options.maxSteps ?? perstackConfig.maxSteps
       const maxRetries = input.options.maxRetries ?? perstackConfig.maxRetries ?? defaultMaxRetries
       const timeout = input.options.timeout ?? perstackConfig.timeout ?? defaultTimeout
@@ -116,7 +112,6 @@ export const startCommand = new Command()
         initialConfig: {
           runtimeVersion: getRuntimeVersion(),
           model,
-          temperature,
           maxSteps,
           maxRetries,
           timeout,
@@ -185,7 +180,6 @@ export const startCommand = new Command()
             experts,
             model,
             providerConfig,
-            temperature: input.options.temperature ?? perstackConfig.temperature,
             reasoningBudget: input.options.reasoningBudget ?? perstackConfig.reasoningBudget,
             maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
             maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,

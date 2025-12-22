@@ -274,3 +274,185 @@ export async function getToolSet(
   }
   return tools
 }
+
+export interface CollectToolDefinitionsOptions {
+  env: Record<string, string>
+  perstackBaseSkillCommand?: string[]
+  factory?: SkillManagerFactory
+}
+
+export interface CollectedToolDefinition {
+  skillName: string
+  name: string
+  description?: string
+  inputSchema: Record<string, unknown>
+}
+
+export async function collectToolDefinitionsForExpert(
+  expert: Expert,
+  options: CollectToolDefinitionsOptions,
+): Promise<CollectedToolDefinition[]> {
+  const { env, perstackBaseSkillCommand, factory = defaultSkillManagerFactory } = options
+  const { skills } = expert
+  if (!skills["@perstack/base"]) {
+    throw new Error("Base skill is not defined")
+  }
+  const factoryContext: SkillManagerFactoryContext = {
+    env,
+    jobId: "lockfile-generation",
+    runId: "lockfile-generation",
+    eventListener: undefined,
+  }
+  const allManagers: BaseSkillManager[] = []
+  const baseSkill = skills["@perstack/base"]
+  const useBundledBase =
+    (baseSkill.type === "mcpStdioSkill" || baseSkill.type === "mcpSseSkill") &&
+    shouldUseBundledBase(baseSkill, perstackBaseSkillCommand)
+  try {
+    if (useBundledBase && baseSkill.type === "mcpStdioSkill") {
+      const baseManager = factory.createInMemoryBase(baseSkill, factoryContext)
+      allManagers.push(baseManager)
+      await initSkillManagersWithCleanup([baseManager], allManagers)
+    }
+    const mcpSkills = Object.values(skills)
+      .filter(
+        (skill): skill is McpStdioSkill | McpSseSkill =>
+          skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill",
+      )
+      .filter((skill) => {
+        if (useBundledBase && isBaseSkill(skill)) {
+          return false
+        }
+        return true
+      })
+      .map((skill) => {
+        if (perstackBaseSkillCommand && skill.type === "mcpStdioSkill") {
+          const matchesBaseByPackage =
+            skill.command === "npx" && skill.packageName === "@perstack/base"
+          const matchesBaseByArgs =
+            skill.command === "npx" &&
+            Array.isArray(skill.args) &&
+            skill.args.includes("@perstack/base")
+          if (matchesBaseByPackage || matchesBaseByArgs) {
+            const [overrideCommand, ...overrideArgs] = perstackBaseSkillCommand
+            if (!overrideCommand) {
+              throw new Error("perstackBaseSkillCommand must have at least one element")
+            }
+            return {
+              ...skill,
+              command: overrideCommand,
+              packageName: undefined,
+              args: overrideArgs,
+              lazyInit: false,
+            } as McpStdioSkill
+          }
+        }
+        return skill
+      })
+    const mcpSkillManagers = mcpSkills.map((skill) => {
+      const manager = factory.createMcp(skill, factoryContext)
+      allManagers.push(manager)
+      return manager
+    })
+    await initSkillManagersWithCleanup(mcpSkillManagers, allManagers)
+    const interactiveSkills = Object.values(skills).filter(
+      (skill): skill is InteractiveSkill => skill.type === "interactiveSkill",
+    )
+    const interactiveSkillManagers = interactiveSkills.map((interactiveSkill) => {
+      const manager = factory.createInteractive(interactiveSkill, factoryContext)
+      allManagers.push(manager)
+      return manager
+    })
+    await initSkillManagersWithCleanup(interactiveSkillManagers, allManagers)
+    const toolDefinitions: CollectedToolDefinition[] = []
+    for (const manager of allManagers) {
+      const definitions = await manager.getToolDefinitions()
+      for (const def of definitions) {
+        toolDefinitions.push({
+          skillName: def.skillName,
+          name: def.name,
+          description: def.description,
+          inputSchema: def.inputSchema,
+        })
+      }
+    }
+    return toolDefinitions
+  } finally {
+    await Promise.all(allManagers.map((m) => m.close().catch(() => {})))
+  }
+}
+
+export interface GetSkillManagersFromLockfileOptions {
+  isDelegatedRun?: boolean
+  factory?: SkillManagerFactory
+}
+
+export async function getSkillManagersFromLockfile(
+  expert: Expert,
+  experts: Record<string, Expert>,
+  setting: RunSetting,
+  lockfileToolDefinitions: Record<string, CollectedToolDefinition[]>,
+  eventListener?: (event: RunEvent | RuntimeEvent) => void,
+  options?: GetSkillManagersFromLockfileOptions,
+): Promise<Record<string, BaseSkillManager>> {
+  const { LockfileSkillManager } = await import("./lockfile-skill-manager.js")
+  const { perstackBaseSkillCommand, env, jobId, runId } = setting
+  const { skills } = expert
+  const factory = options?.factory ?? defaultSkillManagerFactory
+  if (!skills["@perstack/base"]) {
+    throw new Error("Base skill is not defined")
+  }
+  const factoryContext: SkillManagerFactoryContext = {
+    env,
+    jobId,
+    runId,
+    eventListener,
+  }
+  const allManagers: BaseSkillManager[] = []
+  const mcpSkills = Object.values(skills).filter(
+    (skill): skill is McpStdioSkill | McpSseSkill =>
+      skill.type === "mcpStdioSkill" || skill.type === "mcpSseSkill",
+  )
+  for (const skill of mcpSkills) {
+    const skillToolDefs = lockfileToolDefinitions[skill.name] ?? []
+    const manager = new LockfileSkillManager({
+      skill,
+      toolDefinitions: skillToolDefs,
+      env,
+      jobId,
+      runId,
+      eventListener,
+      perstackBaseSkillCommand,
+    })
+    await manager.init()
+    allManagers.push(manager)
+  }
+  if (!options?.isDelegatedRun) {
+    const interactiveSkills = Object.values(skills).filter(
+      (skill): skill is InteractiveSkill => skill.type === "interactiveSkill",
+    )
+    const interactiveSkillManagers = interactiveSkills.map((interactiveSkill) => {
+      const manager = factory.createInteractive(interactiveSkill, factoryContext)
+      allManagers.push(manager)
+      return manager
+    })
+    await initSkillManagersWithCleanup(interactiveSkillManagers, allManagers)
+  }
+  const delegateSkillManagers: BaseSkillManager[] = []
+  for (const delegateExpertName of expert.delegates) {
+    const delegate = experts[delegateExpertName]
+    if (!delegate) {
+      await Promise.all(allManagers.map((m) => m.close().catch(() => {})))
+      throw new Error(`Delegate expert "${delegateExpertName}" not found in experts`)
+    }
+    const manager = factory.createDelegate(delegate, factoryContext)
+    allManagers.push(manager)
+    delegateSkillManagers.push(manager)
+  }
+  await initSkillManagersWithCleanup(delegateSkillManagers, allManagers)
+  const skillManagers: Record<string, BaseSkillManager> = {}
+  for (const manager of allManagers) {
+    skillManagers[manager.name] = manager
+  }
+  return skillManagers
+}

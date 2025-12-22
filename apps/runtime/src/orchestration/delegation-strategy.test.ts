@@ -22,7 +22,6 @@ const createMockSetting = (overrides?: Partial<RunSetting>): RunSetting =>
     runId: "run-1",
     expertKey: "expert-1",
     model: "claude-sonnet-4-20250514",
-    temperature: 0.7,
     maxSteps: 10,
     maxRetries: 3,
     timeout: 30000,

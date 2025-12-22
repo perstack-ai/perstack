@@ -7,7 +7,6 @@ describe("MockLLMExecutor", () => {
 
     const result = await mock.generateText({
       messages: [],
-      temperature: 0.7,
       maxRetries: 3,
       tools: {},
     })
@@ -28,7 +27,6 @@ describe("MockLLMExecutor", () => {
 
     const result = await mock.generateText({
       messages: [],
-      temperature: 0.7,
       maxRetries: 3,
       tools: {},
     })
@@ -41,7 +39,6 @@ describe("MockLLMExecutor", () => {
 
     const result = await mock.generateTextWithoutTools({
       messages: [],
-      temperature: 0.7,
       maxRetries: 3,
     })
 

@@ -37,11 +37,10 @@ Both `start` and `run` accept the same options:
 
 ### Model and Provider
 
-| Option                  | Description           | Default             |
-| ----------------------- | --------------------- | ------------------- |
-| `--provider <provider>` | LLM provider          | `anthropic`         |
-| `--model <model>`       | Model name            | `claude-sonnet-4-5` |
-| `--temperature <temp>`  | Temperature (0.0-1.0) | `0.3`               |
+| Option                  | Description  | Default             |
+| ----------------------- | ------------ | ------------------- |
+| `--provider <provider>` | LLM provider | `anthropic`         |
+| `--model <model>`       | Model name   | `claude-sonnet-4-5` |
 
 Providers: `anthropic`, `google`, `openai`, `ollama`, `azure-openai`, `amazon-bedrock`, `google-vertex`
 
@@ -186,7 +185,6 @@ npx perstack run my-expert "Review this code"
 npx perstack run my-expert "query" \
   --provider google \
   --model gemini-2.5-pro \
-  --temperature 0.7 \
   --max-steps 100
 
 # Continue Job with follow-up
@@ -326,6 +324,60 @@ perstack status my-expert@1.0.0 deprecated
 | `available`  | Normal, visible in registry  |
 | `deprecated` | Still usable but discouraged |
 | `disabled`   | Cannot be executed           |
+
+## Performance Optimization
+
+### `perstack install`
+
+Pre-collect tool definitions to enable instant LLM inference.
+
+```bash
+perstack install [options]
+```
+
+**Purpose:**
+
+By default, Perstack initializes MCP skills at runtime to discover their tool definitions. This can add 500ms-6s startup latency per skill. `perstack install` solves this by:
+
+1. Initializing all skills once and collecting their tool schemas
+2. Caching the schemas in a `perstack.lock` file
+3. Enabling the runtime to start LLM inference immediately using cached schemas
+4. Deferring actual MCP connections until tools are called
+
+**Options:**
+
+| Option                 | Description             | Default                |
+| ---------------------- | ----------------------- | ---------------------- |
+| `--config <path>`      | Path to `perstack.toml` | Auto-discover from cwd |
+| `--env-path <path...>` | Environment file paths  | `.env`, `.env.local`   |
+
+**Example:**
+
+```bash
+# Generate lockfile for current project
+perstack install
+
+# Generate lockfile for specific config
+perstack install --config ./configs/production.toml
+
+# Re-generate after adding new skills
+perstack install
+```
+
+**Output:**
+
+Creates `perstack.lock` in the same directory as `perstack.toml`. This file contains:
+
+- All expert definitions (including resolved delegates from registry)
+- All tool definitions for each expert's skills
+
+**When to run:**
+
+- After adding or modifying skills in `perstack.toml`
+- After updating MCP server dependencies
+- Before deploying to production for faster startup
+
+**Note:** The lockfile is optional. If not present, skills are initialized at runtime as usual.
 
 ## Project Setup
 

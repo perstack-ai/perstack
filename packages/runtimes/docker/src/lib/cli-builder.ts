@@ -22,9 +22,6 @@ export function buildCliArgs(setting: AdapterRunParams["setting"]): string[] {
   if (setting.timeout !== undefined) {
     args.push("--timeout", String(setting.timeout))
   }
-  if (setting.temperature !== undefined) {
-    args.push("--temperature", String(setting.temperature))
-  }
 
   if (setting.input.interactiveToolCallResult) {
     args.push("-i")

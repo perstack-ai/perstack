@@ -12,6 +12,7 @@ import type {
   RuntimeExpertConfig,
 } from "@perstack/core"
 import { BaseAdapter, checkpointSchema, getFilteredEnv } from "@perstack/core"
+import { findLockfile, loadLockfile } from "./helpers/index.js"
 import { run as perstackRun } from "./run.js"
 
 export type PerstackAdapterOptions = {
@@ -73,12 +74,15 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
       events.push(event)
       params.eventListener?.(event)
     }
+    const lockfilePath = findLockfile(process.cwd())
+    const lockfile = lockfilePath ? (loadLockfile(lockfilePath) ?? undefined) : undefined
     const checkpoint = await perstackRun(
       { setting: params.setting, checkpoint: params.checkpoint },
       {
         eventListener,
         storeCheckpoint: params.storeCheckpoint,
         retrieveCheckpoint: params.retrieveCheckpoint,
+        lockfile,
       },
     )
     return { checkpoint, events }
@@ -128,9 +132,6 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
     }
     if (setting.timeout !== undefined) {
       args.push("--timeout", String(setting.timeout))
-    }
-    if (setting.temperature !== undefined) {
-      args.push("--temperature", String(setting.temperature))
     }
     if (setting.model) {
       args.push("--model", setting.model)

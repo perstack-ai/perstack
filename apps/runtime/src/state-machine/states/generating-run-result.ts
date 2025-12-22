@@ -1,5 +1,6 @@
 import {
   completeRun,
+  createRuntimeEvent,
   type RunEvent,
   retry,
   stopRunByError,
@@ -30,6 +31,7 @@ export async function generatingRunResultLogic({
   setting,
   checkpoint,
   step,
+  eventListener,
 }: RunSnapshot["context"]): Promise<RunEvent> {
   if (!step.toolCalls || !step.toolResults || step.toolResults.length === 0) {
     throw new Error("No tool calls or tool results found")
@@ -62,7 +64,6 @@ export async function generatingRunResultLogic({
     generationResult = await generateText({
       model,
       messages: coreMessages,
-      temperature: setting.temperature,
       maxRetries: setting.maxRetries,
       abortSignal: AbortSignal.timeout(setting.timeout),
       providerOptions,
@@ -110,6 +111,15 @@ export async function generatingRunResultLogic({
   ]
   const newMessages = [toolMessage, createExpertMessage(expertContents)]
 
+  // Emit completeReasoning event if reasoning text exists
+  if (thinkingText) {
+    await eventListener(
+      createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
+        text: thinkingText,
+      }),
+    )
+  }
+
   return completeRun(setting, checkpoint, {
     checkpoint: {
       ...checkpoint,
@@ -127,7 +137,6 @@ export async function generatingRunResultLogic({
       usage: sumUsage(step.usage, usage),
     },
     text,
-    thinking: thinkingText || undefined,
     usage,
   })
 }

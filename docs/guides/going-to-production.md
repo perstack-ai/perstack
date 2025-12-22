@@ -39,17 +39,51 @@ One container = one Expert execution. The container:
 - Has a mounted workspace for file I/O (controlled)
 - Terminates when the Expert completes (isolated)
 
+## Optimizing startup with lockfiles
+
+By default, Perstack initializes MCP skills at runtime to discover their tools. This adds latency (500ms-6s per skill). For production, pre-collect tool definitions:
+
+```bash
+# Generate lockfile with all tool definitions
+perstack install --config perstack.toml
+```
+
+This creates `perstack.lock` containing all expert and tool definitions. When the lockfile exists:
+
+1. The runtime loads tool schemas instantly (no MCP initialization delay)
+2. LLM inference starts immediately
+3. MCP connections are only opened when tools are actually called
+
+**Workflow:**
+
+```bash
+# Development: iterate without lockfile
+perstack start my-expert "test query"
+
+# Before deployment: generate lockfile
+perstack install
+
+# Production: instant startup
+perstack run my-expert "query"
+```
+
+Run `perstack install` again whenever you add or modify skills.
+
 ## Basic Docker setup
 
 ```dockerfile
 FROM node:22-slim
 RUN npm install -g perstack
 COPY perstack.toml /app/perstack.toml
+COPY perstack.lock /app/perstack.lock
 WORKDIR /workspace
 ENTRYPOINT ["perstack", "run", "--config", "/app/perstack.toml"]
 ```
 
 ```bash
+# Generate lockfile before building
+perstack install
+
 docker build -t my-expert .
 docker run --rm \
   -e ANTHROPIC_API_KEY \

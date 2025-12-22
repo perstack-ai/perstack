@@ -48,7 +48,7 @@ describe("@perstack/core: createEvent", () => {
     providerConfig: { providerName: "anthropic" as const, apiKey: "key" },
     input: { text: "test" },
     experts: {},
-    temperature: 0.7,
+    reasoningBudget: "low" as const,
     maxSteps: 100,
     maxRetries: 3,
     timeout: 30000,
@@ -97,7 +97,6 @@ describe("@perstack/core: createRuntimeEvent", () => {
       expertName: "test-expert",
       experts: ["expert-1", "expert-2"],
       model: "claude-sonnet-4-20250514",
-      temperature: 0.7,
       maxRetries: 3,
       timeout: 30000,
     })

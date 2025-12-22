@@ -33,7 +33,23 @@ const renderThink = (args: Record<string, unknown>) => {
   const thought = getString(args, "thought")
   return <ActionRowSimple indicatorColor="white" text={thought} textDimColor={true} />
 }
-const renderAttemptCompletion = () => <ActionRowSimple indicatorColor="white" text="Run Results" />
+const renderCompleteReasoning = (text: string) => {
+  const label = "Reasoning"
+  const lines = text.split("\n")
+  return (
+    <ActionRow indicatorColor="white" label={label}>
+      <Box flexDirection="column">
+        {lines.map((line, idx) => (
+          <Text key={`reasoning-${idx}`} dimColor>
+            {truncateText(line, UI_CONSTANTS.TRUNCATE_TEXT_DEFAULT)}
+          </Text>
+        ))}
+      </Box>
+    </ActionRow>
+  )
+}
+// attemptCompletion is an internal tool, actual result shown via completeRun event
+const renderAttemptCompletion = () => null
 const getTodosFromResult = (
   result: ToolResult | undefined,
 ): { id: number; title: string; completed: boolean }[] => {
@@ -491,5 +507,7 @@ export const LogEntryRow = ({ entry }: LogEntryRowProps) => {
           statusCode={entry.statusCode}
         />
       )
+    case "completeReasoning":
+      return <Box>{renderCompleteReasoning(entry.text)}</Box>
   }
 }

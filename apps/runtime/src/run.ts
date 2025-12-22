@@ -1,6 +1,7 @@
 import type {
   Checkpoint,
   Job,
+  Lockfile,
   RunEvent,
   RunParamsInput,
   RunSetting,
@@ -27,6 +28,7 @@ export type RunOptions = {
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   resolveExpertToRun?: ResolveExpertToRunFn
   returnOnDelegationComplete?: boolean
+  lockfile?: Lockfile
 }
 
 const defaultCreateJob = (jobId: string, expertKey: string, maxSteps?: number): Job => ({
@@ -76,6 +78,7 @@ export async function run(runInput: RunParamsInput, options?: RunOptions): Promi
     storeEvent: options?.storeEvent,
     eventListener: options?.eventListener,
     resolveExpertToRun: options?.resolveExpertToRun,
+    lockfile: options?.lockfile,
   })
 
   while (true) {

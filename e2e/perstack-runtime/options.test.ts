@@ -2,7 +2,7 @@
  * CLI Options E2E Tests (Runtime)
  *
  * Tests CLI option handling in perstack-runtime:
- * - --provider, --model, --temperature
+ * - --provider, --model
  * - --max-steps, --max-retries, --timeout
  * - --job-id, --run-id, --env-path, --verbose
  *
@@ -49,27 +49,6 @@ describe.concurrent("CLI Options", () => {
           GLOBAL_RUNTIME_CONFIG,
           "--model",
           "claude-sonnet-4-5",
-          "e2e-global-runtime",
-          "Say hello",
-        ],
-        { timeout: LLM_TIMEOUT },
-      )
-      expect(result.exitCode).toBe(0)
-    },
-    LLM_TIMEOUT,
-  )
-
-  /** Verifies --temperature option is accepted. */
-  it(
-    "should accept --temperature option",
-    async () => {
-      const result = await runRuntimeCli(
-        [
-          "run",
-          "--config",
-          GLOBAL_RUNTIME_CONFIG,
-          "--temperature",
-          "0.5",
           "e2e-global-runtime",
           "Say hello",
         ],

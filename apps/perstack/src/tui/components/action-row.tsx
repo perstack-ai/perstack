@@ -19,8 +19,17 @@ type CompletionRowProps = {
   text: string
 }
 export const CompletionRow = ({ text }: CompletionRowProps) => (
-  <Box>
-    <Text color="white">{text}</Text>
+  <Box flexDirection="column">
+    <Box flexDirection="row" gap={1}>
+      <Text color="white">{INDICATOR.BULLET}</Text>
+      <Text color="white">Run Results</Text>
+    </Box>
+    <Box flexDirection="row">
+      <Box paddingRight={1}>
+        <Text dimColor>{INDICATOR.TREE}</Text>
+      </Box>
+      <Text color="white">{text}</Text>
+    </Box>
   </Box>
 )
 

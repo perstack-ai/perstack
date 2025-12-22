@@ -5,11 +5,17 @@ import type { RuntimeName } from "./runtime-name.js"
 import { runtimeNameSchema } from "./runtime-name.js"
 
 /** Reasoning budget for native LLM reasoning (extended thinking / test-time scaling) */
-export type ReasoningBudget = "minimal" | "low" | "medium" | "high" | number
+export type ReasoningBudget = "none" | "minimal" | "low" | "medium" | "high" | number
+
+/** Default reasoning budget - enables extended thinking by default */
+export const defaultReasoningBudget: ReasoningBudget = "low"
 
 export const reasoningBudgetSchema = z.union([
-  z.enum(["minimal", "low", "medium", "high"]),
-  z.number().int().positive(),
+  z.enum(["none", "minimal", "low", "medium", "high"]),
+  z
+    .number()
+    .int()
+    .nonnegative(), // 0 disables reasoning (same as "none")
 ])
 
 const domainPatternRegex =
@@ -245,8 +251,6 @@ export interface PerstackConfig {
   provider?: ProviderTable
   /** Default model name */
   model?: string
-  /** Default temperature (0-1) */
-  temperature?: number
   /** Reasoning budget for native LLM reasoning (extended thinking) */
   reasoningBudget?: ReasoningBudget
   /** Default execution runtime */
@@ -270,7 +274,6 @@ export interface PerstackConfig {
 export const perstackConfigSchema = z.object({
   provider: providerTableSchema.optional(),
   model: z.string().optional(),
-  temperature: z.number().optional(),
   reasoningBudget: reasoningBudgetSchema.optional(),
   runtime: runtimeNameSchema.optional(),
   maxSteps: z.number().optional(),

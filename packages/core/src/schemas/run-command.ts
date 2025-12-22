@@ -14,8 +14,6 @@ export interface CommandOptions {
   provider?: ProviderName
   /** Model name */
   model?: string
-  /** Temperature (0-1) */
-  temperature?: number
   /** Reasoning budget for native LLM reasoning (extended thinking) */
   reasoningBudget?: ReasoningBudget
   /** Maximum steps */
@@ -52,15 +50,6 @@ const commandOptionsSchema = z.object({
   config: z.string().optional(),
   provider: providerNameSchema.optional(),
   model: z.string().optional(),
-  temperature: z
-    .string()
-    .optional()
-    .transform((value) => {
-      if (value === undefined) return undefined
-      const parsedValue = Number.parseFloat(value)
-      if (Number.isNaN(parsedValue)) return undefined
-      return parsedValue
-    }),
   reasoningBudget: z
     .string()
     .optional()

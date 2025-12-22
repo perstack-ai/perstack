@@ -118,6 +118,17 @@ const processEventToLogs = (
     return
   }
 
+  // Handle completeReasoning events (native LLM reasoning / extended thinking)
+  if (event.type === "completeReasoning") {
+    const reasoningEvent = event as { text: string }
+    addLog({
+      id: `completeReasoning-${event.id}`,
+      type: "completeReasoning",
+      text: reasoningEvent.text,
+    })
+    return
+  }
+
   if (event.type === "initializeRuntime") {
     if (!state.rootRunId) {
       state.rootRunId = runId
@@ -164,11 +175,12 @@ const processEventToLogs = (
         state.pendingDelegations.delete(runId)
       }
     } else if (!state.completionLogged) {
-      const text = (event as { text?: string }).text
+      // Use event text, or fall back to accumulated streaming text
+      const text = (event as { text?: string }).text || state.streamingText
       if (text) {
         addLog({ id: `completion-${runId}`, type: "completion", text })
-        state.completionLogged = true
       }
+      state.completionLogged = true
       state.isComplete = true
       state.streamingText = undefined
     }

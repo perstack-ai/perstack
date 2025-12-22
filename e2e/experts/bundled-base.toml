@@ -2,7 +2,6 @@
 # Tests that the bundled @perstack/base uses in-memory transport (no process spawn)
 
 model = "claude-sonnet-4-5"
-temperature = 0.3
 runtime = "local"
 
 [provider]
