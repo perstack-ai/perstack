@@ -85,7 +85,6 @@ export function createRuntimeInitEvent(
     expertName,
     experts: [],
     model: `${runtime}:default`,
-    temperature: 0,
     maxRetries: 0,
     timeout: 0,
     query,

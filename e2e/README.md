@@ -296,7 +296,6 @@ These tests verify that sensitive environment variables are not exposed.
 | ------------------------------------ | ------------------------- |
 | `should accept --provider option`    | Verify provider option    |
 | `should accept --model option`       | Verify model option       |
-| `should accept --temperature option` | Verify temperature option |
 | `should accept --max-steps option`   | Verify max-steps option   |
 | `should accept --max-retries option` | Verify max-retries option |
 | `should accept --timeout option`     | Verify timeout option     |

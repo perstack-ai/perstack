@@ -50,14 +50,11 @@ describe("buildCliArgs", () => {
       ...baseSetting,
       maxRetries: 3,
       timeout: 60000,
-      temperature: 0.7,
     })
     expect(args).toContain("--max-retries")
     expect(args).toContain("3")
     expect(args).toContain("--timeout")
     expect(args).toContain("60000")
-    expect(args).toContain("--temperature")
-    expect(args).toContain("0.7")
   })
 
   it("should handle interactiveToolCallResult with -i flag", () => {
@@ -93,7 +90,6 @@ describe("buildCliArgs", () => {
       maxSteps: 200,
       maxRetries: 5,
       timeout: 120000,
-      temperature: 0.5,
       input: { text: "complex prompt" },
     })
     expect(args).toEqual([
@@ -109,8 +105,6 @@ describe("buildCliArgs", () => {
       "5",
       "--timeout",
       "120000",
-      "--temperature",
-      "0.5",
       "complex prompt",
     ])
   })

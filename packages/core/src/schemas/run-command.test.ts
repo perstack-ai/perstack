@@ -12,24 +12,6 @@ describe("@perstack/core: runCommandInputSchema", () => {
     expect(result.query).toBe("Hello world")
   })
 
-  it("transforms temperature string to number", () => {
-    const result = runCommandInputSchema.parse({
-      expertKey: "test-expert",
-      query: "test",
-      options: { temperature: "0.7" },
-    })
-    expect(result.options.temperature).toBe(0.7)
-  })
-
-  it("returns undefined for invalid temperature", () => {
-    const result = runCommandInputSchema.parse({
-      expertKey: "test-expert",
-      query: "test",
-      options: { temperature: "invalid" },
-    })
-    expect(result.options.temperature).toBeUndefined()
-  })
-
   it("transforms maxSteps string to number", () => {
     const result = runCommandInputSchema.parse({
       expertKey: "test-expert",
@@ -89,13 +71,11 @@ describe("@perstack/core: runCommandInputSchema", () => {
       expertKey: "test-expert",
       query: "test",
       options: {
-        temperature: undefined,
         maxSteps: undefined,
         maxRetries: undefined,
         timeout: undefined,
       },
     })
-    expect(result.options.temperature).toBeUndefined()
     expect(result.options.maxSteps).toBeUndefined()
     expect(result.options.maxRetries).toBeUndefined()
     expect(result.options.timeout).toBeUndefined()
@@ -167,6 +147,15 @@ describe("@perstack/core: commandOptionsSchema - reasoningBudget options", () =>
       })
       expect(result.options.reasoningBudget).toBe(level)
     }
+  })
+
+  it("transforms 'none' to disable reasoning", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { reasoningBudget: "none" },
+    })
+    expect(result.options.reasoningBudget).toBe("none")
   })
 
   it("transforms numeric reasoning budget", () => {

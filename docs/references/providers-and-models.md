@@ -61,7 +61,7 @@ headers = { "X-Custom-Header" = "value" }        # Optional
 | `baseUrl` | string | Custom API endpoint |
 | `headers` | object | Custom HTTP headers |
 
-**Native reasoning:** Supported via extended thinking. When `reasoningBudget` is set, `temperature` is fixed at 1.0.
+**Native reasoning:** Supported via extended thinking.
 
 **Models:**
 | Model                        | Context | Max Output |

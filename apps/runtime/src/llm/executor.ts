@@ -1,6 +1,11 @@
+import type { ReasoningBudget } from "@perstack/core"
 import type { ProviderAdapter, ProviderOptions } from "@perstack/provider-core"
 import { generateText, type LanguageModel } from "ai"
 import type { GenerateTextParams, LLMExecutionResult } from "./types.js"
+
+/** Check if reasoning should be enabled based on budget value */
+const shouldEnableReasoning = (budget: ReasoningBudget | undefined): boolean =>
+  budget !== undefined && budget !== "none" && budget !== 0
 
 export class LLMExecutor {
   constructor(
@@ -14,16 +19,17 @@ export class LLMExecutor {
       params.providerToolOptions,
     )
     const baseProviderOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
-    const reasoningOptions = params.reasoningBudget
-      ? this.adapter.getReasoningOptions(params.reasoningBudget)
-      : undefined
+    const reasoningEnabled = shouldEnableReasoning(params.reasoningBudget)
+    const reasoningOptions =
+      reasoningEnabled && params.reasoningBudget
+        ? this.adapter.getReasoningOptions(params.reasoningBudget)
+        : undefined
     const providerOptions = this.mergeProviderOptions(baseProviderOptions, reasoningOptions)
 
     try {
       const result = await generateText({
         model: this.model,
         messages: params.messages,
-        temperature: params.temperature,
         maxRetries: params.maxRetries,
         tools: { ...params.tools, ...providerTools },
         toolChoice: params.toolChoice,
@@ -62,16 +68,17 @@ export class LLMExecutor {
     >,
   ): Promise<LLMExecutionResult> {
     const baseProviderOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
-    const reasoningOptions = params.reasoningBudget
-      ? this.adapter.getReasoningOptions(params.reasoningBudget)
-      : undefined
+    const reasoningEnabled = shouldEnableReasoning(params.reasoningBudget)
+    const reasoningOptions =
+      reasoningEnabled && params.reasoningBudget
+        ? this.adapter.getReasoningOptions(params.reasoningBudget)
+        : undefined
     const providerOptions = this.mergeProviderOptions(baseProviderOptions, reasoningOptions)
 
     try {
       const result = await generateText({
         model: this.model,
         messages: params.messages,
-        temperature: params.temperature,
         maxRetries: params.maxRetries,
         abortSignal: params.abortSignal,
         providerOptions,

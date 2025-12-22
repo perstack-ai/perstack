@@ -1,10 +1,14 @@
 import type { AnthropicProviderConfig } from "@perstack/core"
 import { beforeEach, describe, expect, it } from "vitest"
-import { ProviderAdapterFactory, ProviderNotInstalledError } from "./provider-adapter-factory.js"
+import {
+  clearProviderAdapterCache,
+  createProviderAdapter,
+  ProviderNotInstalledError,
+} from "./provider-adapter-factory.js"
 
-describe("ProviderAdapterFactory", () => {
+describe("Provider Adapter Factory", () => {
   beforeEach(() => {
-    ProviderAdapterFactory.clearCache()
+    clearProviderAdapterCache()
   })
 
   describe("ProviderNotInstalledError", () => {
@@ -31,9 +35,9 @@ describe("ProviderAdapterFactory", () => {
     })
   })
 
-  describe("create", () => {
+  describe("createProviderAdapter", () => {
     it("throws ProviderNotInstalledError for unregistered provider", async () => {
-      ProviderAdapterFactory.clearCache()
+      clearProviderAdapterCache()
       const config: AnthropicProviderConfig = {
         providerName: "anthropic",
         apiKey: "test-key",
@@ -41,14 +45,14 @@ describe("ProviderAdapterFactory", () => {
 
       // Clear all registrations by creating fresh state
       // Note: This test verifies error handling for unregistered providers
-      await expect(ProviderAdapterFactory.create(config)).rejects.toThrow(ProviderNotInstalledError)
+      await expect(createProviderAdapter(config)).rejects.toThrow(ProviderNotInstalledError)
     })
   })
 
-  describe("clearCache", () => {
+  describe("clearProviderAdapterCache", () => {
     it("clears the instance cache", () => {
-      // This is a basic test to ensure clearCache doesn't throw
-      expect(() => ProviderAdapterFactory.clearCache()).not.toThrow()
+      // This is a basic test to ensure clearProviderAdapterCache doesn't throw
+      expect(() => clearProviderAdapterCache()).not.toThrow()
     })
   })
 })

@@ -6,6 +6,11 @@ export {
   createNextStepCheckpoint,
   type DelegationStateResult,
 } from "./checkpoint.js"
+export {
+  findLockfile,
+  getLockfileExpertToolDefinitions,
+  loadLockfile,
+} from "./lockfile.js"
 export { calculateContextWindowUsage, getContextWindow, getModel } from "./model.js"
 export { resolveExpertToRun } from "./resolve-expert.js"
 export {

@@ -5,6 +5,7 @@ import {
   type RunEvent,
   type RunParamsInput,
   type RunSetting,
+  type RuntimeEvent,
   runParamsSchema,
   type Step,
   stepSchema,
@@ -23,7 +24,6 @@ export function createRunSetting(overrides: Partial<RunParamsInput["setting"]> =
     },
     model: "claude-sonnet-4-20250514",
     expertKey: "test-expert",
-    temperature: 0.3,
     maxRetries: 3,
     maxSteps: 10,
     timeout: 1000,
@@ -90,7 +90,7 @@ export interface CreateTestContextOptions {
   setting?: Partial<RunParamsInput["setting"]>
   checkpoint?: Partial<Checkpoint>
   step?: Partial<Step>
-  eventListener?: (event: RunEvent) => Promise<void>
+  eventListener?: (event: RunEvent | RuntimeEvent) => Promise<void>
   skillManagers?: Record<string, BaseSkillManager>
   llmExecutor?: LLMExecutor
 }

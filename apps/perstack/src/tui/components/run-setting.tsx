@@ -81,8 +81,6 @@ export const RunSetting = ({
       <Text>
         <Text color="gray">Model: </Text>
         <Text color="white">{info.model}</Text>
-        <Text color="gray"> / Temperature: </Text>
-        <Text color="white">{info.temperature}</Text>
       </Text>
       <Box>
         <Text color="gray">Query: </Text>

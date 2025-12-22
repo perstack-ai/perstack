@@ -1,0 +1,23 @@
+# E2E test configuration for lockfile functionality
+# Tests perstack install and lockfile-based execution
+
+model = "claude-sonnet-4-5"
+runtime = "local"
+
+[provider]
+providerName = "anthropic"
+
+envPath = [".env", ".env.local"]
+
+[experts."e2e-lockfile"]
+version = "1.0.0"
+description = "E2E test expert for lockfile functionality"
+instruction = """
+Call healthCheck and then call attemptCompletion with result "lockfile-test-ok"
+"""
+
+[experts."e2e-lockfile".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion", "healthCheck"]

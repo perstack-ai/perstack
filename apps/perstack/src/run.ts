@@ -18,7 +18,6 @@ export const runCommand = new Command()
   .option("--config <configPath>", "Path to perstack.toml config file")
   .option("--provider <provider>", "Provider to use")
   .option("--model <model>", "Model to use")
-  .option("--temperature <temperature>", "Temperature for the model, default is 0.3")
   .option(
     "--reasoning-budget <budget>",
     "Reasoning budget for native LLM reasoning (minimal, low, medium, high, or token count)",
@@ -85,7 +84,6 @@ export const runCommand = new Command()
           experts,
           model,
           providerConfig,
-          temperature: input.options.temperature ?? perstackConfig.temperature,
           reasoningBudget: input.options.reasoningBudget ?? perstackConfig.reasoningBudget,
           maxSteps: input.options.maxSteps ?? perstackConfig.maxSteps,
           maxRetries: input.options.maxRetries ?? perstackConfig.maxRetries,

@@ -3,6 +3,7 @@ import {
   type Checkpoint,
   createRuntimeEvent,
   type Expert,
+  type Lockfile,
   type RunEvent,
   type RunSetting,
   type RuntimeEvent,
@@ -14,13 +15,14 @@ import {
   createInitialCheckpoint,
   createNextStepCheckpoint,
   getContextWindow,
+  getLockfileExpertToolDefinitions,
   type ResolveExpertToRunFn,
   setupExperts,
 } from "../helpers/index.js"
-import { ProviderAdapterFactory } from "../helpers/provider-adapter-factory.js"
+import { createProviderAdapter } from "../helpers/provider-adapter-factory.js"
 import "../helpers/register-providers.js"
 import { LLMExecutor } from "../llm/index.js"
-import { getSkillManagers } from "../skill-manager/index.js"
+import { getSkillManagers, getSkillManagersFromLockfile } from "../skill-manager/index.js"
 import { executeStateMachine } from "../state-machine/index.js"
 
 export type SingleRunExecutorOptions = {
@@ -29,6 +31,7 @@ export type SingleRunExecutorOptions = {
   storeEvent?: (event: RunEvent) => Promise<void>
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   resolveExpertToRun?: ResolveExpertToRunFn
+  lockfile?: Lockfile
 }
 
 export type SingleRunResult = {
@@ -48,7 +51,7 @@ export class SingleRunExecutor {
   constructor(private options: SingleRunExecutorOptions = {}) {}
 
   async execute(setting: RunSetting, checkpoint?: Checkpoint): Promise<SingleRunResult> {
-    const adapter = await ProviderAdapterFactory.create(setting.providerConfig, {
+    const adapter = await createProviderAdapter(setting.providerConfig, {
       proxyUrl: setting.proxyUrl,
     })
     const model = adapter.createModel(setting.model)
@@ -59,13 +62,19 @@ export class SingleRunExecutor {
 
     this.emitInitEvent(setting, expertToRun, experts)
 
-    const skillManagers = await getSkillManagers(
-      expertToRun,
-      experts,
-      setting,
-      this.options.eventListener,
-      { isDelegatedRun: !!checkpoint?.delegatedBy },
-    )
+    const lockfileExpert = this.options.lockfile?.experts[setting.expertKey]
+    const skillManagers = lockfileExpert
+      ? await getSkillManagersFromLockfile(
+          expertToRun,
+          experts,
+          setting,
+          getLockfileExpertToolDefinitions(lockfileExpert),
+          this.options.eventListener,
+          { isDelegatedRun: !!checkpoint?.delegatedBy },
+        )
+      : await getSkillManagers(expertToRun, experts, setting, this.options.eventListener, {
+          isDelegatedRun: !!checkpoint?.delegatedBy,
+        })
 
     const initialCheckpoint = checkpoint
       ? createNextStepCheckpoint(createId(), checkpoint)
@@ -120,7 +129,6 @@ export class SingleRunExecutor {
       expertName: expertToRun.name,
       experts: Object.keys(experts),
       model: setting.model,
-      temperature: setting.temperature,
       maxSteps: setting.maxSteps,
       maxRetries: setting.maxRetries,
       timeout: setting.timeout,

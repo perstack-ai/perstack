@@ -47,6 +47,8 @@ async function runReasoningTest(
     { timeout: LLM_TIMEOUT },
   )
   const result = withEventParsing(cmdResult)
+
+  // Get completeRun event for usage info
   const completeEvents = filterEventsByType(result.events, "completeRun")
   const completeEvent = completeEvents[0] as
     | {
@@ -57,16 +59,19 @@ async function runReasoningTest(
             contents?: Array<{ type: string; thinking?: string }>
           }>
         }
-        thinking?: string
       }
     | undefined
+
+  // Get completeReasoning event for thinking text
+  const reasoningEvents = filterEventsByType(result.events, "completeReasoning")
+  const reasoningEvent = reasoningEvents[0] as { text?: string } | undefined
 
   // Use checkpoint.usage as primary source (accumulates all step usage)
   const checkpointUsage = completeEvent?.checkpoint?.usage
   const reasoningTokens = checkpointUsage?.reasoningTokens ?? 0
 
-  // Get thinking from completeRun event or from checkpoint messages
-  let thinking = completeEvent?.thinking
+  // Get thinking from completeReasoning event or from checkpoint messages
+  let thinking = reasoningEvent?.text
   if (!thinking && completeEvent?.checkpoint?.messages) {
     // Look for thinkingPart in any message
     for (const message of completeEvent.checkpoint.messages) {

@@ -227,9 +227,6 @@ Native reasoning is applied during the final result generation (after tool execu
 | Google    | Planned | Flash Thinking mode                  |
 | DeepSeek  | Partial | Use `deepseek-reasoner` model        |
 
-> [!NOTE]
-> When `reasoningBudget` is set for Anthropic, `temperature` is ignored (fixed at 1.0 by the API).
-
 ## Providers and models
 
 Perstack uses standard LLM features available from most providers:

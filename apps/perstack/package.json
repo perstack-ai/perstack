@@ -23,6 +23,7 @@
     "@perstack/api-client": "workspace:*",
     "@perstack/core": "workspace:*",
     "@perstack/runner": "workspace:*",
+    "@perstack/runtime": "workspace:*",
     "@perstack/filesystem-storage": "workspace:*",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",

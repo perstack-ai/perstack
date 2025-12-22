@@ -8,7 +8,6 @@ import type { GenerateTextResult, ModelMessage, ToolSet } from "ai"
 
 export interface GenerateTextParams {
   messages: ModelMessage[]
-  temperature: number
   reasoningBudget?: ReasoningBudget
   maxRetries: number
   tools: ToolSet

@@ -10,7 +10,6 @@ export function generateCreateExpertToml(options: CreateExpertTomlOptions): stri
   const runtimeLine =
     options.runtime && options.runtime !== "default" ? `runtime = "${options.runtime}"\n` : ""
   return `model = "${options.model}"
-temperature = 0.3
 ${runtimeLine}
 [provider]
 providerName = "${options.provider}"

@@ -48,7 +48,6 @@ perstack run <expertKey> <query> [options]
 |--------|-------------|---------|
 | \`--provider <provider>\` | LLM provider | \`anthropic\` |
 | \`--model <model>\` | Model name | \`claude-sonnet-4-5\` |
-| \`--temperature <temp>\` | Temperature (0.0-1.0) | \`0.3\` |
 | \`--max-steps <n>\` | Maximum steps | unlimited |
 | \`--runtime <runtime>\` | Execution runtime | \`docker\` |
 
@@ -64,7 +63,6 @@ perstack run <expertKey> <query> [options]
 
 \`\`\`toml
 model = "${model}"
-temperature = 0.3
 ${runtimeSection}
 
 [provider]

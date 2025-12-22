@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2"
 import {
   callTools,
   completeRun,
+  createRuntimeEvent,
   type RunEvent,
   retry,
   stopRunByError,
@@ -86,6 +87,7 @@ export async function generatingToolCallLogic({
   checkpoint,
   step,
   skillManagers,
+  eventListener,
 }: RunSnapshot["context"]): Promise<RunEvent> {
   const { messages } = checkpoint
   const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
@@ -98,7 +100,6 @@ export async function generatingToolCallLogic({
     result = await generateText({
       model,
       messages: messages.map(messageToCoreMessage),
-      temperature: setting.temperature,
       maxRetries: setting.maxRetries,
       tools: await getToolSet(skillManagers),
       toolChoice: "auto",
@@ -147,6 +148,16 @@ export async function generatingToolCallLogic({
     > = [...thinkingParts, { type: "textPart", text }]
     const newMessage = createExpertMessage(contents)
     const newUsage = sumUsage(checkpoint.usage, usage)
+
+    // Emit completeReasoning event if reasoning text exists
+    if (thinkingText) {
+      await eventListener(
+        createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
+          text: thinkingText,
+        }),
+      )
+    }
+
     return completeRun(setting, checkpoint, {
       checkpoint: {
         ...checkpoint,
@@ -164,7 +175,6 @@ export async function generatingToolCallLogic({
         usage: sumUsage(step.usage, usage),
       },
       text,
-      thinking: thinkingText || undefined,
       usage,
     })
   }

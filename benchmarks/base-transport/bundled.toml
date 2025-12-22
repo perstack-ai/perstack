@@ -2,7 +2,6 @@
 # This uses the in-process base skill for near-zero latency
 
 model = "claude-sonnet-4-5"
-temperature = 0.3
 
 [provider]
 providerName = "anthropic"
