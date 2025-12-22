@@ -895,6 +895,9 @@ importers:
         specifier: workspace:*
         version: link:../../core
     devDependencies:
+      '@paralleldrive/cuid2':
+        specifier: ^3.0.4
+        version: 3.0.4
       '@tsconfig/node22':
         specifier: ^22.0.5
         version: 22.0.5
