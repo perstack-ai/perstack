@@ -810,9 +810,6 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.800.0
         version: 3.956.0
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../../core
       '@perstack/s3-compatible-storage':
         specifier: workspace:*
         version: link:../s3-compatible
@@ -838,9 +835,6 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.800.0
         version: 3.956.0
-      '@perstack/core':
-        specifier: workspace:*
-        version: link:../../core
       '@perstack/s3-compatible-storage':
         specifier: workspace:*
         version: link:../s3-compatible
