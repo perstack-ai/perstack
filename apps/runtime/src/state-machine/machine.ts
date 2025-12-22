@@ -138,6 +138,7 @@ export const runtimeStateMachine = setup({
                 ...context.checkpoint,
                 messages: [...context.checkpoint.messages, ...event.newMessages],
                 usage: sumUsage(context.checkpoint.usage, event.usage),
+                retryCount: (context.checkpoint.retryCount ?? 0) + 1,
               }) satisfies Checkpoint,
             step: ({ context, event }) =>
               ({
@@ -167,7 +168,7 @@ export const runtimeStateMachine = setup({
         completeRun: {
           target: "Stopped",
           actions: assign({
-            checkpoint: ({ event }) => event.checkpoint,
+            checkpoint: ({ event }) => ({ ...event.checkpoint, retryCount: 0 }),
             step: ({ event }) => ({
               ...event.step,
               inputMessages: undefined,
@@ -177,15 +178,18 @@ export const runtimeStateMachine = setup({
         callTools: {
           target: "CallingTool",
           actions: assign({
-            checkpoint: ({ context, event }) =>
-              ({
+            checkpoint: ({ context, event }) => {
+              const newUsage = sumUsage(context.checkpoint.usage, event.usage)
+              return {
                 ...context.checkpoint,
                 messages: [...context.checkpoint.messages, event.newMessage],
-                usage: sumUsage(context.checkpoint.usage, event.usage),
+                usage: newUsage,
                 contextWindowUsage: context.checkpoint.contextWindow
-                  ? calculateContextWindowUsage(event.usage, context.checkpoint.contextWindow)
+                  ? calculateContextWindowUsage(newUsage, context.checkpoint.contextWindow)
                   : undefined,
-              }) satisfies Checkpoint,
+                retryCount: 0,
+              } satisfies Checkpoint
+            },
             step: ({ context, event }) =>
               ({
                 ...context.step,
@@ -198,15 +202,18 @@ export const runtimeStateMachine = setup({
         callInteractiveTool: {
           target: "CallingInteractiveTool",
           actions: assign({
-            checkpoint: ({ context, event }) =>
-              ({
+            checkpoint: ({ context, event }) => {
+              const newUsage = sumUsage(context.checkpoint.usage, event.usage)
+              return {
                 ...context.checkpoint,
                 messages: [...context.checkpoint.messages, event.newMessage],
-                usage: sumUsage(context.checkpoint.usage, event.usage),
+                usage: newUsage,
                 contextWindowUsage: context.checkpoint.contextWindow
-                  ? calculateContextWindowUsage(event.usage, context.checkpoint.contextWindow)
+                  ? calculateContextWindowUsage(newUsage, context.checkpoint.contextWindow)
                   : undefined,
-              }) satisfies Checkpoint,
+                retryCount: 0, // Reset on successful generation
+              } satisfies Checkpoint
+            },
             step: ({ context, event }) =>
               ({
                 ...context.step,
@@ -219,15 +226,18 @@ export const runtimeStateMachine = setup({
         callDelegate: {
           target: "CallingDelegate",
           actions: assign({
-            checkpoint: ({ context, event }) =>
-              ({
+            checkpoint: ({ context, event }) => {
+              const newUsage = sumUsage(context.checkpoint.usage, event.usage)
+              return {
                 ...context.checkpoint,
                 messages: [...context.checkpoint.messages, event.newMessage],
-                usage: sumUsage(context.checkpoint.usage, event.usage),
+                usage: newUsage,
                 contextWindowUsage: context.checkpoint.contextWindow
-                  ? calculateContextWindowUsage(event.usage, context.checkpoint.contextWindow)
+                  ? calculateContextWindowUsage(newUsage, context.checkpoint.contextWindow)
                   : undefined,
-              }) satisfies Checkpoint,
+                retryCount: 0, // Reset on successful generation
+              } satisfies Checkpoint
+            },
             step: ({ context, event }) =>
               ({
                 ...context.step,
@@ -322,6 +332,7 @@ export const runtimeStateMachine = setup({
                 ...context.checkpoint,
                 messages: [...context.checkpoint.messages, ...event.newMessages],
                 usage: sumUsage(context.checkpoint.usage, event.usage),
+                retryCount: (context.checkpoint.retryCount ?? 0) + 1,
               }) satisfies Checkpoint,
             step: ({ context, event }) =>
               ({
@@ -351,7 +362,7 @@ export const runtimeStateMachine = setup({
         completeRun: {
           target: "Stopped",
           actions: assign({
-            checkpoint: ({ event }) => event.checkpoint,
+            checkpoint: ({ event }) => ({ ...event.checkpoint, retryCount: 0 }),
             step: ({ event }) => ({
               ...event.step,
               inputMessages: undefined,

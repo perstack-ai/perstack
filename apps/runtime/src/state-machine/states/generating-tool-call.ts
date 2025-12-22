@@ -11,18 +11,14 @@ import {
   type ToolCall,
   type ToolCallPart,
 } from "@perstack/core"
-import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
-import {
-  calculateContextWindowUsage,
-  getModel,
-  getReasoningProviderOptions,
-} from "../../helpers/model.js"
+import { calculateContextWindowUsage } from "../../helpers/model.js"
 import {
   extractThinkingParts,
   extractThinkingText,
   type ReasoningPart,
 } from "../../helpers/thinking.js"
 import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
+import type { StreamCallbacks } from "../../llm/types.js"
 import {
   createExpertMessage,
   createToolMessage,
@@ -88,26 +84,48 @@ export async function generatingToolCallLogic({
   step,
   skillManagers,
   eventListener,
+  llmExecutor,
 }: RunSnapshot["context"]): Promise<RunEvent> {
   const { messages } = checkpoint
-  const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
-  const providerOptions = getReasoningProviderOptions(
-    setting.providerConfig.providerName,
-    setting.reasoningBudget,
-  )
-  let result: GenerateTextResult<ToolSet, never>
-  try {
-    result = await generateText({
-      model,
+
+  // Track if reasoning was completed via callback (to avoid duplicate emissions)
+  let reasoningCompletedViaCallback = false
+
+  // Create streaming callbacks for fire-and-forget event emission
+  // Note: Only emit reasoning events here. Result streaming events (startRunResult, streamRunResult)
+  // are NOT emitted in GeneratingToolCall because we don't know if there will be tool calls
+  // until streaming completes. Result streaming is only done in GeneratingRunResult.
+  const callbacks: StreamCallbacks = {
+    onReasoningStart: () => {
+      eventListener(createRuntimeEvent("startReasoning", setting.jobId, setting.runId, {}))
+    },
+    onReasoningDelta: (delta) => {
+      eventListener(createRuntimeEvent("streamReasoning", setting.jobId, setting.runId, { delta }))
+    },
+    onReasoningComplete: (text) => {
+      // Emit completeReasoning when reasoning phase ends
+      eventListener(createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, { text }))
+      reasoningCompletedViaCallback = true
+    },
+    // onResultStart and onResultDelta intentionally not set - result streaming only in GeneratingRunResult
+  }
+
+  const executionResult = await llmExecutor.streamText(
+    {
       messages: messages.map(messageToCoreMessage),
       maxRetries: setting.maxRetries,
       tools: await getToolSet(skillManagers),
       toolChoice: "auto",
-      providerOptions,
       abortSignal: AbortSignal.timeout(setting.timeout),
-    })
-  } catch (error) {
-    if (error instanceof APICallError && !error.isRetryable) {
+      reasoningBudget: setting.reasoningBudget,
+    },
+    callbacks,
+  )
+
+  if (!executionResult.success) {
+    const { error, isRetryable } = executionResult
+    const currentRetryCount = checkpoint.retryCount ?? 0
+    if (!isRetryable || currentRetryCount >= setting.maxRetries) {
       return stopRunByError(setting, checkpoint, {
         checkpoint: {
           ...checkpoint,
@@ -118,23 +136,25 @@ export async function generatingToolCallLogic({
           finishedAt: Date.now(),
         },
         error: {
-          name: error.name,
-          message: error.message,
+          name: error.name ?? "Error",
+          message:
+            currentRetryCount >= setting.maxRetries
+              ? `Max retries (${setting.maxRetries}) exceeded: ${error.message}`
+              : error.message,
           statusCode: error.statusCode,
           isRetryable: false,
         },
       })
     }
-    if (error instanceof Error) {
-      const reason = JSON.stringify({ error: error.name, message: error.message })
-      return retry(setting, checkpoint, {
-        reason,
-        newMessages: [createUserMessage([{ type: "textPart", text: reason }])],
-        usage: createEmptyUsage(),
-      })
-    }
-    throw error
+    const reason = JSON.stringify({ error: error.name ?? "Error", message: error.message })
+    return retry(setting, checkpoint, {
+      reason,
+      newMessages: [createUserMessage([{ type: "textPart", text: reason }])],
+      usage: createEmptyUsage(),
+    })
   }
+
+  const result = executionResult.result
   const usage = usageFromGenerateTextResult(result)
   const { text, toolCalls, finishReason, reasoning } = result
   // Extract thinking from reasoning (Anthropic, Google)
@@ -149,8 +169,9 @@ export async function generatingToolCallLogic({
     const newMessage = createExpertMessage(contents)
     const newUsage = sumUsage(checkpoint.usage, usage)
 
-    // Emit completeReasoning event if reasoning text exists
-    if (thinkingText) {
+    // Note: completeReasoning is emitted via onReasoningComplete callback during streaming
+    // Fallback emission only if callback wasn't triggered (should be rare)
+    if (thinkingText && !reasoningCompletedViaCallback) {
       await eventListener(
         createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
           text: thinkingText,
@@ -179,8 +200,26 @@ export async function generatingToolCallLogic({
     })
   }
 
-  // Nothing generated = retry
+  // Nothing generated = retry (with limit check)
   if (toolCalls.length === 0) {
+    const currentRetryCount = checkpoint.retryCount ?? 0
+    if (currentRetryCount >= setting.maxRetries) {
+      return stopRunByError(setting, checkpoint, {
+        checkpoint: {
+          ...checkpoint,
+          status: "stoppedByError",
+        },
+        step: {
+          ...step,
+          finishedAt: Date.now(),
+        },
+        error: {
+          name: "MaxRetriesExceeded",
+          message: `Max retries (${setting.maxRetries}) exceeded: No tool call or text generated`,
+          isRetryable: false,
+        },
+      })
+    }
     const reason = JSON.stringify({
       error: "Error: No tool call or text generated",
       message: "You must generate a tool call or provide a response. Try again.",
@@ -201,6 +240,17 @@ export async function generatingToolCallLogic({
       Omit<TextPart, "id"> | Omit<ToolCallPart, "id"> | Omit<ThinkingPart, "id">
     > = [...thinkingParts, ...(text ? [{ type: "textPart" as const, text }] : []), ...toolCallParts]
     const allToolCalls = buildToolCalls(sorted)
+
+    // Note: completeReasoning is emitted via onReasoningComplete callback during streaming
+    // Fallback emission only if callback wasn't triggered (should be rare)
+    if (thinkingText && !reasoningCompletedViaCallback) {
+      await eventListener(
+        createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
+          text: thinkingText,
+        }),
+      )
+    }
+
     return callTools(setting, checkpoint, {
       newMessage: createExpertMessage(contents),
       toolCalls: allToolCalls,
@@ -211,6 +261,24 @@ export async function generatingToolCallLogic({
     const firstToolCall = sorted[0]
     if (!firstToolCall) {
       throw new Error("No tool call found")
+    }
+    const currentRetryCount = checkpoint.retryCount ?? 0
+    if (currentRetryCount >= setting.maxRetries) {
+      return stopRunByError(setting, checkpoint, {
+        checkpoint: {
+          ...checkpoint,
+          status: "stoppedByError",
+        },
+        step: {
+          ...step,
+          finishedAt: Date.now(),
+        },
+        error: {
+          name: "MaxRetriesExceeded",
+          message: `Max retries (${setting.maxRetries}) exceeded: Generation length exceeded`,
+          isRetryable: false,
+        },
+      })
     }
     const reason = JSON.stringify({
       error: "Error: Tool call generation failed",

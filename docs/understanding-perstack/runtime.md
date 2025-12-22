@@ -227,6 +227,34 @@ Native reasoning is applied during the final result generation (after tool execu
 | Google    | Planned | Flash Thinking mode                  |
 | DeepSeek  | Partial | Use `deepseek-reasoner` model        |
 
+## Streaming events
+
+The runtime supports real-time streaming of LLM output through fire-and-forget events. Events are emitted as deltas arrive, without waiting for acknowledgment.
+
+### Event sequence
+
+| Phase     | Events                                                        | Description              |
+| --------- | ------------------------------------------------------------- | ------------------------ |
+| Reasoning | `startReasoning` → `streamReasoning...` → `completeReasoning` | Extended thinking output |
+| Result    | `startRunResult` → `streamRunResult...` → `completeRun`       | Final completion text    |
+
+### Streaming vs state machine events
+
+| Event type  | State transition?  | Purpose                               |
+| ----------- | ------------------ | ------------------------------------- |
+| `start*`    | No                 | Marks stream beginning (display hint) |
+| `stream*`   | No                 | Incremental delta (fire-and-forget)   |
+| `complete*` | `completeRun` only | Final result with full text           |
+
+### When streaming is used
+
+- **GeneratingToolCall**: Streams reasoning; text streamed only if no tool calls
+- **GeneratingRunResult**: Full streaming (reasoning + result)
+
+### Tool calls are NOT streamed
+
+Tool calls are structured data requiring complete parsing. They are processed after the stream completes, not incrementally.
+
 ## Providers and models
 
 Perstack uses standard LLM features available from most providers:

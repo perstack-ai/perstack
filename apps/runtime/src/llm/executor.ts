@@ -1,7 +1,12 @@
 import type { ReasoningBudget } from "@perstack/core"
 import type { ProviderAdapter, ProviderOptions } from "@perstack/provider-core"
-import { generateText, type LanguageModel } from "ai"
-import type { GenerateTextParams, LLMExecutionResult } from "./types.js"
+import { generateText, type LanguageModel, streamText } from "ai"
+import type {
+  GenerateTextParams,
+  LLMExecutionResult,
+  StreamCallbacks,
+  StreamTextParams,
+} from "./types.js"
 
 /** Check if reasoning should be enabled based on budget value */
 const shouldEnableReasoning = (budget: ReasoningBudget | undefined): boolean =>
@@ -84,6 +89,106 @@ export class LLMExecutor {
         providerOptions,
       })
       return { success: true, result }
+    } catch (error) {
+      const providerError = this.adapter.normalizeError(error)
+      return {
+        success: false,
+        error: providerError,
+        isRetryable: this.adapter.isRetryable(error),
+      }
+    }
+  }
+
+  async streamText(
+    params: StreamTextParams,
+    callbacks: StreamCallbacks,
+  ): Promise<LLMExecutionResult> {
+    const providerTools = this.adapter.getProviderTools(
+      params.providerToolNames ?? [],
+      params.providerToolOptions,
+    )
+    const baseProviderOptions = this.adapter.getProviderOptions(params.providerOptionsConfig)
+    const reasoningEnabled = shouldEnableReasoning(params.reasoningBudget)
+    const reasoningOptions =
+      reasoningEnabled && params.reasoningBudget
+        ? this.adapter.getReasoningOptions(params.reasoningBudget)
+        : undefined
+    const providerOptions = this.mergeProviderOptions(baseProviderOptions, reasoningOptions)
+
+    const streamResult = streamText({
+      model: this.model,
+      messages: params.messages,
+      maxRetries: params.maxRetries,
+      tools: { ...params.tools, ...providerTools },
+      toolChoice: params.toolChoice,
+      abortSignal: params.abortSignal,
+      providerOptions,
+    })
+
+    let reasoningStarted = false
+    let reasoningCompleted = false
+    let resultStarted = false
+    let accumulatedReasoning = ""
+
+    try {
+      // Iterate over fullStream to emit streaming events
+      for await (const part of streamResult.fullStream) {
+        if (part.type === "reasoning-delta") {
+          if (!reasoningStarted) {
+            callbacks.onReasoningStart?.()
+            reasoningStarted = true
+          }
+          accumulatedReasoning += part.text
+          callbacks.onReasoningDelta?.(part.text)
+        }
+        if (part.type === "text-delta") {
+          // Complete reasoning phase before starting result phase
+          if (reasoningStarted && !reasoningCompleted) {
+            callbacks.onReasoningComplete?.(accumulatedReasoning)
+            reasoningCompleted = true
+          }
+          if (!resultStarted) {
+            callbacks.onResultStart?.()
+            resultStarted = true
+          }
+          callbacks.onResultDelta?.(part.text)
+        }
+      }
+
+      // If reasoning was started but never completed (no text-delta received),
+      // complete it now
+      if (reasoningStarted && !reasoningCompleted) {
+        callbacks.onReasoningComplete?.(accumulatedReasoning)
+        reasoningCompleted = true
+      }
+
+      // After fullStream is consumed, await the final result
+      // The streamText result object caches these values during streaming
+      const text = await streamResult.text
+      const toolCalls = await streamResult.toolCalls
+      const finishReason = await streamResult.finishReason
+      const usage = await streamResult.usage
+      const reasoning = await streamResult.reasoning
+      const response = await streamResult.response
+
+      // Construct a result compatible with GenerateTextResult
+      const result = {
+        text,
+        toolCalls,
+        finishReason,
+        usage,
+        reasoning,
+        response,
+        // These properties are required by GenerateTextResult but not available in streamText
+        // They're optional or have safe defaults
+        toolResults: [] as never[],
+        steps: [],
+        experimental_output: undefined,
+        providerMetadata: undefined,
+        request: { body: "" },
+      }
+
+      return { success: true, result: result as never }
     } catch (error) {
       const providerError = this.adapter.normalizeError(error)
       return {

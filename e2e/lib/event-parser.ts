@@ -1,6 +1,6 @@
-import type { RunEvent } from "@perstack/core"
+import type { RunEvent, RuntimeEvent } from "@perstack/core"
 
-export type ParsedEvent = RunEvent & { raw: string }
+export type ParsedEvent = (RunEvent | RuntimeEvent) & { raw: string }
 
 export type ToolCallInfo = {
   id: string

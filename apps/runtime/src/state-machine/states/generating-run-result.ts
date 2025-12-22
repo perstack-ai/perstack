@@ -7,18 +7,14 @@ import {
   type TextPart,
   type ThinkingPart,
 } from "@perstack/core"
-import { APICallError, type GenerateTextResult, generateText, type ToolSet } from "ai"
-import {
-  calculateContextWindowUsage,
-  getModel,
-  getReasoningProviderOptions,
-} from "../../helpers/model.js"
+import { calculateContextWindowUsage } from "../../helpers/model.js"
 import {
   extractThinkingParts,
   extractThinkingText,
   type ReasoningPart,
 } from "../../helpers/thinking.js"
 import { createEmptyUsage, sumUsage, usageFromGenerateTextResult } from "../../helpers/usage.js"
+import type { StreamCallbacks } from "../../llm/types.js"
 import {
   createExpertMessage,
   createToolMessage,
@@ -32,6 +28,7 @@ export async function generatingRunResultLogic({
   checkpoint,
   step,
   eventListener,
+  llmExecutor,
 }: RunSnapshot["context"]): Promise<RunEvent> {
   if (!step.toolCalls || !step.toolResults || step.toolResults.length === 0) {
     throw new Error("No tool calls or tool results found")
@@ -51,25 +48,48 @@ export async function generatingRunResultLogic({
     }
   })
   const toolMessage = createToolMessage(toolResultParts)
-  const model = getModel(setting.model, setting.providerConfig, { proxyUrl: setting.proxyUrl })
-  // Extended Thinking must be enabled for all requests in a conversation once enabled
-  const providerOptions = getReasoningProviderOptions(
-    setting.providerConfig.providerName,
-    setting.reasoningBudget,
-  )
   const { messages } = checkpoint
-  let generationResult: GenerateTextResult<ToolSet, never>
   const coreMessages = [...messages, toolMessage].map(messageToCoreMessage)
-  try {
-    generationResult = await generateText({
-      model,
+
+  // Track if reasoning was completed via callback (to avoid duplicate emissions)
+  let reasoningCompletedViaCallback = false
+
+  // Create streaming callbacks for fire-and-forget event emission
+  const callbacks: StreamCallbacks = {
+    onReasoningStart: () => {
+      eventListener(createRuntimeEvent("startReasoning", setting.jobId, setting.runId, {}))
+    },
+    onReasoningDelta: (delta) => {
+      eventListener(createRuntimeEvent("streamReasoning", setting.jobId, setting.runId, { delta }))
+    },
+    onReasoningComplete: (text) => {
+      // Emit completeReasoning before result phase starts
+      eventListener(createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, { text }))
+      reasoningCompletedViaCallback = true
+    },
+    onResultStart: () => {
+      eventListener(createRuntimeEvent("startRunResult", setting.jobId, setting.runId, {}))
+    },
+    onResultDelta: (delta) => {
+      eventListener(createRuntimeEvent("streamRunResult", setting.jobId, setting.runId, { delta }))
+    },
+  }
+
+  const executionResult = await llmExecutor.streamText(
+    {
       messages: coreMessages,
       maxRetries: setting.maxRetries,
+      tools: {}, // No tools for run result generation
       abortSignal: AbortSignal.timeout(setting.timeout),
-      providerOptions,
-    })
-  } catch (error) {
-    if (error instanceof APICallError && !error.isRetryable) {
+      reasoningBudget: setting.reasoningBudget,
+    },
+    callbacks,
+  )
+
+  if (!executionResult.success) {
+    const { error, isRetryable } = executionResult
+    const currentRetryCount = checkpoint.retryCount ?? 0
+    if (!isRetryable || currentRetryCount >= setting.maxRetries) {
       return stopRunByError(setting, checkpoint, {
         checkpoint: {
           ...checkpoint,
@@ -80,23 +100,25 @@ export async function generatingRunResultLogic({
           finishedAt: Date.now(),
         },
         error: {
-          name: error.name,
-          message: error.message,
+          name: error.name ?? "Error",
+          message:
+            currentRetryCount >= setting.maxRetries
+              ? `Max retries (${setting.maxRetries}) exceeded: ${error.message}`
+              : error.message,
           statusCode: error.statusCode,
           isRetryable: false,
         },
       })
     }
-    if (error instanceof Error) {
-      const reason = JSON.stringify({ error: error.name, message: error.message })
-      return retry(setting, checkpoint, {
-        reason,
-        newMessages: [toolMessage, createUserMessage([{ type: "textPart", text: reason }])],
-        usage: createEmptyUsage(),
-      })
-    }
-    throw error
+    const reason = JSON.stringify({ error: error.name ?? "Error", message: error.message })
+    return retry(setting, checkpoint, {
+      reason,
+      newMessages: [toolMessage, createUserMessage([{ type: "textPart", text: reason }])],
+      usage: createEmptyUsage(),
+    })
   }
+
+  const generationResult = executionResult.result
   const usage = usageFromGenerateTextResult(generationResult)
   const { text, reasoning } = generationResult
 
@@ -111,8 +133,9 @@ export async function generatingRunResultLogic({
   ]
   const newMessages = [toolMessage, createExpertMessage(expertContents)]
 
-  // Emit completeReasoning event if reasoning text exists
-  if (thinkingText) {
+  // Note: completeReasoning is emitted via onReasoningComplete callback during streaming
+  // Fallback emission only if callback wasn't triggered (should be rare)
+  if (thinkingText && !reasoningCompletedViaCallback) {
     await eventListener(
       createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
         text: thinkingText,
@@ -120,13 +143,14 @@ export async function generatingRunResultLogic({
     )
   }
 
+  const newUsage = sumUsage(checkpoint.usage, usage)
   return completeRun(setting, checkpoint, {
     checkpoint: {
       ...checkpoint,
       messages: [...messages, ...newMessages],
-      usage: sumUsage(checkpoint.usage, usage),
+      usage: newUsage,
       contextWindowUsage: checkpoint.contextWindow
-        ? calculateContextWindowUsage(usage, checkpoint.contextWindow)
+        ? calculateContextWindowUsage(newUsage, checkpoint.contextWindow)
         : undefined,
       status: "completed",
     },

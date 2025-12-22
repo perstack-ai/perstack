@@ -109,6 +109,8 @@ export interface Checkpoint {
     statusCode?: number
     isRetryable: boolean
   }
+  /** Consecutive retry count for current generation (reset on success) */
+  retryCount?: number
 }
 
 export const delegationTargetSchema = z.object({
@@ -167,5 +169,6 @@ export const checkpointSchema = z.object({
       isRetryable: z.boolean(),
     })
     .optional(),
+  retryCount: z.number().optional(),
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>

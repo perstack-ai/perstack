@@ -39,7 +39,18 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
       <Static items={eventStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
         {(entry) => <LogEntryRow key={entry.id} entry={entry} />}
       </Static>
-      {eventStore.streamingText && <Text dimColor>{eventStore.streamingText}</Text>}
+      {eventStore.streamingReasoning && (
+        <Box flexDirection="column" marginBottom={1}>
+          <Text color="cyan">● Reasoning</Text>
+          <Text dimColor>└ {eventStore.streamingReasoning}</Text>
+        </Box>
+      )}
+      {eventStore.streamingText && (
+        <Box flexDirection="column">
+          <Text color="green">● Run Results</Text>
+          <Text dimColor>└ {eventStore.streamingText}</Text>
+        </Box>
+      )}
       <Box marginTop={1}>
         <Text color="gray">Events: {eventStore.eventCount}</Text>
         {eventStore.isComplete && <Text color="green"> ✓ Complete</Text>}
