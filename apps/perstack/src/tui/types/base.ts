@@ -62,6 +62,11 @@ export type LogEntry =
       type: "completeReasoning"
       text: string
     }
+  | {
+      id: string
+      type: "retry"
+      reason: string
+    }
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
   runtimeVersion?: string
@@ -78,6 +83,8 @@ export type RuntimeInfo = {
   contextWindowUsage: number
   runtime?: string
   streamingText?: string
+  /** Accumulated streaming reasoning text (extended thinking) */
+  streamingReasoning?: string
   dockerState?: "building" | "starting" | "running" | "healthy" | "stopped" | "error"
 }
 export type InitialRuntimeConfig = {

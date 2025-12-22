@@ -466,6 +466,18 @@ type RuntimeEventPayloads = {
   completeReasoning: {
     text: string
   }
+  /** Start of reasoning stream (display hint) */
+  startReasoning: Record<string, never>
+  /** Streaming reasoning delta */
+  streamReasoning: {
+    delta: string
+  }
+  /** Start of run result stream (display hint) */
+  startRunResult: Record<string, never>
+  /** Streaming run result delta */
+  streamRunResult: {
+    delta: string
+  }
 }
 
 /** All runtime event types */

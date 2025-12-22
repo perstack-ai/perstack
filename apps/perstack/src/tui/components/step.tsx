@@ -40,8 +40,8 @@ const renderCompleteReasoning = (text: string) => {
     <ActionRow indicatorColor="white" label={label}>
       <Box flexDirection="column">
         {lines.map((line, idx) => (
-          <Text key={`reasoning-${idx}`} dimColor>
-            {truncateText(line, UI_CONSTANTS.TRUNCATE_TEXT_DEFAULT)}
+          <Text key={`reasoning-${idx}`} dimColor wrap="wrap">
+            {line}
           </Text>
         ))}
       </Box>
@@ -509,5 +509,11 @@ export const LogEntryRow = ({ entry }: LogEntryRowProps) => {
       )
     case "completeReasoning":
       return <Box>{renderCompleteReasoning(entry.text)}</Box>
+    case "retry":
+      return (
+        <ActionRow indicatorColor="yellow" label="Retry">
+          <Text dimColor>{entry.reason}</Text>
+        </ActionRow>
+      )
   }
 }

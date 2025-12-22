@@ -117,6 +117,45 @@ describe("Reasoning Budget", () => {
     )
 
     it(
+      "should emit streaming reasoning events",
+      async () => {
+        const expertKey = "e2e-reasoning-anthropic-medium"
+        const cmdResult = await runRuntimeCli(
+          [
+            "run",
+            "--config",
+            REASONING_BUDGET_CONFIG,
+            expertKey,
+            "Calculate 3+3",
+            "--provider",
+            "anthropic",
+            "--model",
+            ANTHROPIC_MODEL,
+            "--reasoning-budget",
+            "medium",
+          ],
+          { timeout: LLM_TIMEOUT },
+        )
+        const result = withEventParsing(cmdResult)
+
+        expect(result.exitCode).toBe(0)
+
+        // Verify streaming events were emitted
+        const streamReasoningEvents = result.events.filter((e) => e.type === "streamReasoning")
+        expect(streamReasoningEvents.length).toBeGreaterThan(0)
+
+        // Verify start event preceded stream events
+        const startIdx = result.events.findIndex((e) => e.type === "startReasoning")
+        const firstStreamIdx = result.events.findIndex((e) => e.type === "streamReasoning")
+
+        if (startIdx !== -1 && firstStreamIdx !== -1) {
+          expect(startIdx).toBeLessThan(firstStreamIdx)
+        }
+      },
+      LLM_TIMEOUT,
+    )
+
+    it(
       "should produce more reasoning tokens with higher budget",
       async () => {
         // Run minimal and high budget tests
@@ -135,11 +174,6 @@ describe("Reasoning Budget", () => {
           highResult.reasoningTokens > 0 || (highResult.thinking && highResult.thinking.length > 0)
         expect(minimalHasThinking).toBe(true)
         expect(highHasThinking).toBe(true)
-
-        // Log for observability
-        console.log(
-          `Anthropic - minimal thinking: ${minimalResult.thinking?.length ?? 0} chars, high thinking: ${highResult.thinking?.length ?? 0} chars`,
-        )
       },
       LLM_TIMEOUT * 2, // Two API calls
     )
@@ -148,18 +182,10 @@ describe("Reasoning Budget", () => {
       "should complete successfully with all budget levels",
       async () => {
         const budgets: BudgetLevel[] = ["minimal", "low", "medium", "high"]
-        const results: ReasoningTestResult[] = []
 
         for (const budget of budgets) {
           const result = await runReasoningTest("anthropic", budget, ANTHROPIC_MODEL)
-          results.push(result)
           expect(result.success).toBe(true)
-        }
-
-        // Log all results for analysis
-        console.log("Anthropic reasoning tokens by budget:")
-        for (const result of results) {
-          console.log(`  ${result.budget}: ${result.reasoningTokens}`)
         }
       },
       LLM_TIMEOUT * 4, // Four API calls
@@ -195,12 +221,6 @@ describe("Reasoning Budget", () => {
         // Both should produce reasoning tokens
         expect(minimalResult.reasoningTokens).toBeGreaterThan(0)
         expect(highResult.reasoningTokens).toBeGreaterThan(0)
-
-        // High budget should generally produce more reasoning tokens than minimal
-        // Note: This is a statistical tendency, not guaranteed for every run
-        console.log(
-          `OpenAI reasoning tokens - minimal: ${minimalResult.reasoningTokens}, high: ${highResult.reasoningTokens}`,
-        )
       },
       LLM_TIMEOUT * 2, // Two API calls
     )
@@ -209,18 +229,10 @@ describe("Reasoning Budget", () => {
       "should complete successfully with all budget levels",
       async () => {
         const budgets: BudgetLevel[] = ["minimal", "low", "medium", "high"]
-        const results: ReasoningTestResult[] = []
 
         for (const budget of budgets) {
           const result = await runReasoningTest("openai", budget, OPENAI_MODEL)
-          results.push(result)
           expect(result.success).toBe(true)
-        }
-
-        // Log all results for analysis
-        console.log("OpenAI reasoning tokens by budget:")
-        for (const result of results) {
-          console.log(`  ${result.budget}: ${result.reasoningTokens}`)
         }
       },
       LLM_TIMEOUT * 4, // Four API calls
@@ -263,11 +275,6 @@ describe("Reasoning Budget", () => {
           highResult.reasoningTokens > 0 || (highResult.thinking && highResult.thinking.length > 0)
         expect(minimalHasThinking).toBe(true)
         expect(highHasThinking).toBe(true)
-
-        // Log for observability
-        console.log(
-          `Google - minimal thinking: ${minimalResult.thinking?.length ?? 0} chars, high thinking: ${highResult.thinking?.length ?? 0} chars`,
-        )
       },
       LLM_TIMEOUT * 2, // Two API calls
     )
@@ -276,18 +283,10 @@ describe("Reasoning Budget", () => {
       "should complete successfully with all budget levels",
       async () => {
         const budgets: BudgetLevel[] = ["minimal", "low", "medium", "high"]
-        const results: ReasoningTestResult[] = []
 
         for (const budget of budgets) {
           const result = await runReasoningTest("google", budget, GOOGLE_MODEL)
-          results.push(result)
           expect(result.success).toBe(true)
-        }
-
-        // Log all results for analysis
-        console.log("Google reasoning tokens by budget:")
-        for (const result of results) {
-          console.log(`  ${result.budget}: ${result.reasoningTokens}`)
         }
       },
       LLM_TIMEOUT * 4, // Four API calls

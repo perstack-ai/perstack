@@ -4,6 +4,14 @@ import { UI_CONSTANTS } from "../../constants.js"
 import type { LogEntry, PerstackEvent } from "../../types/index.js"
 
 const TOOL_RESULT_EVENT_TYPES = new Set(["resolveToolResults", "attemptCompletion"])
+
+/** Streaming events are fire-and-forget and should not be counted in event history */
+const STREAMING_EVENT_TYPES = new Set([
+  "startReasoning",
+  "streamReasoning",
+  "startRunResult",
+  "streamRunResult",
+])
 const isToolCallsEvent = (event: PerstackEvent): event is RunEvent & { toolCalls: ToolCall[] } =>
   "type" in event && event.type === "callTools" && "toolCalls" in event
 const isToolCallEvent = (event: PerstackEvent): event is RunEvent & { toolCall: ToolCall } =>
@@ -54,6 +62,12 @@ type ProcessState = {
   completionLogged: boolean
   isComplete: boolean
   streamingText?: string
+  /** Accumulated streaming reasoning text */
+  streamingReasoning?: string
+  /** Whether reasoning stream is active */
+  isReasoningStreaming?: boolean
+  /** Whether run result stream is active */
+  isRunResultStreaming?: boolean
 }
 const processEventToLogs = (
   state: ProcessState,
@@ -126,6 +140,25 @@ const processEventToLogs = (
       type: "completeReasoning",
       text: reasoningEvent.text,
     })
+    state.isReasoningStreaming = false
+    state.streamingReasoning = undefined // Clear streaming state after completion
+    return
+  }
+
+  // Note: Streaming events (startReasoning, streamReasoning, startRunResult, streamRunResult)
+  // are handled directly in addEvent() and do not reach this function
+
+  // Handle retry events
+  if (event.type === "retry") {
+    const retryEvent = event as { reason: string }
+    addLog({
+      id: `retry-${event.id}`,
+      type: "retry",
+      reason: retryEvent.reason,
+    })
+    // Clear streaming state on retry (stale content from failed attempt)
+    state.streamingText = undefined
+    state.streamingReasoning = undefined
     return
   }
 
@@ -183,6 +216,7 @@ const processEventToLogs = (
       state.completionLogged = true
       state.isComplete = true
       state.streamingText = undefined
+      state.streamingReasoning = undefined // Clear streaming reasoning on completion
     }
     return
   }
@@ -199,6 +233,7 @@ const processEventToLogs = (
     })
     state.isComplete = true
     state.streamingText = undefined
+    state.streamingReasoning = undefined // Clear streaming reasoning on error termination
     return
   }
   if (isDelegation) return
@@ -275,6 +310,7 @@ export const useEventStore = () => {
   const [events, setEvents] = useState<PerstackEvent[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [streamingText, setStreamingText] = useState<string | undefined>()
+  const [streamingReasoning, setStreamingReasoning] = useState<string | undefined>()
   const [isComplete, setIsComplete] = useState(false)
   const stateRef = useRef<ProcessState>({
     tools: new Map(),
@@ -286,6 +322,29 @@ export const useEventStore = () => {
   const processedCountRef = useRef(0)
   const needsRebuildRef = useRef(false)
   const addEvent = useCallback((event: PerstackEvent) => {
+    // Handle streaming events directly without adding to events array
+    // Streaming events are fire-and-forget and should not inflate event count
+    if ("type" in event && STREAMING_EVENT_TYPES.has(event.type)) {
+      if (event.type === "startReasoning") {
+        stateRef.current.streamingReasoning = ""
+        stateRef.current.isReasoningStreaming = true
+        setStreamingReasoning("")
+      } else if (event.type === "streamReasoning") {
+        const delta = (event as { delta: string }).delta
+        stateRef.current.streamingReasoning = (stateRef.current.streamingReasoning ?? "") + delta
+        setStreamingReasoning(stateRef.current.streamingReasoning)
+      } else if (event.type === "startRunResult") {
+        stateRef.current.isRunResultStreaming = true
+        stateRef.current.streamingText = ""
+        setStreamingText("")
+      } else if (event.type === "streamRunResult") {
+        const delta = (event as { delta: string }).delta
+        stateRef.current.streamingText = (stateRef.current.streamingText ?? "") + delta
+        setStreamingText(stateRef.current.streamingText)
+      }
+      return
+    }
+
     setEvents((prev) => {
       const newEvents = [...prev, event]
       if (newEvents.length > UI_CONSTANTS.MAX_EVENTS) {
@@ -327,11 +386,13 @@ export const useEventStore = () => {
       setLogs((prev) => [...prev, ...newLogs])
     }
     setStreamingText(stateRef.current.streamingText)
+    setStreamingReasoning(stateRef.current.streamingReasoning)
     setIsComplete(stateRef.current.isComplete)
   }, [events])
   return {
     logs,
     streamingText,
+    streamingReasoning,
     isComplete,
     eventCount: events.length,
     addEvent,

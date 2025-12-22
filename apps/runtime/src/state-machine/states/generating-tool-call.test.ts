@@ -1,67 +1,69 @@
-import { APICallError } from "ai"
-import { MockLanguageModelV2 } from "ai/test"
-import { describe, expect, it, vi } from "vitest"
+import type { GenerateTextResult, ToolSet } from "ai"
+import { beforeEach, describe, expect, it } from "vitest"
 import { createCheckpoint, createRunSetting, createStep } from "../../../test/run-params.js"
 import type { LLMExecutor } from "../../llm/index.js"
-import { createMockLLMExecutor } from "../../llm/index.js"
+import { createMockLLMExecutor, type MockLLMExecutor } from "../../llm/index.js"
+import type { LLMExecutionResult } from "../../llm/types.js"
 import type { BaseSkillManager } from "../../skill-manager/index.js"
 import { StateMachineLogics } from "../index.js"
 
-const mockLLMExecutor = createMockLLMExecutor() as unknown as LLMExecutor
+let mockLLMExecutor: MockLLMExecutor
 
-const mockGetModel = vi.fn()
-vi.mock("../../helpers/model.js", async (importOriginal) => ({
-  ...(await importOriginal()),
-  getModel: () => mockGetModel(),
-}))
-
-type ToolCallContent = {
-  type: "tool-call"
+type MockToolCall = {
   toolCallId: string
   toolName: string
-  input: string
+  args: Record<string, unknown>
 }
 
-function createMockLanguageModel(
+function createMockResult(
   options: {
     finishReason?: "stop" | "tool-calls" | "length" | "error"
     text?: string
-    shouldError?: boolean
-    toolCalls?: ToolCallContent[]
+    toolCalls?: MockToolCall[]
+    reasoning?: Array<{ type: "reasoning"; text: string }>
   } = {},
-) {
-  const {
-    finishReason = "stop",
-    text = "Generated text",
-    shouldError = false,
-    toolCalls = [],
-  } = options
-  return new MockLanguageModelV2({
-    doGenerate: async () => {
-      if (shouldError) {
-        throw new Error("Model generation failed")
-      }
-      const content: Array<{ type: "text"; text: string } | ToolCallContent> = []
-      if (text) {
-        content.push({ type: "text", text })
-      }
-      for (const tc of toolCalls) {
-        content.push(tc)
-      }
-      return {
-        content,
-        warnings: [],
-        finishReason,
-        usage: {
-          inputTokens: 10,
-          outputTokens: 20,
-          reasoningTokens: 30,
-          totalTokens: 60,
-          cachedInputTokens: 40,
-        },
-      }
+): LLMExecutionResult {
+  const { finishReason = "stop", text = "Generated text", toolCalls = [], reasoning } = options
+  return {
+    success: true,
+    result: {
+      text,
+      finishReason,
+      toolCalls,
+      reasoning,
+      usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
+      response: { id: "mock", timestamp: new Date(), modelId: "mock", headers: {} },
+      request: {},
+      toolResults: [],
+      warnings: [],
+      sources: [],
+      providerMetadata: undefined,
+      reasoningDetails: [],
+      files: [],
+      logprobs: undefined,
+      toJsonResponse: () => new Response(),
+      experimental_output: undefined,
+      steps: [],
+      rawCall: {},
+    } as unknown as GenerateTextResult<ToolSet, never>,
+  }
+}
+
+function createMockErrorResult(
+  error: { name: string; message: string; statusCode?: number },
+  isRetryable: boolean,
+): LLMExecutionResult {
+  return {
+    success: false,
+    error: {
+      name: error.name,
+      message: error.message,
+      statusCode: error.statusCode,
+      isRetryable,
+      provider: "anthropic",
     },
-  })
+    isRetryable,
+  }
 }
 
 function createMockSkillManager(
@@ -86,18 +88,22 @@ function createMockSkillManager(
 }
 
 describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
+  beforeEach(() => {
+    mockLLMExecutor = createMockLLMExecutor()
+  })
+
   it("returns completeRun event when text-only is generated (implicit completion)", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    mockGetModel.mockReturnValue(createMockLanguageModel())
+    mockLLMExecutor.setMockResult(createMockResult())
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("completeRun")
     expect(event.expertKey).toBe("test-expert")
@@ -110,14 +116,14 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    mockGetModel.mockReturnValue(createMockLanguageModel({ text: "" }))
+    mockLLMExecutor.setMockResult(createMockResult({ text: "" }))
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("retry")
     expect(event.expertKey).toBe("test-expert")
@@ -127,14 +133,16 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    mockGetModel.mockReturnValue(createMockLanguageModel({ shouldError: true }))
+    mockLLMExecutor.setMockResult(
+      createMockErrorResult({ name: "Error", message: "Model generation failed" }, true),
+    )
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -143,21 +151,11 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    const apiError = new APICallError({
-      message: "Unauthorized",
-      url: "https://api.anthropic.com/v1/messages",
-      requestBodyValues: {},
-      statusCode: 401,
-      responseHeaders: {},
-      responseBody: "Invalid API key",
-      isRetryable: false,
-    })
-    mockGetModel.mockReturnValue(
-      new MockLanguageModelV2({
-        doGenerate: async () => {
-          throw apiError
-        },
-      }),
+    mockLLMExecutor.setMockResult(
+      createMockErrorResult(
+        { name: "APICallError", message: "Unauthorized", statusCode: 401 },
+        false,
+      ),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
@@ -165,7 +163,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("stopRunByError")
     if (event.type === "stopRunByError") {
@@ -180,21 +178,11 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    const apiError = new APICallError({
-      message: "Rate limited",
-      url: "https://api.anthropic.com/v1/messages",
-      requestBodyValues: {},
-      statusCode: 429,
-      responseHeaders: {},
-      responseBody: "Too many requests",
-      isRetryable: true,
-    })
-    mockGetModel.mockReturnValue(
-      new MockLanguageModelV2({
-        doGenerate: async () => {
-          throw apiError
-        },
-      }),
+    mockLLMExecutor.setMockResult(
+      createMockErrorResult(
+        { name: "APICallError", message: "Rate limited", statusCode: 429 },
+        true,
+      ),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
@@ -202,7 +190,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -211,14 +199,14 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    mockGetModel.mockReturnValue(createMockLanguageModel())
+    mockLLMExecutor.setMockResult(createMockResult())
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.id).toBeDefined()
     expect(typeof event.id).toBe("string")
@@ -229,14 +217,14 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    mockGetModel.mockReturnValue(createMockLanguageModel({ finishReason: "stop" }))
+    mockLLMExecutor.setMockResult(createMockResult({ finishReason: "stop" }))
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     // Text-only with stop = implicit completion
     expect(event.type).toBe("completeRun")
@@ -247,14 +235,14 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()
     const step = createStep()
-    mockGetModel.mockReturnValue(createMockLanguageModel())
+    mockLLMExecutor.setMockResult(createMockResult())
     const event = await StateMachineLogics.GeneratingToolCall({
       setting,
       checkpoint,
       step,
       eventListener: async () => {},
       skillManagers: {},
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("completeRun")
     expect((event as { usage?: { inputTokens: number } }).usage).toBeDefined()
@@ -265,17 +253,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "tool-calls",
-        toolCalls: [
-          {
-            type: "tool-call",
-            toolCallId: "tc_1",
-            toolName: "testTool",
-            input: JSON.stringify({ arg: "value" }),
-          },
-        ],
+        toolCalls: [{ toolCallId: "tc_1", toolName: "testTool", args: { arg: "value" } }],
       }),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
@@ -284,7 +265,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })
@@ -294,17 +275,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const skillManager = createMockSkillManager("interactive-skill", "interactive", "askUser")
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "stop",
-        toolCalls: [
-          {
-            type: "tool-call",
-            toolCallId: "tc_2",
-            toolName: "askUser",
-            input: JSON.stringify({ question: "?" }),
-          },
-        ],
+        toolCalls: [{ toolCallId: "tc_2", toolName: "askUser", args: { question: "?" } }],
       }),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
@@ -313,7 +287,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "interactive-skill": skillManager },
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })
@@ -323,16 +297,11 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const skillManager = createMockSkillManager("delegate-skill", "delegate", "delegateTask")
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "tool-calls",
         toolCalls: [
-          {
-            type: "tool-call",
-            toolCallId: "tc_3",
-            toolName: "delegateTask",
-            input: JSON.stringify({ task: "do something" }),
-          },
+          { toolCallId: "tc_3", toolName: "delegateTask", args: { task: "do something" } },
         ],
       }),
     )
@@ -342,7 +311,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "delegate-skill": skillManager },
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("callTools")
   })
@@ -362,13 +331,13 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       "interactive",
       "interactiveTool",
     )
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "tool-calls",
         toolCalls: [
-          { type: "tool-call", toolCallId: "tc_int", toolName: "interactiveTool", input: "{}" },
-          { type: "tool-call", toolCallId: "tc_del", toolName: "delegateTool", input: "{}" },
-          { type: "tool-call", toolCallId: "tc_mcp", toolName: "mcpTool", input: "{}" },
+          { toolCallId: "tc_int", toolName: "interactiveTool", args: {} },
+          { toolCallId: "tc_del", toolName: "delegateTool", args: {} },
+          { toolCallId: "tc_mcp", toolName: "mcpTool", args: {} },
         ],
       }),
     )
@@ -382,7 +351,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
         "delegate-skill": delegateSkillManager,
         "interactive-skill": interactiveSkillManager,
       },
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("callTools")
     if (event.type === "callTools") {
@@ -397,10 +366,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "length",
-        toolCalls: [{ type: "tool-call", toolCallId: "tc_4", toolName: "testTool", input: "{}" }],
+        toolCalls: [{ toolCallId: "tc_4", toolName: "testTool", args: {} }],
       }),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
@@ -409,7 +378,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("retry")
   })
@@ -419,10 +388,10 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "error" as "stop",
-        toolCalls: [{ type: "tool-call", toolCallId: "tc_5", toolName: "testTool", input: "{}" }],
+        toolCalls: [{ toolCallId: "tc_5", toolName: "testTool", args: {} }],
       }),
     )
     await expect(
@@ -432,7 +401,7 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
         step,
         eventListener: async () => {},
         skillManagers: { "test-skill": skillManager },
-        llmExecutor: mockLLMExecutor,
+        llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
       }),
     ).rejects.toThrow("Unexpected finish reason: error")
   })
@@ -442,11 +411,11 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
     const checkpoint = createCheckpoint()
     const step = createStep()
     const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
-    mockGetModel.mockReturnValue(
-      createMockLanguageModel({
+    mockLLMExecutor.setMockResult(
+      createMockResult({
         finishReason: "tool-calls",
         text: "Thinking about this...",
-        toolCalls: [{ type: "tool-call", toolCallId: "tc_6", toolName: "testTool", input: "{}" }],
+        toolCalls: [{ toolCallId: "tc_6", toolName: "testTool", args: {} }],
       }),
     )
     const event = await StateMachineLogics.GeneratingToolCall({
@@ -455,8 +424,81 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingToolCall']", () => {
       step,
       eventListener: async () => {},
       skillManagers: { "test-skill": skillManager },
-      llmExecutor: mockLLMExecutor,
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
     })
     expect(event.type).toBe("callTools")
+  })
+
+  it("returns stopRunByError when retryable error occurs but retryCount >= maxRetries", async () => {
+    const setting = createRunSetting({ maxRetries: 3 })
+    const checkpoint = createCheckpoint({ retryCount: 3 })
+    const step = createStep()
+    const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
+    mockLLMExecutor.setMockResult(
+      createMockErrorResult({ name: "RateLimitError", message: "Rate limited" }, true),
+    )
+    const event = await StateMachineLogics.GeneratingToolCall({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: { "test-skill": skillManager },
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
+    })
+    expect(event.type).toBe("stopRunByError")
+    if (event.type === "stopRunByError") {
+      expect(event.error.message).toContain("Max retries (3) exceeded")
+    }
+  })
+
+  it("returns stopRunByError when nothing generated and retryCount >= maxRetries", async () => {
+    const setting = createRunSetting({ maxRetries: 3 })
+    const checkpoint = createCheckpoint({ retryCount: 3 })
+    const step = createStep()
+    const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
+    mockLLMExecutor.setMockResult(
+      createMockResult({
+        finishReason: "stop",
+        text: "",
+        toolCalls: [],
+      }),
+    )
+    const event = await StateMachineLogics.GeneratingToolCall({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: { "test-skill": skillManager },
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
+    })
+    expect(event.type).toBe("stopRunByError")
+    if (event.type === "stopRunByError") {
+      expect(event.error.message).toContain("Max retries (3) exceeded")
+    }
+  })
+
+  it("returns stopRunByError when finish reason is length and retryCount >= maxRetries", async () => {
+    const setting = createRunSetting({ maxRetries: 3 })
+    const checkpoint = createCheckpoint({ retryCount: 3 })
+    const step = createStep()
+    const skillManager = createMockSkillManager("test-skill", "mcp", "testTool")
+    mockLLMExecutor.setMockResult(
+      createMockResult({
+        finishReason: "length",
+        toolCalls: [{ toolCallId: "tc_len", toolName: "testTool", args: {} }],
+      }),
+    )
+    const event = await StateMachineLogics.GeneratingToolCall({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: { "test-skill": skillManager },
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
+    })
+    expect(event.type).toBe("stopRunByError")
+    if (event.type === "stopRunByError") {
+      expect(event.error.message).toContain("Max retries (3) exceeded")
+    }
   })
 })
