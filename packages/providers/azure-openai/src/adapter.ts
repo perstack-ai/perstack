@@ -1,7 +1,14 @@
 import { createAzure } from "@ai-sdk/azure"
 import type { AzureOpenAiProviderConfig } from "@perstack/core"
-import { BaseProviderAdapter, type ProviderAdapterOptions } from "@perstack/provider-core"
-import type { LanguageModel } from "ai"
+import {
+  BaseProviderAdapter,
+  type ProviderAdapterOptions,
+  type ProviderError,
+  type ProviderToolOptions,
+} from "@perstack/provider-core"
+import type { LanguageModel, ToolSet } from "ai"
+import { isAzureOpenAIRetryable, normalizeAzureOpenAIError } from "./errors.js"
+import { buildAzureOpenAITools } from "./tools.js"
 
 export class AzureOpenAIProviderAdapter extends BaseProviderAdapter {
   readonly providerName = "azure-openai" as const
@@ -25,5 +32,17 @@ export class AzureOpenAIProviderAdapter extends BaseProviderAdapter {
 
   override createModel(modelId: string): LanguageModel {
     return this.client(modelId)
+  }
+
+  override getProviderTools(toolNames: string[], options?: ProviderToolOptions): ToolSet {
+    return buildAzureOpenAITools(this.client, toolNames, options)
+  }
+
+  override normalizeError(error: unknown): ProviderError {
+    return normalizeAzureOpenAIError(error)
+  }
+
+  override isRetryable(error: unknown): boolean {
+    return isAzureOpenAIRetryable(error)
   }
 }

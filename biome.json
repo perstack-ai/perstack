@@ -24,9 +24,13 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "complexity": {
+        "useLiteralKeys": "off"
+      },
       "style": {
         "noNonNullAssertion": "off",
-        "useImportType": "error"
+        "useImportType": "error",
+        "useTemplate": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off"

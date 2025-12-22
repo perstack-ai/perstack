@@ -1,11 +1,11 @@
-import type { createGoogleGenerativeAI } from "@ai-sdk/google"
+import type { createVertex } from "@ai-sdk/google-vertex"
 import type { ProviderToolOptions } from "@perstack/provider-core"
 import type { ToolSet } from "ai"
 
-type GoogleClient = ReturnType<typeof createGoogleGenerativeAI>
+type VertexClient = ReturnType<typeof createVertex>
 
-export function buildGoogleTools(
-  client: GoogleClient,
+export function buildVertexTools(
+  client: VertexClient,
   toolNames: string[],
   options?: ProviderToolOptions,
 ): ToolSet {
@@ -27,20 +27,9 @@ export function buildGoogleTools(
         tools["url_context"] = urlContextTool
         break
       }
-      case "fileSearch": {
-        const storeNames = options?.fileSearch?.vectorStoreIds
-        if (!storeNames || storeNames.length === 0) {
-          console.warn(
-            "Google fileSearch tool requires fileSearchStoreNames. " +
-              "Set providerToolOptions.fileSearch.vectorStoreIds to use this tool.",
-          )
-          break
-        }
-        const fileSearchTool = client.tools.fileSearch({
-          fileSearchStoreNames: storeNames,
-          topK: options?.fileSearch?.maxNumResults,
-        })
-        tools["file_search"] = fileSearchTool
+      case "enterpriseWebSearch": {
+        const enterpriseWebSearchTool = client.tools.enterpriseWebSearch({})
+        tools["enterprise_web_search"] = enterpriseWebSearchTool
         break
       }
       case "googleMaps": {
