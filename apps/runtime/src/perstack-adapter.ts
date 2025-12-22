@@ -74,7 +74,7 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
       events.push(event)
       params.eventListener?.(event)
     }
-    const lockfilePath = findLockfile(process.cwd())
+    const lockfilePath = findLockfile()
     const lockfile = lockfilePath ? (loadLockfile(lockfilePath) ?? undefined) : undefined
     const checkpoint = await perstackRun(
       { setting: params.setting, checkpoint: params.checkpoint },

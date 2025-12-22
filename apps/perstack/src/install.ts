@@ -12,6 +12,7 @@ import {
 } from "@perstack/core"
 import { collectToolDefinitionsForExpert } from "@perstack/runtime"
 import { Command } from "commander"
+import TOML from "smol-toml"
 import { getEnv } from "./lib/get-env.js"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 
@@ -139,74 +140,7 @@ function expertToLockfileExpert(
 }
 
 function generateLockfileToml(lockfile: Lockfile): string {
-  const lines: string[] = []
-  lines.push(`version = "1"`)
-  lines.push(`generatedAt = ${lockfile.generatedAt}`)
-  lines.push(`configPath = ${JSON.stringify(lockfile.configPath)}`)
-  lines.push("")
-  for (const [key, expert] of Object.entries(lockfile.experts)) {
-    lines.push(`[experts.${JSON.stringify(key)}]`)
-    lines.push(`key = ${JSON.stringify(expert.key)}`)
-    lines.push(`name = ${JSON.stringify(expert.name)}`)
-    lines.push(`version = ${JSON.stringify(expert.version)}`)
-    if (expert.description) {
-      lines.push(`description = ${JSON.stringify(expert.description)}`)
-    }
-    lines.push(`instruction = ${JSON.stringify(expert.instruction)}`)
-    lines.push(`delegates = ${JSON.stringify(expert.delegates)}`)
-    lines.push(`tags = ${JSON.stringify(expert.tags)}`)
-    lines.push("")
-    for (const [skillName, skill] of Object.entries(expert.skills)) {
-      lines.push(`[experts.${JSON.stringify(key)}.skills.${JSON.stringify(skillName)}]`)
-      lines.push(`type = ${JSON.stringify(skill.type)}`)
-      lines.push(`name = ${JSON.stringify(skill.name)}`)
-      if (skill.description) {
-        lines.push(`description = ${JSON.stringify(skill.description)}`)
-      }
-      if (skill.rule) {
-        lines.push(`rule = ${JSON.stringify(skill.rule)}`)
-      }
-      if (skill.type === "mcpStdioSkill") {
-        lines.push(`command = ${JSON.stringify(skill.command)}`)
-        if (skill.packageName) {
-          lines.push(`packageName = ${JSON.stringify(skill.packageName)}`)
-        }
-        lines.push(`args = ${JSON.stringify(skill.args)}`)
-        lines.push(`pick = ${JSON.stringify(skill.pick)}`)
-        lines.push(`omit = ${JSON.stringify(skill.omit)}`)
-        lines.push(`requiredEnv = ${JSON.stringify(skill.requiredEnv)}`)
-        lines.push(`lazyInit = ${skill.lazyInit}`)
-      } else if (skill.type === "mcpSseSkill") {
-        lines.push(`endpoint = ${JSON.stringify(skill.endpoint)}`)
-        lines.push(`pick = ${JSON.stringify(skill.pick)}`)
-        lines.push(`omit = ${JSON.stringify(skill.omit)}`)
-      } else if (skill.type === "interactiveSkill") {
-        for (const [toolName, tool] of Object.entries(skill.tools)) {
-          lines.push(
-            `[experts.${JSON.stringify(key)}.skills.${JSON.stringify(skillName)}.tools.${JSON.stringify(toolName)}]`,
-          )
-          lines.push(`name = ${JSON.stringify(tool.name)}`)
-          if (tool.description) {
-            lines.push(`description = ${JSON.stringify(tool.description)}`)
-          }
-          lines.push(`inputJsonSchema = ${JSON.stringify(tool.inputJsonSchema)}`)
-        }
-      }
-      lines.push("")
-    }
-    for (let i = 0; i < expert.toolDefinitions.length; i++) {
-      const toolDef = expert.toolDefinitions[i]
-      lines.push(`[[experts.${JSON.stringify(key)}.toolDefinitions]]`)
-      lines.push(`skillName = ${JSON.stringify(toolDef.skillName)}`)
-      lines.push(`name = ${JSON.stringify(toolDef.name)}`)
-      if (toolDef.description) {
-        lines.push(`description = ${JSON.stringify(toolDef.description)}`)
-      }
-      lines.push(`inputSchema = ${JSON.stringify(toolDef.inputSchema)}`)
-      lines.push("")
-    }
-  }
-  return lines.join("\n")
+  return TOML.stringify(lockfile)
 }
 
 export const installCommand = new Command()
