@@ -55,8 +55,8 @@ const commandOptionsSchema = z.object({
     .optional()
     .transform((value) => {
       if (value === undefined) return undefined
-      // Check if it's a named level
-      if (["minimal", "low", "medium", "high"].includes(value)) {
+      // Check if it's a named level (including "none" to disable reasoning)
+      if (["none", "minimal", "low", "medium", "high"].includes(value)) {
         return value as ReasoningBudget
       }
       // Try to parse as number

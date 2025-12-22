@@ -149,6 +149,15 @@ describe("@perstack/core: commandOptionsSchema - reasoningBudget options", () =>
     }
   })
 
+  it("transforms 'none' to disable reasoning", () => {
+    const result = runCommandInputSchema.parse({
+      expertKey: "test-expert",
+      query: "test",
+      options: { reasoningBudget: "none" },
+    })
+    expect(result.options.reasoningBudget).toBe("none")
+  })
+
   it("transforms numeric reasoning budget", () => {
     const result = runCommandInputSchema.parse({
       expertKey: "test-expert",
