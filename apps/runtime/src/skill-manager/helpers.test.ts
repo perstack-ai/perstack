@@ -1,10 +1,4 @@
-import type {
-  Expert,
-  McpSseSkill,
-  McpStdioSkill,
-  RunSetting,
-  ToolDefinition,
-} from "@perstack/core"
+import type { Expert, McpSseSkill, McpStdioSkill, RunSetting, ToolDefinition } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import type { BaseSkillManager } from "./base.js"
 import {
@@ -18,7 +12,7 @@ import {
   isBaseSkill,
   shouldUseBundledBase,
 } from "./helpers.js"
-import type { SkillManagerFactory, SkillManagerFactoryContext } from "./skill-manager-factory.js"
+import type { SkillManagerFactory } from "./skill-manager-factory.js"
 
 const createMcpStdioSkill = (overrides: Partial<McpStdioSkill> = {}): McpStdioSkill => ({
   name: "@perstack/base",
@@ -463,9 +457,7 @@ describe("skill-manager helpers", () => {
         createDelegate: vi.fn().mockReturnValue(mockManager),
       } as unknown as SkillManagerFactory
 
-      await expect(
-        collectToolDefinitionsForExpert(expert, { env: {}, factory }),
-      ).rejects.toThrow()
+      await expect(collectToolDefinitionsForExpert(expert, { env: {}, factory })).rejects.toThrow()
 
       // close should still be called due to finally block
       expect(mockManager.close).toHaveBeenCalled()
