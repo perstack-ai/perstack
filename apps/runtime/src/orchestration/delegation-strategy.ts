@@ -316,14 +316,16 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
 
     const textPart = lastMessage.contents.find((c) => c.type === "textPart")
     if (!textPart || textPart.type !== "textPart") {
-      throw new Error("Delegation error: delegation result message does not contain text")
+      console.warn(
+        `Delegation result from ${expertKey} has no text content. Parent expert will receive empty string.`,
+      )
     }
 
     return {
       toolCallId,
       toolName,
       expertKey,
-      text: textPart.text,
+      text: textPart?.type === "textPart" ? textPart.text : "",
       stepNumber: checkpoint.stepNumber,
       deltaUsage: checkpoint.usage,
     }

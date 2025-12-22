@@ -9,7 +9,7 @@ import { StateMachineLogics } from "../index.js"
 
 let mockLLMExecutor: MockLLMExecutor
 
-function createMockResult(text: string): LLMExecutionResult {
+function createMockResult(text?: string): LLMExecutionResult {
   return {
     success: true,
     result: {
@@ -294,6 +294,51 @@ describe("@perstack/runtime: StateMachineLogic['GeneratingRunResult']", () => {
     expect(event.type).toBe("stopRunByError")
     if (event.type === "stopRunByError") {
       expect(event.error.message).toContain("Max retries (3) exceeded")
+    }
+  })
+
+  it("handles undefined text from LLM by using empty string", async () => {
+    const setting = createRunSetting()
+    const checkpoint = createCheckpoint()
+    const step = createStep({
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          args: {},
+        },
+      ],
+      toolResults: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          result: [{ type: "textPart", text: JSON.stringify({}), id: createId() }],
+        },
+      ],
+    })
+    mockLLMExecutor.setMockResult(createMockResult(undefined))
+    const event = await StateMachineLogics.GeneratingRunResult({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers: {},
+      llmExecutor: mockLLMExecutor as unknown as LLMExecutor,
+    })
+    expect(event.type).toBe("completeRun")
+    if (event.type === "completeRun") {
+      expect(event.text).toBeUndefined()
+      const lastMessage = event.checkpoint.messages[event.checkpoint.messages.length - 1]
+      expect(lastMessage.type).toBe("expertMessage")
+      if (lastMessage.type === "expertMessage") {
+        const textPart = lastMessage.contents.find((c) => c.type === "textPart")
+        expect(textPart).toBeDefined()
+        if (textPart?.type === "textPart") {
+          expect(textPart.text).toBe("")
+        }
+      }
     }
   })
 })

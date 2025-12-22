@@ -378,7 +378,8 @@ describe("@perstack/runtime: delegation-strategy", () => {
       ).rejects.toThrow("Delegation error: delegation result message is incorrect")
     })
 
-    it("throws error if delegation result has no text part", async () => {
+    it("uses empty string and warns when delegation result has no text part", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
       const strategy = new ParallelDelegationStrategy()
       const setting = createMockSetting()
       const delegations = [
@@ -395,9 +396,10 @@ describe("@perstack/runtime: delegation-strategy", () => {
         ],
       })
 
-      await expect(
-        strategy.execute(delegations, setting, context, parentExpert, runFn),
-      ).rejects.toThrow("Delegation error: delegation result message does not contain text")
+      const result = await strategy.execute(delegations, setting, context, parentExpert, runFn)
+      expect(result.nextSetting.input.interactiveToolCallResult?.text).toBe("")
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("has no text content"))
+      warnSpy.mockRestore()
     })
 
     it("passes parent options to child runs", async () => {

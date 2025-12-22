@@ -127,9 +127,10 @@ export async function generatingRunResultLogic({
   const thinkingText = extractThinkingText(reasoning as ReasoningPart[] | undefined)
 
   // Build ExpertMessage with ThinkingPart + TextPart
+  // Always include textPart even if empty - required for delegation result handling
   const expertContents: Array<Omit<ThinkingPart, "id"> | Omit<TextPart, "id">> = [
     ...thinkingParts,
-    ...(text ? [{ type: "textPart" as const, text }] : []),
+    { type: "textPart" as const, text: text ?? "" },
   ]
   const newMessages = [toolMessage, createExpertMessage(expertContents)]
 
