@@ -1,5 +1,5 @@
 import type { Checkpoint, RunSetting } from "@perstack/core"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   buildDelegateToState,
   buildDelegationReturnState,
@@ -197,7 +197,8 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
     ).toThrow("delegation result message is incorrect")
   })
 
-  it("throws when expertMessage has no text content", () => {
+  it("uses empty string and warns when expertMessage has no text content", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     const checkpointWithNoText: Checkpoint = {
       ...resultCheckpoint,
       messages: [
@@ -210,9 +211,10 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
         },
       ],
     }
-    expect(() =>
-      buildDelegationReturnState(baseSetting, checkpointWithNoText, parentCheckpoint),
-    ).toThrow("does not contain a text")
+    const result = buildDelegationReturnState(baseSetting, checkpointWithNoText, parentCheckpoint)
+    expect(result.setting.input.interactiveToolCallResult?.text).toBe("")
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("has no text content"))
+    warnSpy.mockRestore()
   })
 })
 

@@ -59,7 +59,10 @@ export function buildDelegationReturnState(
   }
   const delegateText = delegateResultMessage.contents.find((content) => content.type === "textPart")
   if (!delegateText) {
-    throw new Error("Delegation error: delegation result message does not contain a text")
+    console.warn(
+      `Delegation result from ${resultCheckpoint.expert.key} has no text content. ` +
+        `Parent expert ${delegatedBy.expert.key} will receive empty string.`,
+    )
   }
   const { expert, toolCallId, toolName } = delegatedBy
   return {
@@ -71,7 +74,7 @@ export function buildDelegationReturnState(
           toolCallId,
           toolName,
           skillName: `delegate/${resultCheckpoint.expert.key}`,
-          text: delegateText.text,
+          text: delegateText?.text ?? "",
         },
       },
     },
