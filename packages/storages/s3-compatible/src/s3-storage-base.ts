@@ -227,7 +227,10 @@ export class S3StorageBase implements Storage {
       if (body) {
         existingSetting = deserializeRunSetting(body)
       }
-    } catch {
+    } catch (error) {
+      if ((error as { name?: string }).name !== "NoSuchKey") {
+        throw error
+      }
       // Key doesn't exist, will create new
     }
     const settingToStore = existingSetting ? { ...existingSetting, updatedAt: Date.now() } : setting

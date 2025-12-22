@@ -183,7 +183,7 @@ export class FileSystemStorage implements Storage {
   async storeRunSetting(setting: RunSetting): Promise<void> {
     const runDir = this.getRunDir(setting.jobId, setting.runId)
     const runSettingPath = path.resolve(runDir, "run-setting.json")
-    if (existsSync(runDir)) {
+    if (existsSync(runSettingPath)) {
       const existingSetting = runSettingSchema.parse(
         JSON.parse(readFileSync(runSettingPath, "utf-8")),
       )
