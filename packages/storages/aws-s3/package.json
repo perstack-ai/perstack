@@ -1,0 +1,44 @@
+{
+  "private": true,
+  "name": "@perstack/s3-storage",
+  "version": "0.0.2",
+  "description": "Perstack S3 Storage - AWS S3 storage backend for Perstack",
+  "author": "Wintermute Technologies, Inc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": "./dist/src/index.js"
+    },
+    "types": {
+      ".": "./dist/src/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && tsup --config ../../../tsup.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.800.0",
+    "@perstack/core": "workspace:*",
+    "@perstack/s3-compatible-storage": "workspace:*"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.5",
+    "@types/node": "^25.0.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

@@ -6,6 +6,7 @@ export {
   getCheckpointsByJobId,
 } from "./checkpoint.js"
 export { defaultStoreEvent, getEventContents, getEventsByRun } from "./event.js"
+export { FileSystemStorage, type FileSystemStorageConfig } from "./filesystem-storage.js"
 export {
   createInitialJob,
   getAllJobs,
