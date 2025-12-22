@@ -42,8 +42,12 @@ export class OllamaProviderAdapter extends BaseProviderAdapter {
     }
   }
 
-  override getReasoningOptions(_budget: ReasoningBudget): ProviderOptions | undefined {
+  override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
     // Ollama uses 'think' toggle for hybrid reasoning models
+    // Return undefined when reasoning is disabled
+    if (budget === "none" || budget === 0) {
+      return undefined
+    }
     return {
       ollama: {
         think: true,

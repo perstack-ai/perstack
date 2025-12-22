@@ -80,5 +80,15 @@ describe("OllamaProviderAdapter", () => {
         ollama: { think: true },
       })
     })
+
+    it("returns undefined for none budget", () => {
+      const adapter = new OllamaProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions("none")).toBeUndefined()
+    })
+
+    it("returns undefined for zero budget", () => {
+      const adapter = new OllamaProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions(0)).toBeUndefined()
+    })
   })
 })
