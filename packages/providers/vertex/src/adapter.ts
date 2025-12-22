@@ -51,6 +51,9 @@ export class VertexProviderAdapter extends BaseProviderAdapter {
   }
 
   override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
+    if (budget === "none" || budget === 0) {
+      return undefined
+    }
     const budgetTokens = this.budgetToTokens(budget)
     return {
       vertex: {

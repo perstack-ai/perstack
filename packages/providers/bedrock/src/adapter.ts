@@ -39,11 +39,14 @@ export class BedrockProviderAdapter extends BaseProviderAdapter {
     }
     const bedrockOptions: Record<string, JSONValue> = {}
     if (config.guardrails) {
-      bedrockOptions["guardrailConfig"] = {
+      const guardrailConfig: Record<string, JSONValue> = {
         guardrailIdentifier: config.guardrails.guardrailIdentifier,
         guardrailVersion: config.guardrails.guardrailVersion,
-        trace: config.guardrails.trace ?? null,
       }
+      if (config.guardrails.trace) {
+        guardrailConfig["trace"] = config.guardrails.trace
+      }
+      bedrockOptions["guardrailConfig"] = guardrailConfig
     }
     if (config.cachePoint) {
       bedrockOptions["cachePoint"] = { type: config.cachePoint.type }
@@ -52,6 +55,9 @@ export class BedrockProviderAdapter extends BaseProviderAdapter {
   }
 
   override getReasoningOptions(budget: ReasoningBudget): ProviderOptions | undefined {
+    if (budget === "none" || budget === 0) {
+      return undefined
+    }
     const budgetTokens = this.budgetToTokens(budget)
     return {
       bedrock: {

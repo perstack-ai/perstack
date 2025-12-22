@@ -136,5 +136,15 @@ describe("VertexProviderAdapter", () => {
         },
       })
     })
+
+    it("returns undefined for none budget", () => {
+      const adapter = new VertexProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions("none")).toBeUndefined()
+    })
+
+    it("returns undefined for zero budget", () => {
+      const adapter = new VertexProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions(0)).toBeUndefined()
+    })
   })
 })

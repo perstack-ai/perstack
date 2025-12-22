@@ -56,6 +56,24 @@ describe("BedrockProviderAdapter", () => {
       })
     })
 
+    it("omits trace field when not provided", () => {
+      const adapter = new BedrockProviderAdapter(mockConfig)
+      const result = adapter.getProviderOptions({
+        guardrails: {
+          guardrailIdentifier: "my-guardrail",
+          guardrailVersion: "1",
+        },
+      })
+      expect(result).toEqual({
+        bedrock: {
+          guardrailConfig: {
+            guardrailIdentifier: "my-guardrail",
+            guardrailVersion: "1",
+          },
+        },
+      })
+    })
+
     it("returns cachePoint config when provided", () => {
       const adapter = new BedrockProviderAdapter(mockConfig)
       const result = adapter.getProviderOptions({
@@ -92,6 +110,16 @@ describe("BedrockProviderAdapter", () => {
       expect(adapter.getReasoningOptions(3000)).toEqual({
         bedrock: { reasoning: { budgetTokens: 3000 } },
       })
+    })
+
+    it("returns undefined for none budget", () => {
+      const adapter = new BedrockProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions("none")).toBeUndefined()
+    })
+
+    it("returns undefined for zero budget", () => {
+      const adapter = new BedrockProviderAdapter(mockConfig)
+      expect(adapter.getReasoningOptions(0)).toBeUndefined()
     })
   })
 })
