@@ -18,10 +18,15 @@ export function loadLockfile(lockfilePath: string): Lockfile | null {
   }
 }
 
+function isRemoteUrl(configPath: string): boolean {
+  const lower = configPath.toLowerCase()
+  return lower.startsWith("https://") || lower.startsWith("http://")
+}
+
 export function findLockfile(configPath?: string): string | null {
   if (configPath) {
     // Remote config URLs don't support lockfiles - skip silently
-    if (configPath.startsWith("http://") || configPath.startsWith("https://")) {
+    if (isRemoteUrl(configPath)) {
       return null
     }
     const configDir = path.dirname(path.resolve(process.cwd(), configPath))
