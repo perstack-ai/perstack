@@ -20,6 +20,10 @@ export function loadLockfile(lockfilePath: string): Lockfile | null {
 
 export function findLockfile(configPath?: string): string | null {
   if (configPath) {
+    // Remote config URLs don't support lockfiles - skip silently
+    if (configPath.startsWith("http://") || configPath.startsWith("https://")) {
+      return null
+    }
     const configDir = path.dirname(path.resolve(process.cwd(), configPath))
     return path.join(configDir, "perstack.lock")
   }
