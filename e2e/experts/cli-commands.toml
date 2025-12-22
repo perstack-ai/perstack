@@ -17,3 +17,16 @@ type = "mcpStdioSkill"
 command = "npx"
 packageName = "@perstack/base"
 pick = ["attemptCompletion"]
+
+[experts."e2e-cli-simple"]
+version = "1.0.0"
+description = "E2E test expert for CLI log command validation"
+instruction = """
+Call attemptCompletion with result "OK"
+"""
+
+[experts."e2e-cli-simple".skills."@perstack/base"]
+type = "mcpStdioSkill"
+command = "npx"
+packageName = "@perstack/base"
+pick = ["attemptCompletion"]

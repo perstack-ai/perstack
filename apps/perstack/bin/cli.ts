@@ -3,6 +3,7 @@
 import { Command } from "commander"
 import packageJson from "../package.json" with { type: "json" }
 import { installCommand } from "../src/install.js"
+import { logCommand } from "../src/log.js"
 import { publishCommand } from "../src/publish.js"
 import { runCommand } from "../src/run.js"
 import { startCommand } from "../src/start.js"
@@ -16,6 +17,7 @@ const program = new Command()
   .version(packageJson.version)
   .addCommand(startCommand)
   .addCommand(runCommand)
+  .addCommand(logCommand)
   .addCommand(installCommand)
   .addCommand(publishCommand)
   .addCommand(unpublishCommand)

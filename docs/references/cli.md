@@ -325,6 +325,162 @@ perstack status my-expert@1.0.0 deprecated
 | `deprecated` | Still usable but discouraged |
 | `disabled`   | Cannot be executed           |
 
+## Debugging and Inspection
+
+### `perstack log`
+
+View execution history and events for debugging.
+
+```bash
+perstack log [options]
+```
+
+**Purpose:**
+
+Inspect job/run execution history and events for debugging. This command is designed for both human inspection and AI agent usage, making it easy to diagnose issues in Expert runs.
+
+**Default Behavior:**
+
+When called without options, shows a summary of the latest job.
+
+**Options:**
+
+| Option                    | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `--job <jobId>`           | Show events for a specific job                         |
+| `--run <runId>`           | Show events for a specific run                         |
+| `--checkpoint <id>`       | Show checkpoint details                                |
+| `--step <step>`           | Filter by step number (e.g., `5`, `>5`, `1-10`)        |
+| `--type <type>`           | Filter by event type                                   |
+| `--errors`                | Show only error-related events                         |
+| `--tools`                 | Show only tool call events                             |
+| `--delegations`           | Show only delegation events                            |
+| `--filter <expression>`   | Simple filter expression                               |
+| `--json`                  | Output as JSON (machine-readable)                      |
+| `--pretty`                | Pretty-print JSON output                               |
+| `--verbose`               | Show full event details                                |
+| `--limit <n>`             | Limit number of results                                |
+| `--context <n>`           | Include N events before/after matches                  |
+| `--messages`              | Show message history for checkpoint                    |
+| `--summary`               | Show summarized view                                   |
+| `--config <path>`         | Path to `perstack.toml`                                |
+
+**Event Types:**
+
+| Event Type              | Description                              |
+| ----------------------- | ---------------------------------------- |
+| `startRun`              | Run started                              |
+| `callTools`             | Tool calls made                          |
+| `resolveToolResults`    | Tool results received                    |
+| `callDelegate`          | Delegation to another expert             |
+| `stopRunByError`        | Error occurred                           |
+| `retry`                 | Generation retry                         |
+| `completeRun`           | Run completed                            |
+| `continueToNextStep`    | Step transition                          |
+
+**Filter Expression Syntax:**
+
+Simple conditions are supported:
+
+```bash
+# Exact match
+--filter '.type == "completeRun"'
+
+# Numeric comparison
+--filter '.stepNumber > 5'
+--filter '.stepNumber >= 5'
+--filter '.stepNumber < 10'
+
+# Array element matching
+--filter '.toolCalls[].skillName == "base"'
+```
+
+**Step Range Syntax:**
+
+```bash
+--step 5       # Exact step number
+--step ">5"    # Greater than 5
+--step ">=5"   # Greater than or equal to 5
+--step "1-10"  # Range (inclusive)
+```
+
+**Examples:**
+
+```bash
+# Show latest job summary
+perstack log
+
+# Show all events for a specific job
+perstack log --job abc123
+
+# Show events for a specific run
+perstack log --run xyz789
+
+# Show checkpoint details with messages
+perstack log --checkpoint cp123 --messages
+
+# Show only errors
+perstack log --errors
+
+# Show tool calls for steps 5-10
+perstack log --tools --step "5-10"
+
+# Filter by event type
+perstack log --job abc123 --type callTools
+
+# JSON output for automation
+perstack log --job abc123 --json
+
+# Error diagnosis with context
+perstack log --errors --context 5
+
+# Filter with expression
+perstack log --filter '.toolCalls[].skillName == "base"'
+
+# Summary view
+perstack log --summary
+```
+
+**Output Format:**
+
+Terminal output (default) shows human-readable format with colors:
+
+```
+Job: abc123 (completed)
+Expert: my-expert@1.0.0
+Started: 2024-12-23 10:30:15
+Steps: 12
+
+Events:
+─────────────────────────────────────────────
+[Step 1] startRun                    10:30:15
+  Expert: my-expert@1.0.0
+  Query: "Analyze this code..."
+
+[Step 2] callTools                   10:30:18
+  Tools: read_file, write_file
+
+[Step 3] resolveToolResults          10:30:22
+  ✓ read_file: Success
+  ✗ write_file: Permission denied
+─────────────────────────────────────────────
+```
+
+JSON output (`--json`) for machine parsing:
+
+```json
+{
+  "job": { "id": "abc123", "status": "completed" },
+  "events": [
+    { "type": "startRun", "stepNumber": 1 }
+  ],
+  "summary": {
+    "totalEvents": 15,
+    "errorCount": 0
+  }
+}
+```
+
 ## Performance Optimization
 
 ### `perstack install`
