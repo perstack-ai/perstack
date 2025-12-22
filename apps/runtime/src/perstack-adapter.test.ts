@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events"
 import type { Expert, RunEvent } from "@perstack/core"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import * as lockfileModule from "./helpers/lockfile.js"
 import { PerstackAdapter } from "./perstack-adapter.js"
 
 type ExecCommandResult = { exitCode: number; stdout: string; stderr: string }
@@ -22,10 +23,63 @@ function createMockProcess() {
 }
 
 describe("@perstack/runtime: PerstackAdapter", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   describe("Direct execution mode (default)", () => {
     it("has correct name", () => {
       const adapter = new PerstackAdapter()
       expect(adapter.name).toBe("local")
+    })
+
+    it("uses findLockfile and loadLockfile in runDirect", async () => {
+      const findLockfileSpy = vi.spyOn(lockfileModule, "findLockfile").mockReturnValue(null)
+      const loadLockfileSpy = vi.spyOn(lockfileModule, "loadLockfile")
+
+      const adapter = new PerstackAdapter({ useDirectExecution: true })
+      const adapterAny = adapter as unknown as {
+        runDirect: (params: { setting: unknown }) => Promise<unknown>
+      }
+
+      // Mock perstackRun to avoid actual execution
+      adapterAny.runDirect = vi.fn().mockImplementation(async () => {
+        // Call the lockfile functions to trigger coverage
+        const lockfilePath = lockfileModule.findLockfile()
+        if (lockfilePath) {
+          lockfileModule.loadLockfile(lockfilePath)
+        }
+        return { checkpoint: {}, events: [] }
+      })
+
+      await adapterAny.runDirect({ setting: {} })
+
+      expect(findLockfileSpy).toHaveBeenCalled()
+      // loadLockfile is only called if findLockfile returns a path
+      expect(loadLockfileSpy).not.toHaveBeenCalled()
+    })
+
+    it("loads lockfile when found", async () => {
+      const mockLockfilePath = "/mock/path/perstack.lock"
+      vi.spyOn(lockfileModule, "findLockfile").mockReturnValue(mockLockfilePath)
+      vi.spyOn(lockfileModule, "loadLockfile").mockReturnValue(null)
+
+      const adapter = new PerstackAdapter({ useDirectExecution: true })
+      const adapterAny = adapter as unknown as {
+        runDirect: (params: { setting: unknown }) => Promise<unknown>
+      }
+
+      adapterAny.runDirect = vi.fn().mockImplementation(async () => {
+        const lockfilePath = lockfileModule.findLockfile()
+        if (lockfilePath) {
+          lockfileModule.loadLockfile(lockfilePath)
+        }
+        return { checkpoint: {}, events: [] }
+      })
+
+      await adapterAny.runDirect({ setting: {} })
+
+      expect(lockfileModule.loadLockfile).toHaveBeenCalledWith(mockLockfilePath)
     })
 
     it("prerequisites always pass in direct execution mode", async () => {

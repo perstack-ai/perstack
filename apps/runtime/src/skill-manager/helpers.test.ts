@@ -1,6 +1,15 @@
-import type { McpSseSkill, McpStdioSkill } from "@perstack/core"
-import { describe, expect, it } from "vitest"
-import { hasExplicitBaseVersion, isBaseSkill, shouldUseBundledBase } from "./helpers.js"
+import type { McpSseSkill, McpStdioSkill, ToolDefinition } from "@perstack/core"
+import { describe, expect, it, vi } from "vitest"
+import type { BaseSkillManager } from "./base.js"
+import {
+  closeSkillManagers,
+  getSkillManagerByToolName,
+  getToolSet,
+  hasExplicitBaseVersion,
+  initSkillManagersWithCleanup,
+  isBaseSkill,
+  shouldUseBundledBase,
+} from "./helpers.js"
 
 const createMcpStdioSkill = (overrides: Partial<McpStdioSkill> = {}): McpStdioSkill => ({
   name: "@perstack/base",
@@ -118,6 +127,209 @@ describe("skill-manager helpers", () => {
     it("returns false for skill with explicit version", () => {
       const skill = createMcpStdioSkill({ packageName: "@perstack/base@0.0.34" })
       expect(shouldUseBundledBase(skill)).toBe(false)
+    })
+
+    it("returns false when perstackBaseSkillCommand is empty array", () => {
+      const skill = createMcpStdioSkill({ packageName: "@perstack/base" })
+      // Empty array is still falsy for the check
+      expect(shouldUseBundledBase(skill, [])).toBe(true)
+    })
+  })
+
+  describe("initSkillManagersWithCleanup", () => {
+    const createMockManager = (
+      initResult: "success" | Error = "success",
+    ): BaseSkillManager & { init: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> } => ({
+      name: "mock-skill",
+      type: "mcp",
+      lazyInit: false,
+      skill: createMcpStdioSkill(),
+      init: vi
+        .fn()
+        .mockImplementation(() =>
+          initResult === "success" ? Promise.resolve() : Promise.reject(initResult),
+        ),
+      close: vi.fn().mockResolvedValue(undefined),
+      getToolDefinitions: vi.fn().mockResolvedValue([]),
+      callTool: vi.fn().mockResolvedValue([]),
+    })
+
+    it("initializes all managers successfully", async () => {
+      const manager1 = createMockManager()
+      const manager2 = createMockManager()
+      const allManagers: BaseSkillManager[] = [manager1, manager2]
+
+      await initSkillManagersWithCleanup([manager1, manager2], allManagers)
+
+      expect(manager1.init).toHaveBeenCalled()
+      expect(manager2.init).toHaveBeenCalled()
+    })
+
+    it("closes all managers and throws on failure", async () => {
+      const error = new Error("Init failed")
+      const manager1 = createMockManager("success")
+      const manager2 = createMockManager(error)
+      const allManagers: BaseSkillManager[] = [manager1, manager2]
+
+      await expect(initSkillManagersWithCleanup([manager1, manager2], allManagers)).rejects.toThrow(
+        "Init failed",
+      )
+
+      expect(manager1.close).toHaveBeenCalled()
+      expect(manager2.close).toHaveBeenCalled()
+    })
+
+    it("handles close errors gracefully", async () => {
+      const initError = new Error("Init failed")
+      const manager1 = createMockManager("success")
+      manager1.close.mockRejectedValue(new Error("Close failed"))
+      const manager2 = createMockManager(initError)
+      const allManagers: BaseSkillManager[] = [manager1, manager2]
+
+      // Should not throw from close error, only from init error
+      await expect(initSkillManagersWithCleanup([manager1, manager2], allManagers)).rejects.toThrow(
+        "Init failed",
+      )
+    })
+  })
+
+  describe("closeSkillManagers", () => {
+    const createMockManager = (): BaseSkillManager & {
+      close: ReturnType<typeof vi.fn>
+    } => ({
+      name: "mock-skill",
+      type: "mcp",
+      lazyInit: false,
+      skill: createMcpStdioSkill(),
+      init: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+      getToolDefinitions: vi.fn().mockResolvedValue([]),
+      callTool: vi.fn().mockResolvedValue([]),
+    })
+
+    it("closes all skill managers", async () => {
+      const manager1 = createMockManager()
+      const manager2 = createMockManager()
+      const managers = { skill1: manager1, skill2: manager2 }
+
+      await closeSkillManagers(managers)
+
+      expect(manager1.close).toHaveBeenCalled()
+      expect(manager2.close).toHaveBeenCalled()
+    })
+
+    it("handles close errors gracefully", async () => {
+      const manager1 = createMockManager()
+      manager1.close.mockRejectedValue(new Error("Close failed"))
+      const manager2 = createMockManager()
+      const managers = { skill1: manager1, skill2: manager2 }
+
+      // Should not throw
+      await expect(closeSkillManagers(managers)).resolves.not.toThrow()
+    })
+  })
+
+  describe("getSkillManagerByToolName", () => {
+    const createMockManager = (name: string, tools: ToolDefinition[]): BaseSkillManager => ({
+      name,
+      type: "mcp",
+      lazyInit: false,
+      skill: createMcpStdioSkill({ name }),
+      init: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+      getToolDefinitions: vi.fn().mockResolvedValue(tools),
+      callTool: vi.fn().mockResolvedValue([]),
+    })
+
+    it("returns manager that contains the tool", async () => {
+      const manager1 = createMockManager("skill1", [
+        {
+          skillName: "skill1",
+          name: "tool1",
+          description: "Test",
+          inputSchema: {},
+          interactive: false,
+        },
+      ])
+      const manager2 = createMockManager("skill2", [
+        {
+          skillName: "skill2",
+          name: "tool2",
+          description: "Test",
+          inputSchema: {},
+          interactive: false,
+        },
+      ])
+      const managers = { skill1: manager1, skill2: manager2 }
+
+      const result = await getSkillManagerByToolName(managers, "tool2")
+
+      expect(result).toBe(manager2)
+    })
+
+    it("throws when tool is not found", async () => {
+      const manager = createMockManager("skill1", [
+        {
+          skillName: "skill1",
+          name: "tool1",
+          description: "Test",
+          inputSchema: {},
+          interactive: false,
+        },
+      ])
+      const managers = { skill1: manager }
+
+      await expect(getSkillManagerByToolName(managers, "nonexistent")).rejects.toThrow(
+        "Tool nonexistent not found",
+      )
+    })
+  })
+
+  describe("getToolSet", () => {
+    const createMockManager = (tools: ToolDefinition[]): BaseSkillManager => ({
+      name: "mock-skill",
+      type: "mcp",
+      lazyInit: false,
+      skill: createMcpStdioSkill(),
+      init: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+      getToolDefinitions: vi.fn().mockResolvedValue(tools),
+      callTool: vi.fn().mockResolvedValue([]),
+    })
+
+    it("returns toolset from all managers", async () => {
+      const manager1 = createMockManager([
+        {
+          skillName: "skill1",
+          name: "readFile",
+          description: "Read a file",
+          inputSchema: { type: "object", properties: { path: { type: "string" } } },
+          interactive: false,
+        },
+      ])
+      const manager2 = createMockManager([
+        {
+          skillName: "skill2",
+          name: "writeFile",
+          description: "Write a file",
+          inputSchema: { type: "object", properties: { path: { type: "string" } } },
+          interactive: false,
+        },
+      ])
+      const managers = { skill1: manager1, skill2: manager2 }
+
+      const toolset = await getToolSet(managers)
+
+      expect(toolset).toHaveProperty("readFile")
+      expect(toolset).toHaveProperty("writeFile")
+    })
+
+    it("returns empty object for empty managers", async () => {
+      const managers = {}
+
+      const toolset = await getToolSet(managers)
+
+      expect(Object.keys(toolset)).toHaveLength(0)
     })
   })
 })

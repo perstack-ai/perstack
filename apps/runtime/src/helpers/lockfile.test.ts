@@ -1,6 +1,8 @@
+import fs from "node:fs"
+import path from "node:path"
 import type { LockfileExpert, LockfileToolDefinition } from "@perstack/core"
-import { describe, expect, it } from "vitest"
-import { getLockfileExpertToolDefinitions } from "./lockfile.js"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { findLockfile, getLockfileExpertToolDefinitions, loadLockfile } from "./lockfile.js"
 
 const createLockfileExpert = (
   toolDefinitions: LockfileToolDefinition[],
@@ -84,6 +86,130 @@ describe("lockfile", () => {
           required: ["param"],
         },
       })
+    })
+  })
+
+  describe("loadLockfile", () => {
+    const testDir = path.join(process.cwd(), ".test-lockfile-temp")
+    const testLockfilePath = path.join(testDir, "perstack.lock")
+
+    beforeEach(() => {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true })
+      }
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true })
+      }
+    })
+
+    it("returns parsed lockfile for valid TOML", () => {
+      const validToml = `
+version = "1"
+generatedAt = 1704067200000
+configPath = "perstack.toml"
+
+[experts.test-expert]
+key = "test-expert"
+name = "Test Expert"
+version = "1.0.0"
+instruction = "Test"
+delegates = []
+tags = []
+toolDefinitions = []
+
+[experts.test-expert.skills]
+`
+      fs.writeFileSync(testLockfilePath, validToml)
+
+      const result = loadLockfile(testLockfilePath)
+
+      expect(result).not.toBeNull()
+      expect(result?.version).toBe("1")
+      expect(result?.configPath).toBe("perstack.toml")
+      expect(Object.keys(result?.experts ?? {})).toHaveLength(1)
+    })
+
+    it("returns null for invalid TOML", () => {
+      fs.writeFileSync(testLockfilePath, "invalid { toml content")
+
+      const result = loadLockfile(testLockfilePath)
+
+      expect(result).toBeNull()
+    })
+
+    it("returns null for non-existent file", () => {
+      const result = loadLockfile("/non/existent/path/perstack.lock")
+
+      expect(result).toBeNull()
+    })
+
+    it("returns null for TOML that doesn't match schema", () => {
+      fs.writeFileSync(testLockfilePath, "[invalid]\nkey = 'value'")
+
+      const result = loadLockfile(testLockfilePath)
+
+      expect(result).toBeNull()
+    })
+  })
+
+  describe("findLockfile", () => {
+    const originalCwd = process.cwd()
+    const testDir = path.join(originalCwd, ".test-find-lockfile-temp")
+    const nestedDir = path.join(testDir, "nested", "deep")
+
+    beforeEach(() => {
+      if (!fs.existsSync(nestedDir)) {
+        fs.mkdirSync(nestedDir, { recursive: true })
+      }
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true })
+      }
+    })
+
+    it("returns lockfile path based on config path when provided", () => {
+      const configPath = path.join(testDir, "perstack.toml")
+
+      const result = findLockfile(configPath)
+
+      expect(result).toBe(path.join(testDir, "perstack.lock"))
+    })
+
+    it("returns lockfile path from config path even if file does not exist", () => {
+      // findLockfile with configPath always returns the path, doesn't check existence
+      const configPath = path.join("/some/nonexistent", "perstack.toml")
+
+      const result = findLockfile(configPath)
+
+      expect(result).toBe(path.join("/some/nonexistent", "perstack.lock"))
+    })
+
+    it("finds lockfile recursively from nested directory", () => {
+      // Create lockfile in parent directory
+      const lockfilePath = path.join(testDir, "perstack.lock")
+      fs.writeFileSync(lockfilePath, "")
+      vi.spyOn(process, "cwd").mockReturnValue(nestedDir)
+
+      const result = findLockfile()
+
+      expect(result).toBe(lockfilePath)
+    })
+
+    it("finds lockfile in current directory", () => {
+      const lockfilePath = path.join(testDir, "perstack.lock")
+      fs.writeFileSync(lockfilePath, "")
+      vi.spyOn(process, "cwd").mockReturnValue(testDir)
+
+      const result = findLockfile()
+
+      expect(result).toBe(lockfilePath)
     })
   })
 })

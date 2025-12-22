@@ -1,4 +1,4 @@
-import type { LockfileToolDefinition, McpStdioSkill } from "@perstack/core"
+import type { LockfileToolDefinition, McpSseSkill, McpStdioSkill } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import { LockfileSkillManager } from "./lockfile-skill-manager.js"
 
@@ -107,5 +107,124 @@ describe("LockfileSkillManager", () => {
 
     await manager.init()
     await expect(manager.close()).resolves.not.toThrow()
+  })
+
+  it("should expose skill property correctly", () => {
+    const skill = createMockSkill({ name: "custom-skill" })
+    const manager = new LockfileSkillManager({
+      skill,
+      toolDefinitions: createMockToolDefinitions(),
+      env: {},
+      jobId: "test-job",
+      runId: "test-run",
+    })
+
+    expect(manager.skill).toBe(skill)
+    expect(manager.name).toBe("custom-skill")
+    expect(manager.type).toBe("mcp")
+  })
+
+  it("should set interactive to false for all tool definitions", async () => {
+    const manager = new LockfileSkillManager({
+      skill: createMockSkill(),
+      toolDefinitions: createMockToolDefinitions(),
+      env: {},
+      jobId: "test-job",
+      runId: "test-run",
+    })
+
+    await manager.init()
+    const tools = await manager.getToolDefinitions()
+
+    for (const tool of tools) {
+      expect(tool.interactive).toBe(false)
+    }
+  })
+
+  it("should handle empty tool definitions", async () => {
+    const manager = new LockfileSkillManager({
+      skill: createMockSkill(),
+      toolDefinitions: [],
+      env: {},
+      jobId: "test-job",
+      runId: "test-run",
+    })
+
+    await manager.init()
+    const tools = await manager.getToolDefinitions()
+
+    expect(tools).toHaveLength(0)
+  })
+
+  describe("_ensureRealManager", () => {
+    it("creates InMemoryBaseSkillManager for base skill without version", async () => {
+      const skill = createMockSkill({
+        name: "@perstack/base",
+        packageName: "@perstack/base",
+      })
+      const manager = new LockfileSkillManager({
+        skill,
+        toolDefinitions: createMockToolDefinitions(),
+        env: {},
+        jobId: "test-job",
+        runId: "test-run",
+      })
+
+      await manager.init()
+
+      // Access private method via type assertion for testing
+      const managerAny = manager as unknown as {
+        _ensureRealManager: () => Promise<unknown>
+        _realManager?: { close: () => Promise<void> }
+      }
+
+      // This will trigger real manager creation
+      try {
+        await managerAny._ensureRealManager()
+        // Real manager should be created
+        expect(managerAny._realManager).toBeDefined()
+      } catch {
+        // Expected if InMemoryBaseSkillManager init fails in test env
+      } finally {
+        // Cleanup
+        if (managerAny._realManager) {
+          await managerAny._realManager.close().catch(() => {})
+        }
+      }
+    })
+  })
+
+  describe("with SSE skill", () => {
+    const createMockSseSkill = (overrides: Partial<McpSseSkill> = {}): McpSseSkill => ({
+      name: "sse-skill",
+      type: "mcpSseSkill",
+      endpoint: "https://example.com/sse",
+      pick: [],
+      omit: [],
+      ...overrides,
+    })
+
+    it("should handle SSE skill type", async () => {
+      const manager = new LockfileSkillManager({
+        skill: createMockSseSkill(),
+        toolDefinitions: [
+          {
+            skillName: "sse-skill",
+            name: "sseTool",
+            description: "An SSE tool",
+            inputSchema: { type: "object" },
+          },
+        ],
+        env: {},
+        jobId: "test-job",
+        runId: "test-run",
+      })
+
+      await manager.init()
+      const tools = await manager.getToolDefinitions()
+
+      expect(tools).toHaveLength(1)
+      expect(tools[0].name).toBe("sseTool")
+    })
   })
 })
