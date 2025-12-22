@@ -13,6 +13,8 @@ vi.mock("ai", async (importOriginal) => {
 
 describe("LLMExecutor", () => {
   const createMockAdapter = (overrides: Partial<ProviderAdapter> = {}): ProviderAdapter => ({
+    providerName: "anthropic",
+    createModel: vi.fn(),
     getProviderTools: vi.fn().mockReturnValue({}),
     getProviderOptions: vi.fn().mockReturnValue(undefined),
     getReasoningOptions: vi.fn().mockReturnValue({ anthropic: { thinking: true } }),

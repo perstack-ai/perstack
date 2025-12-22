@@ -137,22 +137,26 @@ describe("skill-manager helpers", () => {
   })
 
   describe("initSkillManagersWithCleanup", () => {
-    const createMockManager = (
-      initResult: "success" | Error = "success",
-    ): BaseSkillManager & { init: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> } => ({
-      name: "mock-skill",
-      type: "mcp",
-      lazyInit: false,
-      skill: createMcpStdioSkill(),
-      init: vi
-        .fn()
-        .mockImplementation(() =>
-          initResult === "success" ? Promise.resolve() : Promise.reject(initResult),
-        ),
-      close: vi.fn().mockResolvedValue(undefined),
-      getToolDefinitions: vi.fn().mockResolvedValue([]),
-      callTool: vi.fn().mockResolvedValue([]),
-    })
+    const createMockManager = (initResult: "success" | Error = "success") => {
+      const manager = {
+        name: "mock-skill",
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill(),
+        init: vi
+          .fn()
+          .mockImplementation(() =>
+            initResult === "success" ? Promise.resolve() : Promise.reject(initResult),
+          ),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue([]),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      return manager as unknown as BaseSkillManager & {
+        init: ReturnType<typeof vi.fn>
+        close: ReturnType<typeof vi.fn>
+      }
+    }
 
     it("initializes all managers successfully", async () => {
       const manager1 = createMockManager()
@@ -194,18 +198,19 @@ describe("skill-manager helpers", () => {
   })
 
   describe("closeSkillManagers", () => {
-    const createMockManager = (): BaseSkillManager & {
-      close: ReturnType<typeof vi.fn>
-    } => ({
-      name: "mock-skill",
-      type: "mcp",
-      lazyInit: false,
-      skill: createMcpStdioSkill(),
-      init: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      getToolDefinitions: vi.fn().mockResolvedValue([]),
-      callTool: vi.fn().mockResolvedValue([]),
-    })
+    const createMockManager = () => {
+      const manager = {
+        name: "mock-skill",
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill(),
+        init: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue([]),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      return manager as unknown as BaseSkillManager & { close: ReturnType<typeof vi.fn> }
+    }
 
     it("closes all skill managers", async () => {
       const manager1 = createMockManager()
@@ -230,16 +235,19 @@ describe("skill-manager helpers", () => {
   })
 
   describe("getSkillManagerByToolName", () => {
-    const createMockManager = (name: string, tools: ToolDefinition[]): BaseSkillManager => ({
-      name,
-      type: "mcp",
-      lazyInit: false,
-      skill: createMcpStdioSkill({ name }),
-      init: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      getToolDefinitions: vi.fn().mockResolvedValue(tools),
-      callTool: vi.fn().mockResolvedValue([]),
-    })
+    const createMockManager = (name: string, tools: ToolDefinition[]): BaseSkillManager => {
+      const manager = {
+        name,
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill({ name }),
+        init: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue(tools),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      return manager as unknown as BaseSkillManager
+    }
 
     it("returns manager that contains the tool", async () => {
       const manager1 = createMockManager("skill1", [
@@ -286,16 +294,19 @@ describe("skill-manager helpers", () => {
   })
 
   describe("getToolSet", () => {
-    const createMockManager = (tools: ToolDefinition[]): BaseSkillManager => ({
-      name: "mock-skill",
-      type: "mcp",
-      lazyInit: false,
-      skill: createMcpStdioSkill(),
-      init: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      getToolDefinitions: vi.fn().mockResolvedValue(tools),
-      callTool: vi.fn().mockResolvedValue([]),
-    })
+    const createMockManager = (tools: ToolDefinition[]): BaseSkillManager => {
+      const manager = {
+        name: "mock-skill",
+        type: "mcp" as const,
+        lazyInit: false,
+        skill: createMcpStdioSkill(),
+        init: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+        getToolDefinitions: vi.fn().mockResolvedValue(tools),
+        callTool: vi.fn().mockResolvedValue([]),
+      }
+      return manager as unknown as BaseSkillManager
+    }
 
     it("returns toolset from all managers", async () => {
       const manager1 = createMockManager([
