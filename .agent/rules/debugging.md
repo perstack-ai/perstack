@@ -22,6 +22,11 @@ perstack log --json
 perstack log --job <jobId>
 ```
 
+**Default Behavior:**
+- Shows the latest job (indicated by "(showing latest job)")
+- Displays storage path (e.g., "Storage: /path/to/perstack")
+- Limits to 100 events by default (use `--take 0` for all)
+
 ## Common Debugging Scenarios
 
 ### 1. Investigating Errors
@@ -147,6 +152,24 @@ perstack log --summary --json
 | `completeRun`        | Run completed                |
 | `continueToNextStep` | Step transition              |
 
+## Pagination
+
+By default, only 100 events are shown. Use `--take` and `--offset` for pagination:
+
+```bash
+# Show first 50 events
+perstack log --take 50
+
+# Skip first 100, show next 100
+perstack log --offset 100
+
+# Show events 101-150
+perstack log --take 50 --offset 100
+
+# Show all events (no limit)
+perstack log --take 0
+```
+
 ## Tips
 
 1. **Start broad, then narrow**: Begin with `perstack log` to see all events, then add filters
@@ -154,3 +177,4 @@ perstack log --summary --json
 3. **JSON for scripts**: Always use `--json` when parsing output programmatically
 4. **Check steps**: Use `--step` to focus on specific phases of execution
 5. **Combine filters**: Multiple options are ANDed together for precise filtering
+6. **Paginate large jobs**: Use `--take` and `--offset` for jobs with many events

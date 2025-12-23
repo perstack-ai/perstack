@@ -341,29 +341,32 @@ Inspect job/run execution history and events for debugging. This command is desi
 
 **Default Behavior:**
 
-When called without options, shows a summary of the latest job.
+When called without options, shows a summary of the latest job with:
+- "(showing latest job)" indicator when no `--job` specified
+- "Storage: <path>" showing where data is stored
+- Maximum 100 events (use `--take 0` for all)
 
 **Options:**
 
-| Option                  | Description                                     |
-| ----------------------- | ----------------------------------------------- |
-| `--job <jobId>`         | Show events for a specific job                  |
-| `--run <runId>`         | Show events for a specific run                  |
-| `--checkpoint <id>`     | Show checkpoint details                         |
-| `--step <step>`         | Filter by step number (e.g., `5`, `>5`, `1-10`) |
-| `--type <type>`         | Filter by event type                            |
-| `--errors`              | Show only error-related events                  |
-| `--tools`               | Show only tool call events                      |
-| `--delegations`         | Show only delegation events                     |
-| `--filter <expression>` | Simple filter expression                        |
-| `--json`                | Output as JSON (machine-readable)               |
-| `--pretty`              | Pretty-print JSON output                        |
-| `--verbose`             | Show full event details                         |
+| Option                  | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| `--job <jobId>`         | Show events for a specific job                        |
+| `--run <runId>`         | Show events for a specific run                        |
+| `--checkpoint <id>`     | Show checkpoint details                               |
+| `--step <step>`         | Filter by step number (e.g., `5`, `>5`, `1-10`)       |
+| `--type <type>`         | Filter by event type                                  |
+| `--errors`              | Show only error-related events                        |
+| `--tools`               | Show only tool call events                            |
+| `--delegations`         | Show only delegation events                           |
+| `--filter <expression>` | Simple filter expression                              |
+| `--json`                | Output as JSON (machine-readable)                     |
+| `--pretty`              | Pretty-print JSON output                              |
+| `--verbose`             | Show full event details                               |
 | `--take <n>`            | Number of events to display (default: 100, 0 for all) |
-| `--offset <n>`          | Number of events to skip (default: 0)           |
-| `--context <n>`         | Include N events before/after matches           |
-| `--messages`            | Show message history for checkpoint             |
-| `--summary`             | Show summarized view                            |
+| `--offset <n>`          | Number of events to skip (default: 0)                 |
+| `--context <n>`         | Include N events before/after matches                 |
+| `--messages`            | Show message history for checkpoint                   |
+| `--summary`             | Show summarized view                                  |
 
 **Event Types:**
 
