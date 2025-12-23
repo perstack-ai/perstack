@@ -81,6 +81,7 @@ export class PerstackAdapter extends BaseAdapter implements RuntimeAdapter {
       {
         eventListener,
         storeCheckpoint: params.storeCheckpoint,
+        storeEvent: params.storeEvent,
         retrieveCheckpoint: params.retrieveCheckpoint,
         lockfile,
       },

@@ -7,7 +7,11 @@ import type {
   RuntimeEvent,
   RuntimeName,
 } from "@perstack/core"
-import { defaultRetrieveCheckpoint, defaultStoreCheckpoint } from "@perstack/filesystem-storage"
+import {
+  defaultRetrieveCheckpoint,
+  defaultStoreCheckpoint,
+  defaultStoreEvent,
+} from "@perstack/filesystem-storage"
 import { getAdapter, getRegisteredRuntimes, isAdapterAvailable } from "./registry.js"
 
 export type DispatchParams = {
@@ -17,6 +21,7 @@ export type DispatchParams = {
   config?: PerstackConfig
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  storeEvent?: (event: RunEvent) => Promise<void>
   retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
   workspace?: string
   /** Additional environment variable names to pass to Docker runtime */
@@ -34,6 +39,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     config,
     eventListener,
     storeCheckpoint,
+    storeEvent,
     retrieveCheckpoint,
     workspace,
     additionalEnvKeys,
@@ -63,6 +69,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
     config,
     eventListener,
     storeCheckpoint: storeCheckpoint ?? defaultStoreCheckpoint,
+    storeEvent: storeEvent ?? defaultStoreEvent,
     retrieveCheckpoint: retrieveCheckpoint ?? defaultRetrieveCheckpoint,
     workspace,
     additionalEnvKeys,

@@ -9,6 +9,7 @@ export type AdapterRunParams = {
   checkpoint?: Checkpoint
   eventListener?: (event: RunEvent | RuntimeEvent) => void
   storeCheckpoint?: (checkpoint: Checkpoint) => Promise<void>
+  storeEvent?: (event: RunEvent) => Promise<void>
   retrieveCheckpoint?: (jobId: string, checkpointId: string) => Promise<Checkpoint>
   workspace?: string
   /** Additional environment variable names to pass to Docker runtime */
