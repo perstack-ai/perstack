@@ -25,11 +25,20 @@ export function createSummary(events: RunEvent[]): LogSummary {
 }
 
 export function formatJson(output: LogOutput, options: FormatterOptions): string {
-  const data = {
+  const data: Record<string, unknown> = {
     job: output.job,
-    checkpoint: output.checkpoint,
     events: output.events,
     summary: output.summary,
+  }
+  // Include optional fields when present
+  if (output.checkpoint) {
+    data.checkpoint = output.checkpoint
+  }
+  if (output.checkpoints && output.checkpoints.length > 0) {
+    data.checkpoints = output.checkpoints
+  }
+  if (output.runs && output.runs.length > 0) {
+    data.runs = output.runs
   }
   if (options.pretty) {
     return JSON.stringify(data, null, 2)

@@ -199,11 +199,14 @@ export function applyFilters(events: RunEvent[], options: FilterOptions): RunEve
       evaluateCondition(e, options.filterExpression as FilterCondition),
     )
   }
-  if (options.context !== undefined && options.context > 0) {
-    filtered = addContextEvents(events, filtered, options.context)
-  }
+  // Apply limit to matched events BEFORE adding context
+  // This ensures matched events are not excluded by the limit
   if (options.limit !== undefined && options.limit > 0) {
     filtered = filtered.slice(0, options.limit)
+  }
+  // Add context events after limit to preserve matched events
+  if (options.context !== undefined && options.context > 0) {
+    filtered = addContextEvents(events, filtered, options.context)
   }
   return filtered
 }
