@@ -345,38 +345,38 @@ When called without options, shows a summary of the latest job.
 
 **Options:**
 
-| Option                    | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `--job <jobId>`           | Show events for a specific job                         |
-| `--run <runId>`           | Show events for a specific run                         |
-| `--checkpoint <id>`       | Show checkpoint details                                |
-| `--step <step>`           | Filter by step number (e.g., `5`, `>5`, `1-10`)        |
-| `--type <type>`           | Filter by event type                                   |
-| `--errors`                | Show only error-related events                         |
-| `--tools`                 | Show only tool call events                             |
-| `--delegations`           | Show only delegation events                            |
-| `--filter <expression>`   | Simple filter expression                               |
-| `--json`                  | Output as JSON (machine-readable)                      |
-| `--pretty`                | Pretty-print JSON output                               |
-| `--verbose`               | Show full event details                                |
-| `--limit <n>`             | Limit number of results                                |
-| `--context <n>`           | Include N events before/after matches                  |
-| `--messages`              | Show message history for checkpoint                    |
-| `--summary`               | Show summarized view                                   |
-| `--config <path>`         | Path to `perstack.toml`                                |
+| Option                  | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `--job <jobId>`         | Show events for a specific job                  |
+| `--run <runId>`         | Show events for a specific run                  |
+| `--checkpoint <id>`     | Show checkpoint details                         |
+| `--step <step>`         | Filter by step number (e.g., `5`, `>5`, `1-10`) |
+| `--type <type>`         | Filter by event type                            |
+| `--errors`              | Show only error-related events                  |
+| `--tools`               | Show only tool call events                      |
+| `--delegations`         | Show only delegation events                     |
+| `--filter <expression>` | Simple filter expression                        |
+| `--json`                | Output as JSON (machine-readable)               |
+| `--pretty`              | Pretty-print JSON output                        |
+| `--verbose`             | Show full event details                         |
+| `--limit <n>`           | Limit number of results                         |
+| `--context <n>`         | Include N events before/after matches           |
+| `--messages`            | Show message history for checkpoint             |
+| `--summary`             | Show summarized view                            |
+| `--config <path>`       | Path to `perstack.toml`                         |
 
 **Event Types:**
 
-| Event Type              | Description                              |
-| ----------------------- | ---------------------------------------- |
-| `startRun`              | Run started                              |
-| `callTools`             | Tool calls made                          |
-| `resolveToolResults`    | Tool results received                    |
-| `callDelegate`          | Delegation to another expert             |
-| `stopRunByError`        | Error occurred                           |
-| `retry`                 | Generation retry                         |
-| `completeRun`           | Run completed                            |
-| `continueToNextStep`    | Step transition                          |
+| Event Type           | Description                  |
+| -------------------- | ---------------------------- |
+| `startRun`           | Run started                  |
+| `callTools`          | Tool calls made              |
+| `resolveToolResults` | Tool results received        |
+| `callDelegate`       | Delegation to another expert |
+| `stopRunByError`     | Error occurred               |
+| `retry`              | Generation retry             |
+| `completeRun`        | Run completed                |
+| `continueToNextStep` | Step transition              |
 
 **Filter Expression Syntax:**
 
