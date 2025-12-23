@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@perstack/filesystem-storage",
-  "version": "0.1.0",
+  "version": "0.0.3",
   "description": "Perstack Storage - Job, Checkpoint, Event persistence",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",

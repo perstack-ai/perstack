@@ -1,8 +1,8 @@
 # @perstack/e2e-mcp-server
 
-## 0.1.0
+## 0.0.4
 
-### Minor Changes
+### Patch Changes
 
 - [#235](https://github.com/perstack-ai/perstack/pull/235) [`90b86c0`](https://github.com/perstack-ai/perstack/commit/90b86c0e503dac95a3d6bc1a29a6f5d8d35dd666) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - feat: bundle @perstack/base into runtime with InMemoryTransport
 

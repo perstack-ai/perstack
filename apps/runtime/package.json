@@ -1,6 +1,6 @@
 {
   "name": "@perstack/runtime",
-  "version": "0.1.0",
+  "version": "0.0.71",
   "description": "Perstack Runtime",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
