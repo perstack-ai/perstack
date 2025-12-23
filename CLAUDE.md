@@ -9,6 +9,8 @@ Your configuration source is the `.agent/` directory.
 | `.agent/rules/how-you-work.md` | Always, before starting any task    |
 | `.agent/rules/coding-style.md` | When writing code                   |
 | `.agent/rules/versioning.md`   | When creating changesets            |
+| `.agent/rules/e2e.md`          | When running or writing E2E tests   |
+| `.agent/rules/debugging.md`    | When debugging Perstack executions  |
 | `SECURITY.md`                  | When touching security-related code |
 
 ## GitHub Operations
