@@ -7,12 +7,30 @@
  *
  * These tests do NOT invoke LLM APIs - they test CLI parsing and basic behavior.
  */
-import { describe, expect, it } from "vitest"
+import { mkdtemp, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { runCli } from "../lib/runner.js"
 
 describe("Log Command", () => {
+  let storagePath: string
+
+  beforeEach(async () => {
+    storagePath = await mkdtemp(join(tmpdir(), "perstack-e2e-log-"))
+  })
+
+  afterEach(async () => {
+    await rm(storagePath, { recursive: true, force: true })
+  })
+
+  function runCliWithIsolatedStorage(args: string[]) {
+    return runCli(args, { env: { ...process.env, PERSTACK_STORAGE_PATH: storagePath } })
+  }
+
   it("should show help text", async () => {
-    const result = await runCli(["log", "--help"])
+    const result = await runCliWithIsolatedStorage(["log", "--help"])
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("View execution history")
     expect(result.stdout).toContain("--job")
@@ -24,42 +42,48 @@ describe("Log Command", () => {
   })
 
   it("should handle nonexistent job gracefully", async () => {
-    const result = await runCli(["log", "--job", "nonexistent-job-id"])
+    const result = await runCliWithIsolatedStorage(["log", "--job", "nonexistent-job-id"])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept valid options", async () => {
-    const result = await runCli(["log", "--job", "test-job", "--json"])
+    const result = await runCliWithIsolatedStorage(["log", "--job", "test-job", "--json"])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept step filter", async () => {
-    const result = await runCli(["log", "--job", "test-job", "--step", "5"])
+    const result = await runCliWithIsolatedStorage(["log", "--job", "test-job", "--step", "5"])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept type filter", async () => {
-    const result = await runCli(["log", "--job", "test-job", "--type", "callTools"])
+    const result = await runCliWithIsolatedStorage([
+      "log",
+      "--job",
+      "test-job",
+      "--type",
+      "callTools",
+    ])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept errors preset", async () => {
-    const result = await runCli(["log", "--errors"])
+    const result = await runCliWithIsolatedStorage(["log", "--errors"])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept tools preset", async () => {
-    const result = await runCli(["log", "--tools"])
+    const result = await runCliWithIsolatedStorage(["log", "--tools"])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept summary option", async () => {
-    const result = await runCli(["log", "--summary"])
+    const result = await runCliWithIsolatedStorage(["log", "--summary"])
     expect(result.stdout).toContain("No data found")
   })
 
   it("should accept filter expression", async () => {
-    const result = await runCli(["log", "--filter", ".stepNumber > 1"])
+    const result = await runCliWithIsolatedStorage(["log", "--filter", ".stepNumber > 1"])
     expect(result.stdout).toContain("No data found")
   })
 })
