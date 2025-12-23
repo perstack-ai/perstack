@@ -41,6 +41,10 @@ describe("parseStepFilter", () => {
   it("throws on invalid format", () => {
     expect(() => parseStepFilter("abc")).toThrow("Invalid step filter")
   })
+
+  it("throws on inverted range", () => {
+    expect(() => parseStepFilter("10-5")).toThrow("Invalid step range")
+  })
 })
 
 describe("parseFilterExpression", () => {

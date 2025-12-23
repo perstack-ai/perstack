@@ -9,7 +9,12 @@ export function parseStepFilter(step: string): StepFilter {
   const trimmed = step.trim()
   const rangeMatch = trimmed.match(/^(\d+)-(\d+)$/)
   if (rangeMatch) {
-    return { type: "range", min: Number(rangeMatch[1]), max: Number(rangeMatch[2]) }
+    const min = Number(rangeMatch[1])
+    const max = Number(rangeMatch[2])
+    if (min > max) {
+      throw new Error(`Invalid step range: ${step} (min ${min} > max ${max})`)
+    }
+    return { type: "range", min, max }
   }
   const gteMatch = trimmed.match(/^>=(\d+)$/)
   if (gteMatch) {
