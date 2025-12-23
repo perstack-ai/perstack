@@ -18,6 +18,17 @@ import {
 const DEFAULT_TAKE = 100
 const DEFAULT_OFFSET = 0
 
+function parsePositiveInt(val: string, optionName: string): number {
+  const parsed = parseInt(val, 10)
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid value for ${optionName}: "${val}" is not a valid number`)
+  }
+  if (parsed < 0) {
+    throw new Error(`Invalid value for ${optionName}: "${val}" must be non-negative`)
+  }
+  return parsed
+}
+
 export const logCommand = new Command()
   .command("log")
   .description("View execution history and events for debugging")
@@ -36,12 +47,14 @@ export const logCommand = new Command()
   .option(
     "--take <n>",
     `Number of events to display (default: ${DEFAULT_TAKE}, use 0 for all)`,
-    (val) => parseInt(val, 10),
+    (val) => parsePositiveInt(val, "--take"),
   )
   .option("--offset <n>", `Number of events to skip (default: ${DEFAULT_OFFSET})`, (val) =>
-    parseInt(val, 10),
+    parsePositiveInt(val, "--offset"),
   )
-  .option("--context <n>", "Include N events before/after matches", (val) => parseInt(val, 10))
+  .option("--context <n>", "Include N events before/after matches", (val) =>
+    parsePositiveInt(val, "--context"),
+  )
   .option("--messages", "Show message history for checkpoint")
   .option("--summary", "Show summarized view")
   .action(async (options: LogCommandOptions) => {

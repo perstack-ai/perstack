@@ -48,4 +48,41 @@ describe("logCommand", () => {
     const { logCommand } = await import("./log.js")
     expect(logCommand.description()).toBe("View execution history and events for debugging")
   })
+
+  it("validates --take option rejects non-numeric values", async () => {
+    const { logCommand } = await import("./log.js")
+    const takeOption = logCommand.options.find((o) => o.long === "--take")
+    expect(takeOption).toBeDefined()
+    // The parseArg function should throw for non-numeric values
+    expect(() => takeOption!.parseArg!("abc", undefined)).toThrow(
+      'Invalid value for --take: "abc" is not a valid number',
+    )
+  })
+
+  it("validates --take option rejects negative values", async () => {
+    const { logCommand } = await import("./log.js")
+    const takeOption = logCommand.options.find((o) => o.long === "--take")
+    expect(takeOption).toBeDefined()
+    expect(() => takeOption!.parseArg!("-5", undefined)).toThrow(
+      'Invalid value for --take: "-5" must be non-negative',
+    )
+  })
+
+  it("validates --offset option rejects non-numeric values", async () => {
+    const { logCommand } = await import("./log.js")
+    const offsetOption = logCommand.options.find((o) => o.long === "--offset")
+    expect(offsetOption).toBeDefined()
+    expect(() => offsetOption!.parseArg!("xyz", undefined)).toThrow(
+      'Invalid value for --offset: "xyz" is not a valid number',
+    )
+  })
+
+  it("validates --context option rejects non-numeric values", async () => {
+    const { logCommand } = await import("./log.js")
+    const contextOption = logCommand.options.find((o) => o.long === "--context")
+    expect(contextOption).toBeDefined()
+    expect(() => contextOption!.parseArg!("foo", undefined)).toThrow(
+      'Invalid value for --context: "foo" is not a valid number',
+    )
+  })
 })
