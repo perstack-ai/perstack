@@ -41,7 +41,6 @@ describe("logCommand", () => {
     expect(options).toContain("--context")
     expect(options).toContain("--messages")
     expect(options).toContain("--summary")
-    expect(options).toContain("--config")
   })
 
   it("has correct description", async () => {

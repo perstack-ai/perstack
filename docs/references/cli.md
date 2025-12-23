@@ -363,7 +363,6 @@ When called without options, shows a summary of the latest job.
 | `--context <n>`         | Include N events before/after matches           |
 | `--messages`            | Show message history for checkpoint             |
 | `--summary`             | Show summarized view                            |
-| `--config <path>`       | Path to `perstack.toml`                         |
 
 **Event Types:**
 

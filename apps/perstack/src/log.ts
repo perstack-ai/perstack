@@ -34,7 +34,6 @@ export const logCommand = new Command()
   .option("--context <n>", "Include N events before/after matches", (val) => parseInt(val, 10))
   .option("--messages", "Show message history for checkpoint")
   .option("--summary", "Show summarized view")
-  .option("--config <configPath>", "Path to perstack.toml config file")
   .action(async (options: LogCommandOptions) => {
     try {
       const storagePath = process.env.PERSTACK_STORAGE_PATH ?? `${process.cwd()}/perstack`
@@ -123,10 +122,13 @@ async function buildOutput(
         summary: createSummary(filteredEvents),
       }
     }
+    const job = await fetcher.getJob(jobId)
+    if (!job) {
+      return null
+    }
     const checkpoint = await fetcher.getCheckpoint(jobId, options.checkpoint)
     const events = await fetcher.getEvents(jobId, checkpoint.runId)
     const filteredEvents = applyFilters(events, filterOptions)
-    const job = await fetcher.getJob(jobId)
     return {
       job,
       checkpoint,
@@ -150,6 +152,9 @@ async function buildOutput(
       }
     }
     const job = await fetcher.getJob(jobId)
+    if (!job) {
+      return null
+    }
     const events = await fetcher.getEvents(jobId, options.run)
     const filteredEvents = applyFilters(events, filterOptions)
     return {

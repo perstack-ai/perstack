@@ -17,7 +17,6 @@ export interface LogCommandOptions {
   context?: number
   messages?: boolean
   summary?: boolean
-  config?: string
 }
 
 export interface FilterOptions {
