@@ -1,19 +1,8 @@
-# @perstack/base
+# create-expert
 
 ## 0.1.0
 
 ### Minor Changes
-
-- [#248](https://github.com/perstack-ai/perstack/pull/248) [`d6b7d4d`](https://github.com/perstack-ai/perstack/commit/d6b7d4d34fa9f92c57d324884e4fa6603ec577a1) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add `perstack log` command for viewing execution history and events.
-
-  This command enables developers and AI agents to inspect job/run history for debugging purposes. Features include:
-
-  - View events by job, run, or checkpoint
-  - Filter events by type, step number, or custom expressions
-  - Preset filters for errors, tools, and delegations
-  - Human-readable terminal output with colors
-  - JSON output for machine parsing
-  - Summary view for quick diagnosis
 
 - [#235](https://github.com/perstack-ai/perstack/pull/235) [`90b86c0`](https://github.com/perstack-ai/perstack/commit/90b86c0e503dac95a3d6bc1a29a6f5d8d35dd666) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - feat: bundle @perstack/base into runtime with InMemoryTransport
 
@@ -75,15 +64,6 @@
   - Reproducible builds with locked tool definitions
   - Faster production deployments
 
-- [#236](https://github.com/perstack-ai/perstack/pull/236) [`d88f116`](https://github.com/perstack-ai/perstack/commit/d88f116edbbb8ffa4240066f0bacb70f442e1123) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add native LLM reasoning support (Extended Thinking/Reasoning)
-
-  - Add `reasoningBudget` option to enable test-time scaling
-  - Support Anthropic Extended Thinking with thinking block preservation
-  - Support OpenAI Reasoning Effort with effort level mapping
-  - Support Google Flash Thinking with thinkingBudget configuration
-  - Add `ThinkingPart` message type for conversation history
-  - Add `thinking` field to `completeRun` event for observability
-
 - [#247](https://github.com/perstack-ai/perstack/pull/247) [`9da758b`](https://github.com/perstack-ai/perstack/commit/9da758b3b59047a7086d5748dbaa586bbd9dbca1) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add S3 and R2 storage backends with unified Storage interface
 
   - Add `Storage` interface and `EventMeta` type to `@perstack/core`
@@ -144,6 +124,15 @@
 
   Closes #165, #167
 
+- [#221](https://github.com/perstack-ai/perstack/pull/221) [`91a3a31`](https://github.com/perstack-ai/perstack/commit/91a3a3112f03201074619e1ee5cb12d498dcbb66) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - refactor: integrate TUI components into apps (Phase 4)
+
+  This change integrates the @perstack/tui package directly into the apps that use it:
+
+  - `apps/perstack`: Now contains TUI components for start, status, publish, tag, unpublish, and progress
+  - `apps/create-expert`: Now contains the wizard TUI component
+
+  The @perstack/tui package has been removed as a separate package. Each app now owns its UI components directly.
+
 - [#151](https://github.com/perstack-ai/perstack/pull/151) [`51159b6`](https://github.com/perstack-ai/perstack/commit/51159b6e9fabed47134cbb94f1145e950928bca0) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Multi-runtime support and Docker enhancements
 
   Features:
@@ -171,188 +160,3 @@
   - Reorganize E2E tests with security audit trails
   - Add runtime field to TUI and Registry API
   - Add verbose output for Docker build progress with --verbose flag
-
-- Updated dependencies [[`d6b7d4d`](https://github.com/perstack-ai/perstack/commit/d6b7d4d34fa9f92c57d324884e4fa6603ec577a1), [`90b86c0`](https://github.com/perstack-ai/perstack/commit/90b86c0e503dac95a3d6bc1a29a6f5d8d35dd666), [`7792a8d`](https://github.com/perstack-ai/perstack/commit/7792a8df1aa988ae04c40f4ee737e5086b9cacca), [`edec35e`](https://github.com/perstack-ai/perstack/commit/edec35e728c89ef98873cee9594ecc3a853d3999), [`5b07fd7`](https://github.com/perstack-ai/perstack/commit/5b07fd7ba21fae211ab38e808881c9bdc80de718), [`80a58ed`](https://github.com/perstack-ai/perstack/commit/80a58edf047bc0ef883745afd52173dfc4162669), [`f5dc244`](https://github.com/perstack-ai/perstack/commit/f5dc244339238f080661c6e73f652cd737d3c218), [`a01ee65`](https://github.com/perstack-ai/perstack/commit/a01ee65fa1932726928744bb625c3196b499a20b), [`0653050`](https://github.com/perstack-ai/perstack/commit/065305088dce72c2cf68873a1485c98183174c78), [`26e1109`](https://github.com/perstack-ai/perstack/commit/26e11097a65c1b2cc9aa74f48b53026df3eaa4b0), [`beb1edc`](https://github.com/perstack-ai/perstack/commit/beb1edc7222231ac67cf0653331e4644b162ca8b), [`58ddc86`](https://github.com/perstack-ai/perstack/commit/58ddc8690ff6a399a270c487e8035065efa03fb5), [`d88f116`](https://github.com/perstack-ai/perstack/commit/d88f116edbbb8ffa4240066f0bacb70f442e1123), [`9da758b`](https://github.com/perstack-ai/perstack/commit/9da758b3b59047a7086d5748dbaa586bbd9dbca1), [`90f7de0`](https://github.com/perstack-ai/perstack/commit/90f7de06a92f98df771a71cc663da607f11d8194), [`0831c63`](https://github.com/perstack-ai/perstack/commit/0831c63c1484dd9b0a6c6ce95504d46c05086aa4), [`51159b6`](https://github.com/perstack-ai/perstack/commit/51159b6e9fabed47134cbb94f1145e950928bca0)]:
-  - @perstack/core@0.1.0
-
-## 0.0.33
-
-### Patch Changes
-
-- [#62](https://github.com/perstack-ai/perstack/pull/62) [`3b64f88`](https://github.com/perstack-ai/perstack/commit/3b64f886b2e6f030d0e75d0baf4b51fb4d3747b8) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add parallel tool call support and mixed tool call handling
-
-  Features:
-
-  - Process all tool calls from a single LLM response instead of only the first one
-  - MCP tools execute in parallel using `Promise.all`
-  - Support mixed tool calls (MCP + Delegate + Interactive in same response)
-  - Process tools in priority order: MCP → Delegate → Interactive
-  - Preserve partial results across checkpoint boundaries
-
-  Schema Changes:
-
-  - `Step.toolCall` → `Step.toolCalls` (array)
-  - `Step.toolResult` → `Step.toolResults` (array)
-  - Add `Step.pendingToolCalls` for tracking unprocessed tool calls
-  - Add `Checkpoint.pendingToolCalls` and `Checkpoint.partialToolResults` for resume
-
-  Event Changes:
-
-  - `callTool` → `callTools`
-  - `resolveToolResult` → `resolveToolResults`
-  - Add `resumeToolCalls` and `finishAllToolCalls` events
-
-## 0.0.32
-
-### Patch Changes
-
-- [#57](https://github.com/perstack-ai/perstack/pull/57) [`f5fc0ec`](https://github.com/perstack-ai/perstack/commit/f5fc0ec4eaf66fe80ad99e4d23e2757bf4471f07) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Remove character limits from file operation tools
-
-  The following tools no longer have character limits:
-
-  - writeTextFile: removed 10,000 character limit
-  - appendTextFile: removed 2,000 character limit
-  - editTextFile: removed 2,000 character limit for both newText and oldText
-
-## 0.0.31
-
-### Patch Changes
-
-- [#45](https://github.com/perstack-ai/perstack/pull/45) [`af20acb`](https://github.com/perstack-ai/perstack/commit/af20acb717b74df1d59164858e3848d6da48a21a) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add event detail view in history browser
-
-  Users can now select an event in the events list to view its details including type, step number, timestamp, and IDs.
-
-## 0.0.30
-
-### Patch Changes
-
-- Add health check tool, Zod error formatting, and refactor SkillManager
-
-  Features:
-
-  - Add healthCheck tool to @perstack/base for runtime health monitoring
-  - Add friendly Zod error formatting utility to @perstack/core
-  - Export BaseEvent interface from @perstack/core
-
-  Improvements:
-
-  - Refactor SkillManager into separate classes (McpSkillManager, InteractiveSkillManager, DelegateSkillManager)
-  - Use discriminatedUnion for provider settings in perstack.toml schema
-  - Add JSDoc documentation to all core schema types
-  - Add Skill Management documentation
-
-## 0.0.29
-
-### Patch Changes
-
-- init
-
-## 0.0.28
-
-### Patch Changes
-
-- init
-
-## 0.0.27
-
-### Patch Changes
-
-- init
-
-## 0.0.26
-
-### Patch Changes
-
-- init
-
-## 0.0.25
-
-### Patch Changes
-
-- init
-
-## 0.0.24
-
-### Patch Changes
-
-- init
-
-## 0.0.23
-
-### Patch Changes
-
-- init
-
-## 0.0.22
-
-### Patch Changes
-
-- init
-
-## 0.0.21
-
-### Patch Changes
-
-- init
-
-## 0.0.20
-
-### Patch Changes
-
-- init
-
-## 0.0.18
-
-### Patch Changes
-
-- init
-- init
-- init
-
-## 0.0.15
-
-### Patch Changes
-
-- init
-
-## 0.0.14
-
-### Patch Changes
-
-- init
-
-## 0.0.13
-
-### Patch Changes
-
-- Init
-
-## 0.0.12
-
-### Patch Changes
-
-- Init
-
-## 0.0.11
-
-### Patch Changes
-
-- Init
-
-## 0.0.10
-
-### Patch Changes
-
-- Init
-
-## 0.0.9
-
-### Patch Changes
-
-- Test: Setting up changeset
-
-## 0.0.8
-
-### Patch Changes
-
-- Test
