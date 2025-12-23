@@ -11,6 +11,18 @@ export const unpublishCommand = new Command()
   .option("--force", "Skip confirmation prompt (required for CLI mode)")
   .action(async (expertKey: string | undefined, options: { config?: string; force?: boolean }) => {
     try {
+      if (expertKey) {
+        if (!expertKey.includes("@")) {
+          console.error("Expert key must include version (e.g., my-expert@1.0.0)")
+          process.exit(1)
+        }
+        if (!options.force) {
+          console.error(`This will permanently remove ${expertKey} from the registry.`)
+          console.error("Use --force to confirm, or run without arguments for interactive mode.")
+          process.exit(1)
+        }
+      }
+
       const perstackConfig = await getPerstackConfig(options.config)
       const client = createApiClient({
         baseUrl: perstackConfig.perstackApiBaseUrl,
@@ -66,15 +78,6 @@ export const unpublishCommand = new Command()
         }
         console.log(`Unpublished ${result.expertKey}`)
         return
-      }
-      if (!expertKey.includes("@")) {
-        console.error("Expert key must include version (e.g., my-expert@1.0.0)")
-        process.exit(1)
-      }
-      if (!options.force) {
-        console.error(`This will permanently remove ${expertKey} from the registry.`)
-        console.error("Use --force to confirm, or run without arguments for interactive mode.")
-        process.exit(1)
       }
       const deleteResult = await client.registry.experts.delete(expertKey)
       if (!deleteResult.ok) {

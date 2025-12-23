@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { filterEventsByType } from "../lib/event-parser.js"
+import { hasAnthropicKey, hasGoogleKey, hasOpenAIKey } from "../lib/prerequisites.js"
 import { runRuntimeCli, withEventParsing } from "../lib/runner.js"
 
 const REASONING_BUDGET_CONFIG = "./e2e/experts/reasoning-budget.toml"
@@ -96,7 +97,7 @@ async function runReasoningTest(
 }
 
 describe("Reasoning Budget", () => {
-  describe("Anthropic Extended Thinking", () => {
+  describe.runIf(hasAnthropicKey())("Anthropic Extended Thinking", () => {
     // Note: Claude claude-sonnet-4-5 supports extended thinking
     const ANTHROPIC_MODEL = "claude-sonnet-4-5"
 
@@ -192,7 +193,7 @@ describe("Reasoning Budget", () => {
     )
   })
 
-  describe("OpenAI Reasoning Effort", () => {
+  describe.runIf(hasOpenAIKey())("OpenAI Reasoning Effort", () => {
     // Note: o3-mini supports reasoning effort
     const OPENAI_MODEL = "o3-mini"
 
@@ -239,7 +240,7 @@ describe("Reasoning Budget", () => {
     )
   })
 
-  describe("Google Flash Thinking", () => {
+  describe.runIf(hasGoogleKey())("Google Flash Thinking", () => {
     // Note: gemini-2.5-flash supports thinking mode
     const GOOGLE_MODEL = "gemini-2.5-flash"
 

@@ -16,6 +16,17 @@ export const tagCommand = new Command()
       options: { config?: string },
     ) => {
       try {
+        if (expertKey) {
+          if (!expertKey.includes("@")) {
+            console.error("Expert key must include version (e.g., my-expert@1.0.0)")
+            process.exit(1)
+          }
+          if (!tags || tags.length === 0) {
+            console.error("Please provide tags to set")
+            process.exit(1)
+          }
+        }
+
         const perstackConfig = await getPerstackConfig(options.config)
         const client = createApiClient({
           baseUrl: perstackConfig.perstackApiBaseUrl,
@@ -76,14 +87,6 @@ export const tagCommand = new Command()
             `  Tags: ${updateResult.data.tags.length > 0 ? updateResult.data.tags.join(", ") : "(none)"}`,
           )
           return
-        }
-        if (!expertKey.includes("@")) {
-          console.error("Expert key must include version (e.g., my-expert@1.0.0)")
-          process.exit(1)
-        }
-        if (!tags || tags.length === 0) {
-          console.error("Please provide tags to set")
-          process.exit(1)
         }
         const updateResult = await client.registry.experts.update(expertKey, { tags })
         if (!updateResult.ok) {

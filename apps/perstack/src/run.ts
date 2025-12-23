@@ -58,6 +58,11 @@ export const runCommand = new Command()
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(runCommandInputSchema, { expertKey, query, options })
     try {
+      if (input.options.resumeFrom && !input.options.continue && !input.options.continueJob) {
+        console.error("--resume-from requires --continue or --continue-job")
+        process.exit(1)
+      }
+
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
           configPath: input.options.config,

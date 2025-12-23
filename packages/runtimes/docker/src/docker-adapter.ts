@@ -192,10 +192,12 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
     additionalEnvKeys?: string[],
   ): Promise<string> {
     const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), "perstack-docker-"))
+    const containerUser = this.getContainerUser()
     const context = generateBuildContext(config, expertKey, {
       workspacePath: workspace,
       verbose,
       additionalEnvKeys,
+      containerUser,
     })
     fs.writeFileSync(path.join(buildDir, "Dockerfile"), context.dockerfile)
     fs.writeFileSync(path.join(buildDir, "perstack.toml"), context.configToml)
@@ -219,6 +221,22 @@ export class DockerAdapter extends BaseAdapter implements RuntimeAdapter {
       fs.mkdirSync(workspaceDir)
     }
     return buildDir
+  }
+
+  /**
+   * Prefer running the container as the current host user to avoid permission
+   * issues for mounted workspaces (e.g., CI temp dirs with 0700).
+   *
+   * If uid/gid are unavailable or root, fall back to the image default.
+   */
+  protected getContainerUser(): { uid: number; gid: number } | undefined {
+    if (typeof process.getuid !== "function" || typeof process.getgid !== "function") {
+      return undefined
+    }
+    const uid = process.getuid()
+    const gid = process.getgid()
+    if (uid === 0) return undefined
+    return { uid, gid }
   }
 
   protected async buildImages(

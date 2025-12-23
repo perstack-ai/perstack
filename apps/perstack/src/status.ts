@@ -16,6 +16,21 @@ export const statusCommand = new Command()
       options: { config?: string },
     ) => {
       try {
+        if (expertKey) {
+          if (!expertKey.includes("@")) {
+            console.error("Expert key must include version (e.g., my-expert@1.0.0)")
+            process.exit(1)
+          }
+          if (!status) {
+            console.error("Please provide a status (available, deprecated, disabled)")
+            process.exit(1)
+          }
+          if (!["available", "deprecated", "disabled"].includes(status)) {
+            console.error("Invalid status. Must be: available, deprecated, or disabled")
+            process.exit(1)
+          }
+        }
+
         const perstackConfig = await getPerstackConfig(options.config)
         const client = createApiClient({
           baseUrl: perstackConfig.perstackApiBaseUrl,
@@ -74,18 +89,6 @@ export const statusCommand = new Command()
           console.log(`Updated ${updateResult.data.key}`)
           console.log(`  Status: ${updateResult.data.status}`)
           return
-        }
-        if (!expertKey.includes("@")) {
-          console.error("Expert key must include version (e.g., my-expert@1.0.0)")
-          process.exit(1)
-        }
-        if (!status) {
-          console.error("Please provide a status (available, deprecated, disabled)")
-          process.exit(1)
-        }
-        if (!["available", "deprecated", "disabled"].includes(status)) {
-          console.error("Invalid status. Must be: available, deprecated, or disabled")
-          process.exit(1)
         }
         const updateResult = await client.registry.experts.update(expertKey, {
           status: status as "available" | "deprecated" | "disabled",

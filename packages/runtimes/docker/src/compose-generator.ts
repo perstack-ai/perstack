@@ -16,6 +16,11 @@ export interface ComposeGeneratorOptions {
   networkName: string
   envKeys: string[]
   workspacePath?: string
+  /**
+   * Run container as a specific host user (uid:gid).
+   * This avoids permission issues when mounting host workspaces into /workspace.
+   */
+  containerUser?: { uid: number; gid: number }
 }
 function validateWorkspacePath(path: string): void {
   if (path.includes("..") || path.includes("\n") || path.includes(";") || path.includes("$")) {
@@ -24,10 +29,12 @@ function validateWorkspacePath(path: string): void {
 }
 
 export function generateComposeFile(options: ComposeGeneratorOptions): string {
-  const { proxyEnabled, networkName, envKeys, workspacePath } = options
+  const { proxyEnabled, networkName, envKeys, workspacePath, containerUser } = options
   if (workspacePath) {
     validateWorkspacePath(workspacePath)
   }
+  const containerUid = containerUser?.uid ?? 999
+  const containerGid = containerUser?.gid ?? 999
   const internalNetworkName = `${networkName}-internal`
   const lines: string[] = []
   lines.push("services:")
@@ -35,6 +42,7 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("    build:")
   lines.push("      context: .")
   lines.push("      dockerfile: Dockerfile")
+  lines.push(`    user: "${containerUid}:${containerGid}"`)
   const allEnvKeys = [...envKeys]
   if (proxyEnabled) {
     allEnvKeys.push("HTTP_PROXY=http://proxy:3128")
@@ -63,8 +71,12 @@ export function generateComposeFile(options: ComposeGeneratorOptions): string {
   lines.push("    read_only: true")
   lines.push("    tmpfs:")
   lines.push("      - /tmp:size=256M,mode=1777,exec")
-  lines.push("      - /home/perstack/.npm:size=512M,uid=999,gid=999,mode=0755,exec")
-  lines.push("      - /home/perstack/.cache:size=256M,uid=999,gid=999,mode=0755,exec")
+  lines.push(
+    `      - /home/perstack/.npm:size=512M,uid=${containerUid},gid=${containerGid},mode=0755,exec`,
+  )
+  lines.push(
+    `      - /home/perstack/.cache:size=256M,uid=${containerUid},gid=${containerGid},mode=0755,exec`,
+  )
   lines.push("    deploy:")
   lines.push("      resources:")
   lines.push("        limits:")
@@ -108,6 +120,8 @@ export interface BuildContextOptions {
   verbose?: boolean
   /** Additional environment variable names to pass to Docker container */
   additionalEnvKeys?: string[]
+  /** Run Docker container as host uid:gid (recommended for mounted workspaces). */
+  containerUser?: { uid: number; gid: number }
 }
 
 export function generateBuildContext(
@@ -124,10 +138,15 @@ export function generateBuildContext(
   composeFile: string
 } {
   // Support both old signature (string) and new signature (options object)
-  const { workspacePath, verbose, additionalEnvKeys } =
+  const { workspacePath, verbose, additionalEnvKeys, containerUser } =
     typeof options === "string" || options === undefined
-      ? { workspacePath: options, verbose: false, additionalEnvKeys: [] as string[] }
-      : { additionalEnvKeys: [], ...options }
+      ? {
+          workspacePath: options,
+          verbose: false,
+          additionalEnvKeys: [] as string[],
+          containerUser: undefined,
+        }
+      : { additionalEnvKeys: [], containerUser: undefined, ...options }
 
   const allowedDomains = collectAllowedDomains(config, expertKey)
   const hasAllowlist = allowedDomains.length > 0
@@ -155,6 +174,7 @@ export function generateBuildContext(
     networkName: "perstack-net",
     envKeys: allEnvKeys,
     workspacePath: resolvedWorkspacePath,
+    containerUser,
   })
   return {
     dockerfile,

@@ -133,15 +133,27 @@ export class LLMExecutor {
     try {
       // Iterate over fullStream to emit streaming events
       for await (const part of streamResult.fullStream) {
-        if (part.type === "reasoning-delta") {
+        const partType = (part as { type?: unknown }).type
+        const partText = (part as { text?: unknown }).text
+
+        const isReasoningChunk =
+          (partType === "reasoning-delta" ||
+            partType === "reasoning" ||
+            partType === "thinking-delta" ||
+            partType === "thinking") &&
+          typeof partText === "string"
+
+        const isTextChunk = (partType === "text-delta" || partType === "text") && typeof partText === "string"
+
+        if (isReasoningChunk) {
           if (!reasoningStarted) {
             callbacks.onReasoningStart?.()
             reasoningStarted = true
           }
-          accumulatedReasoning += part.text
-          callbacks.onReasoningDelta?.(part.text)
+          accumulatedReasoning += partText
+          callbacks.onReasoningDelta?.(partText)
         }
-        if (part.type === "text-delta") {
+        if (isTextChunk) {
           // Complete reasoning phase before starting result phase
           if (reasoningStarted && !reasoningCompleted) {
             callbacks.onReasoningComplete?.(accumulatedReasoning)
@@ -151,7 +163,7 @@ export class LLMExecutor {
             callbacks.onResultStart?.()
             resultStarted = true
           }
-          callbacks.onResultDelta?.(part.text)
+          callbacks.onResultDelta?.(partText)
         }
       }
 
