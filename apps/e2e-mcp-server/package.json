@@ -1,6 +1,7 @@
 {
   "name": "@perstack/e2e-mcp-server",
   "version": "0.0.4",
+  "private": true,
   "description": "MCP server for E2E testing of Perstack security and skill features.",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
@@ -8,21 +9,6 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "publishConfig": {
-    "access": "public",
-    "bin": {
-      "@perstack/e2e-mcp-server": "dist/bin/server.js"
-    },
-    "exports": {
-      ".": "./dist/src/index.js"
-    },
-    "types": {
-      ".": "./dist/src/index.d.ts"
-    }
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "clean": "rm -rf dist",
     "build": "pnpm run clean && tsup",
