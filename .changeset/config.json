@@ -7,5 +7,25 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [
+    "@perstack/mock",
+    "@perstack/runner",
+    "@perstack/anthropic-provider",
+    "@perstack/azure-openai-provider",
+    "@perstack/bedrock-provider",
+    "@perstack/provider-core",
+    "@perstack/deepseek-provider",
+    "@perstack/google-provider",
+    "@perstack/ollama-provider",
+    "@perstack/openai-provider",
+    "@perstack/vertex-provider",
+    "@perstack/claude-code",
+    "@perstack/cursor",
+    "@perstack/docker",
+    "@perstack/gemini",
+    "@perstack/s3-storage",
+    "@perstack/r2-storage",
+    "@perstack/filesystem-storage",
+    "@perstack/s3-compatible-storage"
+  ]
 }
