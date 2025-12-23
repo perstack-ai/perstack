@@ -13,7 +13,8 @@ export interface LogCommandOptions {
   json?: boolean
   pretty?: boolean
   verbose?: boolean
-  limit?: number
+  take?: number
+  offset?: number
   context?: number
   messages?: boolean
   summary?: boolean
@@ -26,7 +27,8 @@ export interface FilterOptions {
   tools?: boolean
   delegations?: boolean
   filterExpression?: FilterCondition
-  limit?: number
+  take?: number
+  offset?: number
   context?: number
 }
 
@@ -54,6 +56,8 @@ export interface LogOutput {
   isLatestJob?: boolean
   /** Path to storage directory */
   storagePath?: string
+  /** Total events before limit was applied */
+  totalEventsBeforeLimit?: number
 }
 
 export interface LogSummary {

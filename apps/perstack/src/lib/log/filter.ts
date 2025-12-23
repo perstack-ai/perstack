@@ -177,7 +177,12 @@ function matchesStepFilter(stepNumber: number, filter: StepFilter): boolean {
   }
 }
 
-export function applyFilters(events: RunEvent[], options: FilterOptions): RunEvent[] {
+export type ApplyFiltersResult = {
+  events: RunEvent[]
+  totalBeforePagination: number
+}
+
+export function applyFilters(events: RunEvent[], options: FilterOptions): ApplyFiltersResult {
   let filtered = events
   if (options.step) {
     filtered = filtered.filter((e) => matchesStepFilter(e.stepNumber, options.step as StepFilter))
@@ -199,16 +204,21 @@ export function applyFilters(events: RunEvent[], options: FilterOptions): RunEve
       evaluateCondition(e, options.filterExpression as FilterCondition),
     )
   }
-  // Apply limit to matched events BEFORE adding context
-  // This ensures matched events are not excluded by the limit
-  if (options.limit !== undefined && options.limit > 0) {
-    filtered = filtered.slice(0, options.limit)
+  // Record total count before pagination
+  const totalBeforePagination = filtered.length
+  // Apply offset and take (pagination)
+  const offset = options.offset ?? 0
+  if (offset > 0) {
+    filtered = filtered.slice(offset)
   }
-  // Add context events after limit to preserve matched events
+  if (options.take !== undefined && options.take > 0) {
+    filtered = filtered.slice(0, options.take)
+  }
+  // Add context events after pagination to preserve matched events
   if (options.context !== undefined && options.context > 0) {
     filtered = addContextEvents(events, filtered, options.context)
   }
-  return filtered
+  return { events: filtered, totalBeforePagination }
 }
 
 function addContextEvents(

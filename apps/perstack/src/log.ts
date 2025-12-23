@@ -15,6 +15,9 @@ import {
   parseStepFilter,
 } from "./lib/log/index.js"
 
+const DEFAULT_TAKE = 100
+const DEFAULT_OFFSET = 0
+
 export const logCommand = new Command()
   .command("log")
   .description("View execution history and events for debugging")
@@ -30,7 +33,14 @@ export const logCommand = new Command()
   .option("--json", "Output as JSON")
   .option("--pretty", "Pretty-print JSON output")
   .option("--verbose", "Show full event details")
-  .option("--limit <n>", "Limit number of results", (val) => parseInt(val, 10))
+  .option(
+    "--take <n>",
+    `Number of events to display (default: ${DEFAULT_TAKE}, use 0 for all)`,
+    (val) => parseInt(val, 10),
+  )
+  .option("--offset <n>", `Number of events to skip (default: ${DEFAULT_OFFSET})`, (val) =>
+    parseInt(val, 10),
+  )
   .option("--context <n>", "Include N events before/after matches", (val) => parseInt(val, 10))
   .option("--messages", "Show message history for checkpoint")
   .option("--summary", "Show summarized view")
@@ -81,9 +91,12 @@ function buildFilterOptions(options: LogCommandOptions): FilterOptions {
   if (options.filter) {
     filterOptions.filterExpression = parseFilterExpression(options.filter)
   }
-  if (options.limit !== undefined) {
-    filterOptions.limit = options.limit
+  // --take 0 means no limit (show all)
+  const take = options.take ?? DEFAULT_TAKE
+  if (take > 0) {
+    filterOptions.take = take
   }
+  filterOptions.offset = options.offset ?? DEFAULT_OFFSET
   if (options.context !== undefined) {
     filterOptions.context = options.context
   }
@@ -115,14 +128,15 @@ async function buildOutput(
       }
       const checkpoint = await fetcher.getCheckpoint(latestJob.id, options.checkpoint)
       const events = await fetcher.getEvents(latestJob.id, checkpoint.runId)
-      const filteredEvents = applyFilters(events, filterOptions)
+      const result = applyFilters(events, filterOptions)
       return {
         job: latestJob,
         checkpoint,
-        events: filteredEvents,
-        summary: createSummary(filteredEvents),
+        events: result.events,
+        summary: createSummary(result.events),
         isLatestJob: true,
         storagePath,
+        totalEventsBeforeLimit: result.totalBeforePagination,
       }
     }
     const job = await fetcher.getJob(jobId)
@@ -131,13 +145,14 @@ async function buildOutput(
     }
     const checkpoint = await fetcher.getCheckpoint(jobId, options.checkpoint)
     const events = await fetcher.getEvents(jobId, checkpoint.runId)
-    const filteredEvents = applyFilters(events, filterOptions)
+    const result = applyFilters(events, filterOptions)
     return {
       job,
       checkpoint,
-      events: filteredEvents,
-      summary: createSummary(filteredEvents),
+      events: result.events,
+      summary: createSummary(result.events),
       storagePath,
+      totalEventsBeforeLimit: result.totalBeforePagination,
     }
   }
   if (options.run) {
@@ -148,13 +163,14 @@ async function buildOutput(
         return null
       }
       const events = await fetcher.getEvents(latestJob.id, options.run)
-      const filteredEvents = applyFilters(events, filterOptions)
+      const result = applyFilters(events, filterOptions)
       return {
         job: latestJob,
-        events: filteredEvents,
-        summary: createSummary(filteredEvents),
+        events: result.events,
+        summary: createSummary(result.events),
         isLatestJob: true,
         storagePath,
+        totalEventsBeforeLimit: result.totalBeforePagination,
       }
     }
     const job = await fetcher.getJob(jobId)
@@ -162,12 +178,13 @@ async function buildOutput(
       return null
     }
     const events = await fetcher.getEvents(jobId, options.run)
-    const filteredEvents = applyFilters(events, filterOptions)
+    const result = applyFilters(events, filterOptions)
     return {
       job,
-      events: filteredEvents,
-      summary: createSummary(filteredEvents),
+      events: result.events,
+      summary: createSummary(result.events),
       storagePath,
+      totalEventsBeforeLimit: result.totalBeforePagination,
     }
   }
   if (options.job) {
@@ -176,14 +193,15 @@ async function buildOutput(
       return null
     }
     const events = await fetcher.getAllEventsForJob(options.job)
-    const filteredEvents = applyFilters(events, filterOptions)
+    const result = applyFilters(events, filterOptions)
     const checkpoints = await fetcher.getCheckpoints(options.job)
     return {
       job,
       checkpoints,
-      events: filteredEvents,
-      summary: createSummary(filteredEvents),
+      events: result.events,
+      summary: createSummary(result.events),
       storagePath,
+      totalEventsBeforeLimit: result.totalBeforePagination,
     }
   }
   const latestJob = await fetcher.getLatestJob()
@@ -191,12 +209,13 @@ async function buildOutput(
     return null
   }
   const events = await fetcher.getAllEventsForJob(latestJob.id)
-  const filteredEvents = applyFilters(events, filterOptions)
+  const result = applyFilters(events, filterOptions)
   return {
     job: latestJob,
-    events: filteredEvents,
-    summary: createSummary(filteredEvents),
+    events: result.events,
+    summary: createSummary(result.events),
     isLatestJob: true,
     storagePath,
+    totalEventsBeforeLimit: result.totalBeforePagination,
   }
 }

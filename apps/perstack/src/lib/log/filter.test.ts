@@ -282,49 +282,64 @@ describe("applyFilters", () => {
   it("filters by exact step", () => {
     const options: FilterOptions = { step: { type: "exact", value: 2 } }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e2", "e3"])
+    expect(result.events.map((e) => e.id)).toEqual(["e2", "e3"])
   })
 
   it("filters by step greater than", () => {
     const options: FilterOptions = { step: { type: "gt", value: 2 } }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e4", "e5"])
+    expect(result.events.map((e) => e.id)).toEqual(["e4", "e5"])
   })
 
   it("filters by step range", () => {
     const options: FilterOptions = { step: { type: "range", min: 2, max: 3 } }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e2", "e3", "e4"])
+    expect(result.events.map((e) => e.id)).toEqual(["e2", "e3", "e4"])
   })
 
   it("filters by event type", () => {
     const options: FilterOptions = { type: "callTools" }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e2"])
+    expect(result.events.map((e) => e.id)).toEqual(["e2"])
   })
 
   it("filters errors preset", () => {
     const options: FilterOptions = { errors: true }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e4"])
+    expect(result.events.map((e) => e.id)).toEqual(["e4"])
   })
 
   it("filters tools preset", () => {
     const options: FilterOptions = { tools: true }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e2", "e3"])
+    expect(result.events.map((e) => e.id)).toEqual(["e2", "e3"])
   })
 
   it("filters delegations preset", () => {
     const options: FilterOptions = { delegations: true }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e5"])
+    expect(result.events.map((e) => e.id)).toEqual(["e5"])
   })
 
-  it("applies limit", () => {
-    const options: FilterOptions = { limit: 2 }
+  it("applies take", () => {
+    const options: FilterOptions = { take: 2 }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e1", "e2"])
+    expect(result.events.map((e) => e.id)).toEqual(["e1", "e2"])
+    expect(result.totalBeforePagination).toBe(5)
+  })
+
+  it("applies offset", () => {
+    const options: FilterOptions = { offset: 2 }
+    const result = applyFilters(events, options)
+    expect(result.events.map((e) => e.id)).toEqual(["e3", "e4", "e5"])
+    expect(result.totalBeforePagination).toBe(5)
+  })
+
+  it("applies take and offset together", () => {
+    const options: FilterOptions = { take: 2, offset: 1 }
+    const result = applyFilters(events, options)
+    expect(result.events.map((e) => e.id)).toEqual(["e2", "e3"])
+    expect(result.totalBeforePagination).toBe(5)
   })
 
   it("combines multiple filters (AND logic)", () => {
@@ -333,7 +348,7 @@ describe("applyFilters", () => {
       tools: true,
     }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e2", "e3"])
+    expect(result.events.map((e) => e.id)).toEqual(["e2", "e3"])
   })
 
   it("applies filter expression", () => {
@@ -341,12 +356,12 @@ describe("applyFilters", () => {
       filterExpression: { field: ["stepNumber"], operator: ">", value: 2 },
     }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e4", "e5"])
+    expect(result.events.map((e) => e.id)).toEqual(["e4", "e5"])
   })
 
   it("adds context events", () => {
     const options: FilterOptions = { errors: true, context: 1 }
     const result = applyFilters(events, options)
-    expect(result.map((e) => e.id)).toEqual(["e3", "e4", "e5"])
+    expect(result.events.map((e) => e.id)).toEqual(["e3", "e4", "e5"])
   })
 })

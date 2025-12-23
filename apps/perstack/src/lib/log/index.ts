@@ -6,6 +6,7 @@ export {
 } from "./data-fetcher.js"
 export {
   applyFilters,
+  type ApplyFiltersResult,
   evaluateCondition,
   parseFilterExpression,
   parseStepFilter,

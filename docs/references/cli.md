@@ -359,7 +359,8 @@ When called without options, shows a summary of the latest job.
 | `--json`                | Output as JSON (machine-readable)               |
 | `--pretty`              | Pretty-print JSON output                        |
 | `--verbose`             | Show full event details                         |
-| `--limit <n>`           | Limit number of results                         |
+| `--take <n>`            | Number of events to display (default: 100, 0 for all) |
+| `--offset <n>`          | Number of events to skip (default: 0)           |
 | `--context <n>`         | Include N events before/after matches           |
 | `--messages`            | Show message history for checkpoint             |
 | `--summary`             | Show summarized view                            |

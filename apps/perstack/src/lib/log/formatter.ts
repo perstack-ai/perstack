@@ -46,6 +46,9 @@ export function formatJson(output: LogOutput, options: FormatterOptions): string
   if (output.storagePath) {
     data.storagePath = output.storagePath
   }
+  if (output.totalEventsBeforeLimit !== undefined) {
+    data.totalEventsBeforeLimit = output.totalEventsBeforeLimit
+  }
   if (options.pretty) {
     return JSON.stringify(data, null, 2)
   }
@@ -85,6 +88,17 @@ export function formatTerminal(output: LogOutput, options: FormatterOptions): st
       lines.push(...formatEvent(event, options.verbose))
     }
     lines.push("─".repeat(50))
+    // Show pagination info if events were truncated
+    if (
+      output.totalEventsBeforeLimit !== undefined &&
+      output.totalEventsBeforeLimit > output.events.length
+    ) {
+      const remaining = output.totalEventsBeforeLimit - output.events.length
+      lines.push(`(showing ${output.events.length} of ${output.totalEventsBeforeLimit} events)`)
+      lines.push(`Use --take and --offset to paginate, or --take 0 for all`)
+    }
+  } else if (output.totalEventsBeforeLimit !== undefined && output.totalEventsBeforeLimit > 0) {
+    lines.push(`(${output.totalEventsBeforeLimit} events available, use --offset to view)`)
   }
   return lines.join("\n")
 }
