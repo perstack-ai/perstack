@@ -124,7 +124,7 @@ export const expertJobSchema = z.object({
   id: z.string(),
   expertKey: z.string(),
   status: expertJobStatusSchema,
-  query: z.string(),
+  query: z.string().optional(),
   createdAt: z.string().transform((s) => new Date(s)),
   updatedAt: z.string().transform((s) => new Date(s)),
   startedAt: z
