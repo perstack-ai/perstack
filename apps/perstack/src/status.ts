@@ -1,4 +1,4 @@
-import { ApiV1Client } from "@perstack/api-client/v1"
+import { createApiClient } from "@perstack/api-client"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 import { renderStatus, type WizardVersionInfo } from "./tui/index.js"
@@ -17,7 +17,7 @@ export const statusCommand = new Command()
     ) => {
       try {
         const perstackConfig = await getPerstackConfig(options.config)
-        const client = new ApiV1Client({
+        const client = createApiClient({
           baseUrl: perstackConfig.perstackApiBaseUrl,
           apiKey: process.env.PERSTACK_API_KEY,
         })
@@ -34,49 +34,45 @@ export const statusCommand = new Command()
               description: experts[name].description,
             })),
             onFetchVersions: async (expertName: string): Promise<WizardVersionInfo[]> => {
-              try {
-                const { versions } = await client.registry.experts.getVersions({
-                  expertKey: expertName,
-                })
-                const versionInfos: WizardVersionInfo[] = []
-                for (const v of versions) {
-                  try {
-                    const { expert: fullExpert } = await client.registry.experts.get({
-                      expertKey: v.key,
-                    })
-                    if (fullExpert.type === "registryExpert") {
-                      versionInfos.push({
-                        key: v.key,
-                        version: v.version ?? "unknown",
-                        tags: v.tags,
-                        status: fullExpert.status,
-                      })
-                    }
-                  } catch {
-                    versionInfos.push({
-                      key: v.key,
-                      version: v.version ?? "unknown",
-                      tags: v.tags,
-                      status: "available",
-                    })
-                  }
-                }
-                return versionInfos
-              } catch {
+              const versionsResult = await client.registry.experts.getVersions(expertName)
+              if (!versionsResult.ok) {
                 throw new Error(`Expert "${expertName}" not found in registry`)
               }
+              const { versions } = versionsResult.data
+              const versionInfos: WizardVersionInfo[] = []
+              for (const v of versions) {
+                const expertResult = await client.registry.experts.get(v.key)
+                if (expertResult.ok && expertResult.data.type === "registryExpert") {
+                  versionInfos.push({
+                    key: v.key,
+                    version: v.version ?? "unknown",
+                    tags: v.tags,
+                    status: expertResult.data.status,
+                  })
+                } else {
+                  versionInfos.push({
+                    key: v.key,
+                    version: v.version ?? "unknown",
+                    tags: v.tags,
+                    status: "available",
+                  })
+                }
+              }
+              return versionInfos
             },
           })
           if (!result) {
             console.log("Cancelled")
             process.exit(0)
           }
-          const { expert } = await client.registry.experts.update({
-            expertKey: result.expertKey,
+          const updateResult = await client.registry.experts.update(result.expertKey, {
             status: result.status,
           })
-          console.log(`Updated ${expert.key}`)
-          console.log(`  Status: ${expert.status}`)
+          if (!updateResult.ok) {
+            throw new Error(updateResult.error.message)
+          }
+          console.log(`Updated ${updateResult.data.key}`)
+          console.log(`  Status: ${updateResult.data.status}`)
           return
         }
         if (!expertKey.includes("@")) {
@@ -91,12 +87,14 @@ export const statusCommand = new Command()
           console.error("Invalid status. Must be: available, deprecated, or disabled")
           process.exit(1)
         }
-        const { expert } = await client.registry.experts.update({
-          expertKey,
+        const updateResult = await client.registry.experts.update(expertKey, {
           status: status as "available" | "deprecated" | "disabled",
         })
-        console.log(`Updated ${expert.key}`)
-        console.log(`  Status: ${expert.status}`)
+        if (!updateResult.ok) {
+          throw new Error(updateResult.error.message)
+        }
+        console.log(`Updated ${updateResult.data.key}`)
+        console.log(`  Status: ${updateResult.data.status}`)
       } catch (error) {
         if (error instanceof Error) {
           console.error(error.message)

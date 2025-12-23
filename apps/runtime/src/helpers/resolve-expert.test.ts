@@ -2,12 +2,13 @@ import type { Expert } from "@perstack/core"
 import { describe, expect, it, vi } from "vitest"
 import { resolveExpertToRun } from "./resolve-expert.js"
 
-vi.mock("@perstack/api-client/v1", () => ({
-  ApiV1Client: class {
-    registry = {
+vi.mock("@perstack/api-client", () => ({
+  createApiClient: () => ({
+    registry: {
       experts: {
         get: async () => ({
-          expert: {
+          ok: true,
+          data: {
             key: "remote-expert",
             name: "Remote Expert",
             version: "1.0.0",
@@ -30,8 +31,8 @@ vi.mock("@perstack/api-client/v1", () => ({
           },
         }),
       },
-    }
-  },
+    },
+  }),
 }))
 
 function createTestExpert(overrides: Partial<Expert> = {}): Expert {

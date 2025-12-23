@@ -1,3 +1,7 @@
+---
+title: "Using Experts"
+---
+
 # Using Experts
 
 This section covers **running and integrating Experts** — CLI usage, state management, and error handling.

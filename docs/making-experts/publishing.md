@@ -1,3 +1,7 @@
+---
+title: "Publishing Experts"
+---
+
 # Publishing Experts
 
 Share your Experts with the community by publishing them to the Perstack Registry.

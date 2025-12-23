@@ -1,3 +1,7 @@
+---
+title: "Skills"
+---
+
 # Skills
 
 Skills give Experts access to external tools via MCP (Model Context Protocol).

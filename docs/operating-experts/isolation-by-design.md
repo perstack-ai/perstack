@@ -1,3 +1,7 @@
+---
+title: "Isolation by Design"
+---
+
 # Isolation by Design
 
 Perstack is designed to run inside isolated environments. The runtime itself doesn't enforce security boundaries — your infrastructure does.

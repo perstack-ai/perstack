@@ -1,3 +1,7 @@
+---
+title: "Deployment"
+---
+
 # Deployment
 
 Perstack runs on any Node.js environment. Choose your deployment target based on security requirements, cost, and operational preferences.

@@ -24,12 +24,13 @@ Your configuration source is the `.agent/` directory.
 
 ## Workflows
 
-| File                                  | When to Read                       |
-| ------------------------------------- | ---------------------------------- |
-| `.agent/workflows/implementation.md`  | When implementing a feature or fix |
-| `.agent/workflows/qa.md`              | When running QA                    |
-| `.agent/workflows/audit.md`           | When auditing security             |
-| `.agent/workflows/creating-expert.md` | When creating an Expert            |
+| File                                  | When to Read                        |
+| ------------------------------------- | ----------------------------------- |
+| `.agent/workflows/implementation.md`  | When implementing a feature or fix  |
+| `.agent/workflows/qa.md`              | When running QA                     |
+| `.agent/workflows/audit.md`           | When auditing security              |
+| `.agent/workflows/creating-expert.md` | When creating an Expert             |
+| `.agent/workflows/api-client.md`      | When updating @perstack/api-client  |
 
 ## Project
 

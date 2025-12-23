@@ -1,3 +1,7 @@
+---
+title: "Providers and Models"
+---
+
 # Providers and Models
 
 Perstack supports multiple LLM providers. Configure via CLI options, environment variables, or `perstack.toml`.
