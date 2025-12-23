@@ -1,3 +1,7 @@
+---
+title: "State Management"
+---
+
 # State Management
 
 Perstack automatically saves execution state, enabling continuation and replay.

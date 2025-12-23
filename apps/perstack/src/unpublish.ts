@@ -1,7 +1,8 @@
-import { ApiV1Client } from "@perstack/api-client/v1"
+import { createApiClient } from "@perstack/api-client"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 import { renderUnpublish, type WizardVersionInfo } from "./tui/index.js"
+
 export const unpublishCommand = new Command()
   .command("unpublish")
   .description("Remove an Expert version from the registry")
@@ -11,7 +12,7 @@ export const unpublishCommand = new Command()
   .action(async (expertKey: string | undefined, options: { config?: string; force?: boolean }) => {
     try {
       const perstackConfig = await getPerstackConfig(options.config)
-      const client = new ApiV1Client({
+      const client = createApiClient({
         baseUrl: perstackConfig.perstackApiBaseUrl,
         apiKey: process.env.PERSTACK_API_KEY,
       })
@@ -28,44 +29,41 @@ export const unpublishCommand = new Command()
             description: experts[name].description,
           })),
           onFetchVersions: async (expertName: string): Promise<WizardVersionInfo[]> => {
-            try {
-              const { versions } = await client.registry.experts.getVersions({
-                expertKey: expertName,
-              })
-              const versionInfos: WizardVersionInfo[] = []
-              for (const v of versions) {
-                try {
-                  const { expert: fullExpert } = await client.registry.experts.get({
-                    expertKey: v.key,
-                  })
-                  if (fullExpert.type === "registryExpert") {
-                    versionInfos.push({
-                      key: v.key,
-                      version: v.version ?? "unknown",
-                      tags: v.tags,
-                      status: fullExpert.status,
-                    })
-                  }
-                } catch {
-                  versionInfos.push({
-                    key: v.key,
-                    version: v.version ?? "unknown",
-                    tags: v.tags,
-                    status: "available",
-                  })
-                }
-              }
-              return versionInfos
-            } catch {
+            const versionsResult = await client.registry.experts.getVersions(expertName)
+            if (!versionsResult.ok) {
               throw new Error(`Expert "${expertName}" not found in registry`)
             }
+            const { versions } = versionsResult.data
+            const versionInfos: WizardVersionInfo[] = []
+            for (const v of versions) {
+              const expertResult = await client.registry.experts.get(v.key)
+              if (expertResult.ok && expertResult.data.type === "registryExpert") {
+                versionInfos.push({
+                  key: v.key,
+                  version: v.version ?? "unknown",
+                  tags: v.tags,
+                  status: expertResult.data.status,
+                })
+              } else {
+                versionInfos.push({
+                  key: v.key,
+                  version: v.version ?? "unknown",
+                  tags: v.tags,
+                  status: "available",
+                })
+              }
+            }
+            return versionInfos
           },
         })
         if (!result) {
           console.log("Cancelled")
           process.exit(0)
         }
-        await client.registry.experts.delete({ expertKey: result.expertKey })
+        const deleteResult = await client.registry.experts.delete(result.expertKey)
+        if (!deleteResult.ok) {
+          throw new Error(deleteResult.error.message)
+        }
         console.log(`Unpublished ${result.expertKey}`)
         return
       }
@@ -78,7 +76,10 @@ export const unpublishCommand = new Command()
         console.error("Use --force to confirm, or run without arguments for interactive mode.")
         process.exit(1)
       }
-      await client.registry.experts.delete({ expertKey })
+      const deleteResult = await client.registry.experts.delete(expertKey)
+      if (!deleteResult.ok) {
+        throw new Error(deleteResult.error.message)
+      }
       console.log(`Unpublished ${expertKey}`)
     } catch (error) {
       if (error instanceof Error) {

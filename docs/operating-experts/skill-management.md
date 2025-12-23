@@ -1,3 +1,7 @@
+---
+title: "Skill Management"
+---
+
 # Skill Management
 
 The Perstack runtime manages three types of skills through specialized Skill Managers. Each type has different initialization behavior and security implications.

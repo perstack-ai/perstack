@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { type ApiRegistryExpert, ApiV1Client } from "@perstack/api-client/v1"
+import { createApiClient, type RegistryExpert } from "@perstack/api-client"
 import {
   defaultPerstackApiBaseUrl,
   type Expert,
@@ -36,7 +36,7 @@ async function findConfigPathRecursively(cwd: string): Promise<string> {
   }
 }
 
-function toRuntimeExpert(key: string, expert: ApiRegistryExpert): Expert {
+function toRuntimeExpert(key: string, expert: RegistryExpert): Expert {
   const skills: Record<string, Skill> = Object.fromEntries(
     Object.entries(expert.skills).map(([name, skill]) => {
       switch (skill.type) {
@@ -79,7 +79,7 @@ async function resolveAllExperts(
   env: Record<string, string>,
 ): Promise<Record<string, Expert>> {
   const experts: Record<string, Expert> = {}
-  const apiClient = new ApiV1Client({
+  const client = createApiClient({
     baseUrl: config.perstackApiBaseUrl ?? defaultPerstackApiBaseUrl,
     apiKey: env.PERSTACK_API_KEY,
   })
@@ -99,19 +99,16 @@ async function resolveAllExperts(
     if (!delegateKey) break
     toResolve.delete(delegateKey)
     if (experts[delegateKey]) continue
-    try {
-      const { expert: registryExpert } = await apiClient.registry.experts.get({
-        expertKey: delegateKey,
-      })
-      experts[delegateKey] = toRuntimeExpert(delegateKey, registryExpert)
-      for (const nestedDelegate of registryExpert.delegates) {
-        if (!experts[nestedDelegate]) {
-          toResolve.add(nestedDelegate)
-        }
+    const result = await client.registry.experts.get(delegateKey)
+    if (!result.ok) {
+      throw new Error(`Failed to resolve delegate "${delegateKey}": ${result.error.message}`)
+    }
+    const registryExpert = result.data
+    experts[delegateKey] = toRuntimeExpert(delegateKey, registryExpert)
+    for (const nestedDelegate of registryExpert.delegates) {
+      if (!experts[nestedDelegate]) {
+        toResolve.add(nestedDelegate)
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      throw new Error(`Failed to resolve delegate "${delegateKey}": ${message}`)
     }
   }
   return experts

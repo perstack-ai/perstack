@@ -1,3 +1,7 @@
+---
+title: "Experts"
+---
+
 # Experts
 
 Experts are the core building block of Perstack — modular micro-agents designed for reuse.

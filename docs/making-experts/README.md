@@ -1,3 +1,7 @@
+---
+title: "Making Experts"
+---
+
 # Making Experts
 
 Experts are defined in `perstack.toml`. This section covers how to define, test, and publish Experts.

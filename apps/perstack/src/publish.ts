@@ -1,11 +1,11 @@
-import { ApiV1Client, type CreateRegistryExpertInput } from "@perstack/api-client/v1"
+import { type CreateExpertInput, createApiClient } from "@perstack/api-client"
 import type { PerstackConfig } from "@perstack/core"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 import { renderPublish } from "./tui/index.js"
 
 type ConfigSkills = NonNullable<NonNullable<PerstackConfig["experts"]>[string]["skills"]>
-type ApiSkills = CreateRegistryExpertInput["skills"]
+type ApiSkills = CreateExpertInput["skills"]
 
 function convertSkillsForApi(skills: ConfigSkills): ApiSkills {
   return Object.fromEntries(
@@ -108,7 +108,7 @@ export const publishCommand = new Command()
         }
         const expert = experts[selectedExpert]
         const version = expert.version ?? "1.0.0"
-        const payload: CreateRegistryExpertInput = {
+        const payload: CreateExpertInput = {
           name: selectedExpert,
           version,
           minRuntimeVersion: "v1.0",
@@ -123,12 +123,15 @@ export const publishCommand = new Command()
           console.log(JSON.stringify(payload, null, 2))
           return
         }
-        const client = new ApiV1Client({
+        const client = createApiClient({
           baseUrl: perstackConfig.perstackApiBaseUrl,
           apiKey: process.env.PERSTACK_API_KEY,
         })
-        const { expert: published } = await client.registry.experts.create(payload)
-        console.log(`Published ${published.key}`)
+        const result = await client.registry.experts.create(payload)
+        if (!result.ok) {
+          throw new Error(result.error.message)
+        }
+        console.log(`Published ${result.data.key}`)
       } catch (error) {
         if (error instanceof Error) {
           console.error(error.message)

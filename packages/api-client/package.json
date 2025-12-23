@@ -6,18 +6,15 @@
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
-    ".": "./v1/index.ts",
-    "./v1": "./v1/index.ts"
+    ".": "./src/index.ts"
   },
   "publishConfig": {
     "access": "public",
     "exports": {
-      ".": "./dist/v1/index.js",
-      "./v1": "./dist/v1/index.js"
+      ".": "./dist/index.js"
     },
     "types": {
-      ".": "./dist/v1/index.d.ts",
-      "./v1": "./dist/v1/index.d.ts"
+      ".": "./dist/index.d.ts"
     }
   },
   "files": [
@@ -26,7 +23,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "pnpm run clean && tsup --config ./tsup.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@perstack/core": "workspace:*",

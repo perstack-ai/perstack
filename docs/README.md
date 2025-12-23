@@ -1,3 +1,7 @@
+---
+title: "Perstack: Expert Stack for Agent-first Development"
+---
+
 # Perstack: Expert Stack for Agent-first Development
 
 Perstack is a package manager and runtime for agent-first development.

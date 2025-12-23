@@ -1,3 +1,7 @@
+---
+title: "Error Handling"
+---
+
 # Error Handling
 
 Perstack is designed to recover from errors automatically when possible. Most errors are fed back to the LLM for self-correction rather than crashing the run.

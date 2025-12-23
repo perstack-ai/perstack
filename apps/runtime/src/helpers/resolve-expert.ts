@@ -1,4 +1,4 @@
-import { type ApiRegistryExpert, ApiV1Client } from "@perstack/api-client/v1"
+import { createApiClient, type RegistryExpert } from "@perstack/api-client"
 import type { Expert, Skill } from "@perstack/core"
 
 export async function resolveExpertToRun(
@@ -12,15 +12,18 @@ export async function resolveExpertToRun(
   if (experts[expertKey]) {
     return experts[expertKey]
   }
-  const client = new ApiV1Client({
+  const client = createApiClient({
     baseUrl: clientOptions.perstackApiBaseUrl,
     apiKey: clientOptions.perstackApiKey,
   })
-  const { expert } = await client.registry.experts.get({ expertKey })
-  return toRuntimeExpert(expert)
+  const result = await client.registry.experts.get(expertKey)
+  if (!result.ok) {
+    throw new Error(`Failed to resolve expert "${expertKey}": ${result.error.message}`)
+  }
+  return toRuntimeExpert(result.data)
 }
 
-function toRuntimeExpert(expert: ApiRegistryExpert): Expert {
+function toRuntimeExpert(expert: RegistryExpert): Expert {
   const skills: Record<string, Skill> = Object.fromEntries(
     Object.entries(expert.skills).map(([name, skill]) => {
       switch (skill.type) {

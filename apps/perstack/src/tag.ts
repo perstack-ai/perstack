@@ -1,4 +1,4 @@
-import { ApiV1Client } from "@perstack/api-client/v1"
+import { createApiClient } from "@perstack/api-client"
 import { Command } from "commander"
 import { getPerstackConfig } from "./lib/perstack-toml.js"
 import { renderTag, type WizardVersionInfo } from "./tui/index.js"
@@ -17,7 +17,7 @@ export const tagCommand = new Command()
     ) => {
       try {
         const perstackConfig = await getPerstackConfig(options.config)
-        const client = new ApiV1Client({
+        const client = createApiClient({
           baseUrl: perstackConfig.perstackApiBaseUrl,
           apiKey: process.env.PERSTACK_API_KEY,
         })
@@ -34,49 +34,47 @@ export const tagCommand = new Command()
               description: experts[name].description,
             })),
             onFetchVersions: async (expertName: string): Promise<WizardVersionInfo[]> => {
-              try {
-                const { versions } = await client.registry.experts.getVersions({
-                  expertKey: expertName,
-                })
-                const versionInfos: WizardVersionInfo[] = []
-                for (const v of versions) {
-                  try {
-                    const { expert: fullExpert } = await client.registry.experts.get({
-                      expertKey: v.key,
-                    })
-                    if (fullExpert.type === "registryExpert") {
-                      versionInfos.push({
-                        key: v.key,
-                        version: v.version ?? "unknown",
-                        tags: v.tags,
-                        status: fullExpert.status,
-                      })
-                    }
-                  } catch {
-                    versionInfos.push({
-                      key: v.key,
-                      version: v.version ?? "unknown",
-                      tags: v.tags,
-                      status: "available",
-                    })
-                  }
-                }
-                return versionInfos
-              } catch {
+              const versionsResult = await client.registry.experts.getVersions(expertName)
+              if (!versionsResult.ok) {
                 throw new Error(`Expert "${expertName}" not found in registry`)
               }
+              const { versions } = versionsResult.data
+              const versionInfos: WizardVersionInfo[] = []
+              for (const v of versions) {
+                const expertResult = await client.registry.experts.get(v.key)
+                if (expertResult.ok && expertResult.data.type === "registryExpert") {
+                  versionInfos.push({
+                    key: v.key,
+                    version: v.version ?? "unknown",
+                    tags: v.tags,
+                    status: expertResult.data.status,
+                  })
+                } else {
+                  versionInfos.push({
+                    key: v.key,
+                    version: v.version ?? "unknown",
+                    tags: v.tags,
+                    status: "available",
+                  })
+                }
+              }
+              return versionInfos
             },
           })
           if (!result) {
             console.log("Cancelled")
             process.exit(0)
           }
-          const { expert } = await client.registry.experts.update({
-            expertKey: result.expertKey,
+          const updateResult = await client.registry.experts.update(result.expertKey, {
             tags: result.tags,
           })
-          console.log(`Updated ${expert.key}`)
-          console.log(`  Tags: ${expert.tags.length > 0 ? expert.tags.join(", ") : "(none)"}`)
+          if (!updateResult.ok) {
+            throw new Error(updateResult.error.message)
+          }
+          console.log(`Updated ${updateResult.data.key}`)
+          console.log(
+            `  Tags: ${updateResult.data.tags.length > 0 ? updateResult.data.tags.join(", ") : "(none)"}`,
+          )
           return
         }
         if (!expertKey.includes("@")) {
@@ -87,12 +85,14 @@ export const tagCommand = new Command()
           console.error("Please provide tags to set")
           process.exit(1)
         }
-        const { expert } = await client.registry.experts.update({
-          expertKey,
-          tags,
-        })
-        console.log(`Updated ${expert.key}`)
-        console.log(`  Tags: ${expert.tags.length > 0 ? expert.tags.join(", ") : "(none)"}`)
+        const updateResult = await client.registry.experts.update(expertKey, { tags })
+        if (!updateResult.ok) {
+          throw new Error(updateResult.error.message)
+        }
+        console.log(`Updated ${updateResult.data.key}`)
+        console.log(
+          `  Tags: ${updateResult.data.tags.length > 0 ? updateResult.data.tags.join(", ") : "(none)"}`,
+        )
       } catch (error) {
         if (error instanceof Error) {
           console.error(error.message)

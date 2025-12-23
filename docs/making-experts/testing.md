@@ -1,3 +1,7 @@
+---
+title: "Testing Experts"
+---
+
 # Testing Experts
 
 Experts are probabilistic — the same query can produce different results. This guide covers strategies for testing effectively.

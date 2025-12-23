@@ -1,3 +1,7 @@
+---
+title: "perstack.toml Reference"
+---
+
 # perstack.toml Reference
 
 - [Complete Example](#complete-example)

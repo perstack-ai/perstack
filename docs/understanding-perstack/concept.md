@@ -1,3 +1,7 @@
+---
+title: "Concept"
+---
+
 # Concept
 
 Perstack is built on a concept called **Expert Stack** — the architecture that enables agent-first development.

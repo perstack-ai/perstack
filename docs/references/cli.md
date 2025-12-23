@@ -1,3 +1,7 @@
+---
+title: "CLI Reference"
+---
+
 # CLI Reference
 
 ## Running Experts

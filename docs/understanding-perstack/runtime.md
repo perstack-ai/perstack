@@ -1,3 +1,7 @@
+---
+title: "Runtime"
+---
+
 # Runtime
 
 The Perstack runtime combines probabilistic LLM reasoning with deterministic state management — making agent execution predictable, reproducible, and auditable.

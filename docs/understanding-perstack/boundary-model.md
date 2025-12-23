@@ -1,3 +1,7 @@
+---
+title: "The Boundary Model"
+---
+
 # The Boundary Model
 
 [Isolation](./concept.md#isolation) is one of Perstack's three core goals. Experts are isolated from everything except their role — model access, context, tools, and dependencies are all mediated by the runtime.

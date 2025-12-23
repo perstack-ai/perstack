@@ -1,3 +1,7 @@
+---
+title: "Registry"
+---
+
 # Registry
 
 The Perstack Registry is a community-driven ecosystem for sharing Experts — like npm, but for AI agents.

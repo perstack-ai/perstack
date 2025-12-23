@@ -1,3 +1,7 @@
+---
+title: "Observing"
+---
+
 # Observing
 
 Every Perstack execution produces a complete audit trail. Use events and checkpoints to monitor, debug, and verify Expert behavior.

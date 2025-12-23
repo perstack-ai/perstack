@@ -1,3 +1,7 @@
+---
+title: "Workspace"
+---
+
 # Workspace
 
 The workspace is the isolated directory where Experts execute. All file operations are confined to this directory.

@@ -1,3 +1,7 @@
+---
+title: "Base Skill"
+---
+
 # Base Skill
 
 Every Expert automatically has access to `@perstack/base` — a built-in skill that provides file operations, runtime control, and other essential tools.

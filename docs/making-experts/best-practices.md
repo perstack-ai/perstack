@@ -1,3 +1,7 @@
+---
+title: "Best Practices"
+---
+
 # Best Practices
 
 These principles help you avoid common pitfalls in agent development: monoliths, complexity explosions, debugging nightmares, and fragile systems. Building a large agent head-on almost always fails.

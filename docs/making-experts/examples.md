@@ -1,3 +1,7 @@
+---
+title: "Examples"
+---
+
 # Examples
 
 Patterns for defining Experts. Each example highlights a specific skill type or integration approach.
