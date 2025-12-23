@@ -39,7 +39,7 @@ export const logCommand = new Command()
     try {
       const storagePath = process.env.PERSTACK_STORAGE_PATH ?? `${process.cwd()}/perstack`
       const storage = new FileSystemStorage({ basePath: storagePath })
-      const adapter = createStorageAdapter(storage)
+      const adapter = createStorageAdapter(storage, storagePath)
       const fetcher = createLogDataFetcher(adapter)
       const filterOptions = buildFilterOptions(options)
       const formatterOptions = buildFormatterOptions(options)

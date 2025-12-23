@@ -88,10 +88,13 @@ describe("createLogDataFetcher", () => {
     retrieveCheckpoint: vi.fn(),
     getEventContents: vi.fn(),
     getAllRuns: vi.fn(),
+    getJobIds: vi.fn().mockReturnValue([]),
+    getBasePath: vi.fn().mockReturnValue("/tmp/test"),
   }
 
   it("returns undefined for non-existent job", async () => {
     mockStorage.retrieveJob.mockResolvedValue(undefined)
+    mockStorage.getCheckpointsByJobId.mockResolvedValue([])
     const fetcher = createLogDataFetcher(mockStorage)
     const result = await fetcher.getJob("nonexistent")
     expect(result).toBeUndefined()

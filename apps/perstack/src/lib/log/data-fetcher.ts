@@ -1,3 +1,5 @@
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+import path from "node:path"
 import type { Checkpoint, Job, RunEvent, RunSetting, Storage } from "@perstack/core"
 
 export interface LogDataFetcher {
@@ -17,22 +19,57 @@ export interface StorageAdapter {
   retrieveCheckpoint(jobId: string, checkpointId: string): Promise<Checkpoint>
   getEventContents(jobId: string, runId: string, maxStep?: number): Promise<RunEvent[]>
   getAllRuns(): Promise<RunSetting[]>
+  getJobIds(): string[]
+  getBasePath(): string
 }
 
 export function createLogDataFetcher(storage: StorageAdapter): LogDataFetcher {
   return {
     async getJob(jobId: string): Promise<Job | undefined> {
-      return storage.retrieveJob(jobId)
+      // First try to get from storage
+      const job = await storage.retrieveJob(jobId)
+      if (job) return job
+      // Fallback: construct minimal job from checkpoints
+      const checkpoints = await storage.getCheckpointsByJobId(jobId)
+      if (checkpoints.length === 0) return undefined
+      const firstCheckpoint = checkpoints[0]
+      const lastCheckpoint = checkpoints[checkpoints.length - 1]
+      return {
+        id: jobId,
+        coordinatorExpertKey: firstCheckpoint.expert.key,
+        totalSteps: lastCheckpoint.stepNumber,
+        usage: lastCheckpoint.usage,
+        startedAt: getJobDirMtime(storage.getBasePath(), jobId),
+        finishedAt: Date.now(),
+        status: lastCheckpoint.status === "completed" ? "completed" : "running",
+      }
     },
 
     async getLatestJob(): Promise<Job | undefined> {
+      // First try standard storage
       const jobs = await storage.getAllJobs()
-      return jobs[0]
+      if (jobs.length > 0) return jobs[0]
+      // Fallback: scan job directories
+      const jobIds = storage.getJobIds()
+      if (jobIds.length === 0) return undefined
+      // Sort by directory modification time (newest first)
+      const basePath = storage.getBasePath()
+      const sortedJobIds = jobIds
+        .map((id) => ({ id, mtime: getJobDirMtime(basePath, id) }))
+        .sort((a, b) => b.mtime - a.mtime)
+      const latestJobId = sortedJobIds[0].id
+      return this.getJob(latestJobId)
     },
 
     async getRuns(jobId: string): Promise<RunSetting[]> {
       const runs = await storage.getAllRuns()
-      return runs.filter((r) => r.jobId === jobId)
+      const jobRuns = runs.filter((r) => r.jobId === jobId)
+      if (jobRuns.length > 0) return jobRuns
+      // Fallback: extract unique runIds from checkpoints and return minimal run info
+      const checkpoints = await storage.getCheckpointsByJobId(jobId)
+      const runIds = [...new Set(checkpoints.map((c) => c.runId))]
+      // Return minimal objects with just jobId and runId for event retrieval
+      return runIds.map((runId) => ({ jobId, runId }) as unknown as RunSetting)
     },
 
     async getCheckpoints(jobId: string): Promise<Checkpoint[]> {
@@ -48,10 +85,9 @@ export function createLogDataFetcher(storage: StorageAdapter): LogDataFetcher {
     },
 
     async getAllEventsForJob(jobId: string): Promise<RunEvent[]> {
-      const runs = await storage.getAllRuns()
-      const jobRuns = runs.filter((r) => r.jobId === jobId)
+      const runs = await this.getRuns(jobId)
       const allEvents: RunEvent[] = []
-      for (const run of jobRuns) {
+      for (const run of runs) {
         const events = await storage.getEventContents(jobId, run.runId)
         allEvents.push(...events)
       }
@@ -60,7 +96,17 @@ export function createLogDataFetcher(storage: StorageAdapter): LogDataFetcher {
   }
 }
 
-export function createStorageAdapter(storage: Storage): StorageAdapter {
+function getJobDirMtime(basePath: string, jobId: string): number {
+  try {
+    const jobDir = path.join(basePath, "jobs", jobId)
+    const stats = statSync(jobDir)
+    return stats.mtimeMs
+  } catch {
+    return Date.now()
+  }
+}
+
+export function createStorageAdapter(storage: Storage, basePath: string): StorageAdapter {
   return {
     getAllJobs: () => storage.getAllJobs(),
     retrieveJob: (jobId) => storage.retrieveJob(jobId),
@@ -68,5 +114,13 @@ export function createStorageAdapter(storage: Storage): StorageAdapter {
     retrieveCheckpoint: (jobId, checkpointId) => storage.retrieveCheckpoint(jobId, checkpointId),
     getEventContents: (jobId, runId, maxStep) => storage.getEventContents(jobId, runId, maxStep),
     getAllRuns: () => storage.getAllRuns(),
+    getJobIds: () => {
+      const jobsDir = path.join(basePath, "jobs")
+      if (!existsSync(jobsDir)) return []
+      return readdirSync(jobsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name)
+    },
+    getBasePath: () => basePath,
   }
 }
