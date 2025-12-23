@@ -258,7 +258,7 @@ function createWorkspaceInstanceItemsApi(fetcher: Fetcher): WorkspaceInstanceIte
       return {
         ok: true,
         data: {
-          data: result.data.data.items,
+          data: result.data.data.workspaceItems,
           meta: result.data.meta,
         },
       }
@@ -303,15 +303,15 @@ function createWorkspaceInstanceItemsApi(fetcher: Fetcher): WorkspaceInstanceIte
       )
     },
 
-    async find(jobId, pattern, options) {
+    async find(jobId, pathPattern, options) {
       const searchParams = new URLSearchParams()
-      searchParams.set("pattern", pattern)
+      searchParams.set("path", pathPattern)
 
       const path = `/api/studio/v1/expert_jobs/${encodeURIComponent(jobId)}/workspace_instance/items/find?${searchParams.toString()}`
 
       const result = await fetcher.get(path, findWorkspaceItemsResponseSchema, options)
       if (!result.ok) return result
-      return { ok: true, data: result.data.data.items }
+      return { ok: true, data: result.data.data.workspaceItems }
     },
   }
 }

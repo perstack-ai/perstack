@@ -107,12 +107,18 @@ describe("expertDigestSchema", () => {
 
 describe("expertJobStatusSchema", () => {
   it("accepts valid status values", () => {
-    expect(expertJobStatusSchema.parse("pending")).toBe("pending")
-    expect(expertJobStatusSchema.parse("running")).toBe("running")
+    expect(expertJobStatusSchema.parse("queued")).toBe("queued")
+    expect(expertJobStatusSchema.parse("processing")).toBe("processing")
     expect(expertJobStatusSchema.parse("completed")).toBe("completed")
+    expect(expertJobStatusSchema.parse("requestInteractiveToolResult")).toBe(
+      "requestInteractiveToolResult",
+    )
+    expect(expertJobStatusSchema.parse("requestDelegateResult")).toBe("requestDelegateResult")
+    expect(expertJobStatusSchema.parse("exceededMaxSteps")).toBe("exceededMaxSteps")
     expect(expertJobStatusSchema.parse("failed")).toBe("failed")
-    expect(expertJobStatusSchema.parse("cancelled")).toBe("cancelled")
-    expect(expertJobStatusSchema.parse("waiting")).toBe("waiting")
+    expect(expertJobStatusSchema.parse("canceling")).toBe("canceling")
+    expect(expertJobStatusSchema.parse("canceled")).toBe("canceled")
+    expect(expertJobStatusSchema.parse("expired")).toBe("expired")
   })
 })
 
@@ -121,7 +127,7 @@ describe("expertJobSchema", () => {
     const job = expertJobSchema.parse({
       id: "job-123",
       expertKey: "my-expert",
-      status: "pending",
+      status: "queued",
       query: "Test query",
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-01T00:00:00Z",
@@ -326,7 +332,7 @@ describe("response schemas", () => {
           expertJob: {
             id: "job-123",
             expertKey: "my-expert",
-            status: "pending",
+            status: "queued",
             query: "Test",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
@@ -354,7 +360,7 @@ describe("response schemas", () => {
           expertJob: {
             id: "job-123",
             expertKey: "my-expert",
-            status: "pending",
+            status: "queued",
             query: "Test",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
@@ -372,14 +378,14 @@ describe("response schemas", () => {
           expertJob: {
             id: "job-123",
             expertKey: "my-expert",
-            status: "cancelled",
+            status: "canceled",
             query: "Test",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
           },
         },
       })
-      expect(response.data.expertJob.status).toBe("cancelled")
+      expect(response.data.expertJob.status).toBe("canceled")
     })
   })
 
@@ -452,10 +458,10 @@ describe("response schemas", () => {
 
     it("listWorkspaceItemsResponseSchema parses valid response", () => {
       const response = listWorkspaceItemsResponseSchema.parse({
-        data: { items: [mockItem] },
+        data: { workspaceItems: [mockItem] },
         meta: { total: 1, take: 100, skip: 0 },
       })
-      expect(response.data.items).toHaveLength(1)
+      expect(response.data.workspaceItems).toHaveLength(1)
     })
 
     it("createWorkspaceItemResponseSchema parses valid response", () => {
@@ -474,8 +480,10 @@ describe("response schemas", () => {
     })
 
     it("findWorkspaceItemsResponseSchema parses valid response", () => {
-      const response = findWorkspaceItemsResponseSchema.parse({ data: { items: [mockItem] } })
-      expect(response.data.items).toHaveLength(1)
+      const response = findWorkspaceItemsResponseSchema.parse({
+        data: { workspaceItems: [mockItem] },
+      })
+      expect(response.data.workspaceItems).toHaveLength(1)
     })
   })
 

@@ -15,7 +15,7 @@ const BASE_URL = "https://api.perstack.ai"
 const createMockJob = (overrides = {}) => ({
   id: "job-123",
   expertKey: "my-expert@1.0.0",
-  status: "pending" as const,
+  status: "queued" as const,
   query: "Test query",
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
@@ -176,14 +176,14 @@ describe("createStudioExpertJobsApi", () => {
     it("continues job on success", async () => {
       server.use(
         http.post(`${BASE_URL}/api/studio/v1/expert_jobs/:id/continue`, () => {
-          return HttpResponse.json({ data: { expertJob: createMockJob({ status: "running" }) } })
+          return HttpResponse.json({ data: { expertJob: createMockJob({ status: "processing" }) } })
         }),
       )
 
       const result = await api.continue("job-123", { response: "User response" })
       expect(result.ok).toBe(true)
       if (result.ok) {
-        expect(result.data.status).toBe("running")
+        expect(result.data.status).toBe("processing")
       }
     })
 
@@ -203,14 +203,14 @@ describe("createStudioExpertJobsApi", () => {
     it("updates job on success", async () => {
       server.use(
         http.post(`${BASE_URL}/api/studio/v1/expert_jobs/:id`, () => {
-          return HttpResponse.json({ data: { expertJob: createMockJob({ status: "cancelled" }) } })
+          return HttpResponse.json({ data: { expertJob: createMockJob({ status: "canceled" }) } })
         }),
       )
 
-      const result = await api.update("job-123", { status: "cancelled" })
+      const result = await api.update("job-123", { status: "canceled" })
       expect(result.ok).toBe(true)
       if (result.ok) {
-        expect(result.data.status).toBe("cancelled")
+        expect(result.data.status).toBe("canceled")
       }
     })
 
@@ -221,7 +221,7 @@ describe("createStudioExpertJobsApi", () => {
         }),
       )
 
-      const result = await api.update("not-found", { status: "cancelled" })
+      const result = await api.update("not-found", { status: "canceled" })
       expect(result.ok).toBe(false)
     })
   })
@@ -408,7 +408,7 @@ describe("createStudioExpertJobsApi", () => {
               `${BASE_URL}/api/studio/v1/expert_jobs/:jobId/workspace_instance/items/`,
               () => {
                 return HttpResponse.json({
-                  data: { items: [createMockWorkspaceItem()] },
+                  data: { workspaceItems: [createMockWorkspaceItem()] },
                   meta: { total: 1, take: 100, skip: 0 },
                 })
               },
@@ -430,7 +430,7 @@ describe("createStudioExpertJobsApi", () => {
               ({ request }) => {
                 capturedUrl = request.url
                 return HttpResponse.json({
-                  data: { items: [] },
+                  data: { workspaceItems: [] },
                   meta: { total: 0, take: 50, skip: 10 },
                 })
               },
@@ -599,7 +599,7 @@ describe("createStudioExpertJobsApi", () => {
             http.get(
               `${BASE_URL}/api/studio/v1/expert_jobs/:jobId/workspace_instance/items/find`,
               () => {
-                return HttpResponse.json({ data: { items: [createMockWorkspaceItem()] } })
+                return HttpResponse.json({ data: { workspaceItems: [createMockWorkspaceItem()] } })
               },
             ),
           )

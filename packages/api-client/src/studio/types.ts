@@ -107,12 +107,16 @@ export interface ListStudioExpertsParams {
 }
 
 export const expertJobStatusSchema = z.enum([
-  "pending",
-  "running",
+  "queued",
+  "processing",
   "completed",
+  "requestInteractiveToolResult",
+  "requestDelegateResult",
+  "exceededMaxSteps",
   "failed",
-  "cancelled",
-  "waiting",
+  "canceling",
+  "canceled",
+  "expired",
 ])
 export type ExpertJobStatus = z.infer<typeof expertJobStatusSchema>
 
@@ -261,7 +265,7 @@ export const getWorkspaceItemResponseSchema = z.object({
 
 export const listWorkspaceItemsResponseSchema = z.object({
   data: z.object({
-    items: z.array(workspaceItemSchema),
+    workspaceItems: z.array(workspaceItemSchema),
   }),
   meta: z.object({
     total: z.number(),
@@ -286,7 +290,7 @@ export const deleteWorkspaceItemResponseSchema = z.object({})
 
 export const findWorkspaceItemsResponseSchema = z.object({
   data: z.object({
-    items: z.array(workspaceItemSchema),
+    workspaceItems: z.array(workspaceItemSchema),
   }),
 })
 

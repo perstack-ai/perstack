@@ -114,7 +114,7 @@ function createWorkspaceItemsApi(fetcher: Fetcher): WorkspaceItemsApi {
       return {
         ok: true,
         data: {
-          data: result.data.data.items,
+          data: result.data.data.workspaceItems,
           meta: result.data.meta,
         },
       }
@@ -159,15 +159,15 @@ function createWorkspaceItemsApi(fetcher: Fetcher): WorkspaceItemsApi {
       )
     },
 
-    async find(pattern, options) {
+    async find(pathPattern, options) {
       const searchParams = new URLSearchParams()
-      searchParams.set("pattern", pattern)
+      searchParams.set("path", pathPattern)
 
       const path = `/api/studio/v1/workspace/items/find?${searchParams.toString()}`
 
       const result = await fetcher.get(path, findWorkspaceItemsResponseSchema, options)
       if (!result.ok) return result
-      return { ok: true, data: result.data.data.items }
+      return { ok: true, data: result.data.data.workspaceItems }
     },
   }
 }

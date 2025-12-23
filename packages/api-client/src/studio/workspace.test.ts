@@ -105,7 +105,7 @@ describe("createStudioWorkspaceApi", () => {
         server.use(
           http.get(`${BASE_URL}/api/studio/v1/workspace/items/`, () => {
             return HttpResponse.json({
-              data: { items: [createMockWorkspaceItem()] },
+              data: { workspaceItems: [createMockWorkspaceItem()] },
               meta: { total: 1, take: 100, skip: 0 },
             })
           }),
@@ -124,7 +124,7 @@ describe("createStudioWorkspaceApi", () => {
           http.get(`${BASE_URL}/api/studio/v1/workspace/items/`, ({ request }) => {
             capturedUrl = request.url
             return HttpResponse.json({
-              data: { items: [] },
+              data: { workspaceItems: [] },
               meta: { total: 0, take: 50, skip: 10 },
             })
           }),
@@ -259,7 +259,7 @@ describe("createStudioWorkspaceApi", () => {
       it("finds items on success", async () => {
         server.use(
           http.get(`${BASE_URL}/api/studio/v1/workspace/items/find`, () => {
-            return HttpResponse.json({ data: { items: [createMockWorkspaceItem()] } })
+            return HttpResponse.json({ data: { workspaceItems: [createMockWorkspaceItem()] } })
           }),
         )
 

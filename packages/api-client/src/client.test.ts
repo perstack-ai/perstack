@@ -190,7 +190,7 @@ describe("studio.expertJobs", () => {
       const mockJob = {
         id: "job-123",
         expertKey: "my-expert@1.0.0",
-        status: "pending" as const,
+        status: "queued" as const,
         query: "Test query",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
@@ -211,7 +211,7 @@ describe("studio.expertJobs", () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.data.id).toBe("job-123")
-        expect(result.data.status).toBe("pending")
+        expect(result.data.status).toBe("queued")
       }
     })
   })
