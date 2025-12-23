@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+import { existsSync, readdirSync, statSync } from "node:fs"
 import path from "node:path"
 import type { Checkpoint, Job, RunEvent, RunSetting, Storage } from "@perstack/core"
 

@@ -93,7 +93,6 @@ export function formatTerminal(output: LogOutput, options: FormatterOptions): st
       output.totalEventsBeforeLimit !== undefined &&
       output.totalEventsBeforeLimit > output.events.length
     ) {
-      const remaining = output.totalEventsBeforeLimit - output.events.length
       lines.push(`(showing ${output.events.length} of ${output.totalEventsBeforeLimit} events)`)
       lines.push(`Use --take and --offset to paginate, or --take 0 for all`)
     }

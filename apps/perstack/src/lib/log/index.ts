@@ -5,8 +5,8 @@ export {
   type StorageAdapter,
 } from "./data-fetcher.js"
 export {
-  applyFilters,
   type ApplyFiltersResult,
+  applyFilters,
   evaluateCondition,
   parseFilterExpression,
   parseStepFilter,
