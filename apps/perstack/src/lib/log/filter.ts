@@ -41,8 +41,12 @@ export function parseFilterExpression(expression: string): FilterCondition {
     throw new Error(`Invalid filter expression: ${expression}`)
   }
   const [, fieldPath, operator, rawValue] = operatorMatch
+  const trimmedValue = rawValue.trim()
+  if (trimmedValue === "") {
+    throw new Error(`Missing value in filter expression: ${expression}`)
+  }
   const field = parseFieldPath(fieldPath)
-  const value = parseValue(rawValue.trim())
+  const value = parseValue(trimmedValue)
   return { field, operator: operator as FilterCondition["operator"], value }
 }
 
