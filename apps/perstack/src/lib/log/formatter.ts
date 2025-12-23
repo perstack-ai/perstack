@@ -49,6 +49,9 @@ export function formatJson(output: LogOutput, options: FormatterOptions): string
   if (output.totalEventsBeforeLimit !== undefined) {
     data.totalEventsBeforeLimit = output.totalEventsBeforeLimit
   }
+  if (output.matchedAfterPagination !== undefined) {
+    data.matchedAfterPagination = output.matchedAfterPagination
+  }
   if (options.pretty) {
     return JSON.stringify(data, null, 2)
   }
@@ -89,11 +92,20 @@ export function formatTerminal(output: LogOutput, options: FormatterOptions): st
     }
     lines.push("─".repeat(50))
     // Show pagination info if events were truncated
+    // Use matchedAfterPagination to compare with totalBeforeLimit, not events.length
+    // (events.length may include context events which could exceed matchedAfterPagination)
     if (
       output.totalEventsBeforeLimit !== undefined &&
-      output.totalEventsBeforeLimit > output.events.length
+      output.matchedAfterPagination !== undefined &&
+      output.totalEventsBeforeLimit > output.matchedAfterPagination
     ) {
-      lines.push(`(showing ${output.events.length} of ${output.totalEventsBeforeLimit} events)`)
+      const contextNote =
+        output.events.length > output.matchedAfterPagination
+          ? ` (+${output.events.length - output.matchedAfterPagination} context)`
+          : ""
+      lines.push(
+        `(showing ${output.matchedAfterPagination} of ${output.totalEventsBeforeLimit} matched events${contextNote})`,
+      )
       lines.push(`Use --take and --offset to paginate, or --take 0 for all`)
     }
   } else if (output.totalEventsBeforeLimit !== undefined && output.totalEventsBeforeLimit > 0) {

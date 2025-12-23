@@ -58,6 +58,8 @@ export interface LogOutput {
   storagePath?: string
   /** Total events before limit was applied */
   totalEventsBeforeLimit?: number
+  /** Number of matched events after pagination (before context added) */
+  matchedAfterPagination?: number
 }
 
 export interface LogSummary {

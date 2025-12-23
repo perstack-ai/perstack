@@ -150,6 +150,7 @@ async function buildOutput(
         isLatestJob: true,
         storagePath,
         totalEventsBeforeLimit: result.totalBeforePagination,
+        matchedAfterPagination: result.matchedAfterPagination,
       }
     }
     const job = await fetcher.getJob(jobId)
@@ -166,6 +167,7 @@ async function buildOutput(
       summary: createSummary(result.events),
       storagePath,
       totalEventsBeforeLimit: result.totalBeforePagination,
+      matchedAfterPagination: result.matchedAfterPagination,
     }
   }
   if (options.run) {
@@ -184,6 +186,7 @@ async function buildOutput(
         isLatestJob: true,
         storagePath,
         totalEventsBeforeLimit: result.totalBeforePagination,
+        matchedAfterPagination: result.matchedAfterPagination,
       }
     }
     const job = await fetcher.getJob(jobId)
@@ -198,6 +201,7 @@ async function buildOutput(
       summary: createSummary(result.events),
       storagePath,
       totalEventsBeforeLimit: result.totalBeforePagination,
+      matchedAfterPagination: result.matchedAfterPagination,
     }
   }
   if (options.job) {
@@ -215,6 +219,7 @@ async function buildOutput(
       summary: createSummary(result.events),
       storagePath,
       totalEventsBeforeLimit: result.totalBeforePagination,
+      matchedAfterPagination: result.matchedAfterPagination,
     }
   }
   const latestJob = await fetcher.getLatestJob()
@@ -230,5 +235,6 @@ async function buildOutput(
     isLatestJob: true,
     storagePath,
     totalEventsBeforeLimit: result.totalBeforePagination,
+    matchedAfterPagination: result.matchedAfterPagination,
   }
 }

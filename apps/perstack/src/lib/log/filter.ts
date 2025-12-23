@@ -189,6 +189,7 @@ function matchesStepFilter(stepNumber: number, filter: StepFilter): boolean {
 export type ApplyFiltersResult = {
   events: RunEvent[]
   totalBeforePagination: number
+  matchedAfterPagination: number
 }
 
 export function applyFilters(events: RunEvent[], options: FilterOptions): ApplyFiltersResult {
@@ -223,11 +224,13 @@ export function applyFilters(events: RunEvent[], options: FilterOptions): ApplyF
   if (options.take !== undefined && options.take > 0) {
     filtered = filtered.slice(0, options.take)
   }
+  // Record matched count after pagination (before context is added)
+  const matchedAfterPagination = filtered.length
   // Add context events after pagination to preserve matched events
   if (options.context !== undefined && options.context > 0) {
     filtered = addContextEvents(events, filtered, options.context)
   }
-  return { events: filtered, totalBeforePagination }
+  return { events: filtered, totalBeforePagination, matchedAfterPagination }
 }
 
 function addContextEvents(

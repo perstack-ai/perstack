@@ -330,6 +330,7 @@ describe("applyFilters", () => {
     const result = applyFilters(events, options)
     expect(result.events.map((e) => e.id)).toEqual(["e1", "e2"])
     expect(result.totalBeforePagination).toBe(5)
+    expect(result.matchedAfterPagination).toBe(2)
   })
 
   it("applies offset", () => {
@@ -337,6 +338,7 @@ describe("applyFilters", () => {
     const result = applyFilters(events, options)
     expect(result.events.map((e) => e.id)).toEqual(["e3", "e4", "e5"])
     expect(result.totalBeforePagination).toBe(5)
+    expect(result.matchedAfterPagination).toBe(3)
   })
 
   it("applies take and offset together", () => {
@@ -344,6 +346,7 @@ describe("applyFilters", () => {
     const result = applyFilters(events, options)
     expect(result.events.map((e) => e.id)).toEqual(["e2", "e3"])
     expect(result.totalBeforePagination).toBe(5)
+    expect(result.matchedAfterPagination).toBe(2)
   })
 
   it("combines multiple filters (AND logic)", () => {
@@ -367,5 +370,18 @@ describe("applyFilters", () => {
     const options: FilterOptions = { errors: true, context: 1 }
     const result = applyFilters(events, options)
     expect(result.events.map((e) => e.id)).toEqual(["e3", "e4", "e5"])
+  })
+
+  it("tracks matchedAfterPagination correctly with context", () => {
+    // Filter for errors (e4), take 1, then add context
+    // This tests the bug where events.length > matchedAfterPagination due to context
+    const options: FilterOptions = { errors: true, take: 1, context: 1 }
+    const result = applyFilters(events, options)
+    // Only 1 error event matched, but context adds e3 and e5
+    expect(result.events.map((e) => e.id)).toEqual(["e3", "e4", "e5"])
+    expect(result.totalBeforePagination).toBe(1) // 1 error event total
+    expect(result.matchedAfterPagination).toBe(1) // 1 matched after take
+    // events.length (3) > matchedAfterPagination (1) due to context
+    expect(result.events.length).toBe(3)
   })
 })
