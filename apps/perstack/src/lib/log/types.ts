@@ -50,6 +50,10 @@ export interface LogOutput {
   checkpoint?: Checkpoint
   events: RunEvent[]
   summary: LogSummary
+  /** Indicates this is the latest job (no --job specified) */
+  isLatestJob?: boolean
+  /** Path to storage directory */
+  storagePath?: string
 }
 
 export interface LogSummary {

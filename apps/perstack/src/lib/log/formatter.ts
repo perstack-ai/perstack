@@ -40,6 +40,12 @@ export function formatJson(output: LogOutput, options: FormatterOptions): string
   if (output.runs && output.runs.length > 0) {
     data.runs = output.runs
   }
+  if (output.isLatestJob) {
+    data.isLatestJob = true
+  }
+  if (output.storagePath) {
+    data.storagePath = output.storagePath
+  }
   if (options.pretty) {
     return JSON.stringify(data, null, 2)
   }
@@ -48,6 +54,15 @@ export function formatJson(output: LogOutput, options: FormatterOptions): string
 
 export function formatTerminal(output: LogOutput, options: FormatterOptions): string {
   const lines: string[] = []
+  // Show context information
+  if (output.isLatestJob) {
+    lines.push("(showing latest job)")
+    lines.push("")
+  }
+  if (output.storagePath) {
+    lines.push(`Storage: ${output.storagePath}`)
+    lines.push("")
+  }
   if (output.job) {
     lines.push(...formatJobHeader(output.job))
     lines.push("")

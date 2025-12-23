@@ -42,7 +42,7 @@ export const logCommand = new Command()
       const fetcher = createLogDataFetcher(adapter)
       const filterOptions = buildFilterOptions(options)
       const formatterOptions = buildFormatterOptions(options)
-      const output = await buildOutput(fetcher, options, filterOptions)
+      const output = await buildOutput(fetcher, options, filterOptions, storagePath)
       if (!output) {
         console.log("No data found")
         return
@@ -104,6 +104,7 @@ async function buildOutput(
   fetcher: ReturnType<typeof createLogDataFetcher>,
   options: LogCommandOptions,
   filterOptions: FilterOptions,
+  storagePath: string,
 ): Promise<LogOutput | null> {
   if (options.checkpoint) {
     const jobId = options.job
@@ -120,6 +121,8 @@ async function buildOutput(
         checkpoint,
         events: filteredEvents,
         summary: createSummary(filteredEvents),
+        isLatestJob: true,
+        storagePath,
       }
     }
     const job = await fetcher.getJob(jobId)
@@ -134,6 +137,7 @@ async function buildOutput(
       checkpoint,
       events: filteredEvents,
       summary: createSummary(filteredEvents),
+      storagePath,
     }
   }
   if (options.run) {
@@ -149,6 +153,8 @@ async function buildOutput(
         job: latestJob,
         events: filteredEvents,
         summary: createSummary(filteredEvents),
+        isLatestJob: true,
+        storagePath,
       }
     }
     const job = await fetcher.getJob(jobId)
@@ -161,6 +167,7 @@ async function buildOutput(
       job,
       events: filteredEvents,
       summary: createSummary(filteredEvents),
+      storagePath,
     }
   }
   if (options.job) {
@@ -176,6 +183,7 @@ async function buildOutput(
       checkpoints,
       events: filteredEvents,
       summary: createSummary(filteredEvents),
+      storagePath,
     }
   }
   const latestJob = await fetcher.getLatestJob()
@@ -188,5 +196,7 @@ async function buildOutput(
     job: latestJob,
     events: filteredEvents,
     summary: createSummary(filteredEvents),
+    isLatestJob: true,
+    storagePath,
   }
 }
