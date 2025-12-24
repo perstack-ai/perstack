@@ -1,5 +1,16 @@
 # perstack
 
+## 0.0.54
+
+### Patch Changes
+
+- [`86c709e`](https://github.com/perstack-ai/perstack/commit/86c709e021443f911573f54ceb79d632a3124d46) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Release test
+
+- Updated dependencies [[`86c709e`](https://github.com/perstack-ai/perstack/commit/86c709e021443f911573f54ceb79d632a3124d46)]:
+  - @perstack/runtime@0.0.76
+  - @perstack/core@0.0.32
+  - @perstack/api-client@0.0.40
+
 ## 0.0.53
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@perstack/base",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "Perstack base skills for agents.",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",

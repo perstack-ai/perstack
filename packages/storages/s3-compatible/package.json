@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "name": "@perstack/s3-compatible-storage",
   "description": "Perstack S3-Compatible Storage - Base implementation for S3-compatible storage backends",
   "author": "Wintermute Technologies, Inc.",

@@ -1,5 +1,11 @@
 # create-expert
 
+## 0.0.9
+
+### Patch Changes
+
+- [`86c709e`](https://github.com/perstack-ai/perstack/commit/86c709e021443f911573f54ceb79d632a3124d46) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Release test
+
 ## 0.0.8
 
 ### Patch Changes

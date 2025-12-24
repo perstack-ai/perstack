@@ -1,7 +1,7 @@
 {
   "name": "@perstack/provider-core",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Core interfaces and base classes for Perstack LLM provider adapters",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
