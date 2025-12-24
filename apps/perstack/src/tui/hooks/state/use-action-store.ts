@@ -10,6 +10,7 @@ const TOOL_RESULT_EVENT_TYPES = new Set(["resolveToolResults", "attemptCompletio
 const STREAMING_EVENT_TYPES = new Set([
   "startReasoning",
   "streamReasoning",
+  "completeReasoning",
   "startRunResult",
   "streamRunResult",
 ])
@@ -467,26 +468,45 @@ export const useActionStore = () => {
   const needsRebuildRef = useRef(false)
 
   const addEvent = useCallback((event: PerstackEvent) => {
-    // Handle streaming events directly (update streaming state, don't add to events)
+    // Handle streaming events directly (update streaming state)
     if ("type" in event && STREAMING_EVENT_TYPES.has(event.type)) {
       if (event.type === "startReasoning") {
         setStreaming((prev) => ({ ...prev, reasoning: "", isReasoningActive: true }))
-      } else if (event.type === "streamReasoning") {
+        return // Pure display event, don't add to events
+      }
+      if (event.type === "streamReasoning") {
         const delta = (event as { delta: string }).delta
         setStreaming((prev) => ({
           ...prev,
           reasoning: (prev.reasoning ?? "") + delta,
         }))
-      } else if (event.type === "startRunResult") {
-        setStreaming((prev) => ({ ...prev, text: "", isTextActive: true }))
-      } else if (event.type === "streamRunResult") {
+        return // Pure display event, don't add to events
+      }
+      if (event.type === "completeReasoning") {
+        // Reasoning phase ended - deactivate but keep text for display until result starts
+        setStreaming((prev) => ({ ...prev, isReasoningActive: false }))
+        // Don't return - this event needs to be processed by processEventToActions
+        // to store reasoning for the next action
+      }
+      if (event.type === "startRunResult") {
+        // Result phase starting - clear reasoning display and start result
+        setStreaming((prev) => ({
+          ...prev,
+          reasoning: undefined,
+          isReasoningActive: false,
+          text: "",
+          isTextActive: true,
+        }))
+        return // Pure display event, don't add to events
+      }
+      if (event.type === "streamRunResult") {
         const delta = (event as { delta: string }).delta
         setStreaming((prev) => ({
           ...prev,
           text: (prev.text ?? "") + delta,
         }))
+        return // Pure display event, don't add to events
       }
-      return
     }
 
     // Clear streaming when completing
