@@ -1,59 +1,214 @@
-import type { RunEvent, ToolCall, ToolResult } from "@perstack/core"
+import type { CheckpointAction, RunEvent, ToolCall, ToolResult } from "@perstack/core"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { UI_CONSTANTS } from "../../constants.js"
-import type { LogEntry, PerstackEvent } from "../../types/index.js"
+import type { ActionEntry, PerstackEvent, StreamingState } from "../../types/index.js"
 
+/** Events that indicate tool results are available */
 const TOOL_RESULT_EVENT_TYPES = new Set(["resolveToolResults", "attemptCompletion"])
 
-/** Streaming events are fire-and-forget and should not be counted in event history */
+/** Streaming events are handled separately and don't create ActionEntry */
 const STREAMING_EVENT_TYPES = new Set([
   "startReasoning",
   "streamReasoning",
   "startRunResult",
   "streamRunResult",
 ])
+
 const isToolCallsEvent = (event: PerstackEvent): event is RunEvent & { toolCalls: ToolCall[] } =>
   "type" in event && event.type === "callTools" && "toolCalls" in event
+
 const isToolCallEvent = (event: PerstackEvent): event is RunEvent & { toolCall: ToolCall } =>
   "type" in event &&
   (event.type === "callInteractiveTool" || event.type === "callDelegate") &&
   "toolCall" in event
+
 const isToolResultsEvent = (
   event: PerstackEvent,
 ): event is RunEvent & { toolResults: ToolResult[] } =>
   "type" in event && event.type === "resolveToolResults" && "toolResults" in event
+
 const isToolResultEvent = (event: PerstackEvent): event is RunEvent & { toolResult: ToolResult } =>
   "type" in event && TOOL_RESULT_EVENT_TYPES.has(event.type) && "toolResult" in event
-const checkIsSuccess = (result: Array<{ type: string; text?: string }>): boolean => {
-  const textPart = result.find((r) => r.type === "textPart")
-  if (!textPart || typeof textPart.text !== "string") return true
-  const text = textPart.text.toLowerCase()
-  return !text.startsWith("error") && !text.includes("failed")
-}
+
 const extractQuery = (event: Extract<RunEvent, { type: "startRun" }>): string | undefined => {
   const userMessage = event.inputMessages.find((m) => m.type === "userMessage")
   if (userMessage?.type !== "userMessage") return undefined
   return userMessage.contents.find((c) => c.type === "textPart")?.text
 }
+
 const formatRuntimeName = (runtime: string): string => {
   if (runtime === "claude-code") return "Claude Code"
   if (runtime === "local") return "Local"
   return runtime.charAt(0).toUpperCase() + runtime.slice(1)
 }
+
+/** Convert tool call + result to CheckpointAction */
+function toolToCheckpointAction(
+  toolCall: ToolCall,
+  toolResult: ToolResult,
+  reasoning?: string,
+): CheckpointAction {
+  const { skillName, toolName, args } = toolCall
+  const result = toolResult.result
+
+  // Check for error in result
+  const errorText = (() => {
+    const textPart = result.find((p) => p.type === "textPart")
+    if (!textPart || !("text" in textPart) || typeof textPart.text !== "string") return undefined
+    try {
+      const parsed = JSON.parse(textPart.text) as { error?: string }
+      return typeof parsed.error === "string" ? parsed.error : undefined
+    } catch {
+      const text = textPart.text.toLowerCase()
+      return text.startsWith("error") || text.includes("failed") ? textPart.text : undefined
+    }
+  })()
+
+  // Base skill tools
+  if (skillName === "@perstack/base") {
+    switch (toolName) {
+      case "attemptCompletion":
+        return { type: "attemptCompletion", reasoning, error: errorText }
+      case "todo":
+        return {
+          type: "todo",
+          reasoning,
+          newTodos: Array.isArray(args["newTodos"]) ? args["newTodos"].map(String) : undefined,
+          completedTodos: Array.isArray(args["completedTodos"])
+            ? args["completedTodos"].map(Number)
+            : undefined,
+          todos: [],
+          error: errorText,
+        }
+      case "clearTodo":
+        return { type: "clearTodo", reasoning, error: errorText }
+      case "readTextFile":
+        return {
+          type: "readTextFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "writeTextFile":
+        return {
+          type: "writeTextFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          text: String(args["text"] ?? ""),
+          error: errorText,
+        }
+      case "editTextFile":
+        return {
+          type: "editTextFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          oldText: String(args["oldText"] ?? ""),
+          newText: String(args["newText"] ?? ""),
+          error: errorText,
+        }
+      case "appendTextFile":
+        return {
+          type: "appendTextFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          text: String(args["text"] ?? ""),
+          error: errorText,
+        }
+      case "deleteFile":
+        return {
+          type: "deleteFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "deleteDirectory":
+        return {
+          type: "deleteDirectory",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          recursive: typeof args["recursive"] === "boolean" ? args["recursive"] : undefined,
+          error: errorText,
+        }
+      case "moveFile":
+        return {
+          type: "moveFile",
+          reasoning,
+          source: String(args["source"] ?? ""),
+          destination: String(args["destination"] ?? ""),
+          error: errorText,
+        }
+      case "createDirectory":
+        return {
+          type: "createDirectory",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "listDirectory":
+        return {
+          type: "listDirectory",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "getFileInfo":
+        return {
+          type: "getFileInfo",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "readImageFile":
+        return {
+          type: "readImageFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "readPdfFile":
+        return {
+          type: "readPdfFile",
+          reasoning,
+          path: String(args["path"] ?? ""),
+          error: errorText,
+        }
+      case "exec":
+        return {
+          type: "exec",
+          reasoning,
+          command: String(args["command"] ?? ""),
+          args: Array.isArray(args["args"]) ? args["args"].map(String) : [],
+          cwd: String(args["cwd"] ?? ""),
+          error: errorText,
+        }
+    }
+  }
+
+  // General tool (non-base skill)
+  return {
+    type: "generalTool",
+    reasoning,
+    skillName,
+    toolName,
+    args: args as Record<string, unknown>,
+    result,
+    error: errorText,
+  }
+}
+
 type ToolState = {
   id: string
-  toolName: string
-  args: Record<string, unknown>
-  result?: Array<{ type: string; text?: string }>
-  isSuccess?: boolean
+  toolCall: ToolCall
   logged: boolean
 }
+
 type PendingDelegation = {
   expertName: string
   runtime: string
   version: string
   query?: string
 }
+
 type ProcessState = {
   rootRunId?: string
   tools: Map<string, ToolState>
@@ -61,18 +216,14 @@ type ProcessState = {
   queryLogged: boolean
   completionLogged: boolean
   isComplete: boolean
-  streamingText?: string
-  /** Accumulated streaming reasoning text */
-  streamingReasoning?: string
-  /** Whether reasoning stream is active */
-  isReasoningStreaming?: boolean
-  /** Whether run result stream is active */
-  isRunResultStreaming?: boolean
+  /** Accumulated reasoning from completeReasoning event */
+  completedReasoning?: string
 }
-const processEventToLogs = (
+
+const processEventToActions = (
   state: ProcessState,
   event: PerstackEvent,
-  addLog: (entry: LogEntry) => void,
+  addAction: (entry: ActionEntry) => void,
 ): void => {
   if (!("runId" in event)) return
   const runId = event.runId
@@ -85,7 +236,7 @@ const processEventToLogs = (
       message: string
       progress?: number
     }
-    addLog({
+    addAction({
       id: `docker-build-${event.id}`,
       type: "docker-build",
       stage: buildEvent.stage,
@@ -103,7 +254,7 @@ const processEventToLogs = (
       service: string
       message?: string
     }
-    addLog({
+    addAction({
       id: `docker-container-${event.id}`,
       type: "docker-container",
       status: containerEvent.status,
@@ -121,7 +272,7 @@ const processEventToLogs = (
       port: number
       reason?: string
     }
-    addLog({
+    addAction({
       id: `proxy-access-${event.id}`,
       type: "proxy-access",
       action: proxyEvent.action,
@@ -132,36 +283,31 @@ const processEventToLogs = (
     return
   }
 
-  // Handle completeReasoning events (native LLM reasoning / extended thinking)
+  // Handle completeReasoning events - store for next action
   if (event.type === "completeReasoning") {
     const reasoningEvent = event as { text: string }
-    addLog({
-      id: `completeReasoning-${event.id}`,
-      type: "completeReasoning",
-      text: reasoningEvent.text,
-    })
-    state.isReasoningStreaming = false
-    state.streamingReasoning = undefined // Clear streaming state after completion
+    state.completedReasoning = reasoningEvent.text
     return
   }
-
-  // Note: Streaming events (startReasoning, streamReasoning, startRunResult, streamRunResult)
-  // are handled directly in addEvent() and do not reach this function
 
   // Handle retry events
   if (event.type === "retry") {
     const retryEvent = event as { reason: string }
-    addLog({
+    addAction({
       id: `retry-${event.id}`,
-      type: "retry",
-      reason: retryEvent.reason,
+      type: "action",
+      action: {
+        type: "retry",
+        reasoning: state.completedReasoning,
+        error: retryEvent.reason,
+        message: "",
+      },
     })
-    // Clear streaming state on retry (stale content from failed attempt)
-    state.streamingText = undefined
-    state.streamingReasoning = undefined
+    state.completedReasoning = undefined
     return
   }
 
+  // Handle delegation initialization
   if (event.type === "initializeRuntime") {
     if (!state.rootRunId) {
       state.rootRunId = runId
@@ -175,7 +321,7 @@ const processEventToLogs = (
       const version = (event as { runtimeVersion?: string }).runtimeVersion ?? "unknown"
       const query = (event as { query?: string }).query
       state.pendingDelegations.set(runId, { expertName, runtime, version, query })
-      addLog({
+      addAction({
         id: `delegation-started-${runId}`,
         type: "delegation-started",
         expertName,
@@ -186,18 +332,15 @@ const processEventToLogs = (
     }
     return
   }
+
   const isDelegation = state.rootRunId && runId !== state.rootRunId
-  if (event.type === "streamingText" && "text" in event) {
-    if (!isDelegation) {
-      state.streamingText = event.text
-    }
-    return
-  }
+
+  // Handle run completion
   if (event.type === "completeRun") {
     if (isDelegation) {
       const pending = state.pendingDelegations.get(runId)
       if (pending) {
-        addLog({
+        addAction({
           id: `delegation-completed-${runId}`,
           type: "delegation-completed",
           expertName: pending.expertName,
@@ -208,23 +351,29 @@ const processEventToLogs = (
         state.pendingDelegations.delete(runId)
       }
     } else if (!state.completionLogged) {
-      // Use event text, or fall back to accumulated streaming text
-      const text = (event as { text?: string }).text || state.streamingText
-      if (text) {
-        addLog({ id: `completion-${runId}`, type: "completion", text })
-      }
+      const text = (event as { text?: string }).text ?? ""
+      addAction({
+        id: `completion-${runId}`,
+        type: "action",
+        action: {
+          type: "complete",
+          reasoning: state.completedReasoning,
+          text,
+        },
+      })
       state.completionLogged = true
       state.isComplete = true
-      state.streamingText = undefined
-      state.streamingReasoning = undefined // Clear streaming reasoning on completion
+      state.completedReasoning = undefined
     }
     return
   }
+
+  // Handle error
   if (event.type === "stopRunByError") {
     const errorEvent = event as {
       error: { name: string; message: string; statusCode?: number }
     }
-    addLog({
+    addAction({
       id: `error-${event.id}`,
       type: "error",
       errorName: errorEvent.error.name,
@@ -232,11 +381,14 @@ const processEventToLogs = (
       statusCode: errorEvent.error.statusCode,
     })
     state.isComplete = true
-    state.streamingText = undefined
-    state.streamingReasoning = undefined // Clear streaming reasoning on error termination
+    state.completedReasoning = undefined
     return
   }
+
+  // Skip delegation events for tool processing
   if (isDelegation) return
+
+  // Handle start run (query)
   if (event.type === "startRun") {
     const query = extractQuery(event)
     if (query) {
@@ -246,72 +398,64 @@ const processEventToLogs = (
         state.queryLogged = false
       }
       if (!state.queryLogged) {
-        addLog({ id: `query-${runId}`, type: "query", text: query })
+        addAction({ id: `query-${runId}`, type: "query", text: query })
         state.queryLogged = true
       }
     }
-  } else if (isToolCallsEvent(event)) {
+    return
+  }
+
+  // Track tool calls
+  if (isToolCallsEvent(event)) {
     for (const toolCall of event.toolCalls) {
       if (!state.tools.has(toolCall.id)) {
-        state.tools.set(toolCall.id, {
-          id: toolCall.id,
-          toolName: toolCall.toolName,
-          args: toolCall.args as Record<string, unknown>,
-          logged: false,
-        })
+        state.tools.set(toolCall.id, { id: toolCall.id, toolCall, logged: false })
       }
     }
   } else if (isToolCallEvent(event)) {
     const { toolCall } = event
     if (!state.tools.has(toolCall.id)) {
-      state.tools.set(toolCall.id, {
-        id: toolCall.id,
-        toolName: toolCall.toolName,
-        args: toolCall.args as Record<string, unknown>,
-        logged: false,
-      })
+      state.tools.set(toolCall.id, { id: toolCall.id, toolCall, logged: false })
     }
-  } else if (isToolResultsEvent(event)) {
+  }
+
+  // Process tool results
+  if (isToolResultsEvent(event)) {
     for (const toolResult of event.toolResults) {
       const tool = state.tools.get(toolResult.id)
-      if (tool && !tool.logged && Array.isArray(toolResult.result)) {
-        tool.result = toolResult.result
-        tool.isSuccess = checkIsSuccess(toolResult.result)
-        addLog({
-          id: `tool-${tool.id}`,
-          type: "tool",
-          toolName: tool.toolName,
-          args: tool.args,
-          result: tool.result,
-          isSuccess: tool.isSuccess,
+      if (tool && !tool.logged) {
+        const action = toolToCheckpointAction(tool.toolCall, toolResult, state.completedReasoning)
+        addAction({
+          id: `action-${tool.id}`,
+          type: "action",
+          action,
         })
         tool.logged = true
+        state.completedReasoning = undefined
       }
     }
   } else if (isToolResultEvent(event)) {
     const { toolResult } = event
     const tool = state.tools.get(toolResult.id)
-    if (tool && !tool.logged && Array.isArray(toolResult.result)) {
-      tool.result = toolResult.result
-      tool.isSuccess = checkIsSuccess(toolResult.result)
-      addLog({
-        id: `tool-${tool.id}`,
-        type: "tool",
-        toolName: tool.toolName,
-        args: tool.args,
-        result: tool.result,
-        isSuccess: tool.isSuccess,
+    if (tool && !tool.logged) {
+      const action = toolToCheckpointAction(tool.toolCall, toolResult, state.completedReasoning)
+      addAction({
+        id: `action-${tool.id}`,
+        type: "action",
+        action,
       })
       tool.logged = true
+      state.completedReasoning = undefined
     }
   }
 }
-export const useEventStore = () => {
+
+export const useActionStore = () => {
   const [events, setEvents] = useState<PerstackEvent[]>([])
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [streamingText, setStreamingText] = useState<string | undefined>()
-  const [streamingReasoning, setStreamingReasoning] = useState<string | undefined>()
+  const [actions, setActions] = useState<ActionEntry[]>([])
+  const [streaming, setStreaming] = useState<StreamingState>({})
   const [isComplete, setIsComplete] = useState(false)
+
   const stateRef = useRef<ProcessState>({
     tools: new Map(),
     pendingDelegations: new Map(),
@@ -321,30 +465,36 @@ export const useEventStore = () => {
   })
   const processedCountRef = useRef(0)
   const needsRebuildRef = useRef(false)
+
   const addEvent = useCallback((event: PerstackEvent) => {
-    // Handle streaming events directly without adding to events array
-    // Streaming events are fire-and-forget and should not inflate event count
+    // Handle streaming events directly (update streaming state, don't add to events)
     if ("type" in event && STREAMING_EVENT_TYPES.has(event.type)) {
       if (event.type === "startReasoning") {
-        stateRef.current.streamingReasoning = ""
-        stateRef.current.isReasoningStreaming = true
-        setStreamingReasoning("")
+        setStreaming((prev) => ({ ...prev, reasoning: "", isReasoningActive: true }))
       } else if (event.type === "streamReasoning") {
         const delta = (event as { delta: string }).delta
-        stateRef.current.streamingReasoning = (stateRef.current.streamingReasoning ?? "") + delta
-        setStreamingReasoning(stateRef.current.streamingReasoning)
+        setStreaming((prev) => ({
+          ...prev,
+          reasoning: (prev.reasoning ?? "") + delta,
+        }))
       } else if (event.type === "startRunResult") {
-        stateRef.current.isRunResultStreaming = true
-        stateRef.current.streamingText = ""
-        setStreamingText("")
+        setStreaming((prev) => ({ ...prev, text: "", isTextActive: true }))
       } else if (event.type === "streamRunResult") {
         const delta = (event as { delta: string }).delta
-        stateRef.current.streamingText = (stateRef.current.streamingText ?? "") + delta
-        setStreamingText(stateRef.current.streamingText)
+        setStreaming((prev) => ({
+          ...prev,
+          text: (prev.text ?? "") + delta,
+        }))
       }
       return
     }
 
+    // Clear streaming when completing
+    if ("type" in event && (event.type === "completeRun" || event.type === "stopRunByError")) {
+      setStreaming({})
+    }
+
+    // Add event to queue
     setEvents((prev) => {
       const newEvents = [...prev, event]
       if (newEvents.length > UI_CONSTANTS.MAX_EVENTS) {
@@ -354,6 +504,7 @@ export const useEventStore = () => {
       return newEvents
     })
   }, [])
+
   const setHistoricalEvents = useCallback((historicalEvents: PerstackEvent[]) => {
     needsRebuildRef.current = true
     setEvents(
@@ -362,6 +513,8 @@ export const useEventStore = () => {
         : historicalEvents,
     )
   }, [])
+
+  // Process events into actions
   useEffect(() => {
     if (needsRebuildRef.current) {
       stateRef.current = {
@@ -371,31 +524,40 @@ export const useEventStore = () => {
         completionLogged: false,
         isComplete: false,
       }
-      setLogs([])
+      setActions([])
       processedCountRef.current = 0
       needsRebuildRef.current = false
     }
+
     const newEvents = events.slice(processedCountRef.current)
-    const newLogs: LogEntry[] = []
-    const addLog = (entry: LogEntry) => newLogs.push(entry)
+    const newActions: ActionEntry[] = []
+    const addAction = (entry: ActionEntry) => newActions.push(entry)
+
     for (const event of newEvents) {
-      processEventToLogs(stateRef.current, event, addLog)
+      processEventToActions(stateRef.current, event, addAction)
     }
+
     processedCountRef.current = events.length
-    if (newLogs.length > 0) {
-      setLogs((prev) => [...prev, ...newLogs])
+
+    if (newActions.length > 0) {
+      setActions((prev) => [...prev, ...newActions])
     }
-    setStreamingText(stateRef.current.streamingText)
-    setStreamingReasoning(stateRef.current.streamingReasoning)
+
     setIsComplete(stateRef.current.isComplete)
   }, [events])
+
   return {
-    logs,
-    streamingText,
-    streamingReasoning,
+    /** Completed actions for Static display */
+    actions,
+    /** Streaming state for dynamic display */
+    streaming,
+    /** Whether the run is complete */
     isComplete,
+    /** Total event count */
     eventCount: events.length,
+    /** Add a new event */
     addEvent,
+    /** Set historical events for replay */
     setHistoricalEvents,
   }
 }

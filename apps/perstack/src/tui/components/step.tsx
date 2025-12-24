@@ -2,7 +2,6 @@ import { Box, Text } from "ink"
 import type React from "react"
 import { RENDER_CONSTANTS, UI_CONSTANTS } from "../constants.js"
 import { shortenPath, summarizeOutput, truncateText } from "../helpers.js"
-import type { LogEntry } from "../types/index.js"
 import {
   ActionRow,
   ActionRowSimple,
@@ -466,54 +465,5 @@ const renderToolFromLog = (
       return renderTestUrl(args, color)
     default:
       return renderDefault(toolName, args, color)
-  }
-}
-type LogEntryRowProps = {
-  entry: LogEntry
-}
-export const LogEntryRow = ({ entry }: LogEntryRowProps) => {
-  switch (entry.type) {
-    case "query":
-      return <QueryRow text={entry.text} />
-    case "tool":
-      return (
-        <Box>{renderToolFromLog(entry.toolName, entry.args, entry.result, entry.isSuccess)}</Box>
-      )
-    case "delegation-started":
-      return (
-        <Box>
-          {renderDelegationStarted(entry.expertName, entry.runtime, entry.version, entry.query)}
-        </Box>
-      )
-    case "delegation-completed":
-      return (
-        <Box>
-          {renderDelegationCompleted(entry.expertName, entry.runtime, entry.version, entry.result)}
-        </Box>
-      )
-    case "completion":
-      return <CompletionRow text={entry.text} />
-    case "docker-build":
-      return <Box>{renderDockerBuild(entry.stage, entry.service, entry.message)}</Box>
-    case "docker-container":
-      return <Box>{renderDockerContainer(entry.status, entry.service, entry.message)}</Box>
-    case "proxy-access":
-      return <Box>{renderProxyAccess(entry.action, entry.domain, entry.port, entry.reason)}</Box>
-    case "error":
-      return (
-        <ErrorRow
-          errorName={entry.errorName}
-          message={entry.message}
-          statusCode={entry.statusCode}
-        />
-      )
-    case "completeReasoning":
-      return <Box>{renderCompleteReasoning(entry.text)}</Box>
-    case "retry":
-      return (
-        <ActionRow indicatorColor="yellow" label="Retry">
-          <Text dimColor>{entry.reason}</Text>
-        </ActionRow>
-      )
   }
 }

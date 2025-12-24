@@ -1,7 +1,7 @@
 import { Box, Text } from "ink"
 import type React from "react"
 import { INDICATOR } from "../constants.js"
-export type StatusColor = "green" | "red" | "yellow" | "white" | "gray"
+export type StatusColor = "green" | "red" | "yellow" | "white" | "gray" | "cyan" | "blue"
 
 type QueryRowProps = {
   text: string
