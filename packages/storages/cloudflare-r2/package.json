@@ -26,7 +26,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.800.0"
+    "@aws-sdk/client-s3": "^3.800.0",
+    "@perstack/s3-compatible-storage": "workspace:*"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",

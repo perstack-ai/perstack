@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.56",
-    "@perstack/core": "workspace:*"
+    "@perstack/core": "workspace:*",
+    "@perstack/provider-core": "workspace:*"
   },
   "peerDependencies": {
     "ai": "^5.0.0"

@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^3.0.71",
-    "@perstack/core": "workspace:*"
+    "@perstack/core": "workspace:*",
+    "@perstack/provider-core": "workspace:*"
   },
   "peerDependencies": {
     "ai": "^5.0.0"

@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "ollama-ai-provider-v2": "^1.5.5",
-    "@perstack/core": "workspace:*"
+    "@perstack/core": "workspace:*",
+    "@perstack/provider-core": "workspace:*"
   },
   "peerDependencies": {
     "ai": "^5.0.0"

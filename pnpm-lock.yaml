@@ -394,6 +394,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -422,6 +425,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -450,6 +456,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -506,6 +515,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -534,6 +546,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -559,6 +574,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -590,6 +608,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -618,6 +639,9 @@ importers:
       '@perstack/core':
         specifier: workspace:*
         version: link:../../core
+      '@perstack/provider-core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^5.0.0
         version: 5.0.115(zod@4.2.1)
@@ -786,6 +810,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.800.0
         version: 3.956.0
+      '@perstack/s3-compatible-storage':
+        specifier: workspace:*
+        version: link:../s3-compatible
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5
@@ -808,6 +835,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.800.0
         version: 3.956.0
+      '@perstack/s3-compatible-storage':
+        specifier: workspace:*
+        version: link:../s3-compatible
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.5
