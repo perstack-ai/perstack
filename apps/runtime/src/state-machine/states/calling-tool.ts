@@ -2,10 +2,14 @@ import {
   attemptCompletion,
   callDelegate,
   callInteractiveTool,
+  completeRun,
   type RunEvent,
   resolveToolResults,
   type ToolResult,
 } from "@perstack/core"
+import { calculateContextWindowUsage } from "../../helpers/model.js"
+import { createEmptyUsage, sumUsage } from "../../helpers/usage.js"
+import { createToolMessage } from "../../messages/message.js"
 import { classifyToolCalls, toolExecutorFactory } from "../../tool-execution/index.js"
 import type { RunSnapshot } from "../machine.js"
 
@@ -20,6 +24,25 @@ function hasRemainingTodos(toolResult: ToolResult): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Extract textPart from the last expert message.
+ * When LLM generates both text and attemptCompletion in one response,
+ * we should use that text as the final result instead of re-generating.
+ */
+function extractTextFromLastMessage(checkpoint: RunSnapshot["context"]["checkpoint"]): string | undefined {
+  const lastMessage = checkpoint.messages[checkpoint.messages.length - 1]
+  if (!lastMessage || lastMessage.type !== "expertMessage") {
+    return undefined
+  }
+  const textPart = lastMessage.contents.find((c) => c.type === "textPart")
+  if (!textPart || textPart.type !== "textPart") {
+    return undefined
+  }
+  // Only return if there's actual content (not just whitespace)
+  const text = textPart.text.trim()
+  return text.length > 0 ? text : undefined
 }
 
 export async function callingToolLogic({
@@ -48,6 +71,49 @@ export async function callingToolLogic({
     if (hasRemainingTodos(toolResult)) {
       return resolveToolResults(setting, checkpoint, { toolResults: [toolResult] })
     }
+
+    // Check if LLM already generated a text response along with attemptCompletion
+    // If so, use that text directly instead of transitioning to GeneratingRunResult
+    const existingText = extractTextFromLastMessage(checkpoint)
+    if (existingText) {
+      // Build tool message for the attemptCompletion result
+      const toolResultPart = {
+        type: "toolResultPart" as const,
+        toolCallId: toolResult.id,
+        toolName: attemptCompletionTool.toolName,
+        contents: toolResult.result.filter(
+          (part) =>
+            part.type === "textPart" ||
+            part.type === "imageInlinePart" ||
+            part.type === "fileInlinePart",
+        ),
+      }
+      const toolMessage = createToolMessage([toolResultPart])
+      const newUsage = sumUsage(checkpoint.usage, createEmptyUsage())
+
+      // Complete run directly with the existing text
+      return completeRun(setting, checkpoint, {
+        checkpoint: {
+          ...checkpoint,
+          messages: [...checkpoint.messages, toolMessage],
+          usage: newUsage,
+          contextWindowUsage: checkpoint.contextWindow
+            ? calculateContextWindowUsage(newUsage, checkpoint.contextWindow)
+            : undefined,
+          status: "completed",
+        },
+        step: {
+          ...step,
+          newMessages: [...step.newMessages, toolMessage],
+          toolResults: [toolResult],
+          finishedAt: Date.now(),
+        },
+        text: existingText,
+        usage: createEmptyUsage(),
+      })
+    }
+
+    // No existing text - transition to GeneratingRunResult to generate final result
     return attemptCompletion(setting, checkpoint, { toolResult })
   }
 
