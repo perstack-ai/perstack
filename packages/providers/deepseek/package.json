@@ -1,6 +1,5 @@
 {
   "name": "@perstack/deepseek-provider",
-  "version": "0.0.2",
   "private": true,
   "description": "DeepSeek provider adapter for Perstack",
   "author": "Wintermute Technologies, Inc.",
