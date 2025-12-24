@@ -1,6 +1,5 @@
 {
   "name": "@perstack/provider-core",
-  "version": "0.0.2",
   "private": true,
   "description": "Core interfaces and base classes for Perstack LLM provider adapters",
   "author": "Wintermute Technologies, Inc.",

@@ -1,6 +1,5 @@
 {
   "name": "@perstack/vertex-provider",
-  "version": "0.0.2",
   "private": true,
   "description": "Google Vertex AI provider adapter for Perstack",
   "author": "Wintermute Technologies, Inc.",
