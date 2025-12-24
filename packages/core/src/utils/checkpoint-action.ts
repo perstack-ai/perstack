@@ -1,7 +1,7 @@
 import type { Checkpoint } from "../schemas/checkpoint.js"
 import type { CheckpointAction } from "../schemas/checkpoint-action.js"
 import type { Message } from "../schemas/message.js"
-import type { MessagePart } from "../schemas/message-part.js"
+import type { MessagePart, ThinkingPart } from "../schemas/message-part.js"
 import type { Step } from "../schemas/step.js"
 import type { ToolCall } from "../schemas/tool-call.js"
 import type { ToolResult } from "../schemas/tool-result.js"
@@ -11,6 +11,22 @@ export const BASE_SKILL_PREFIX = "@perstack/base"
 export type GetCheckpointActionParams = {
   checkpoint: Checkpoint
   step: Step
+}
+
+/**
+ * Extracts reasoning from Step.newMessages by finding thinkingParts.
+ */
+function extractReasoning(newMessages: Message[]): string | undefined {
+  const thinkingParts: ThinkingPart[] = []
+  for (const message of newMessages) {
+    for (const content of message.contents) {
+      if (content.type === "thinkingPart") {
+        thinkingParts.push(content)
+      }
+    }
+  }
+  if (thinkingParts.length === 0) return undefined
+  return thinkingParts.map((p) => p.thinking).join("\n\n")
 }
 
 /**
@@ -25,29 +41,34 @@ export function getCheckpointAction(params: GetCheckpointActionParams): Checkpoi
   const toolResult = step.toolResults?.[0]
   const skillName = toolCall?.skillName
   const toolName = toolCall?.toolName
+  const reasoning = extractReasoning(step.newMessages)
 
   if (status === "stoppedByDelegate" && delegateTo && delegateTo.length > 0) {
-    return createDelegateAction(delegateTo)
+    return createDelegateAction(delegateTo, reasoning)
   }
 
   if (status === "stoppedByInteractiveTool" && skillName && toolName && toolCall) {
-    return createInteractiveToolAction(skillName, toolName, toolCall)
+    return createInteractiveToolAction(skillName, toolName, toolCall, reasoning)
   }
 
   if (!skillName || !toolName || !toolCall || !toolResult) {
-    return createRetryAction(step.newMessages)
+    return createRetryAction(step.newMessages, reasoning)
   }
 
   if (skillName.startsWith(BASE_SKILL_PREFIX)) {
-    return createBaseToolAction(toolName, toolCall, toolResult)
+    return createBaseToolAction(toolName, toolCall, toolResult, reasoning)
   }
 
-  return createGeneralToolAction(skillName, toolName, toolCall, toolResult)
+  return createGeneralToolAction(skillName, toolName, toolCall, toolResult, reasoning)
 }
 
-function createDelegateAction(delegateTo: NonNullable<Checkpoint["delegateTo"]>): CheckpointAction {
+function createDelegateAction(
+  delegateTo: NonNullable<Checkpoint["delegateTo"]>,
+  reasoning: string | undefined,
+): CheckpointAction {
   return {
     type: "delegate",
+    reasoning,
     delegateTo: delegateTo.map((d) => ({
       expertKey: d.expert.key,
       query: d.query,
@@ -59,20 +80,26 @@ function createInteractiveToolAction(
   skillName: string,
   toolName: string,
   toolCall: ToolCall,
+  reasoning: string | undefined,
 ): CheckpointAction {
   return {
     type: "interactiveTool",
+    reasoning,
     skillName,
     toolName,
     args: toolCall.args,
   }
 }
 
-function createRetryAction(newMessages: Message[]): CheckpointAction {
+function createRetryAction(
+  newMessages: Message[],
+  reasoning: string | undefined,
+): CheckpointAction {
   const lastMessage = newMessages[newMessages.length - 1]
   const textPart = lastMessage?.contents.find((c) => c.type === "textPart")
   return {
     type: "retry",
+    reasoning,
     error: "No tool call or result found",
     message: textPart?.text ?? "",
   }
@@ -82,6 +109,7 @@ function createBaseToolAction(
   toolName: string,
   toolCall: ToolCall,
   toolResult: ToolResult,
+  reasoning: string | undefined,
 ): CheckpointAction {
   const args = toolCall.args as Record<string, unknown>
   const resultContents = toolResult.result
@@ -92,6 +120,7 @@ function createBaseToolAction(
       const remainingTodos = parseRemainingTodosFromResult(resultContents)
       return {
         type: "attemptCompletion",
+        reasoning,
         remainingTodos,
         error: errorText,
       }
@@ -101,9 +130,10 @@ function createBaseToolAction(
       const todos = parseTodosFromResult(resultContents)
       return {
         type: "todo",
-        newTodos: Array.isArray(args.newTodos) ? args.newTodos.map(String) : undefined,
-        completedTodos: Array.isArray(args.completedTodos)
-          ? args.completedTodos.map(Number)
+        reasoning,
+        newTodos: Array.isArray(args["newTodos"]) ? args["newTodos"].map(String) : undefined,
+        completedTodos: Array.isArray(args["completedTodos"])
+          ? args["completedTodos"].map(Number)
           : undefined,
         todos,
         error: errorText,
@@ -113,13 +143,15 @@ function createBaseToolAction(
     case "clearTodo":
       return {
         type: "clearTodo",
+        reasoning,
         error: errorText,
       }
 
     case "readImageFile":
       return {
         type: "readImageFile",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         mimeType: parseStringField(resultContents, "mimeType"),
         size: parseNumberField(resultContents, "size"),
         error: errorText,
@@ -128,7 +160,8 @@ function createBaseToolAction(
     case "readPdfFile":
       return {
         type: "readPdfFile",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         mimeType: parseStringField(resultContents, "mimeType"),
         size: parseNumberField(resultContents, "size"),
         error: errorText,
@@ -137,65 +170,73 @@ function createBaseToolAction(
     case "readTextFile":
       return {
         type: "readTextFile",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         content: parseStringField(resultContents, "content"),
-        from: typeof args.from === "number" ? args.from : undefined,
-        to: typeof args.to === "number" ? args.to : undefined,
+        from: typeof args["from"] === "number" ? args["from"] : undefined,
+        to: typeof args["to"] === "number" ? args["to"] : undefined,
         error: errorText,
       }
 
     case "editTextFile":
       return {
         type: "editTextFile",
-        path: String(args.path ?? ""),
-        newText: String(args.newText ?? ""),
-        oldText: String(args.oldText ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
+        newText: String(args["newText"] ?? ""),
+        oldText: String(args["oldText"] ?? ""),
         error: errorText,
       }
 
     case "appendTextFile":
       return {
         type: "appendTextFile",
-        path: String(args.path ?? ""),
-        text: String(args.text ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
+        text: String(args["text"] ?? ""),
         error: errorText,
       }
 
     case "writeTextFile":
       return {
         type: "writeTextFile",
-        path: String(args.path ?? ""),
-        text: String(args.text ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
+        text: String(args["text"] ?? ""),
         error: errorText,
       }
 
     case "deleteFile":
       return {
         type: "deleteFile",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         error: errorText,
       }
 
     case "deleteDirectory":
       return {
         type: "deleteDirectory",
-        path: String(args.path ?? ""),
-        recursive: typeof args.recursive === "boolean" ? args.recursive : undefined,
+        reasoning,
+        path: String(args["path"] ?? ""),
+        recursive: typeof args["recursive"] === "boolean" ? args["recursive"] : undefined,
         error: errorText,
       }
 
     case "moveFile":
       return {
         type: "moveFile",
-        source: String(args.source ?? ""),
-        destination: String(args.destination ?? ""),
+        reasoning,
+        source: String(args["source"] ?? ""),
+        destination: String(args["destination"] ?? ""),
         error: errorText,
       }
 
     case "getFileInfo":
       return {
         type: "getFileInfo",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         info: parseFileInfoFromResult(resultContents),
         error: errorText,
       }
@@ -203,14 +244,16 @@ function createBaseToolAction(
     case "createDirectory":
       return {
         type: "createDirectory",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         error: errorText,
       }
 
     case "listDirectory":
       return {
         type: "listDirectory",
-        path: String(args.path ?? ""),
+        reasoning,
+        path: String(args["path"] ?? ""),
         items: parseListDirectoryFromResult(resultContents),
         error: errorText,
       }
@@ -218,9 +261,10 @@ function createBaseToolAction(
     case "exec":
       return {
         type: "exec",
-        command: String(args.command ?? ""),
-        args: Array.isArray(args.args) ? args.args.map(String) : [],
-        cwd: String(args.cwd ?? ""),
+        reasoning,
+        command: String(args["command"] ?? ""),
+        args: Array.isArray(args["args"]) ? args["args"].map(String) : [],
+        cwd: String(args["cwd"] ?? ""),
         output: parseStringField(resultContents, "output"),
         error: errorText,
         stdout: parseStringField(resultContents, "stdout"),
@@ -228,7 +272,7 @@ function createBaseToolAction(
       }
 
     default:
-      return createGeneralToolAction(BASE_SKILL_PREFIX, toolName, toolCall, toolResult)
+      return createGeneralToolAction(BASE_SKILL_PREFIX, toolName, toolCall, toolResult, reasoning)
   }
 }
 
@@ -237,10 +281,12 @@ function createGeneralToolAction(
   toolName: string,
   toolCall: ToolCall,
   toolResult: ToolResult,
+  reasoning: string | undefined,
 ): CheckpointAction {
   const errorText = getErrorFromResult(toolResult.result)
   return {
     type: "generalTool",
+    reasoning,
     skillName,
     toolName,
     args: toolCall.args as Record<string, unknown>,

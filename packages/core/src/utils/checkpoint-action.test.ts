@@ -59,6 +59,87 @@ function createToolResult(overrides: Partial<ToolResult> = {}): ToolResult {
 }
 
 describe("getCheckpointAction", () => {
+  describe("reasoning extraction", () => {
+    it("extracts reasoning from thinkingParts in newMessages", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        newMessages: [
+          {
+            id: "m-1",
+            type: "expertMessage",
+            contents: [
+              { type: "thinkingPart", id: "tp-1", thinking: "Let me analyze this..." },
+              { type: "textPart", id: "tp-2", text: "Response text" },
+            ],
+          },
+        ],
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/test.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{"content": "file content"}' }],
+          }),
+        ],
+      })
+
+      const action = getCheckpointAction({ checkpoint, step })
+
+      expect(action.type).toBe("readTextFile")
+      expect(action.reasoning).toBe("Let me analyze this...")
+    })
+
+    it("combines multiple thinkingParts", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        newMessages: [
+          {
+            id: "m-1",
+            type: "expertMessage",
+            contents: [
+              { type: "thinkingPart", id: "tp-1", thinking: "First thought" },
+              { type: "thinkingPart", id: "tp-2", thinking: "Second thought" },
+            ],
+          },
+        ],
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/test.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{"content": "file content"}' }],
+          }),
+        ],
+      })
+
+      const action = getCheckpointAction({ checkpoint, step })
+
+      expect(action.reasoning).toBe("First thought\n\nSecond thought")
+    })
+
+    it("returns undefined reasoning when no thinkingParts", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        newMessages: [
+          {
+            id: "m-1",
+            type: "expertMessage",
+            contents: [{ type: "textPart", id: "tp-1", text: "Just text" }],
+          },
+        ],
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/test.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{"content": "file content"}' }],
+          }),
+        ],
+      })
+
+      const action = getCheckpointAction({ checkpoint, step })
+
+      expect(action.reasoning).toBeUndefined()
+    })
+  })
+
   describe("delegate action", () => {
     it("returns delegate action when status is stoppedByDelegate", () => {
       const checkpoint = createBaseCheckpoint({
@@ -76,10 +157,10 @@ describe("getCheckpointAction", () => {
 
       const action = getCheckpointAction({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "delegate",
-        delegateTo: [{ expertKey: "child@1.0.0", query: "do something" }],
-      })
+      expect(action.type).toBe("delegate")
+      if (action.type === "delegate") {
+        expect(action.delegateTo).toEqual([{ expertKey: "child@1.0.0", query: "do something" }])
+      }
     })
   })
 

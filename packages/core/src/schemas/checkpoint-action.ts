@@ -2,14 +2,24 @@ import { z } from "zod"
 import type { MessagePart } from "./message-part.js"
 import { messagePartSchema } from "./message-part.js"
 
+/** Base fields shared by all checkpoint actions */
+interface BaseCheckpointAction {
+  /** LLM's reasoning/thinking process before executing this action */
+  reasoning?: string
+}
+
+const baseCheckpointActionSchema = z.object({
+  reasoning: z.string().optional(),
+})
+
 /** Retry action - generation failed and will be retried */
-export interface CheckpointActionRetry {
+export interface CheckpointActionRetry extends BaseCheckpointAction {
   type: "retry"
   error: string
   message: string
 }
 
-export const checkpointActionRetrySchema = z.object({
+export const checkpointActionRetrySchema = baseCheckpointActionSchema.extend({
   type: z.literal("retry"),
   error: z.string(),
   message: z.string(),
@@ -17,13 +27,13 @@ export const checkpointActionRetrySchema = z.object({
 checkpointActionRetrySchema satisfies z.ZodType<CheckpointActionRetry>
 
 /** Attempt completion action - Expert signaling task completion */
-export interface CheckpointActionAttemptCompletion {
+export interface CheckpointActionAttemptCompletion extends BaseCheckpointAction {
   type: "attemptCompletion"
   remainingTodos?: Array<{ id: number; title: string; completed: boolean }>
   error?: string
 }
 
-export const checkpointActionAttemptCompletionSchema = z.object({
+export const checkpointActionAttemptCompletionSchema = baseCheckpointActionSchema.extend({
   type: z.literal("attemptCompletion"),
   remainingTodos: z
     .array(z.object({ id: z.number(), title: z.string(), completed: z.boolean() }))
@@ -33,7 +43,7 @@ export const checkpointActionAttemptCompletionSchema = z.object({
 checkpointActionAttemptCompletionSchema satisfies z.ZodType<CheckpointActionAttemptCompletion>
 
 /** Todo action - Expert managing todo list */
-export interface CheckpointActionTodo {
+export interface CheckpointActionTodo extends BaseCheckpointAction {
   type: "todo"
   newTodos?: string[]
   completedTodos?: number[]
@@ -41,7 +51,7 @@ export interface CheckpointActionTodo {
   error?: string
 }
 
-export const checkpointActionTodoSchema = z.object({
+export const checkpointActionTodoSchema = baseCheckpointActionSchema.extend({
   type: z.literal("todo"),
   newTodos: z.array(z.string()).optional(),
   completedTodos: z.array(z.number()).optional(),
@@ -51,19 +61,19 @@ export const checkpointActionTodoSchema = z.object({
 checkpointActionTodoSchema satisfies z.ZodType<CheckpointActionTodo>
 
 /** Clear todo action - Expert clearing the todo list */
-export interface CheckpointActionClearTodo {
+export interface CheckpointActionClearTodo extends BaseCheckpointAction {
   type: "clearTodo"
   error?: string
 }
 
-export const checkpointActionClearTodoSchema = z.object({
+export const checkpointActionClearTodoSchema = baseCheckpointActionSchema.extend({
   type: z.literal("clearTodo"),
   error: z.string().optional(),
 })
 checkpointActionClearTodoSchema satisfies z.ZodType<CheckpointActionClearTodo>
 
 /** Read image file action */
-export interface CheckpointActionReadImageFile {
+export interface CheckpointActionReadImageFile extends BaseCheckpointAction {
   type: "readImageFile"
   path: string
   mimeType?: string
@@ -71,7 +81,7 @@ export interface CheckpointActionReadImageFile {
   error?: string
 }
 
-export const checkpointActionReadImageFileSchema = z.object({
+export const checkpointActionReadImageFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("readImageFile"),
   path: z.string(),
   mimeType: z.string().optional(),
@@ -81,7 +91,7 @@ export const checkpointActionReadImageFileSchema = z.object({
 checkpointActionReadImageFileSchema satisfies z.ZodType<CheckpointActionReadImageFile>
 
 /** Read PDF file action */
-export interface CheckpointActionReadPdfFile {
+export interface CheckpointActionReadPdfFile extends BaseCheckpointAction {
   type: "readPdfFile"
   path: string
   mimeType?: string
@@ -89,7 +99,7 @@ export interface CheckpointActionReadPdfFile {
   error?: string
 }
 
-export const checkpointActionReadPdfFileSchema = z.object({
+export const checkpointActionReadPdfFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("readPdfFile"),
   path: z.string(),
   mimeType: z.string().optional(),
@@ -99,7 +109,7 @@ export const checkpointActionReadPdfFileSchema = z.object({
 checkpointActionReadPdfFileSchema satisfies z.ZodType<CheckpointActionReadPdfFile>
 
 /** Read text file action */
-export interface CheckpointActionReadTextFile {
+export interface CheckpointActionReadTextFile extends BaseCheckpointAction {
   type: "readTextFile"
   path: string
   content?: string
@@ -108,7 +118,7 @@ export interface CheckpointActionReadTextFile {
   error?: string
 }
 
-export const checkpointActionReadTextFileSchema = z.object({
+export const checkpointActionReadTextFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("readTextFile"),
   path: z.string(),
   content: z.string().optional(),
@@ -119,7 +129,7 @@ export const checkpointActionReadTextFileSchema = z.object({
 checkpointActionReadTextFileSchema satisfies z.ZodType<CheckpointActionReadTextFile>
 
 /** Edit text file action */
-export interface CheckpointActionEditTextFile {
+export interface CheckpointActionEditTextFile extends BaseCheckpointAction {
   type: "editTextFile"
   path: string
   newText: string
@@ -127,7 +137,7 @@ export interface CheckpointActionEditTextFile {
   error?: string
 }
 
-export const checkpointActionEditTextFileSchema = z.object({
+export const checkpointActionEditTextFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("editTextFile"),
   path: z.string(),
   newText: z.string(),
@@ -137,14 +147,14 @@ export const checkpointActionEditTextFileSchema = z.object({
 checkpointActionEditTextFileSchema satisfies z.ZodType<CheckpointActionEditTextFile>
 
 /** Append text file action */
-export interface CheckpointActionAppendTextFile {
+export interface CheckpointActionAppendTextFile extends BaseCheckpointAction {
   type: "appendTextFile"
   path: string
   text: string
   error?: string
 }
 
-export const checkpointActionAppendTextFileSchema = z.object({
+export const checkpointActionAppendTextFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("appendTextFile"),
   path: z.string(),
   text: z.string(),
@@ -153,14 +163,14 @@ export const checkpointActionAppendTextFileSchema = z.object({
 checkpointActionAppendTextFileSchema satisfies z.ZodType<CheckpointActionAppendTextFile>
 
 /** Write text file action */
-export interface CheckpointActionWriteTextFile {
+export interface CheckpointActionWriteTextFile extends BaseCheckpointAction {
   type: "writeTextFile"
   path: string
   text: string
   error?: string
 }
 
-export const checkpointActionWriteTextFileSchema = z.object({
+export const checkpointActionWriteTextFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("writeTextFile"),
   path: z.string(),
   text: z.string(),
@@ -169,13 +179,13 @@ export const checkpointActionWriteTextFileSchema = z.object({
 checkpointActionWriteTextFileSchema satisfies z.ZodType<CheckpointActionWriteTextFile>
 
 /** Delete file action */
-export interface CheckpointActionDeleteFile {
+export interface CheckpointActionDeleteFile extends BaseCheckpointAction {
   type: "deleteFile"
   path: string
   error?: string
 }
 
-export const checkpointActionDeleteFileSchema = z.object({
+export const checkpointActionDeleteFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("deleteFile"),
   path: z.string(),
   error: z.string().optional(),
@@ -183,14 +193,14 @@ export const checkpointActionDeleteFileSchema = z.object({
 checkpointActionDeleteFileSchema satisfies z.ZodType<CheckpointActionDeleteFile>
 
 /** Delete directory action */
-export interface CheckpointActionDeleteDirectory {
+export interface CheckpointActionDeleteDirectory extends BaseCheckpointAction {
   type: "deleteDirectory"
   path: string
   recursive?: boolean
   error?: string
 }
 
-export const checkpointActionDeleteDirectorySchema = z.object({
+export const checkpointActionDeleteDirectorySchema = baseCheckpointActionSchema.extend({
   type: z.literal("deleteDirectory"),
   path: z.string(),
   recursive: z.boolean().optional(),
@@ -199,14 +209,14 @@ export const checkpointActionDeleteDirectorySchema = z.object({
 checkpointActionDeleteDirectorySchema satisfies z.ZodType<CheckpointActionDeleteDirectory>
 
 /** Move file action */
-export interface CheckpointActionMoveFile {
+export interface CheckpointActionMoveFile extends BaseCheckpointAction {
   type: "moveFile"
   source: string
   destination: string
   error?: string
 }
 
-export const checkpointActionMoveFileSchema = z.object({
+export const checkpointActionMoveFileSchema = baseCheckpointActionSchema.extend({
   type: z.literal("moveFile"),
   source: z.string(),
   destination: z.string(),
@@ -215,7 +225,7 @@ export const checkpointActionMoveFileSchema = z.object({
 checkpointActionMoveFileSchema satisfies z.ZodType<CheckpointActionMoveFile>
 
 /** Get file info action */
-export interface CheckpointActionGetFileInfo {
+export interface CheckpointActionGetFileInfo extends BaseCheckpointAction {
   type: "getFileInfo"
   path: string
   info?: {
@@ -234,7 +244,7 @@ export interface CheckpointActionGetFileInfo {
   error?: string
 }
 
-export const checkpointActionGetFileInfoSchema = z.object({
+export const checkpointActionGetFileInfoSchema = baseCheckpointActionSchema.extend({
   type: z.literal("getFileInfo"),
   path: z.string(),
   info: z
@@ -257,13 +267,13 @@ export const checkpointActionGetFileInfoSchema = z.object({
 checkpointActionGetFileInfoSchema satisfies z.ZodType<CheckpointActionGetFileInfo>
 
 /** Create directory action */
-export interface CheckpointActionCreateDirectory {
+export interface CheckpointActionCreateDirectory extends BaseCheckpointAction {
   type: "createDirectory"
   path: string
   error?: string
 }
 
-export const checkpointActionCreateDirectorySchema = z.object({
+export const checkpointActionCreateDirectorySchema = baseCheckpointActionSchema.extend({
   type: z.literal("createDirectory"),
   path: z.string(),
   error: z.string().optional(),
@@ -271,7 +281,7 @@ export const checkpointActionCreateDirectorySchema = z.object({
 checkpointActionCreateDirectorySchema satisfies z.ZodType<CheckpointActionCreateDirectory>
 
 /** List directory action */
-export interface CheckpointActionListDirectory {
+export interface CheckpointActionListDirectory extends BaseCheckpointAction {
   type: "listDirectory"
   path: string
   items?: Array<{
@@ -284,7 +294,7 @@ export interface CheckpointActionListDirectory {
   error?: string
 }
 
-export const checkpointActionListDirectorySchema = z.object({
+export const checkpointActionListDirectorySchema = baseCheckpointActionSchema.extend({
   type: z.literal("listDirectory"),
   path: z.string(),
   items: z
@@ -303,7 +313,7 @@ export const checkpointActionListDirectorySchema = z.object({
 checkpointActionListDirectorySchema satisfies z.ZodType<CheckpointActionListDirectory>
 
 /** Exec action - Command execution */
-export interface CheckpointActionExec {
+export interface CheckpointActionExec extends BaseCheckpointAction {
   type: "exec"
   command: string
   args: string[]
@@ -314,7 +324,7 @@ export interface CheckpointActionExec {
   stderr?: string
 }
 
-export const checkpointActionExecSchema = z.object({
+export const checkpointActionExecSchema = baseCheckpointActionSchema.extend({
   type: z.literal("exec"),
   command: z.string(),
   args: z.array(z.string()),
@@ -327,7 +337,7 @@ export const checkpointActionExecSchema = z.object({
 checkpointActionExecSchema satisfies z.ZodType<CheckpointActionExec>
 
 /** Delegate action - Expert delegating to another Expert */
-export interface CheckpointActionDelegate {
+export interface CheckpointActionDelegate extends BaseCheckpointAction {
   type: "delegate"
   delegateTo: Array<{
     expertKey: string
@@ -335,7 +345,7 @@ export interface CheckpointActionDelegate {
   }>
 }
 
-export const checkpointActionDelegateSchema = z.object({
+export const checkpointActionDelegateSchema = baseCheckpointActionSchema.extend({
   type: z.literal("delegate"),
   delegateTo: z.array(
     z.object({
@@ -347,14 +357,14 @@ export const checkpointActionDelegateSchema = z.object({
 checkpointActionDelegateSchema satisfies z.ZodType<CheckpointActionDelegate>
 
 /** Interactive tool action - Tool requiring user interaction */
-export interface CheckpointActionInteractiveTool {
+export interface CheckpointActionInteractiveTool extends BaseCheckpointAction {
   type: "interactiveTool"
   skillName: string
   toolName: string
   args: Record<string, unknown>
 }
 
-export const checkpointActionInteractiveToolSchema = z.object({
+export const checkpointActionInteractiveToolSchema = baseCheckpointActionSchema.extend({
   type: z.literal("interactiveTool"),
   skillName: z.string(),
   toolName: z.string(),
@@ -363,7 +373,7 @@ export const checkpointActionInteractiveToolSchema = z.object({
 checkpointActionInteractiveToolSchema satisfies z.ZodType<CheckpointActionInteractiveTool>
 
 /** General tool action - Any other tool call */
-export interface CheckpointActionGeneralTool {
+export interface CheckpointActionGeneralTool extends BaseCheckpointAction {
   type: "generalTool"
   skillName: string
   toolName: string
@@ -372,7 +382,7 @@ export interface CheckpointActionGeneralTool {
   error?: string
 }
 
-export const checkpointActionGeneralToolSchema = z.object({
+export const checkpointActionGeneralToolSchema = baseCheckpointActionSchema.extend({
   type: z.literal("generalTool"),
   skillName: z.string(),
   toolName: z.string(),
@@ -383,12 +393,12 @@ export const checkpointActionGeneralToolSchema = z.object({
 checkpointActionGeneralToolSchema satisfies z.ZodType<CheckpointActionGeneralTool>
 
 /** Error action - When action interpretation fails */
-export interface CheckpointActionError {
+export interface CheckpointActionError extends BaseCheckpointAction {
   type: "error"
   error?: string
 }
 
-export const checkpointActionErrorSchema = z.object({
+export const checkpointActionErrorSchema = baseCheckpointActionSchema.extend({
   type: z.literal("error"),
   error: z.string().optional(),
 })
