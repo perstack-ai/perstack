@@ -26,8 +26,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.88",
-    "@perstack/core": "workspace:*",
-    "@perstack/provider-core": "workspace:*"
+    "@perstack/core": "workspace:*"
   },
   "peerDependencies": {
     "ai": "^5.0.0"
