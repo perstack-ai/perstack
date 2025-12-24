@@ -1,5 +1,12 @@
 # @perstack/runner
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`dacb0eb`](https://github.com/perstack-ai/perstack/commit/dacb0eb3718a2cce918a6ab455ffb9ef6cce99c9)]:
+  - @perstack/runtime@0.0.72
+
 ## 0.0.3
 
 ### Patch Changes
