@@ -1,6 +1,5 @@
 {
   "name": "@perstack/vertex-provider",
-  "private": true,
   "description": "Google Vertex AI provider adapter for Perstack",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
@@ -14,7 +13,8 @@
     },
     "types": {
       ".": "./dist/src/index.d.ts"
-    }
+    },
+    "access": "public"
   },
   "files": [
     "dist"
@@ -41,5 +41,6 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  }
+  },
+  "version": "0.0.0"
 }
