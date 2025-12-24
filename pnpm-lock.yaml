@@ -177,12 +177,6 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
     devDependencies:
-      '@perstack/filesystem-storage':
-        specifier: workspace:*
-        version: link:../../packages/storages/filesystem
-      '@perstack/runner':
-        specifier: workspace:*
-        version: link:../../packages/runner
       '@tsconfig/node22':
         specifier: ^22.0.5
         version: 22.0.5
@@ -265,33 +259,6 @@ importers:
         specifier: ^5.25.0
         version: 5.25.0
     devDependencies:
-      '@perstack/anthropic-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/anthropic
-      '@perstack/azure-openai-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/azure-openai
-      '@perstack/bedrock-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/bedrock
-      '@perstack/deepseek-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/deepseek
-      '@perstack/google-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/google
-      '@perstack/ollama-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/ollama
-      '@perstack/openai-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/openai
-      '@perstack/provider-core':
-        specifier: workspace:*
-        version: link:../../packages/providers/core
-      '@perstack/vertex-provider':
-        specifier: workspace:*
-        version: link:../../packages/providers/vertex
       '@tsconfig/node22':
         specifier: ^22.0.5
         version: 22.0.5
