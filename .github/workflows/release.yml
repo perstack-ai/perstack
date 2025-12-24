@@ -94,8 +94,7 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm run version
-          # Use pnpm publish directly for OIDC authentication (no NPM_TOKEN needed)
-          publish: pnpm -r publish --access public
+          publish: changeset publish
           title: 'chore: version packages'
           commit: 'chore: version packages'
         env:
