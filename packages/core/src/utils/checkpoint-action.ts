@@ -39,6 +39,11 @@ export function getCheckpointActions(params: GetCheckpointActionsParams): Checkp
   const { status, delegateTo } = checkpoint
   const reasoning = extractReasoning(step.newMessages)
 
+  // Completed run - final result generation (after attemptCompletion)
+  if (status === "completed") {
+    return [createCompleteAction(step.newMessages, reasoning)]
+  }
+
   // Parallel delegate actions - each delegation becomes a separate action
   if (status === "stoppedByDelegate" && delegateTo && delegateTo.length > 0) {
     return delegateTo.map((d) => createDelegateAction(d, reasoning))
@@ -83,6 +88,20 @@ export function getCheckpointActions(params: GetCheckpointActionsParams): Checkp
   }
 
   return actions
+}
+
+function createCompleteAction(
+  newMessages: Message[],
+  reasoning: string | undefined,
+): CheckpointAction {
+  // Extract final text from the last expertMessage's textPart
+  const lastExpertMessage = [...newMessages].reverse().find((m) => m.type === "expertMessage")
+  const textPart = lastExpertMessage?.contents.find((c) => c.type === "textPart")
+  return {
+    type: "complete",
+    reasoning,
+    text: textPart?.text ?? "",
+  }
 }
 
 function createDelegateAction(

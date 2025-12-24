@@ -386,6 +386,18 @@ export const checkpointActionGeneralToolSchema = baseCheckpointActionSchema.exte
 })
 checkpointActionGeneralToolSchema satisfies z.ZodType<CheckpointActionGeneralTool>
 
+/** Complete action - Run completed successfully with final result */
+export interface CheckpointActionComplete extends BaseCheckpointAction {
+  type: "complete"
+  text: string
+}
+
+export const checkpointActionCompleteSchema = baseCheckpointActionSchema.extend({
+  type: z.literal("complete"),
+  text: z.string(),
+})
+checkpointActionCompleteSchema satisfies z.ZodType<CheckpointActionComplete>
+
 /** Error action - When action interpretation fails */
 export interface CheckpointActionError extends BaseCheckpointAction {
   type: "error"
@@ -401,6 +413,7 @@ checkpointActionErrorSchema satisfies z.ZodType<CheckpointActionError>
 /** Union of all checkpoint action types */
 export type CheckpointAction =
   | CheckpointActionRetry
+  | CheckpointActionComplete
   | CheckpointActionAttemptCompletion
   | CheckpointActionTodo
   | CheckpointActionClearTodo
@@ -424,6 +437,7 @@ export type CheckpointAction =
 
 export const checkpointActionSchema = z.discriminatedUnion("type", [
   checkpointActionRetrySchema,
+  checkpointActionCompleteSchema,
   checkpointActionAttemptCompletionSchema,
   checkpointActionTodoSchema,
   checkpointActionClearTodoSchema,

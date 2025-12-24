@@ -272,6 +272,64 @@ describe("getCheckpointActions", () => {
     })
   })
 
+  describe("complete action", () => {
+    it("returns complete action when status is completed", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "completed",
+      })
+      const step = createBaseStep({
+        newMessages: [
+          {
+            id: "m-1",
+            type: "toolMessage",
+            contents: [],
+          },
+          {
+            id: "m-2",
+            type: "expertMessage",
+            contents: [{ type: "textPart", id: "tp-1", text: "Task completed successfully!" }],
+          },
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0]).toEqual({
+        type: "complete",
+        reasoning: undefined,
+        text: "Task completed successfully!",
+      })
+    })
+
+    it("extracts reasoning from thinkingParts in complete action", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "completed",
+      })
+      const step = createBaseStep({
+        newMessages: [
+          {
+            id: "m-1",
+            type: "expertMessage",
+            contents: [
+              { type: "thinkingPart", id: "tp-1", thinking: "Final reasoning before completion" },
+              { type: "textPart", id: "tp-2", text: "All done!" },
+            ],
+          },
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("complete")
+      expect(actions[0].reasoning).toBe("Final reasoning before completion")
+      if (actions[0].type === "complete") {
+        expect(actions[0].text).toBe("All done!")
+      }
+    })
+  })
+
   describe("parallel tool calls", () => {
     it("returns multiple actions for parallel tool calls", () => {
       const checkpoint = createBaseCheckpoint()
