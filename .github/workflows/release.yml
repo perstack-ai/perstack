@@ -94,10 +94,10 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm run version
-          publish: pnpm run release
+          # Use pnpm publish directly for OIDC authentication (no NPM_TOKEN needed)
+          publish: pnpm -r publish --access public
           title: 'chore: version packages'
           commit: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # NPM_TOKEN not needed - using OIDC Trusted Publishing
