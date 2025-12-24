@@ -1,5 +1,11 @@
 # create-expert
 
+## 0.0.7
+
+### Patch Changes
+
+- [`0e6eceb`](https://github.com/perstack-ai/perstack/commit/0e6eceb8e021d0b631a7fe34de3036fcaf9e6c9d) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Internal improvements and maintenance updates
+
 ## 0.0.6
 
 ### Patch Changes
