@@ -16,6 +16,14 @@ permissions:
 env:
   PNPM_VERSION: '10.10.0'
   NODE_VERSION: '22'
+  # Allowlist of packages that can be published to npm
+  ALLOWED_PACKAGES: |
+    perstack
+    create-expert
+    @perstack/runtime
+    @perstack/base
+    @perstack/core
+    @perstack/api-client
 
 jobs:
   release:
@@ -43,6 +51,44 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Validate publishable packages
+        run: |
+          echo "Checking for unauthorized packages in changesets..."
+          
+          # Get list of packages that would be published
+          PACKAGES_TO_PUBLISH=$(find .changeset -name "*.md" ! -name "README.md" -exec cat {} \; | grep -E '^"[^"]+":' | sed 's/"//g' | cut -d: -f1 | sort -u)
+          
+          if [ -z "$PACKAGES_TO_PUBLISH" ]; then
+            echo "No packages to publish found in changesets."
+            exit 0
+          fi
+          
+          echo "Packages in changesets:"
+          echo "$PACKAGES_TO_PUBLISH"
+          echo ""
+          
+          # Check each package against allowlist
+          UNAUTHORIZED=""
+          while IFS= read -r pkg; do
+            if ! echo "$ALLOWED_PACKAGES" | grep -qx "$pkg"; then
+              UNAUTHORIZED="$UNAUTHORIZED$pkg\n"
+            fi
+          done <<< "$PACKAGES_TO_PUBLISH"
+          
+          if [ -n "$UNAUTHORIZED" ]; then
+            echo "::error::UNAUTHORIZED PACKAGES DETECTED!"
+            echo "The following packages are NOT in the allowlist and cannot be published:"
+            echo -e "$UNAUTHORIZED"
+            echo ""
+            echo "Allowed packages are:"
+            echo "$ALLOWED_PACKAGES"
+            echo ""
+            echo "If you need to publish these packages, update ALLOWED_PACKAGES in .github/workflows/release.yml"
+            exit 1
+          fi
+          
+          echo "✅ All packages are authorized for publishing."
+
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
@@ -55,4 +101,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
