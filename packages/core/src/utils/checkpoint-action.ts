@@ -1,4 +1,4 @@
-import type { Checkpoint } from "../schemas/checkpoint.js"
+import type { Checkpoint, DelegationTarget } from "../schemas/checkpoint.js"
 import type { CheckpointAction } from "../schemas/checkpoint-action.js"
 import type { Message } from "../schemas/message.js"
 import type { MessagePart, ThinkingPart } from "../schemas/message-part.js"
@@ -8,7 +8,7 @@ import type { ToolResult } from "../schemas/tool-result.js"
 
 export const BASE_SKILL_PREFIX = "@perstack/base"
 
-export type GetCheckpointActionParams = {
+export type GetCheckpointActionsParams = {
   checkpoint: Checkpoint
   step: Step
 }
@@ -30,49 +30,70 @@ function extractReasoning(newMessages: Message[]): string | undefined {
 }
 
 /**
- * Computes the checkpoint action from a checkpoint and step.
- * This is a utility function that interprets the checkpoint state
- * to determine what action the Expert performed.
+ * Computes checkpoint actions from a checkpoint and step.
+ * Returns an array of actions, supporting parallel tool calls and delegations.
+ * Each tool call or delegation becomes a separate action in the array.
  */
-export function getCheckpointAction(params: GetCheckpointActionParams): CheckpointAction {
+export function getCheckpointActions(params: GetCheckpointActionsParams): CheckpointAction[] {
   const { checkpoint, step } = params
   const { status, delegateTo } = checkpoint
-  const toolCall = step.toolCalls?.[0]
-  const toolResult = step.toolResults?.[0]
-  const skillName = toolCall?.skillName
-  const toolName = toolCall?.toolName
   const reasoning = extractReasoning(step.newMessages)
 
+  // Parallel delegate actions - each delegation becomes a separate action
   if (status === "stoppedByDelegate" && delegateTo && delegateTo.length > 0) {
-    return createDelegateAction(delegateTo, reasoning)
+    return delegateTo.map((d) => createDelegateAction(d, reasoning))
   }
 
-  if (status === "stoppedByInteractiveTool" && skillName && toolName && toolCall) {
-    return createInteractiveToolAction(skillName, toolName, toolCall, reasoning)
+  // Interactive tool actions - may be parallel
+  if (status === "stoppedByInteractiveTool") {
+    const toolCalls = step.toolCalls ?? []
+    if (toolCalls.length === 0) {
+      return [createRetryAction(step.newMessages, reasoning)]
+    }
+    return toolCalls.map((tc) =>
+      createInteractiveToolAction(tc.skillName, tc.toolName, tc, reasoning),
+    )
   }
 
-  if (!skillName || !toolName || !toolCall || !toolResult) {
-    return createRetryAction(step.newMessages, reasoning)
+  // Normal tool actions - may be parallel
+  const toolCalls = step.toolCalls ?? []
+  const toolResults = step.toolResults ?? []
+
+  if (toolCalls.length === 0) {
+    return [createRetryAction(step.newMessages, reasoning)]
   }
 
-  if (skillName.startsWith(BASE_SKILL_PREFIX)) {
-    return createBaseToolAction(toolName, toolCall, toolResult, reasoning)
+  const actions: CheckpointAction[] = []
+  for (const toolCall of toolCalls) {
+    const toolResult = toolResults.find((tr) => tr.id === toolCall.id)
+    if (!toolResult) {
+      // No result yet for this tool call, skip
+      continue
+    }
+    const { skillName, toolName } = toolCall
+    if (skillName.startsWith(BASE_SKILL_PREFIX)) {
+      actions.push(createBaseToolAction(toolName, toolCall, toolResult, reasoning))
+    } else {
+      actions.push(createGeneralToolAction(skillName, toolName, toolCall, toolResult, reasoning))
+    }
   }
 
-  return createGeneralToolAction(skillName, toolName, toolCall, toolResult, reasoning)
+  if (actions.length === 0) {
+    return [createRetryAction(step.newMessages, reasoning)]
+  }
+
+  return actions
 }
 
 function createDelegateAction(
-  delegateTo: NonNullable<Checkpoint["delegateTo"]>,
+  delegate: DelegationTarget,
   reasoning: string | undefined,
 ): CheckpointAction {
   return {
     type: "delegate",
     reasoning,
-    delegateTo: delegateTo.map((d) => ({
-      expertKey: d.expert.key,
-      query: d.query,
-    })),
+    expertKey: delegate.expert.key,
+    query: delegate.query,
   }
 }
 

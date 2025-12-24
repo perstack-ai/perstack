@@ -339,20 +339,14 @@ checkpointActionExecSchema satisfies z.ZodType<CheckpointActionExec>
 /** Delegate action - Expert delegating to another Expert */
 export interface CheckpointActionDelegate extends BaseCheckpointAction {
   type: "delegate"
-  delegateTo: Array<{
-    expertKey: string
-    query: string
-  }>
+  expertKey: string
+  query: string
 }
 
 export const checkpointActionDelegateSchema = baseCheckpointActionSchema.extend({
   type: z.literal("delegate"),
-  delegateTo: z.array(
-    z.object({
-      expertKey: z.string(),
-      query: z.string(),
-    }),
-  ),
+  expertKey: z.string(),
+  query: z.string(),
 })
 checkpointActionDelegateSchema satisfies z.ZodType<CheckpointActionDelegate>
 

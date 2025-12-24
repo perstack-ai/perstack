@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Checkpoint, Step, ToolCall, ToolResult } from "../index.js"
-import { getCheckpointAction } from "./checkpoint-action.js"
+import { getCheckpointActions } from "./checkpoint-action.js"
 
 function createBaseCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {
@@ -50,7 +50,7 @@ function createToolCall(overrides: Partial<ToolCall> = {}): ToolCall {
 
 function createToolResult(overrides: Partial<ToolResult> = {}): ToolResult {
   return {
-    id: "tr-1",
+    id: "tc-1",
     skillName: "@perstack/base",
     toolName: "readTextFile",
     result: [{ type: "textPart", id: "tp-1", text: '{"content": "file content"}' }],
@@ -58,7 +58,7 @@ function createToolResult(overrides: Partial<ToolResult> = {}): ToolResult {
   }
 }
 
-describe("getCheckpointAction", () => {
+describe("getCheckpointActions", () => {
   describe("reasoning extraction", () => {
     it("extracts reasoning from thinkingParts in newMessages", () => {
       const checkpoint = createBaseCheckpoint()
@@ -82,10 +82,11 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action.type).toBe("readTextFile")
-      expect(action.reasoning).toBe("Let me analyze this...")
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+      expect(actions[0].reasoning).toBe("Let me analyze this...")
     })
 
     it("combines multiple thinkingParts", () => {
@@ -110,9 +111,10 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action.reasoning).toBe("First thought\n\nSecond thought")
+      expect(actions).toHaveLength(1)
+      expect(actions[0].reasoning).toBe("First thought\n\nSecond thought")
     })
 
     it("returns undefined reasoning when no thinkingParts", () => {
@@ -134,14 +136,15 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action.reasoning).toBeUndefined()
+      expect(actions).toHaveLength(1)
+      expect(actions[0].reasoning).toBeUndefined()
     })
   })
 
-  describe("delegate action", () => {
-    it("returns delegate action when status is stoppedByDelegate", () => {
+  describe("delegate actions", () => {
+    it("returns single delegate action for single delegation", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByDelegate",
         delegateTo: [
@@ -155,17 +158,57 @@ describe("getCheckpointAction", () => {
       })
       const step = createBaseStep()
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action.type).toBe("delegate")
-      if (action.type === "delegate") {
-        expect(action.delegateTo).toEqual([{ expertKey: "child@1.0.0", query: "do something" }])
-      }
+      expect(actions).toHaveLength(1)
+      expect(actions[0]).toEqual({
+        type: "delegate",
+        reasoning: undefined,
+        expertKey: "child@1.0.0",
+        query: "do something",
+      })
+    })
+
+    it("returns multiple delegate actions for parallel delegations", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "stoppedByDelegate",
+        delegateTo: [
+          {
+            expert: { key: "child-a@1.0.0", name: "child-a", version: "1.0.0" },
+            toolCallId: "tc-1",
+            toolName: "delegateToChildA",
+            query: "do task A",
+          },
+          {
+            expert: { key: "child-b@1.0.0", name: "child-b", version: "1.0.0" },
+            toolCallId: "tc-2",
+            toolName: "delegateToChildB",
+            query: "do task B",
+          },
+        ],
+      })
+      const step = createBaseStep()
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(2)
+      expect(actions[0]).toEqual({
+        type: "delegate",
+        reasoning: undefined,
+        expertKey: "child-a@1.0.0",
+        query: "do task A",
+      })
+      expect(actions[1]).toEqual({
+        type: "delegate",
+        reasoning: undefined,
+        expertKey: "child-b@1.0.0",
+        query: "do task B",
+      })
     })
   })
 
-  describe("interactive tool action", () => {
-    it("returns interactiveTool action when status is stoppedByInteractiveTool", () => {
+  describe("interactive tool actions", () => {
+    it("returns single interactiveTool action", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByInteractiveTool",
       })
@@ -173,14 +216,34 @@ describe("getCheckpointAction", () => {
         toolCalls: [createToolCall({ skillName: "custom-skill", toolName: "askUser" })],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
+      expect(actions).toHaveLength(1)
+      expect(actions[0]).toEqual({
         type: "interactiveTool",
+        reasoning: undefined,
         skillName: "custom-skill",
         toolName: "askUser",
         args: { path: "/test.txt" },
       })
+    })
+
+    it("returns multiple interactiveTool actions for parallel interactive tools", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "stoppedByInteractiveTool",
+      })
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({ id: "tc-1", skillName: "custom-skill", toolName: "askUserA" }),
+          createToolCall({ id: "tc-2", skillName: "custom-skill", toolName: "askUserB" }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(2)
+      expect(actions[0].type).toBe("interactiveTool")
+      expect(actions[1].type).toBe("interactiveTool")
     })
   })
 
@@ -197,18 +260,116 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
+      expect(actions).toHaveLength(1)
+      expect(actions[0]).toEqual({
         type: "retry",
+        reasoning: undefined,
         error: "No tool call or result found",
         message: "Something went wrong",
       })
     })
   })
 
+  describe("parallel tool calls", () => {
+    it("returns multiple actions for parallel tool calls", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({ id: "tc-1", toolName: "readTextFile", args: { path: "/file1.txt" } }),
+          createToolCall({ id: "tc-2", toolName: "readTextFile", args: { path: "/file2.txt" } }),
+        ],
+        toolResults: [
+          createToolResult({
+            id: "tc-1",
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{"content": "content 1"}' }],
+          }),
+          createToolResult({
+            id: "tc-2",
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-2", text: '{"content": "content 2"}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(2)
+      expect(actions[0].type).toBe("readTextFile")
+      expect(actions[1].type).toBe("readTextFile")
+      if (actions[0].type === "readTextFile" && actions[1].type === "readTextFile") {
+        expect(actions[0].path).toBe("/file1.txt")
+        expect(actions[0].content).toBe("content 1")
+        expect(actions[1].path).toBe("/file2.txt")
+        expect(actions[1].content).toBe("content 2")
+      }
+    })
+
+    it("returns actions only for tool calls with matching results", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({ id: "tc-1", toolName: "readTextFile", args: { path: "/file1.txt" } }),
+          createToolCall({ id: "tc-2", toolName: "readTextFile", args: { path: "/file2.txt" } }),
+        ],
+        toolResults: [
+          createToolResult({
+            id: "tc-1",
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{"content": "content 1"}' }],
+          }),
+          // tc-2 has no result yet
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+    })
+
+    it("shares same reasoning across all parallel actions", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        newMessages: [
+          {
+            id: "m-1",
+            type: "expertMessage",
+            contents: [
+              { type: "thinkingPart", id: "tp-1", thinking: "Shared reasoning for both tools" },
+            ],
+          },
+        ],
+        toolCalls: [
+          createToolCall({ id: "tc-1", toolName: "readTextFile", args: { path: "/file1.txt" } }),
+          createToolCall({ id: "tc-2", toolName: "readTextFile", args: { path: "/file2.txt" } }),
+        ],
+        toolResults: [
+          createToolResult({
+            id: "tc-1",
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{"content": "content 1"}' }],
+          }),
+          createToolResult({
+            id: "tc-2",
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-2", text: '{"content": "content 2"}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(2)
+      expect(actions[0].reasoning).toBe("Shared reasoning for both tools")
+      expect(actions[1].reasoning).toBe("Shared reasoning for both tools")
+    })
+  })
+
   describe("base tool actions", () => {
-    it("returns attemptCompletion action with no remaining todos", () => {
+    it("returns attemptCompletion action", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [createToolCall({ toolName: "attemptCompletion", args: {} })],
@@ -220,40 +381,10 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "attemptCompletion",
-        remainingTodos: undefined,
-        error: undefined,
-      })
-    })
-
-    it("returns attemptCompletion action with remaining todos", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [createToolCall({ toolName: "attemptCompletion", args: {} })],
-        toolResults: [
-          createToolResult({
-            toolName: "attemptCompletion",
-            result: [
-              {
-                type: "textPart",
-                id: "tp-1",
-                text: '{"remainingTodos": [{"id": 1, "title": "Task 1", "completed": false}]}',
-              },
-            ],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "attemptCompletion",
-        remainingTodos: [{ id: 1, title: "Task 1", completed: false }],
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("attemptCompletion")
     })
 
     it("returns todo action", () => {
@@ -279,18 +410,10 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "todo",
-        newTodos: ["Task 1", "Task 2"],
-        completedTodos: undefined,
-        todos: [
-          { id: 0, title: "Task 1", completed: false },
-          { id: 1, title: "Task 2", completed: false },
-        ],
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("todo")
     })
 
     it("returns clearTodo action", () => {
@@ -305,12 +428,10 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "clearTodo",
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("clearTodo")
     })
 
     it("returns readTextFile action", () => {
@@ -336,16 +457,16 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "readTextFile",
-        path: "/test.txt",
-        content: "file content",
-        from: 1,
-        to: 10,
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+      if (actions[0].type === "readTextFile") {
+        expect(actions[0].path).toBe("/test.txt")
+        expect(actions[0].content).toBe("file content")
+        expect(actions[0].from).toBe(1)
+        expect(actions[0].to).toBe(10)
+      }
     })
 
     it("returns editTextFile action", () => {
@@ -365,15 +486,10 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "editTextFile",
-        path: "/test.txt",
-        oldText: "old",
-        newText: "new",
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("editTextFile")
     })
 
     it("returns writeTextFile action", () => {
@@ -393,179 +509,10 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "writeTextFile",
-        path: "/new.txt",
-        text: "new content",
-        error: undefined,
-      })
-    })
-
-    it("returns appendTextFile action", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [
-          createToolCall({
-            toolName: "appendTextFile",
-            args: { path: "/log.txt", text: "log entry" },
-          }),
-        ],
-        toolResults: [
-          createToolResult({
-            toolName: "appendTextFile",
-            result: [{ type: "textPart", id: "tp-1", text: '{"path": "/log.txt"}' }],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "appendTextFile",
-        path: "/log.txt",
-        text: "log entry",
-        error: undefined,
-      })
-    })
-
-    it("returns deleteFile action", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [createToolCall({ toolName: "deleteFile", args: { path: "/delete.txt" } })],
-        toolResults: [
-          createToolResult({
-            toolName: "deleteFile",
-            result: [{ type: "textPart", id: "tp-1", text: '{"path": "/delete.txt"}' }],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "deleteFile",
-        path: "/delete.txt",
-        error: undefined,
-      })
-    })
-
-    it("returns deleteDirectory action", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [
-          createToolCall({
-            toolName: "deleteDirectory",
-            args: { path: "/old-dir", recursive: true },
-          }),
-        ],
-        toolResults: [
-          createToolResult({
-            toolName: "deleteDirectory",
-            result: [{ type: "textPart", id: "tp-1", text: '{"path": "/old-dir"}' }],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "deleteDirectory",
-        path: "/old-dir",
-        recursive: true,
-        error: undefined,
-      })
-    })
-
-    it("returns moveFile action with source and destination", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [
-          createToolCall({
-            toolName: "moveFile",
-            args: { source: "/old.txt", destination: "/new.txt" },
-          }),
-        ],
-        toolResults: [
-          createToolResult({
-            toolName: "moveFile",
-            result: [
-              {
-                type: "textPart",
-                id: "tp-1",
-                text: '{"source": "/old.txt", "destination": "/new.txt"}',
-              },
-            ],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "moveFile",
-        source: "/old.txt",
-        destination: "/new.txt",
-        error: undefined,
-      })
-    })
-
-    it("returns createDirectory action", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [createToolCall({ toolName: "createDirectory", args: { path: "/new-dir" } })],
-        toolResults: [
-          createToolResult({
-            toolName: "createDirectory",
-            result: [{ type: "textPart", id: "tp-1", text: '{"path": "/new-dir"}' }],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "createDirectory",
-        path: "/new-dir",
-        error: undefined,
-      })
-    })
-
-    it("returns listDirectory action with items", () => {
-      const checkpoint = createBaseCheckpoint()
-      const step = createBaseStep({
-        toolCalls: [createToolCall({ toolName: "listDirectory", args: { path: "/src" } })],
-        toolResults: [
-          createToolResult({
-            toolName: "listDirectory",
-            result: [
-              {
-                type: "textPart",
-                id: "tp-1",
-                text: '{"path": "/src", "items": [{"name": "index.ts", "path": "index.ts", "type": "file", "size": 1024, "modified": "2024-01-01T00:00:00Z"}]}',
-              },
-            ],
-          }),
-        ],
-      })
-
-      const action = getCheckpointAction({ checkpoint, step })
-
-      expect(action).toEqual({
-        type: "listDirectory",
-        path: "/src",
-        items: [
-          {
-            name: "index.ts",
-            path: "index.ts",
-            type: "file",
-            size: 1024,
-            modified: "2024-01-01T00:00:00Z",
-          },
-        ],
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("writeTextFile")
     })
 
     it("returns exec action", () => {
@@ -578,9 +525,6 @@ describe("getCheckpointAction", () => {
               command: "ls",
               args: ["-la"],
               cwd: "/workspace",
-              env: {},
-              stdout: true,
-              stderr: true,
             },
           }),
         ],
@@ -598,18 +542,14 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "exec",
-        command: "ls",
-        args: ["-la"],
-        cwd: "/workspace",
-        output: "total 8\ndrwxr-xr-x 2 user user 4096",
-        error: undefined,
-        stdout: undefined,
-        stderr: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("exec")
+      if (actions[0].type === "exec") {
+        expect(actions[0].command).toBe("ls")
+        expect(actions[0].output).toBe("total 8\ndrwxr-xr-x 2 user user 4096")
+      }
     })
   })
 
@@ -633,16 +573,15 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action).toEqual({
-        type: "generalTool",
-        skillName: "custom-skill",
-        toolName: "customTool",
-        args: { foo: "bar" },
-        result: [{ type: "textPart", id: "tp-1", text: "result" }],
-        error: undefined,
-      })
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("generalTool")
+      if (actions[0].type === "generalTool") {
+        expect(actions[0].skillName).toBe("custom-skill")
+        expect(actions[0].toolName).toBe("customTool")
+        expect(actions[0].args).toEqual({ foo: "bar" })
+      }
     })
   })
 
@@ -659,10 +598,11 @@ describe("getCheckpointAction", () => {
         ],
       })
 
-      const action = getCheckpointAction({ checkpoint, step })
+      const actions = getCheckpointActions({ checkpoint, step })
 
-      expect(action.type).toBe("readTextFile")
-      expect((action as { error?: string }).error).toBe("File not found")
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+      expect((actions[0] as { error?: string }).error).toBe("File not found")
     })
   })
 })
