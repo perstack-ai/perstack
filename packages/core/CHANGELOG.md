@@ -1,5 +1,11 @@
 # @perstack/core
 
+## 0.0.29
+
+### Patch Changes
+
+- Internal improvements and maintenance updates
+
 ## 0.0.28
 
 ### Patch Changes

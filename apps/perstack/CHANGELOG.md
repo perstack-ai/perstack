@@ -1,5 +1,16 @@
 # perstack
 
+## 0.0.51
+
+### Patch Changes
+
+- Internal improvements and maintenance updates
+
+- Updated dependencies []:
+  - @perstack/runtime@0.0.73
+  - @perstack/core@0.0.29
+  - @perstack/api-client@0.0.37
+
 ## 0.0.50
 
 ### Patch Changes

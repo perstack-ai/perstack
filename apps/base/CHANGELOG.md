@@ -1,5 +1,14 @@
 # @perstack/base
 
+## 0.0.37
+
+### Patch Changes
+
+- Internal improvements and maintenance updates
+
+- Updated dependencies []:
+  - @perstack/core@0.0.29
+
 ## 0.0.36
 
 ### Patch Changes
