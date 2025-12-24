@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@perstack/docker",
   "description": "Perstack Docker Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
@@ -39,5 +38,6 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  }
+  },
+  "version": "0.0.0"
 }
