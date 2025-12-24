@@ -1,4 +1,9 @@
-import type { Skill } from "@perstack/core"
+import {
+  type CheckpointAction,
+  checkpointActionSchema,
+  checkpointStatusSchema as coreCheckpointStatusSchema,
+  type Skill,
+} from "@perstack/core"
 import { z } from "zod"
 
 export const applicationSchema = z.object({
@@ -360,3 +365,117 @@ export interface CreateWorkspaceSecretInput {
   name: string
   value: string
 }
+
+export const usageSchema = z.object({
+  inputTokens: z.number(),
+  outputTokens: z.number(),
+  reasoningTokens: z.number(),
+  totalTokens: z.number(),
+  cachedInputTokens: z.number(),
+})
+export type Usage = z.infer<typeof usageSchema>
+
+export const messagePartSchema = z
+  .object({
+    type: z.string(),
+    id: z.string(),
+  })
+  .passthrough()
+export type MessagePart = z.infer<typeof messagePartSchema>
+
+export const messageSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  contents: z.array(messagePartSchema),
+})
+export type Message = z.infer<typeof messageSchema>
+
+export const toolCallSchema = z.object({
+  id: z.string(),
+  skillName: z.string(),
+  toolName: z.string(),
+  args: z.unknown(),
+})
+export type ToolCall = z.infer<typeof toolCallSchema>
+
+export const toolResultSchema = z.object({
+  id: z.string(),
+  skillName: z.string(),
+  toolName: z.string(),
+  result: z.array(messagePartSchema),
+})
+export type ToolResult = z.infer<typeof toolResultSchema>
+
+export const streamCheckpointSchema = z.object({
+  type: z.literal("checkpoint"),
+  id: z.string(),
+  action: checkpointActionSchema,
+  runId: z.string(),
+  expertJobId: z.string(),
+  stepNumber: z.number(),
+  status: coreCheckpointStatusSchema,
+  expert: expertDigestSchema,
+  skillName: z.string().optional(),
+  toolName: z.string().optional(),
+  delegateTo: z
+    .object({
+      expert: expertDigestSchema,
+      toolCallId: z.string(),
+      toolName: z.string(),
+    })
+    .optional(),
+  delegatedBy: z
+    .object({
+      expert: expertDigestSchema,
+      toolCallId: z.string(),
+      toolName: z.string(),
+      checkpointId: z.string(),
+    })
+    .optional(),
+  inputMessages: z.array(messageSchema).optional(),
+  messages: z.array(messageSchema),
+  newMessages: z.array(messageSchema),
+  toolCall: z
+    .object({
+      id: z.string(),
+      skillName: z.string(),
+      toolName: z.string(),
+      args: z.record(z.string(), z.unknown()),
+    })
+    .optional(),
+  toolResult: z
+    .object({
+      id: z.string(),
+      skillName: z.string(),
+      toolName: z.string(),
+      result: z.array(messagePartSchema),
+    })
+    .optional(),
+  usage: usageSchema,
+  contextWindow: z.number().optional(),
+  contextWindowUsage: z.number().optional(),
+  startedAt: z.string(),
+  finishedAt: z.string().optional(),
+})
+export type StreamCheckpoint = z.infer<typeof streamCheckpointSchema>
+
+export const checkpointStreamErrorSchema = z.object({
+  type: z.string(),
+  expertJobId: z.string(),
+  message: z.string().optional(),
+  checkpointId: z.string().optional(),
+})
+export type CheckpointStreamError = z.infer<typeof checkpointStreamErrorSchema>
+
+export const checkpointStreamCompleteSchema = z.object({
+  status: z.string(),
+  expertJobId: z.string(),
+})
+export type CheckpointStreamComplete = z.infer<typeof checkpointStreamCompleteSchema>
+
+export type CheckpointStreamEvent =
+  | { event: "message"; data: StreamCheckpoint }
+  | { event: "error"; data: CheckpointStreamError }
+  | { event: "complete"; data: CheckpointStreamComplete }
+
+export type { CheckpointAction }

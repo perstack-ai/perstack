@@ -20,6 +20,7 @@ describe("createFetcher", () => {
     expect(fetcher.post).toBeInstanceOf(Function)
     expect(fetcher.delete).toBeInstanceOf(Function)
     expect(fetcher.getBlob).toBeInstanceOf(Function)
+    expect(fetcher.stream).toBeInstanceOf(Function)
   })
 
   it("uses custom baseUrl", async () => {
@@ -397,5 +398,105 @@ describe("fetcher.getBlob", () => {
     if (!result.ok) {
       expect(result.error.code).toBe(0)
     }
+  })
+})
+
+describe("fetcher.stream", () => {
+  it("streams SSE events", async () => {
+    const encoder = new TextEncoder()
+    const sseData = [
+      "event: message\n",
+      'data: {"id": "1", "value": "first"}\n',
+      "\n",
+      "event: message\n",
+      'data: {"id": "2", "value": "second"}\n',
+      "\n",
+      "event: complete\n",
+      'data: {"status": "done"}\n',
+      "\n",
+    ].join("")
+
+    server.use(
+      http.get(`${BASE_URL}/api/stream`, () => {
+        return new HttpResponse(encoder.encode(sseData), {
+          headers: { "Content-Type": "text/event-stream" },
+        })
+      }),
+    )
+
+    const fetcher = createFetcher()
+    const events: { event: string; data: unknown }[] = []
+
+    for await (const event of fetcher.stream("/api/stream")) {
+      events.push(event)
+    }
+
+    expect(events).toHaveLength(3)
+    expect(events[0]).toEqual({ event: "message", data: { id: "1", value: "first" } })
+    expect(events[1]).toEqual({ event: "message", data: { id: "2", value: "second" } })
+    expect(events[2]).toEqual({ event: "complete", data: { status: "done" } })
+  })
+
+  it("yields error event on HTTP error", async () => {
+    server.use(
+      http.get(`${BASE_URL}/api/stream`, () => {
+        return HttpResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }),
+    )
+
+    const fetcher = createFetcher()
+    const events: { event: string; data: unknown }[] = []
+
+    for await (const event of fetcher.stream("/api/stream")) {
+      events.push(event)
+    }
+
+    expect(events).toHaveLength(1)
+    expect(events[0].event).toBe("error")
+  })
+
+  it("handles non-JSON data gracefully", async () => {
+    const encoder = new TextEncoder()
+    const sseData = ["event: message\n", "data: plain text\n", "\n"].join("")
+
+    server.use(
+      http.get(`${BASE_URL}/api/stream`, () => {
+        return new HttpResponse(encoder.encode(sseData), {
+          headers: { "Content-Type": "text/event-stream" },
+        })
+      }),
+    )
+
+    const fetcher = createFetcher()
+    const events: { event: string; data: unknown }[] = []
+
+    for await (const event of fetcher.stream("/api/stream")) {
+      events.push(event)
+    }
+
+    expect(events).toHaveLength(1)
+    expect(events[0]).toEqual({ event: "message", data: "plain text" })
+  })
+
+  it("sets Accept header for text/event-stream", async () => {
+    let capturedAccept: string | null = null
+    const encoder = new TextEncoder()
+
+    server.use(
+      http.get(`${BASE_URL}/api/stream`, ({ request }) => {
+        capturedAccept = request.headers.get("Accept")
+        return new HttpResponse(encoder.encode("event: done\ndata: {}\n\n"), {
+          headers: { "Content-Type": "text/event-stream" },
+        })
+      }),
+    )
+
+    const fetcher = createFetcher()
+    const events: unknown[] = []
+    for await (const event of fetcher.stream("/api/stream")) {
+      events.push(event)
+    }
+
+    expect(capturedAccept).toBe("text/event-stream")
   })
 })

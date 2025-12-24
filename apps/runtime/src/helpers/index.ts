@@ -6,6 +6,7 @@ export {
   createNextStepCheckpoint,
   type DelegationStateResult,
 } from "./checkpoint.js"
+export { type ToCheckpointActionParams, toCheckpointAction } from "./checkpoint-action.js"
 export {
   findLockfile,
   getLockfileExpertToolDefinitions,

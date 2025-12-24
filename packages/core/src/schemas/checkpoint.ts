@@ -1,4 +1,6 @@
 import { z } from "zod"
+import type { CheckpointAction } from "./checkpoint-action.js"
+import { checkpointActionSchema } from "./checkpoint-action.js"
 import type { Message } from "./message.js"
 import { messageSchema } from "./message.js"
 import type { RuntimeName } from "./runtime-name.js"
@@ -111,6 +113,8 @@ export interface Checkpoint {
   }
   /** Consecutive retry count for current generation (reset on success) */
   retryCount?: number
+  /** Pre-computed action for UI display (optional for backward compatibility) */
+  action?: CheckpointAction
 }
 
 export const delegationTargetSchema = z.object({
@@ -170,5 +174,6 @@ export const checkpointSchema = z.object({
     })
     .optional(),
   retryCount: z.number().optional(),
+  action: checkpointActionSchema.optional(),
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>

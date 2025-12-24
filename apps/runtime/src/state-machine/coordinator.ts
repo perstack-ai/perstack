@@ -1,5 +1,6 @@
 import type { Checkpoint, Expert, RunEvent, RunSetting, RuntimeEvent, Step } from "@perstack/core"
 import type { RunEventEmitter } from "../events/event-emitter.js"
+import { toCheckpointAction } from "../helpers/checkpoint-action.js"
 import type { LLMExecutor } from "../llm/index.js"
 import { type BaseSkillManager, closeSkillManagers } from "../skill-manager/index.js"
 import { type ActorFactory, defaultActorFactory } from "./actor-factory.js"
@@ -111,8 +112,14 @@ export class StateMachineCoordinator {
 
     const event = await this.logics[stateValue](runState.context)
 
-    if ("checkpoint" in event) {
-      await storeCheckpoint(event.checkpoint)
+    if ("checkpoint" in event && "step" in event) {
+      const checkpoint = event.checkpoint as Checkpoint
+      const step = event.step as Step
+      const action = toCheckpointAction({ checkpoint, step })
+      const checkpointWithAction = { ...checkpoint, action }
+      await storeCheckpoint(checkpointWithAction)
+    } else if ("checkpoint" in event) {
+      await storeCheckpoint(event.checkpoint as Checkpoint)
     }
 
     await eventEmitter.emit(event)

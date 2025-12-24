@@ -59,8 +59,23 @@ Every step creates a checkpoint — a complete snapshot of Run state:
 - Token usage
 - Step number
 - Expert info
+- Action — a pre-computed description of the step's primary action for UI display
 
 Checkpoints enable pause, resume, and replay.
+
+### Checkpoint actions
+
+Each checkpoint includes an `action` field that describes what the Expert did in that step. This is pre-computed by the runtime for efficient UI rendering and observability.
+
+Action types include:
+- `attemptCompletion` — Expert signaling task completion
+- `think` — Expert using the think tool for reasoning
+- `todo` — Expert managing a todo list
+- `readTextFile`, `editTextFile`, `writeTextFile` — file operations
+- `delegate` — delegating to another Expert
+- `interactiveTool` — tool requiring user interaction
+- `generalTool` — any other tool call
+- `error` — when action interpretation fails
 
 ## Continuing execution
 

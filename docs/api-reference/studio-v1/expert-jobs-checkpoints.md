@@ -532,6 +532,54 @@ Stream checkpoints in real-time via Server-Sent Events (SSE) as an expert job ex
 **Length:** min: 24, max: 24
 **Examples:** `test12345678901234567890`
 
+### SSE Event Types
+
+The stream emits three types of events:
+
+#### `message` event
+
+Emitted for each checkpoint. Data is a checkpoint object with the same structure as the GET checkpoint response.
+
+#### `error` event
+
+Emitted when an error occurs during streaming.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| type | string | Yes | Error type |
+| expertJobId | string | Yes | The expert job ID |
+| message | string | No | Error message |
+| checkpointId | string | No | Checkpoint ID if applicable |
+
+#### `complete` event
+
+Emitted when the job completes.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| status | string | Yes | Final job status |
+| expertJobId | string | Yes | The expert job ID |
+
+### Client Usage
+
+Using `@perstack/api-client`:
+
+```typescript
+import { createPerstackClient } from "@perstack/api-client"
+
+const client = createPerstackClient({ apiKey: "your-api-key" })
+
+for await (const event of client.studio.expertJobs.checkpoints.stream(jobId)) {
+  if (event.event === "message") {
+    console.log("Checkpoint:", event.data.action.type)
+  } else if (event.event === "error") {
+    console.error("Error:", event.data.message)
+  } else if (event.event === "complete") {
+    console.log("Completed with status:", event.data.status)
+  }
+}
+```
+
 ### Responses
 
 #### 401

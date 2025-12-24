@@ -1,5 +1,5 @@
 import type { ZodType } from "zod"
-import type { ApiClientConfig, ApiError, ApiResult, RequestOptions } from "./types.js"
+import type { ApiClientConfig, ApiError, ApiResult, RequestOptions, SSEEvent } from "./types.js"
 
 const DEFAULT_BASE_URL = "https://api.perstack.ai"
 const DEFAULT_TIMEOUT = 30000
@@ -14,6 +14,7 @@ export interface Fetcher {
   ): Promise<ApiResult<T>>
   delete<T>(path: string, schema: ZodType<T>, options?: RequestOptions): Promise<ApiResult<T>>
   getBlob(path: string, options?: RequestOptions): Promise<ApiResult<Blob>>
+  stream(path: string, options?: RequestOptions): AsyncGenerator<SSEEvent, void, unknown>
 }
 
 function createAbortError(): ApiError {
@@ -179,6 +180,83 @@ export function createFetcher(config?: ApiClientConfig): Fetcher {
     }
   }
 
+  async function* streamSSE(path: string, options?: RequestOptions): AsyncGenerator<SSEEvent> {
+    const controller = new AbortController()
+
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        controller.abort()
+      } else {
+        options.signal.addEventListener("abort", () => controller.abort())
+      }
+    }
+
+    const response = await fetch(buildUrl(path), {
+      method: "GET",
+      headers: {
+        ...buildHeaders(),
+        Accept: "text/event-stream",
+      },
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      let errorBody: unknown
+      try {
+        errorBody = await response.json()
+      } catch {
+        errorBody = undefined
+      }
+      const error = createHttpError(response.status, response.statusText, errorBody)
+      yield { event: "error", data: error }
+      return
+    }
+
+    if (!response.body) {
+      yield { event: "error", data: { message: "No response body" } }
+      return
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ""
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+
+        let currentEvent = "message"
+        let currentData = ""
+
+        for (const line of lines) {
+          if (line.startsWith("event:")) {
+            currentEvent = line.slice(6).trim()
+          } else if (line.startsWith("data:")) {
+            currentData = line.slice(5).trim()
+          } else if (line === "") {
+            if (currentData) {
+              try {
+                const parsedData = JSON.parse(currentData)
+                yield { event: currentEvent, data: parsedData }
+              } catch {
+                yield { event: currentEvent, data: currentData }
+              }
+            }
+            currentEvent = "message"
+            currentData = ""
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock()
+    }
+  }
+
   return {
     get: <T>(path: string, schema: ZodType<T>, options?: RequestOptions) =>
       request("GET", path, schema, undefined, options),
@@ -187,5 +265,6 @@ export function createFetcher(config?: ApiClientConfig): Fetcher {
     delete: <T>(path: string, schema: ZodType<T>, options?: RequestOptions) =>
       request("DELETE", path, schema, undefined, options),
     getBlob: (path: string, options?: RequestOptions) => requestBlob(path, options),
+    stream: (path: string, options?: RequestOptions) => streamSSE(path, options),
   }
 }

@@ -8,7 +8,10 @@ import type { ApiResult, PaginatedResult, RequestOptions } from "../types.js"
 import { blobToBase64 } from "../utils.js"
 import {
   type Checkpoint,
+  type CheckpointStreamEvent,
   type ContinueExpertJobInput,
+  checkpointStreamCompleteSchema,
+  checkpointStreamErrorSchema,
   continueExpertJobResponseSchema,
   createCheckpointResponseSchema,
   createWorkspaceItemResponseSchema,
@@ -27,6 +30,7 @@ import {
   listWorkspaceItemsResponseSchema,
   type StartExpertJobInput,
   startExpertJobResponseSchema,
+  streamCheckpointSchema,
   type UpdateExpertJobInput,
   updateExpertJobResponseSchema,
   updateWorkspaceItemResponseSchema,
@@ -63,6 +67,10 @@ export interface CheckpointsApi {
     options?: RequestOptions,
   ): Promise<ApiResult<PaginatedResult<Checkpoint>>>
   create(jobId: string, options?: RequestOptions): Promise<ApiResult<Checkpoint>>
+  stream(
+    jobId: string,
+    options?: RequestOptions,
+  ): AsyncGenerator<CheckpointStreamEvent, void, unknown>
 }
 
 export interface WorkspaceInstanceApi {
@@ -212,6 +220,28 @@ function createCheckpointsApi(fetcher: Fetcher): CheckpointsApi {
       )
       if (!result.ok) return result
       return { ok: true, data: result.data.data.checkpoint }
+    },
+
+    async *stream(jobId, options) {
+      const path = `/api/studio/v1/expert_jobs/${encodeURIComponent(jobId)}/checkpoints/stream`
+      for await (const sseEvent of fetcher.stream(path, options)) {
+        if (sseEvent.event === "message") {
+          const parsed = streamCheckpointSchema.safeParse(sseEvent.data)
+          if (parsed.success) {
+            yield { event: "message", data: parsed.data }
+          }
+        } else if (sseEvent.event === "error") {
+          const parsed = checkpointStreamErrorSchema.safeParse(sseEvent.data)
+          if (parsed.success) {
+            yield { event: "error", data: parsed.data }
+          }
+        } else if (sseEvent.event === "complete") {
+          const parsed = checkpointStreamCompleteSchema.safeParse(sseEvent.data)
+          if (parsed.success) {
+            yield { event: "complete", data: parsed.data }
+          }
+        }
+      }
     },
   }
 }

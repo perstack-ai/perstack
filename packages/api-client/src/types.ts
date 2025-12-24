@@ -33,3 +33,9 @@ export interface PaginatedResult<T> {
     skip: number
   }
 }
+
+/** Raw SSE event from the server */
+export interface SSEEvent {
+  event: string
+  data: unknown
+}
