@@ -1,5 +1,14 @@
 # @perstack/base
 
+## 0.0.36
+
+### Patch Changes
+
+- [#265](https://github.com/perstack-ai/perstack/pull/265) [`8555f5b`](https://github.com/perstack-ai/perstack/commit/8555f5b842e6bb26f667e52b5ce383e6a6c7317e) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Internal improvements and maintenance updates
+
+- Updated dependencies [[`8555f5b`](https://github.com/perstack-ai/perstack/commit/8555f5b842e6bb26f667e52b5ce383e6a6c7317e)]:
+  - @perstack/core@0.0.28
+
 ## 0.0.35
 
 ### Patch Changes
