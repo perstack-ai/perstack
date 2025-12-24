@@ -1,5 +1,14 @@
 # @perstack/api-client
 
+## 0.0.38
+
+### Patch Changes
+
+- [`0e6eceb`](https://github.com/perstack-ai/perstack/commit/0e6eceb8e021d0b631a7fe34de3036fcaf9e6c9d) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Internal improvements and maintenance updates
+
+- Updated dependencies [[`0e6eceb`](https://github.com/perstack-ai/perstack/commit/0e6eceb8e021d0b631a7fe34de3036fcaf9e6c9d)]:
+  - @perstack/core@0.0.30
+
 ## 0.0.37
 
 ### Patch Changes
