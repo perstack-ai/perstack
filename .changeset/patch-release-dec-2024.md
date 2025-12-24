@@ -16,6 +16,10 @@
 "@perstack/vertex-provider": patch
 "@perstack/runner": patch
 "@perstack/filesystem-storage": patch
+"@perstack/claude-code": patch
+"@perstack/cursor": patch
+"@perstack/docker": patch
+"@perstack/gemini": patch
 ---
 
 Internal improvements and maintenance updates
