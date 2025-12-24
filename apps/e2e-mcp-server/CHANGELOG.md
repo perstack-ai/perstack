@@ -1,6 +1,6 @@
-# create-expert
+# @perstack/e2e-mcp-server
 
-## 0.0.3
+## 0.0.4
 
 ### Patch Changes
 
@@ -49,53 +49,7 @@
 
   Relates to #201
 
-- [#240](https://github.com/perstack-ai/perstack/pull/240) [`26e1109`](https://github.com/perstack-ai/perstack/commit/26e11097a65c1b2cc9aa74f48b53026df3eaa4b0) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - feat: introduce `perstack install` command and `perstack.lock` for faster startup
-
-  This feature enables instant LLM inference by pre-collecting tool definitions:
-
-  - Added `perstack install` command that generates `perstack.lock` file
-  - Lockfile contains all expert definitions and tool schemas from MCP skills
-  - Runtime uses lockfile to skip MCP initialization and start inference immediately
-  - Skills are lazily initialized only when their tools are actually called
-
-  Benefits:
-
-  - Near-zero startup latency (from 500ms-6s per skill to <50ms total)
-  - Reproducible builds with locked tool definitions
-  - Faster production deployments
-
-- [#247](https://github.com/perstack-ai/perstack/pull/247) [`9da758b`](https://github.com/perstack-ai/perstack/commit/9da758b3b59047a7086d5748dbaa586bbd9dbca1) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add S3 and R2 storage backends with unified Storage interface
-
-  - Add `Storage` interface and `EventMeta` type to `@perstack/core`
-  - Create `@perstack/s3-compatible-storage` package with shared S3 logic
-  - Create `@perstack/s3-storage` package for AWS S3 storage
-  - Create `@perstack/r2-storage` package for Cloudflare R2 storage
-  - Add `FileSystemStorage` class to `@perstack/filesystem-storage` implementing Storage interface
-  - Maintain backward compatibility with existing function exports
-
-- [#241](https://github.com/perstack-ai/perstack/pull/241) [`0831c63`](https://github.com/perstack-ai/perstack/commit/0831c63c1484dd9b0a6c6ce95504d46c05086aa4) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add streaming output events for real-time LLM output display
-
-  - New event types: `startReasoning`, `streamReasoning`, `startRunResult`, `streamRunResult`
-  - Fire-and-forget streaming events emitted during LLM generation
-  - TUI displays streaming reasoning and run results in real-time
-  - Reasoning phase properly completes before result phase
-  - Added retry count tracking with configurable limit via `maxRetries`
-  - TUI now displays retry events with reason
-
 ### Patch Changes
-
-- [#172](https://github.com/perstack-ai/perstack/pull/172) [`7792a8d`](https://github.com/perstack-ai/perstack/commit/7792a8df1aa988ae04c40f4ee737e5086b9cacca) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Change default runtime from `perstack` to `docker` for security-by-default posture.
-
-  **Breaking Changes:**
-
-  - Default runtime is now `docker` instead of `perstack`
-  - The `perstack` runtime has been renamed to `local`
-
-  **Migration:**
-
-  If you have `runtime = "perstack"` in your `perstack.toml`, update it to `runtime = "local"`.
-
-  The `docker` runtime provides container isolation and network restrictions by default. Use `--runtime local` only for trusted environments where Docker is not available.
 
 - [#171](https://github.com/perstack-ai/perstack/pull/171) [`5b07fd7`](https://github.com/perstack-ai/perstack/commit/5b07fd7ba21fae211ab38e808881c9bdc80de718) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - feat: display Docker progress and proxy status during perstack start
 
@@ -123,15 +77,6 @@
   ```
 
   Closes #165, #167
-
-- [#221](https://github.com/perstack-ai/perstack/pull/221) [`91a3a31`](https://github.com/perstack-ai/perstack/commit/91a3a3112f03201074619e1ee5cb12d498dcbb66) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - refactor: integrate TUI components into apps (Phase 4)
-
-  This change integrates the @perstack/tui package directly into the apps that use it:
-
-  - `apps/perstack`: Now contains TUI components for start, status, publish, tag, unpublish, and progress
-  - `apps/create-expert`: Now contains the wizard TUI component
-
-  The @perstack/tui package has been removed as a separate package. Each app now owns its UI components directly.
 
 - [#151](https://github.com/perstack-ai/perstack/pull/151) [`51159b6`](https://github.com/perstack-ai/perstack/commit/51159b6e9fabed47134cbb94f1145e950928bca0) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Multi-runtime support and Docker enhancements
 

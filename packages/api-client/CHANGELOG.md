@@ -1,22 +1,5 @@
 # @perstack/api-client
 
-## 0.0.36
-
-### Patch Changes
-
-- [#256](https://github.com/perstack-ai/perstack/pull/256) [`dacb0eb`](https://github.com/perstack-ai/perstack/commit/dacb0eb3718a2cce918a6ab455ffb9ef6cce99c9) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Rewrote @perstack/api-client with modern patterns
-
-  - Replaced class-based `ApiV1Client` with functional `createApiClient()`
-  - Introduced Result pattern for error handling (no exceptions for HTTP errors)
-  - Added namespace-style API access (e.g., `client.registry.experts.get()`)
-  - Simplified test utilities by removing unused OpenAPI spec-based mock generation
-  - Migrated all consumers to use the new API
-
-- [#261](https://github.com/perstack-ai/perstack/pull/261) [`880aede`](https://github.com/perstack-ai/perstack/commit/880aede6bef119463edb4b121a8faa96dcf29ece) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Internal improvements and maintenance updates
-
-- Updated dependencies [[`880aede`](https://github.com/perstack-ai/perstack/commit/880aede6bef119463edb4b121a8faa96dcf29ece)]:
-  - @perstack/core@0.0.28
-
 ## 0.0.35
 
 ### Patch Changes

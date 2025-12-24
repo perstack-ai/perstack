@@ -1,4 +1,4 @@
-# @perstack/cursor
+# @perstack/mock
 
 ## 0.0.3
 
@@ -74,6 +74,15 @@
   - Near-zero startup latency (from 500ms-6s per skill to <50ms total)
   - Reproducible builds with locked tool definitions
   - Faster production deployments
+
+- [#225](https://github.com/perstack-ai/perstack/pull/225) [`beb1edc`](https://github.com/perstack-ai/perstack/commit/beb1edc7222231ac67cf0653331e4644b162ca8b) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add pluggable LLM provider architecture with ProviderAdapter pattern
+
+  - Introduce `ProviderAdapter` interface and `BaseProviderAdapter` abstract class in `@perstack/provider-core`
+  - Add provider-specific adapters for Anthropic, OpenAI, Google, Ollama, Azure OpenAI, Bedrock, Vertex, and DeepSeek
+  - Add `LLMExecutor` layer to encapsulate LLM calls with provider-specific error handling and retry logic
+  - Add `ProviderAdapterFactory` with dynamic import support for future npm package installation pattern
+  - Extend Expert and PerstackConfigExpert schemas to support `providerTools`, `providerSkills`, and `providerToolOptions`
+  - Add `createTestContext` helper for improved test ergonomics
 
 - [#236](https://github.com/perstack-ai/perstack/pull/236) [`d88f116`](https://github.com/perstack-ai/perstack/commit/d88f116edbbb8ffa4240066f0bacb70f442e1123) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add native LLM reasoning support (Extended Thinking/Reasoning)
 

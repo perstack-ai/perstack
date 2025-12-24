@@ -1,5 +1,6 @@
 {
   "name": "@perstack/e2e-mcp-server",
+  "version": "0.0.4",
   "private": true,
   "description": "MCP server for E2E testing of Perstack security and skill features.",
   "author": "Wintermute Technologies, Inc.",
