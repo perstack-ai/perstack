@@ -94,6 +94,7 @@ export class ClaudeCodeAdapter extends BaseAdapter {
       expert: expertInfo,
       usage: createEmptyUsage(),
       metadata: { runtime: "claude-code" },
+      action: { type: "init" },
     }
     const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
     eventListener?.(startRunEvent)

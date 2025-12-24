@@ -45,6 +45,7 @@ const mockCheckpoint: Checkpoint = {
     cachedInputTokens: 0,
     reasoningTokens: 0,
   },
+  action: { type: "attemptCompletion", result: "Hi there!" },
 }
 
 const mockEvents: RunEvent[] = [

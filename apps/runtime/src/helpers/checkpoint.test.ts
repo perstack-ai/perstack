@@ -37,6 +37,7 @@ describe("@perstack/runtime: createInitialCheckpoint", () => {
       },
       contextWindow: 100000,
       contextWindowUsage: 0.0,
+      action: { type: "init" },
     })
   })
 
@@ -73,6 +74,7 @@ describe("@perstack/runtime: createNextStepCheckpoint", () => {
     },
     contextWindow: 100000,
     contextWindowUsage: 0.5,
+    action: { type: "init" },
   }
 
   it("increments stepNumber and updates id", () => {
@@ -124,6 +126,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
       totalTokens: 75,
       cachedInputTokens: 0,
     },
+    action: { type: "init" },
   }
   const resultCheckpoint: Checkpoint = {
     id: "child-checkpoint-id",
@@ -152,6 +155,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
       toolName: "delegateTool",
       checkpointId: "parent-checkpoint-id",
     },
+    action: { type: "attemptCompletion", result: "delegation result" },
   }
 
   it("builds correct setting with interactiveToolCallResult", () => {
@@ -261,6 +265,10 @@ describe("@perstack/runtime: buildDelegateToState", () => {
         query: "please do this",
       },
     ],
+    action: {
+      type: "delegate",
+      delegateTo: [{ expertKey: "child-expert", query: "please do this" }],
+    },
   }
   const currentExpert = { key: "parent-expert", name: "parent", version: "1.0.0" }
 

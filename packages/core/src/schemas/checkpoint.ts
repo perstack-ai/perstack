@@ -113,8 +113,8 @@ export interface Checkpoint {
   }
   /** Consecutive retry count for current generation (reset on success) */
   retryCount?: number
-  /** Pre-computed action for UI display (optional for backward compatibility) */
-  action?: CheckpointAction
+  /** Pre-computed action describing the step's primary action for UI display */
+  action: CheckpointAction
 }
 
 export const delegationTargetSchema = z.object({
@@ -174,6 +174,6 @@ export const checkpointSchema = z.object({
     })
     .optional(),
   retryCount: z.number().optional(),
-  action: checkpointActionSchema.optional(),
+  action: checkpointActionSchema,
 })
 checkpointSchema satisfies z.ZodType<Checkpoint>

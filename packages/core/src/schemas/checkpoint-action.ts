@@ -2,6 +2,16 @@ import { z } from "zod"
 import type { MessagePart } from "./message-part.js"
 import { messagePartSchema } from "./message-part.js"
 
+/** Init action - Initial checkpoint before any action is taken */
+export interface CheckpointActionInit {
+  type: "init"
+}
+
+export const checkpointActionInitSchema = z.object({
+  type: z.literal("init"),
+})
+checkpointActionInitSchema satisfies z.ZodType<CheckpointActionInit>
+
 /** Retry action - generation failed and will be retried */
 export interface CheckpointActionRetry {
   type: "retry"
@@ -394,6 +404,7 @@ checkpointActionErrorSchema satisfies z.ZodType<CheckpointActionError>
 
 /** Union of all checkpoint action types */
 export type CheckpointAction =
+  | CheckpointActionInit
   | CheckpointActionRetry
   | CheckpointActionAttemptCompletion
   | CheckpointActionThink
@@ -416,6 +427,7 @@ export type CheckpointAction =
   | CheckpointActionError
 
 export const checkpointActionSchema = z.discriminatedUnion("type", [
+  checkpointActionInitSchema,
   checkpointActionRetrySchema,
   checkpointActionAttemptCompletionSchema,
   checkpointActionThinkSchema,

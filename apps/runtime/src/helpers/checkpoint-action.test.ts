@@ -18,6 +18,7 @@ function createBaseCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
       totalTokens: 0,
       cachedInputTokens: 0,
     },
+    action: { type: "init" },
     ...overrides,
   }
 }

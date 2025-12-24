@@ -106,6 +106,7 @@ export class GeminiAdapter extends BaseAdapter {
       expert: expertInfo,
       usage: createEmptyUsage(),
       metadata: { runtime: "gemini" },
+      action: { type: "init" },
     }
     const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
     eventListener?.(startRunEvent)

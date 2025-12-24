@@ -30,6 +30,7 @@ function createTestCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
     usage: createEmptyUsage(),
     contextWindow: 100,
     contextWindowUsage: 0,
+    action: { type: "init" },
     ...overrides,
   }
 }

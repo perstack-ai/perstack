@@ -72,6 +72,7 @@ describe("@perstack/core: createEvent", () => {
       totalTokens: 0,
       cachedInputTokens: 0,
     },
+    action: { type: "init" as const },
   }
 
   it("creates startRun event", () => {

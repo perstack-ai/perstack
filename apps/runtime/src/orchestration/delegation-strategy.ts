@@ -146,6 +146,7 @@ export class SingleDelegationStrategy implements DelegationStrategy {
       contextWindow: context.contextWindow,
       pendingToolCalls: undefined,
       partialToolResults: undefined,
+      action: { type: "init" },
     }
 
     return { nextSetting, nextCheckpoint }
@@ -244,6 +245,13 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       delegateTo: undefined,
       pendingToolCalls: remainingPendingToolCalls?.length ? remainingPendingToolCalls : undefined,
       partialToolResults: [...(context.partialToolResults ?? []), ...restToolResults],
+      action: {
+        type: "delegate",
+        delegateTo: delegations.map((d) => ({
+          expertKey: d.expert.key,
+          query: d.query,
+        })),
+      },
     }
 
     return { nextSetting, nextCheckpoint }
@@ -291,6 +299,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       },
       usage: createEmptyUsage(),
       contextWindow: parentContext.contextWindow,
+      action: { type: "init" },
     }
 
     // Merge parent options with returnOnDelegationComplete to ensure child runs

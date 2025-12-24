@@ -144,6 +144,7 @@ export class CursorAdapter extends BaseAdapter {
       expert: expertInfo,
       usage: createEmptyUsage(),
       metadata: { runtime: "cursor" },
+      action: { type: "init" },
     }
     const startRunEvent = createStartRunEvent(jobId, runId, setting.expertKey, initialCheckpoint)
     eventListener?.(startRunEvent)

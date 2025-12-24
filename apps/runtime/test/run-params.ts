@@ -70,6 +70,7 @@ export function createCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoin
     usage: createEmptyUsage(),
     contextWindow: 100,
     contextWindowUsage: 0,
+    action: { type: "init" },
     ...overrides,
   })
 }

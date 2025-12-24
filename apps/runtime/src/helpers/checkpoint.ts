@@ -28,6 +28,7 @@ export function createInitialCheckpoint(
     usage: createEmptyUsage(),
     contextWindow: params.contextWindow,
     contextWindowUsage: params.contextWindow ? 0.0 : undefined,
+    action: { type: "init" },
   }
 }
 
@@ -129,6 +130,7 @@ export function buildDelegateToState(
       usage: resultCheckpoint.usage,
       pendingToolCalls: undefined,
       partialToolResults: undefined,
+      action: { type: "init" },
     },
   }
 }

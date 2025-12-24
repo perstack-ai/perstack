@@ -38,6 +38,7 @@ describe("serialization", () => {
           version: "1.0.0",
         },
         usage: createEmptyUsage(),
+        action: { type: "init" },
       }
       const serialized = serializeCheckpoint(checkpoint)
       const deserialized = deserializeCheckpoint(serialized)

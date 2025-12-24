@@ -44,6 +44,7 @@ export function createNormalizedCheckpoint(params: CreateCheckpointParams): Chec
     expert: { key: expert.key, name: expert.name, version: expert.version },
     usage: createEmptyUsage(),
     metadata: { runtime },
+    action: { type: "attemptCompletion", result: output },
   }
 }
 
