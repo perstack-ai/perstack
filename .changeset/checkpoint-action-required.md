@@ -1,19 +1,17 @@
 ---
-"@perstack/core": major
-"@perstack/runtime": major
-"@perstack/claude-code": major
-"@perstack/cursor": major
-"@perstack/gemini": major
-"@perstack/filesystem-storage": major
-"@perstack/s3-compatible-storage": major
-"perstack": major
+"@perstack/core": patch
+"@perstack/runtime": patch
+"@perstack/claude-code": patch
+"@perstack/cursor": patch
+"@perstack/gemini": patch
+"@perstack/filesystem-storage": patch
+"@perstack/s3-compatible-storage": patch
+"perstack": patch
 ---
 
-BREAKING: Make action field required in Checkpoint interface
+Add required action field to Checkpoint for UI display
 
 - Added `CheckpointActionInit` type for initial checkpoints
-- `Checkpoint.action` is now required (was optional)
+- `Checkpoint.action` is now required
 - All checkpoint creation sites include action field
 - Runtime computes action during checkpoint creation
-
-Migration: Checkpoints without action field are no longer valid. Ensure all checkpoint creation includes the action field.
