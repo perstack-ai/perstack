@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@perstack/docker",
-  "version": "0.0.3",
   "description": "Perstack Docker Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",

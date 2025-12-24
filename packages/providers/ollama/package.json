@@ -1,6 +1,5 @@
 {
   "name": "@perstack/ollama-provider",
-  "version": "0.0.2",
   "private": true,
   "description": "Ollama provider adapter for Perstack",
   "author": "Wintermute Technologies, Inc.",
