@@ -1,6 +1,7 @@
 {
   "name": "@perstack/bedrock-provider",
   "private": true,
+  "version": "0.0.0",
   "description": "Amazon Bedrock provider adapter for Perstack",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",

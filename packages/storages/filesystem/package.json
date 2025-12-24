@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "0.0.0",
   "name": "@perstack/filesystem-storage",
   "description": "Perstack Storage - Job, Checkpoint, Event persistence",
   "author": "Wintermute Technologies, Inc.",

@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "0.0.0",
   "name": "@perstack/r2-storage",
   "description": "Perstack R2 Storage - Cloudflare R2 storage backend for Perstack",
   "author": "Wintermute Technologies, Inc.",

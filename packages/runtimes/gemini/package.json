@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "0.0.0",
   "name": "@perstack/gemini",
   "description": "Perstack Gemini CLI Runtime Adapter",
   "author": "Wintermute Technologies, Inc.",
