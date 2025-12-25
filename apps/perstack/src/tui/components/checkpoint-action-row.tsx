@@ -182,49 +182,62 @@ function renderTodo(
 ): React.ReactNode {
   const { newTodos, completedTodos, todos } = action
 
-  if (newTodos && newTodos.length > 0) {
-    const label = `Todo Added ${newTodos.length} task${newTodos.length > 1 ? "s" : ""}`
-    const preview = newTodos.slice(0, RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW)
-    const remaining = newTodos.length - preview.length
-    return (
-      <ActionRow indicatorColor={color} label={label}>
-        <Box flexDirection="column">
-          {preview.map((todo, idx) => (
+  const hasNewTodos = newTodos && newTodos.length > 0
+  const hasCompletedTodos = completedTodos && completedTodos.length > 0
+
+  if (!hasNewTodos && !hasCompletedTodos) {
+    return null
+  }
+
+  // Build label parts
+  const labelParts: string[] = []
+  if (hasNewTodos) {
+    labelParts.push(`Added ${newTodos.length} task${newTodos.length > 1 ? "s" : ""}`)
+  }
+  if (hasCompletedTodos) {
+    labelParts.push(
+      `Completed ${completedTodos.length} task${completedTodos.length > 1 ? "s" : ""}`,
+    )
+  }
+  const label = `Todo ${labelParts.join(", ")}`
+
+  // Get completed titles for display
+  const completedTitles = hasCompletedTodos
+    ? completedTodos
+        .map((id) => todos.find((t) => t.id === id)?.title)
+        .filter((t): t is string => t !== undefined)
+    : []
+
+  // If no content to show in body, use simple row
+  if (!hasNewTodos && completedTitles.length === 0) {
+    return <ActionRowSimple indicatorColor={color} text={label} />
+  }
+
+  return (
+    <ActionRow indicatorColor={color} label={label}>
+      <Box flexDirection="column">
+        {hasNewTodos &&
+          newTodos.slice(0, RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW).map((todo, idx) => (
             <Text key={`todo-${idx}`} dimColor>
               ○ {todo}
             </Text>
           ))}
-          {remaining > 0 && <Text dimColor>... +{remaining} more</Text>}
-        </Box>
-      </ActionRow>
-    )
-  }
-
-  if (completedTodos && completedTodos.length > 0) {
-    const completedTitles = completedTodos
-      .map((id) => todos.find((t) => t.id === id)?.title)
-      .filter((t): t is string => t !== undefined)
-    const label = `Todo Completed ${completedTodos.length} task${completedTodos.length > 1 ? "s" : ""}`
-    if (completedTitles.length === 0) {
-      return <ActionRowSimple indicatorColor={color} text={label} />
-    }
-    const preview = completedTitles.slice(0, RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW)
-    const remaining = completedTitles.length - preview.length
-    return (
-      <ActionRow indicatorColor={color} label={label}>
-        <Box flexDirection="column">
-          {preview.map((title, idx) => (
-            <Text key={`completed-${idx}`} dimColor>
-              ✓ {title}
-            </Text>
-          ))}
-          {remaining > 0 && <Text dimColor>... +{remaining} more</Text>}
-        </Box>
-      </ActionRow>
-    )
-  }
-
-  return null
+        {hasNewTodos && newTodos.length > RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW && (
+          <Text dimColor>... +{newTodos.length - RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW} more</Text>
+        )}
+        {completedTitles.slice(0, RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW).map((title, idx) => (
+          <Text key={`completed-${idx}`} dimColor>
+            ✓ {title}
+          </Text>
+        ))}
+        {completedTitles.length > RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW && (
+          <Text dimColor>
+            ... +{completedTitles.length - RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW} more
+          </Text>
+        )}
+      </Box>
+    </ActionRow>
+  )
 }
 
 function renderReadTextFile(
