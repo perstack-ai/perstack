@@ -31,7 +31,9 @@ function hasRemainingTodos(toolResult: ToolResult): boolean {
  * When LLM generates both text and attemptCompletion in one response,
  * we should use that text as the final result instead of re-generating.
  */
-function extractTextFromLastMessage(checkpoint: RunSnapshot["context"]["checkpoint"]): string | undefined {
+function extractTextFromLastMessage(
+  checkpoint: RunSnapshot["context"]["checkpoint"],
+): string | undefined {
   const lastMessage = checkpoint.messages[checkpoint.messages.length - 1]
   if (!lastMessage || lastMessage.type !== "expertMessage") {
     return undefined

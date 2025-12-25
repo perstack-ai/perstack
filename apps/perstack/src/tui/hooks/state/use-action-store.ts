@@ -61,9 +61,7 @@ type ListDirItem = { name?: string; path?: string; type?: string; size?: number;
 type TodoItem = { id?: number; title?: string; completed?: boolean }
 
 /** Parse list directory items from tool result */
-function parseListDirectoryItems(
-  result: ToolResult["result"],
-):
+function parseListDirectoryItems(result: ToolResult["result"]):
   | Array<{
       name: string
       path: string
