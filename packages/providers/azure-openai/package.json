@@ -1,7 +1,7 @@
 {
   "name": "@perstack/azure-openai-provider",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Azure OpenAI provider adapter for Perstack",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",

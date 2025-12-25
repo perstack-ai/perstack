@@ -1,5 +1,15 @@
 # @perstack/core
 
+## 0.0.33
+
+### Patch Changes
+
+- [#273](https://github.com/perstack-ai/perstack/pull/273) [`15ab983`](https://github.com/perstack-ai/perstack/commit/15ab98364f08bf63f3019597b9ee8e0db2dc250f) Thanks [@FL4TLiN3](https://github.com/FL4TLiN3)! - Add getCheckpointAction utility function for checkpoint action interpretation
+
+  - Added CheckpointAction types for 20 action types (attemptCompletion, think, todo, file operations, delegate, etc.)
+  - Added getCheckpointAction(checkpoint, step) utility to compute checkpoint actions on-demand
+  - Exported from @perstack/core for use by consumers
+
 ## 0.0.32
 
 ### Patch Changes
