@@ -1251,5 +1251,257 @@ describe("getCheckpointActions", () => {
         expect(actions[0].info?.name).toBe("")
       }
     })
+
+    it("handles invalid JSON in listDirectory result", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "listDirectory", args: { path: "/test" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "listDirectory",
+            result: [{ type: "textPart", id: "tp-1", text: "not json" }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("listDirectory")
+      if (actions[0].type === "listDirectory") {
+        expect(actions[0].items).toBeUndefined()
+      }
+    })
+
+    it("handles invalid JSON in getFileInfo result", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "getFileInfo", args: { path: "/test" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "getFileInfo",
+            result: [{ type: "textPart", id: "tp-1", text: "not json" }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("getFileInfo")
+      if (actions[0].type === "getFileInfo") {
+        expect(actions[0].info).toBeUndefined()
+      }
+    })
+
+    it("handles todos with missing id/title/completed fields", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "todo", args: {} })],
+        toolResults: [
+          createToolResult({
+            toolName: "todo",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({ todos: [{}, { id: 5 }, { title: "Test" }] }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("todo")
+      if (actions[0].type === "todo") {
+        expect(actions[0].todos).toHaveLength(3)
+        // First item: uses index for id, empty string for title, false for completed
+        expect(actions[0].todos[0].id).toBe(0)
+        expect(actions[0].todos[0].title).toBe("")
+        expect(actions[0].todos[0].completed).toBe(false)
+        // Second item: uses provided id
+        expect(actions[0].todos[1].id).toBe(5)
+        // Third item: has title
+        expect(actions[0].todos[2].title).toBe("Test")
+      }
+    })
+
+    it("handles remainingTodos with missing fields", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "attemptCompletion", args: {} })],
+        toolResults: [
+          createToolResult({
+            toolName: "attemptCompletion",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({
+                  remainingTodos: [
+                    { id: 1, title: "Complete", completed: true },
+                    {}, // missing all fields
+                  ],
+                }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("attemptCompletion")
+      if (actions[0].type === "attemptCompletion") {
+        expect(actions[0].remainingTodos).toHaveLength(2)
+        expect(actions[0].remainingTodos?.[0].id).toBe(1)
+        expect(actions[0].remainingTodos?.[0].completed).toBe(true)
+        // Second item uses defaults
+        expect(actions[0].remainingTodos?.[1].id).toBe(1) // uses index
+        expect(actions[0].remainingTodos?.[1].title).toBe("")
+        expect(actions[0].remainingTodos?.[1].completed).toBe(false)
+      }
+    })
+
+    it("handles listDirectory items with missing/invalid fields", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "listDirectory", args: { path: "/" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "listDirectory",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({
+                  items: [
+                    { name: "file.txt", type: "file", size: 100 },
+                    { name: "dir", type: "directory" }, // missing size
+                    {}, // missing all fields
+                  ],
+                }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("listDirectory")
+      if (actions[0].type === "listDirectory") {
+        expect(actions[0].items).toHaveLength(3)
+        expect(actions[0].items?.[0].size).toBe(100)
+        expect(actions[0].items?.[1].type).toBe("directory")
+        expect(actions[0].items?.[1].size).toBe(0) // default
+        expect(actions[0].items?.[2].name).toBe("")
+        expect(actions[0].items?.[2].type).toBe("file") // default
+      }
+    })
+
+    it("handles todo result with non-array todos field", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "todo", args: {} })],
+        toolResults: [
+          createToolResult({
+            toolName: "todo",
+            result: [{ type: "textPart", id: "tp-1", text: '{"todos": "not an array"}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("todo")
+      if (actions[0].type === "todo") {
+        expect(actions[0].todos).toEqual([])
+      }
+    })
+
+    it("handles listDirectory result with non-array items field", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "listDirectory", args: { path: "/" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "listDirectory",
+            result: [{ type: "textPart", id: "tp-1", text: '{"items": "not an array"}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("listDirectory")
+      if (actions[0].type === "listDirectory") {
+        expect(actions[0].items).toBeUndefined()
+      }
+    })
+
+    it("handles readImageFile with number fields", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "readImageFile", args: { path: "/img.png" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readImageFile",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({ mimeType: "image/png", size: "not a number" }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readImageFile")
+      if (actions[0].type === "readImageFile") {
+        expect(actions[0].mimeType).toBe("image/png")
+        expect(actions[0].size).toBeUndefined() // not a number
+      }
+    })
+
+    it("handles exec with all output fields", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "exec", args: { command: "echo", args: ["hi"] } })],
+        toolResults: [
+          createToolResult({
+            toolName: "exec",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({ output: "hi", stdout: "hi\n", stderr: "" }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("exec")
+      if (actions[0].type === "exec") {
+        expect(actions[0].output).toBe("hi")
+        expect(actions[0].stdout).toBe("hi\n")
+        expect(actions[0].stderr).toBe("")
+      }
+    })
   })
 })
