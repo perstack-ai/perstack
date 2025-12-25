@@ -1,7 +1,7 @@
 ---
-"@perstack/react": minor
-"@perstack/core": minor
-"perstack": minor
+"@perstack/react": patch
+"@perstack/core": patch
+"perstack": patch
 ---
 
 Create @perstack/react package for React integration
