@@ -804,4 +804,448 @@ describe("getCheckpointActions", () => {
       }
     })
   })
+
+  describe("additional base tool types", () => {
+    it("returns readImageFile action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "readImageFile",
+            args: { path: "/image.png" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "readImageFile",
+            result: [
+              { type: "textPart", id: "tp-1", text: '{"mimeType": "image/png", "size": 1024}' },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readImageFile")
+      if (actions[0].type === "readImageFile") {
+        expect(actions[0].path).toBe("/image.png")
+        expect(actions[0].mimeType).toBe("image/png")
+        expect(actions[0].size).toBe(1024)
+      }
+    })
+
+    it("returns readPdfFile action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "readPdfFile",
+            args: { path: "/doc.pdf" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "readPdfFile",
+            result: [
+              { type: "textPart", id: "tp-1", text: '{"mimeType": "application/pdf", "size": 2048}' },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readPdfFile")
+      if (actions[0].type === "readPdfFile") {
+        expect(actions[0].path).toBe("/doc.pdf")
+        expect(actions[0].mimeType).toBe("application/pdf")
+        expect(actions[0].size).toBe(2048)
+      }
+    })
+
+    it("returns deleteDirectory action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "deleteDirectory",
+            args: { path: "/old-dir", recursive: true },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "deleteDirectory",
+            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("deleteDirectory")
+      if (actions[0].type === "deleteDirectory") {
+        expect(actions[0].path).toBe("/old-dir")
+        expect(actions[0].recursive).toBe(true)
+      }
+    })
+
+    it("returns moveFile action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "moveFile",
+            args: { source: "/old.txt", destination: "/new.txt" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "moveFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("moveFile")
+      if (actions[0].type === "moveFile") {
+        expect(actions[0].source).toBe("/old.txt")
+        expect(actions[0].destination).toBe("/new.txt")
+      }
+    })
+
+    it("returns getFileInfo action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "getFileInfo",
+            args: { path: "/test.txt" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "getFileInfo",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({
+                  exists: true,
+                  name: "test.txt",
+                  directory: "/",
+                  extension: ".txt",
+                  type: "file",
+                  mimeType: "text/plain",
+                  size: 100,
+                  sizeFormatted: "100 B",
+                  created: "2024-01-01",
+                  modified: "2024-01-02",
+                  accessed: "2024-01-03",
+                }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("getFileInfo")
+      if (actions[0].type === "getFileInfo") {
+        expect(actions[0].path).toBe("/test.txt")
+        expect(actions[0].info?.exists).toBe(true)
+        expect(actions[0].info?.name).toBe("test.txt")
+        expect(actions[0].info?.size).toBe(100)
+      }
+    })
+
+    it("returns createDirectory action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "createDirectory",
+            args: { path: "/new-dir" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "createDirectory",
+            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("createDirectory")
+      if (actions[0].type === "createDirectory") {
+        expect(actions[0].path).toBe("/new-dir")
+      }
+    })
+
+    it("returns listDirectory action with items", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "listDirectory",
+            args: { path: "/workspace" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "listDirectory",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({
+                  items: [
+                    { name: "file1.txt", path: "/workspace/file1.txt", type: "file", size: 100 },
+                    { name: "subdir", path: "/workspace/subdir", type: "directory", size: 0 },
+                  ],
+                }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("listDirectory")
+      if (actions[0].type === "listDirectory") {
+        expect(actions[0].path).toBe("/workspace")
+        expect(actions[0].items).toHaveLength(2)
+        expect(actions[0].items?.[0].name).toBe("file1.txt")
+        expect(actions[0].items?.[1].type).toBe("directory")
+      }
+    })
+
+    it("returns clearTodo action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "clearTodo",
+            args: {},
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "clearTodo",
+            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("clearTodo")
+    })
+
+    it("returns appendTextFile action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "appendTextFile",
+            args: { path: "/log.txt", text: "new line" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "appendTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("appendTextFile")
+      if (actions[0].type === "appendTextFile") {
+        expect(actions[0].path).toBe("/log.txt")
+        expect(actions[0].text).toBe("new line")
+      }
+    })
+
+    it("returns deleteFile action", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "deleteFile",
+            args: { path: "/old.txt" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "deleteFile",
+            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("deleteFile")
+      if (actions[0].type === "deleteFile") {
+        expect(actions[0].path).toBe("/old.txt")
+      }
+    })
+
+    it("returns attemptCompletion action with remainingTodos", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "attemptCompletion",
+            args: {},
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "attemptCompletion",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({
+                  remainingTodos: [{ id: 1, title: "Task 1", completed: false }],
+                }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("attemptCompletion")
+      if (actions[0].type === "attemptCompletion") {
+        expect(actions[0].remainingTodos).toHaveLength(1)
+        expect(actions[0].remainingTodos?.[0].title).toBe("Task 1")
+      }
+    })
+
+    it("returns todo action with todos", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            toolName: "todo",
+            args: { newTodos: ["Task A", "Task B"], completedTodos: [0] },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            toolName: "todo",
+            result: [
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: JSON.stringify({
+                  todos: [
+                    { id: 0, title: "Task 0", completed: true },
+                    { id: 1, title: "Task A", completed: false },
+                    { id: 2, title: "Task B", completed: false },
+                  ],
+                }),
+              },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("todo")
+      if (actions[0].type === "todo") {
+        expect(actions[0].newTodos).toEqual(["Task A", "Task B"])
+        expect(actions[0].completedTodos).toEqual([0])
+        expect(actions[0].todos).toHaveLength(3)
+        expect(actions[0].todos[0].completed).toBe(true)
+      }
+    })
+  })
+
+  describe("parse function edge cases", () => {
+    it("handles invalid JSON in result", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/test.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: "invalid json" }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+      if (actions[0].type === "readTextFile") {
+        expect(actions[0].content).toBeUndefined()
+      }
+    })
+
+    it("handles empty result array", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/test.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+    })
+
+    it("handles missing fields in parsed JSON", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "getFileInfo", args: { path: "/test.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "getFileInfo",
+            result: [{ type: "textPart", id: "tp-1", text: '{"exists": false}' }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("getFileInfo")
+      if (actions[0].type === "getFileInfo") {
+        expect(actions[0].info?.exists).toBe(false)
+        expect(actions[0].info?.name).toBe("")
+      }
+    })
+  })
 })
