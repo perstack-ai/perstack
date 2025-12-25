@@ -1,5 +1,4 @@
 export type {
-  ActionEntry,
   CheckpointHistoryItem,
   EventHistoryItem,
   EventResult,
@@ -10,6 +9,7 @@ export type {
   PerstackEvent,
   RunHistoryItem,
   RuntimeInfo,
+  RuntimeState,
   StreamingState,
 } from "./base.js"
 export type {

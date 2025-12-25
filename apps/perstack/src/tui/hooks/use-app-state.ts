@@ -1,3 +1,4 @@
+import { useLogStore } from "@perstack/react"
 import { useCallback, useEffect, useMemo } from "react"
 import type { InputAreaContextValue } from "../context/index.js"
 import type {
@@ -9,7 +10,6 @@ import type {
   PerstackEvent,
 } from "../types/index.js"
 import { useExpertActions, useHistoryActions, useRunActions } from "./actions/index.js"
-import { useActionStore } from "./state/use-action-store.js"
 import { useInputState } from "./state/use-input-state.js"
 import { useRuntimeInfo } from "./state/use-runtime-info.js"
 
@@ -51,7 +51,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadHistoricalEvents,
     onReady,
   } = props
-  const actionStore = useActionStore()
+  const logStore = useLogStore()
   const {
     runtimeInfo,
     handleEvent,
@@ -75,7 +75,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onComplete,
     onContinue,
     onReady,
-    stepStoreAddEvent: actionStore.addEvent,
+    stepStoreAddEvent: logStore.addEvent,
     handleEvent,
   })
   useEffect(() => {
@@ -103,7 +103,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadEvents,
     onResumeFromCheckpoint,
     onLoadHistoricalEvents,
-    setHistoricalEvents: actionStore.setHistoricalEvents,
+    appendHistoricalEvents: logStore.appendHistoricalEvents,
     setCurrentStep,
     setContextWindowUsage,
     dispatch,
@@ -139,7 +139,7 @@ export const useAppState = (props: UseAppStateProps) => {
     ],
   )
   return {
-    actionStore,
+    logStore,
     runtimeInfo,
     inputState,
     inputAreaContextValue,

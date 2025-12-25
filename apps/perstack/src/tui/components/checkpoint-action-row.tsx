@@ -10,16 +10,12 @@ type CheckpointActionRowProps = {
 }
 
 export const CheckpointActionRow = ({ action }: CheckpointActionRowProps): React.ReactNode => {
-  // Render reasoning if present (extended thinking)
-  const reasoningElement = action.reasoning ? renderReasoning(action.reasoning) : null
-
   const actionElement = renderAction(action)
-
-  if (!actionElement) return reasoningElement
+  if (!actionElement) return null
 
   return (
     <Box flexDirection="column">
-      {reasoningElement}
+      {action.reasoning && renderReasoning(action.reasoning)}
       {actionElement}
     </Box>
   )
@@ -45,6 +41,9 @@ function renderAction(action: CheckpointAction): React.ReactNode {
     action.type === "error" || ("error" in action && action.error) ? "red" : "green"
 
   switch (action.type) {
+    case "query":
+      return renderQuery(action.text)
+
     case "retry":
       return (
         <ActionRow indicatorColor="yellow" label="Retry">
@@ -59,9 +58,27 @@ function renderAction(action: CheckpointAction): React.ReactNode {
         </ActionRow>
       )
 
-    case "attemptCompletion":
-      // attemptCompletion is internal, actual result shown via complete action
-      return null
+    case "attemptCompletion": {
+      // Show status of completion attempt
+      if (action.error) {
+        return (
+          <ActionRow indicatorColor="red" label="Completion Failed">
+            <Text color="red">{action.error}</Text>
+          </ActionRow>
+        )
+      }
+      if (action.remainingTodos && action.remainingTodos.length > 0) {
+        const remaining = action.remainingTodos.filter((t) => !t.completed)
+        return (
+          <ActionRow indicatorColor="yellow" label="Completion Blocked">
+            <Text dimColor>
+              {remaining.length} remaining task{remaining.length > 1 ? "s" : ""}
+            </Text>
+          </ActionRow>
+        )
+      }
+      return <ActionRowSimple indicatorColor="green" text="Completion Accepted" />
+    }
 
     case "todo":
       return renderTodo(action, color)
@@ -186,7 +203,7 @@ function renderTodo(
   const hasCompletedTodos = completedTodos && completedTodos.length > 0
 
   if (!hasNewTodos && !hasCompletedTodos) {
-    return null
+    return <ActionRowSimple indicatorColor={color} text="Todo No changes" />
   }
 
   // Build label parts
@@ -393,6 +410,21 @@ function renderExec(
           </Text>
         ))}
         {remaining > 0 && <Text dimColor>... +{remaining} more</Text>}
+      </Box>
+    </ActionRow>
+  )
+}
+
+function renderQuery(text: string): React.ReactNode {
+  const lines = text.split("\n")
+  return (
+    <ActionRow indicatorColor="cyan" label="Query">
+      <Box flexDirection="column">
+        {lines.map((line, idx) => (
+          <Text key={`query-${idx}`} dimColor wrap="wrap">
+            {line}
+          </Text>
+        ))}
       </Box>
     </ActionRow>
   )

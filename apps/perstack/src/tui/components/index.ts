@@ -5,7 +5,6 @@ export { ExpertList, type ExpertListProps } from "./expert-list.js"
 export { ExpertSelectorBase, type ExpertSelectorBaseProps } from "./expert-selector-base.js"
 export { ListBrowser, type ListBrowserProps } from "./list-browser.js"
 export { RunSetting, type RunSettingProps } from "./run-setting.js"
-export { StaticEntryRow } from "./static-entry-row.js"
 export { StreamingDisplay } from "./streaming-display.js"
 export { VersionSelector, type VersionSelectorProps } from "./version-selector.js"
 export {

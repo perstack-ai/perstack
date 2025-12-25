@@ -507,3 +507,6 @@ export function createRuntimeEvent<T extends RuntimeEventType>(
     ...data,
   } as RuntimeEventForType<T>
 }
+
+/** Union of all Perstack events (RunEvent for state machine, RuntimeEvent for environment) */
+export type PerstackEvent = RunEvent | RuntimeEvent

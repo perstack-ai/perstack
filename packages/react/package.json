@@ -1,14 +1,20 @@
 {
-  "name": "perstack",
-  "version": "0.0.54",
-  "description": "PerStack CLI",
+  "name": "@perstack/react",
+  "version": "0.0.32",
+  "description": "React hooks and utilities for Perstack integration",
   "author": "Wintermute Technologies, Inc.",
   "license": "Apache-2.0",
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "publishConfig": {
     "access": "public",
-    "bin": {
-      "perstack": "dist/bin/cli.js"
+    "exports": {
+      ".": "./dist/src/index.js"
+    },
+    "types": {
+      ".": "./dist/src/index.d.ts"
     }
   },
   "files": [
@@ -16,24 +22,17 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm run clean && tsup --config ./tsup.config.ts",
+    "build": "pnpm run clean && tsup --config ../../tsup.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@perstack/api-client": "workspace:*",
     "@perstack/core": "workspace:*",
-    "@perstack/react": "workspace:*",
-    "@perstack/runtime": "workspace:*",
-    "commander": "^14.0.2",
-    "dotenv": "^17.2.3",
-    "ink": "^6.5.1",
-    "react": "^19.2.3",
-    "smol-toml": "^1.5.2",
-    "ts-dedent": "^2.2.0"
+    "react": "^19.2.3"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
   },
   "devDependencies": {
-    "@perstack/filesystem-storage": "workspace:*",
-    "@perstack/runner": "workspace:*",
     "@tsconfig/node22": "^22.0.5",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.7",

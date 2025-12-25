@@ -170,7 +170,7 @@ function createErrorAction(
   }
 }
 
-function createBaseToolAction(
+export function createBaseToolAction(
   toolName: string,
   toolCall: ToolCall,
   toolResult: ToolResult,
@@ -342,7 +342,7 @@ function createBaseToolAction(
   }
 }
 
-function createGeneralToolAction(
+export function createGeneralToolAction(
   skillName: string,
   toolName: string,
   toolCall: ToolCall,
