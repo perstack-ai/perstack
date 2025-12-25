@@ -64,10 +64,10 @@ function renderAction(action: CheckpointAction): React.ReactNode {
       return null
 
     case "todo":
-      return renderTodo(action)
+      return renderTodo(action, color)
 
     case "clearTodo":
-      return <ActionRowSimple indicatorColor="white" text="Todo Cleared" />
+      return <ActionRowSimple indicatorColor={color} text="Todo Cleared" />
 
     case "readTextFile":
       return renderReadTextFile(action, color)
@@ -176,7 +176,10 @@ function renderAction(action: CheckpointAction): React.ReactNode {
   }
 }
 
-function renderTodo(action: Extract<CheckpointAction, { type: "todo" }>): React.ReactNode {
+function renderTodo(
+  action: Extract<CheckpointAction, { type: "todo" }>,
+  color: StatusColor,
+): React.ReactNode {
   const { newTodos, completedTodos, todos } = action
 
   if (newTodos && newTodos.length > 0) {
@@ -184,7 +187,7 @@ function renderTodo(action: Extract<CheckpointAction, { type: "todo" }>): React.
     const preview = newTodos.slice(0, RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW)
     const remaining = newTodos.length - preview.length
     return (
-      <ActionRow indicatorColor="white" label={label}>
+      <ActionRow indicatorColor={color} label={label}>
         <Box flexDirection="column">
           {preview.map((todo, idx) => (
             <Text key={`todo-${idx}`} dimColor>
@@ -203,12 +206,12 @@ function renderTodo(action: Extract<CheckpointAction, { type: "todo" }>): React.
       .filter((t): t is string => t !== undefined)
     const label = `Todo Completed ${completedTodos.length} task${completedTodos.length > 1 ? "s" : ""}`
     if (completedTitles.length === 0) {
-      return <ActionRowSimple indicatorColor="white" text={label} />
+      return <ActionRowSimple indicatorColor={color} text={label} />
     }
     const preview = completedTitles.slice(0, RENDER_CONSTANTS.NEW_TODO_MAX_PREVIEW)
     const remaining = completedTitles.length - preview.length
     return (
-      <ActionRow indicatorColor="white" label={label}>
+      <ActionRow indicatorColor={color} label={label}>
         <Box flexDirection="column">
           {preview.map((title, idx) => (
             <Text key={`completed-${idx}`} dimColor>
