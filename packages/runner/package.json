@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "name": "@perstack/runner",
   "description": "Perstack Runner - Multi-runtime adapter orchestration",
   "author": "Wintermute Technologies, Inc.",

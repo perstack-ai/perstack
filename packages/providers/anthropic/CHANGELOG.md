@@ -1,5 +1,13 @@
 # @perstack/anthropic-provider
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`15ab983`](https://github.com/perstack-ai/perstack/commit/15ab98364f08bf63f3019597b9ee8e0db2dc250f)]:
+  - @perstack/core@0.0.33
+  - @perstack/provider-core@0.0.2
+
 ## 0.0.1
 
 ### Patch Changes
