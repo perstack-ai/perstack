@@ -414,8 +414,21 @@ export const checkpointActionErrorSchema = baseCheckpointActionSchema.extend({
 })
 checkpointActionErrorSchema satisfies z.ZodType<CheckpointActionError>
 
+/** Query action - User input that starts a run */
+export interface CheckpointActionQuery extends BaseCheckpointAction {
+  type: "query"
+  text: string
+}
+
+export const checkpointActionQuerySchema = baseCheckpointActionSchema.extend({
+  type: z.literal("query"),
+  text: z.string(),
+})
+checkpointActionQuerySchema satisfies z.ZodType<CheckpointActionQuery>
+
 /** Union of all checkpoint action types */
 export type CheckpointAction =
+  | CheckpointActionQuery
   | CheckpointActionRetry
   | CheckpointActionComplete
   | CheckpointActionAttemptCompletion
@@ -440,6 +453,7 @@ export type CheckpointAction =
   | CheckpointActionError
 
 export const checkpointActionSchema = z.discriminatedUnion("type", [
+  checkpointActionQuerySchema,
   checkpointActionRetrySchema,
   checkpointActionCompleteSchema,
   checkpointActionAttemptCompletionSchema,

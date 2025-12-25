@@ -1,15 +1,19 @@
+import type { PerstackEvent } from "@perstack/core"
 import { Box, Static } from "ink"
-import { BrowserRouter, RunSetting, StaticEntryRow, StreamingDisplay } from "../components/index.js"
+import {
+  BrowserRouter,
+  CheckpointActionRow,
+  RunSetting,
+  StreamingDisplay,
+} from "../components/index.js"
 import { InputAreaProvider } from "../context/index.js"
 import { useAppState } from "../hooks/index.js"
 import type {
-  ActionEntry,
   CheckpointHistoryItem,
   EventHistoryItem,
   ExpertOption,
   InitialRuntimeConfig,
   JobHistoryItem,
-  PerstackEvent,
 } from "../types/index.js"
 
 type AppProps = {
@@ -47,7 +51,7 @@ type AppProps = {
  * - When streaming completes, content is committed to Static via new entries
  */
 export const App = (props: AppProps) => {
-  const { actionStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
+  const { logStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
   const isBrowsing =
     inputState.type === "browsingHistory" ||
     inputState.type === "browsingExperts" ||
@@ -58,15 +62,12 @@ export const App = (props: AppProps) => {
   return (
     <Box flexDirection="column">
       {/* Static section - completed actions only */}
-      <Static
-        items={actionStore.actions}
-        style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}
-      >
-        {(entry: ActionEntry) => <StaticEntryRow key={entry.id} entry={entry} />}
+      <Static items={logStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
+        {(entry) => <CheckpointActionRow key={entry.id} action={entry.action} />}
       </Static>
 
       {/* Streaming section - active streaming content (sandwiched between static and input) */}
-      <StreamingDisplay streaming={actionStore.streaming} />
+      <StreamingDisplay streaming={logStore.runtimeState.streaming} />
 
       {/* Input controls */}
       <InputAreaProvider value={inputAreaContextValue}>
@@ -84,7 +85,7 @@ export const App = (props: AppProps) => {
       {showRunSetting && (
         <RunSetting
           info={runtimeInfo}
-          eventCount={actionStore.eventCount}
+          eventCount={logStore.eventCount}
           isEditing={isEditing}
           expertName={isEditing ? inputState.expertName : undefined}
           onQuerySubmit={isEditing ? inputAreaContextValue.onQuerySubmit : undefined}

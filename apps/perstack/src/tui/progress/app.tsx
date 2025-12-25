@@ -1,8 +1,8 @@
+import type { PerstackEvent } from "@perstack/core"
+import { useLogStore } from "@perstack/react"
 import { Box, Static, Text, useApp } from "ink"
 import { useCallback, useEffect } from "react"
-import { StaticEntryRow, StreamingDisplay } from "../components/index.js"
-import { useActionStore } from "../hooks/state/use-action-store.js"
-import type { PerstackEvent } from "../types/index.js"
+import { CheckpointActionRow, StreamingDisplay } from "../components/index.js"
 
 type ProgressAppProps = {
   title?: string
@@ -25,11 +25,11 @@ type ProgressAppProps = {
  */
 export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
   const { exit } = useApp()
-  const actionStore = useActionStore()
+  const logStore = useLogStore()
 
   useEffect(() => {
-    onReady(actionStore.addEvent)
-  }, [onReady, actionStore.addEvent])
+    onReady(logStore.addEvent)
+  }, [onReady, logStore.addEvent])
 
   const handleExit = useCallback(() => {
     onExit?.()
@@ -37,12 +37,12 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
   }, [onExit, exit])
 
   useEffect(() => {
-    if (actionStore.isComplete) {
+    if (logStore.isComplete) {
       const timer = setTimeout(handleExit, 500)
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [actionStore.isComplete, handleExit])
+  }, [logStore.isComplete, handleExit])
 
   return (
     <Box flexDirection="column">
@@ -55,20 +55,17 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
       )}
 
       {/* Static section - completed actions only */}
-      <Static
-        items={actionStore.actions}
-        style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}
-      >
-        {(entry) => <StaticEntryRow key={entry.id} entry={entry} />}
+      <Static items={logStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
+        {(entry) => <CheckpointActionRow key={entry.id} action={entry.action} />}
       </Static>
 
       {/* Streaming section - active streaming content */}
-      <StreamingDisplay streaming={actionStore.streaming} />
+      <StreamingDisplay streaming={logStore.runtimeState.streaming} />
 
       {/* Status footer */}
       <Box marginTop={1}>
-        <Text color="gray">Events: {actionStore.eventCount}</Text>
-        {actionStore.isComplete && <Text color="green"> ✓ Complete</Text>}
+        <Text color="gray">Events: {logStore.eventCount}</Text>
+        {logStore.isComplete && <Text color="green"> ✓ Complete</Text>}
       </Box>
     </Box>
   )

@@ -14,7 +14,7 @@ type StreamingDisplayProps = {
  * logs once complete.
  */
 export const StreamingDisplay = ({ streaming }: StreamingDisplayProps): React.ReactNode => {
-  const hasContent = streaming.isReasoningActive || streaming.isTextActive
+  const hasContent = streaming.isReasoningActive || streaming.isRunResultActive
 
   if (!hasContent) return null
 
@@ -23,7 +23,9 @@ export const StreamingDisplay = ({ streaming }: StreamingDisplayProps): React.Re
       {streaming.isReasoningActive && streaming.reasoning && (
         <StreamingReasoning text={streaming.reasoning} />
       )}
-      {streaming.isTextActive && streaming.text && <StreamingText text={streaming.text} />}
+      {streaming.isRunResultActive && streaming.runResult && (
+        <StreamingRunResult text={streaming.runResult} />
+      )}
     </Box>
   )
 }
@@ -43,13 +45,13 @@ function StreamingReasoning({ text }: { text: string }): React.ReactNode {
   )
 }
 
-function StreamingText({ text }: { text: string }): React.ReactNode {
+function StreamingRunResult({ text }: { text: string }): React.ReactNode {
   const lines = text.split("\n")
   return (
     <ActionRow indicatorColor="green" label="Generating...">
       <Box flexDirection="column">
         {lines.map((line, idx) => (
-          <Text key={`streaming-text-${idx}`} wrap="wrap">
+          <Text key={`streaming-run-result-${idx}`} wrap="wrap">
             {line}
           </Text>
         ))}

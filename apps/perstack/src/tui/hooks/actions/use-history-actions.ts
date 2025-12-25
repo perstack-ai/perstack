@@ -22,7 +22,7 @@ type UseHistoryActionsOptions = {
   ) => Promise<EventHistoryItem[]>
   onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
   onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
-  setHistoricalEvents: (events: PerstackEvent[]) => void
+  appendHistoricalEvents: (events: PerstackEvent[]) => void
   setCurrentStep: (step: number) => void
   setContextWindowUsage: (contextWindowUsage: number) => void
   dispatch: React.Dispatch<InputAction>
@@ -37,7 +37,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     onLoadEvents,
     onResumeFromCheckpoint,
     onLoadHistoricalEvents,
-    setHistoricalEvents,
+    appendHistoricalEvents,
     setCurrentStep,
     setContextWindowUsage,
     dispatch,
@@ -72,7 +72,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
           if (latestCheckpoint) {
             if (onLoadHistoricalEvents) {
               const events = await onLoadHistoricalEvents(latestCheckpoint)
-              setHistoricalEvents(events)
+              appendHistoricalEvents(events)
             }
             setCurrentStep(latestCheckpoint.stepNumber)
             setContextWindowUsage(latestCheckpoint.contextWindowUsage)
@@ -88,7 +88,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
       onLoadCheckpoints,
       onResumeFromCheckpoint,
       onLoadHistoricalEvents,
-      setHistoricalEvents,
+      appendHistoricalEvents,
       setCurrentStep,
       setContextWindowUsage,
       dispatch,
@@ -114,7 +114,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
       if (onResumeFromCheckpoint) {
         if (onLoadHistoricalEvents) {
           const events = await onLoadHistoricalEvents(checkpoint)
-          setHistoricalEvents(events)
+          appendHistoricalEvents(events)
         }
         setCurrentStep(checkpoint.stepNumber)
         setContextWindowUsage(checkpoint.contextWindowUsage)
@@ -125,7 +125,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     [
       onResumeFromCheckpoint,
       onLoadHistoricalEvents,
-      setHistoricalEvents,
+      appendHistoricalEvents,
       setCurrentStep,
       setContextWindowUsage,
       dispatch,
