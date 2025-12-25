@@ -114,6 +114,7 @@ export function processRunEventToLog(
         state.isComplete = false
         state.queryLogged = false
         state.currentRunId = event.runId
+        state.tools.clear()
       }
       if (!state.queryLogged) {
         addEntry({

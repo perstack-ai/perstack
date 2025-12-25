@@ -542,4 +542,55 @@ describe("processRunEventToLog", () => {
       expect(logs[1].action.text).toBe("Second query")
     }
   })
+
+  it("clears tools map when new run starts", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // First run with tool
+    const startEvent1 = createBaseEvent({
+      type: "startRun",
+      runId: "run-1",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-1",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-1", text: "First query" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEvent1, (e) => logs.push(e))
+
+    const toolCall = createToolCall({ id: "tc-1" })
+    const callEvent = createBaseEvent({
+      id: "e-2",
+      runId: "run-1",
+      type: "callTools",
+      toolCalls: [toolCall],
+      newMessage: {} as RunEvent["newMessage"],
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    expect(state.tools.has("tc-1")).toBe(true)
+
+    // New run - tools should be cleared
+    const startEvent2 = createBaseEvent({
+      id: "e-3",
+      runId: "run-2",
+      type: "startRun",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-2",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-2", text: "Second query" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEvent2, (e) => logs.push(e))
+
+    // Tools map should be cleared
+    expect(state.tools.size).toBe(0)
+  })
 })
