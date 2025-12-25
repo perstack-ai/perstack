@@ -1,6 +1,6 @@
 import type { PerstackEvent, RuntimeEvent } from "@perstack/core"
-import { createInitialRuntimeState } from "../types/index.js"
 import { describe, expect, it } from "vitest"
+import { createInitialRuntimeState } from "../types/index.js"
 
 // Since we can't use React hooks directly in Node.js tests,
 // we test the state update logic by simulating the handler behavior
@@ -244,4 +244,3 @@ describe("RuntimeState updates", () => {
     })
   })
 })
-

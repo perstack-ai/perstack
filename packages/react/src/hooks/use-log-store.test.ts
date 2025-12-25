@@ -1,6 +1,6 @@
 import type { PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
-import type { LogEntry } from "../types/index.js"
 import { describe, expect, it } from "vitest"
+import type { LogEntry } from "../types/index.js"
 import { createInitialLogProcessState, processRunEventToLog } from "../utils/event-to-log.js"
 
 // Since we can't use React hooks directly in Node.js tests,
@@ -206,4 +206,3 @@ describe("LogStore processing logic", () => {
     expect(logs[0].action.reasoning).toBe("Thinking about the task...")
   })
 })
-

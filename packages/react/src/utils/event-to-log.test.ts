@@ -1,6 +1,6 @@
 import type { PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
-import type { LogEntry } from "../types/index.js"
 import { describe, expect, it } from "vitest"
+import type { LogEntry } from "../types/index.js"
 import {
   createInitialLogProcessState,
   processRunEventToLog,
@@ -349,4 +349,3 @@ describe("processRunEventToLog", () => {
     }
   })
 })
-
