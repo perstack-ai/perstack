@@ -103,7 +103,7 @@ function toolToCheckpointAction(
   const { skillName, toolName, args } = toolCall
   const result = toolResult.result
 
-  // Check for error in result
+  // Check for error in result - consistent with core's getErrorFromResult
   const errorText = (() => {
     const textPart = result.find((p) => p.type === "textPart")
     if (!textPart || !("text" in textPart) || typeof textPart.text !== "string") return undefined
@@ -111,8 +111,13 @@ function toolToCheckpointAction(
       const parsed = JSON.parse(textPart.text) as { error?: string }
       return typeof parsed.error === "string" ? parsed.error : undefined
     } catch {
-      const text = textPart.text.toLowerCase()
-      return text.startsWith("error") || text.includes("failed") ? textPart.text : undefined
+      // Not JSON - only treat as error if it starts with "Error:" or "error:"
+      // This avoids false positives from text containing "error" in other contexts
+      const trimmed = textPart.text.trim().toLowerCase()
+      if (trimmed.startsWith("error:") || trimmed.startsWith("error ")) {
+        return textPart.text
+      }
+      return undefined
     }
   })()
 
