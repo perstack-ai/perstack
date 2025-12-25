@@ -12,10 +12,10 @@ Perstack emits events during Expert execution for observability and state manage
 PerstackEvent = RunEvent | RuntimeEvent
 ```
 
-| Event Type     | Purpose                              | Accumulation     |
-| -------------- | ------------------------------------ | ---------------- |
-| `RunEvent`     | Primary effects of Expert execution  | Accumulated log  |
-| `RuntimeEvent` | Side effects of Expert execution     | Latest state only |
+| Event Type     | Purpose                             | Accumulation      |
+| -------------- | ----------------------------------- | ----------------- |
+| `RunEvent`     | Primary effects of Expert execution | Accumulated log   |
+| `RuntimeEvent` | Side effects of Expert execution    | Latest state only |
 
 ## RunEvent
 
@@ -29,12 +29,12 @@ Job
       └── Events → Steps → Checkpoints
 ```
 
-| Concept        | Description                                              |
-| -------------- | -------------------------------------------------------- |
-| **Job**        | Top-level execution unit (one per `perstack run`)        |
-| **Run**        | Single Expert execution within a Job                     |
-| **Step**       | One cycle of the agent loop                              |
-| **Checkpoint** | Snapshot at step end — everything needed to resume       |
+| Concept        | Description                                        |
+| -------------- | -------------------------------------------------- |
+| **Job**        | Top-level execution unit (one per `perstack run`)  |
+| **Run**        | Single Expert execution within a Job               |
+| **Step**       | One cycle of the agent loop                        |
+| **Checkpoint** | Snapshot at step end — everything needed to resume |
 
 Steps and Checkpoints are designed to be **deterministic and observable** through the agent loop state machine. RunEvents represent transitions in this state machine.
 
@@ -57,45 +57,45 @@ interface BaseEvent {
 
 #### Lifecycle Events
 
-| Event Type     | Description                        | Key Payload                        |
-| -------------- | ---------------------------------- | ---------------------------------- |
-| `startRun`     | Run started                        | `initialCheckpoint`, `inputMessages` |
-| `completeRun`  | Run completed successfully         | `checkpoint`, `step`, `text`, `usage` |
+| Event Type    | Description                | Key Payload                           |
+| ------------- | -------------------------- | ------------------------------------- |
+| `startRun`    | Run started                | `initialCheckpoint`, `inputMessages`  |
+| `completeRun` | Run completed successfully | `checkpoint`, `step`, `text`, `usage` |
 
 #### Generation Events
 
-| Event Type        | Description                     | Key Payload                       |
-| ----------------- | ------------------------------- | --------------------------------- |
-| `startGeneration` | LLM generation started          | `messages`                        |
-| `retry`           | Generation failed, retrying     | `reason`, `newMessages`, `usage`  |
+| Event Type        | Description                 | Key Payload                      |
+| ----------------- | --------------------------- | -------------------------------- |
+| `startGeneration` | LLM generation started      | `messages`                       |
+| `retry`           | Generation failed, retrying | `reason`, `newMessages`, `usage` |
 
 #### Tool Call Events
 
-| Event Type            | Description                           | Key Payload                          |
-| --------------------- | ------------------------------------- | ------------------------------------ |
-| `callTools`           | Regular tool calls                    | `newMessage`, `toolCalls`, `usage`   |
-| `callInteractiveTool` | Interactive tool call (needs user input) | `newMessage`, `toolCall`, `usage` |
-| `callDelegate`        | Delegation to another Expert          | `newMessage`, `toolCalls`, `usage`   |
-| `resolveToolResults`  | Tool results received                 | `toolResults`                        |
-| `attemptCompletion`   | Completion tool called                | `toolResult`                         |
-| `finishToolCall`      | Single tool call finished             | `newMessages`                        |
-| `resumeToolCalls`     | Resume pending tool calls             | `pendingToolCalls`, `partialToolResults` |
-| `finishAllToolCalls`  | All tool calls finished               | `newMessages`                        |
+| Event Type            | Description                              | Key Payload                              |
+| --------------------- | ---------------------------------------- | ---------------------------------------- |
+| `callTools`           | Regular tool calls                       | `newMessage`, `toolCalls`, `usage`       |
+| `callInteractiveTool` | Interactive tool call (needs user input) | `newMessage`, `toolCall`, `usage`        |
+| `callDelegate`        | Delegation to another Expert             | `newMessage`, `toolCalls`, `usage`       |
+| `resolveToolResults`  | Tool results received                    | `toolResults`                            |
+| `attemptCompletion`   | Completion tool called                   | `toolResult`                             |
+| `finishToolCall`      | Single tool call finished                | `newMessages`                            |
+| `resumeToolCalls`     | Resume pending tool calls                | `pendingToolCalls`, `partialToolResults` |
+| `finishAllToolCalls`  | All tool calls finished                  | `newMessages`                            |
 
 #### Step Transition Events
 
-| Event Type           | Description                    | Key Payload                    |
-| -------------------- | ------------------------------ | ------------------------------ |
-| `continueToNextStep` | Proceeding to next step        | `checkpoint`, `step`, `nextCheckpoint` |
+| Event Type           | Description             | Key Payload                            |
+| -------------------- | ----------------------- | -------------------------------------- |
+| `continueToNextStep` | Proceeding to next step | `checkpoint`, `step`, `nextCheckpoint` |
 
 #### Stop Events
 
-| Event Type                  | Description                      | Key Payload          |
-| --------------------------- | -------------------------------- | -------------------- |
-| `stopRunByInteractiveTool`  | Stopped for user input           | `checkpoint`, `step` |
-| `stopRunByDelegate`         | Stopped for delegation           | `checkpoint`, `step` |
-| `stopRunByExceededMaxSteps` | Stopped due to max steps limit   | `checkpoint`, `step` |
-| `stopRunByError`            | Stopped due to error             | `checkpoint`, `step`, `error` |
+| Event Type                  | Description                    | Key Payload                   |
+| --------------------------- | ------------------------------ | ----------------------------- |
+| `stopRunByInteractiveTool`  | Stopped for user input         | `checkpoint`, `step`          |
+| `stopRunByDelegate`         | Stopped for delegation         | `checkpoint`, `step`          |
+| `stopRunByExceededMaxSteps` | Stopped due to max steps limit | `checkpoint`, `step`          |
+| `stopRunByError`            | Stopped due to error           | `checkpoint`, `step`, `error` |
 
 ### Processing RunEvents
 
@@ -150,42 +150,42 @@ interface BaseRuntimeEvent {
 
 #### Initialization Events
 
-| Event Type          | Description              | Key Payload                                    |
-| ------------------- | ------------------------ | ---------------------------------------------- |
-| `initializeRuntime` | Runtime initialized      | `runtimeVersion`, `expertName`, `model`, etc.  |
+| Event Type          | Description         | Key Payload                                   |
+| ------------------- | ------------------- | --------------------------------------------- |
+| `initializeRuntime` | Runtime initialized | `runtimeVersion`, `expertName`, `model`, etc. |
 
 #### Skill Lifecycle Events
 
-| Event Type          | Description              | Key Payload                                    |
-| ------------------- | ------------------------ | ---------------------------------------------- |
-| `skillStarting`     | MCP skill starting       | `skillName`, `command`, `args`                 |
-| `skillConnected`    | MCP skill connected      | `skillName`, `serverInfo`, timing metrics      |
-| `skillStderr`       | Skill stderr output      | `skillName`, `message`                         |
-| `skillDisconnected` | MCP skill disconnected   | `skillName`                                    |
+| Event Type          | Description            | Key Payload                               |
+| ------------------- | ---------------------- | ----------------------------------------- |
+| `skillStarting`     | MCP skill starting     | `skillName`, `command`, `args`            |
+| `skillConnected`    | MCP skill connected    | `skillName`, `serverInfo`, timing metrics |
+| `skillStderr`       | Skill stderr output    | `skillName`, `message`                    |
+| `skillDisconnected` | MCP skill disconnected | `skillName`                               |
 
 #### Docker Events
 
-| Event Type              | Description              | Key Payload                           |
-| ----------------------- | ------------------------ | ------------------------------------- |
-| `dockerBuildProgress`   | Docker build progress    | `stage`, `service`, `message`, `progress` |
-| `dockerContainerStatus` | Container status change  | `status`, `service`, `message`        |
+| Event Type              | Description             | Key Payload                               |
+| ----------------------- | ----------------------- | ----------------------------------------- |
+| `dockerBuildProgress`   | Docker build progress   | `stage`, `service`, `message`, `progress` |
+| `dockerContainerStatus` | Container status change | `status`, `service`, `message`            |
 
 #### Network Events
 
-| Event Type    | Description                      | Key Payload                        |
-| ------------- | -------------------------------- | ---------------------------------- |
-| `proxyAccess` | Network access allow/block       | `action`, `domain`, `port`, `reason` |
+| Event Type    | Description                | Key Payload                          |
+| ------------- | -------------------------- | ------------------------------------ |
+| `proxyAccess` | Network access allow/block | `action`, `domain`, `port`, `reason` |
 
 #### Streaming Events
 
-| Event Type         | Description                      | Key Payload  |
-| ------------------ | -------------------------------- | ------------ |
-| `startReasoning`   | Start of reasoning stream        | (empty)      |
-| `streamReasoning`  | Reasoning delta                  | `delta`      |
-| `completeReasoning`| Reasoning complete               | `text`       |
-| `startRunResult`   | Start of result stream           | (empty)      |
-| `streamRunResult`  | Result delta                     | `delta`      |
-| `streamingText`    | Text streaming (legacy)          | `text`       |
+| Event Type          | Description               | Key Payload |
+| ------------------- | ------------------------- | ----------- |
+| `startReasoning`    | Start of reasoning stream | (empty)     |
+| `streamReasoning`   | Reasoning delta           | `delta`     |
+| `completeReasoning` | Reasoning complete        | `text`      |
+| `startRunResult`    | Start of result stream    | (empty)     |
+| `streamRunResult`   | Result delta              | `delta`     |
+| `streamingText`     | Text streaming (legacy)   | `text`      |
 
 ### Processing RuntimeEvents
 
@@ -222,17 +222,137 @@ function handleRuntimeEvent(state: RuntimeState, event: PerstackEvent): RuntimeS
 }
 ```
 
+## CheckpointAction
+
+While RunEvents represent raw state machine transitions, **CheckpointAction** provides a human-friendly abstraction for understanding Expert behavior.
+
+### Why CheckpointAction?
+
+A single Step may contain multiple actions:
+- Parallel tool calls (e.g., reading multiple files simultaneously)
+- Multiple delegations
+- Tool calls followed by result processing
+
+RunEvents capture every state transition, but for human users who want to understand "what did the Expert do?", this level of detail can be overwhelming. CheckpointAction extracts the meaningful actions from a Step.
+
+```
+Step (agent loop cycle)
+ └── May contain multiple actions
+      ├── readTextFile (file1.ts)
+      ├── readTextFile (file2.ts)  ← parallel execution
+      └── readTextFile (file3.ts)
+```
+
+### Extracting Actions
+
+Use `getCheckpointActions` to extract actions from a Checkpoint and Step:
+
+```typescript
+import { getCheckpointActions } from "@perstack/core"
+
+const actions = getCheckpointActions({ checkpoint, step })
+// Returns: CheckpointAction[]
+```
+
+Each action includes:
+- `type` — Action type (e.g., `readTextFile`, `exec`, `delegate`)
+- `reasoning` — LLM's thinking process before this action (if available)
+- Action-specific fields (e.g., `path`, `content`, `error`)
+
+### Action Types
+
+#### Lifecycle Actions
+
+| Type       | Description                     |
+| ---------- | ------------------------------- |
+| `query`    | User input that started the run |
+| `complete` | Run completed with final result |
+| `error`    | Run stopped due to error        |
+| `retry`    | Generation failed, will retry   |
+
+#### File Operations
+
+| Type             | Description                |
+| ---------------- | -------------------------- |
+| `readTextFile`   | Read a text file           |
+| `readImageFile`  | Read an image file         |
+| `readPdfFile`    | Read a PDF file            |
+| `writeTextFile`  | Write/create a text file   |
+| `editTextFile`   | Edit existing file content |
+| `appendTextFile` | Append to a file           |
+| `deleteFile`     | Delete a file              |
+| `moveFile`       | Move/rename a file         |
+| `getFileInfo`    | Get file metadata          |
+
+#### Directory Operations
+
+| Type              | Description             |
+| ----------------- | ----------------------- |
+| `listDirectory`   | List directory contents |
+| `createDirectory` | Create a directory      |
+| `deleteDirectory` | Delete a directory      |
+
+#### Execution
+
+| Type   | Description             |
+| ------ | ----------------------- |
+| `exec` | Shell command execution |
+
+#### Task Management
+
+| Type                | Description            |
+| ------------------- | ---------------------- |
+| `todo`              | Update todo list       |
+| `clearTodo`         | Clear all todos        |
+| `attemptCompletion` | Signal task completion |
+
+#### Collaboration
+
+| Type              | Description                |
+| ----------------- | -------------------------- |
+| `delegate`        | Delegate to another Expert |
+| `interactiveTool` | Tool requiring user input  |
+| `generalTool`     | Any other MCP tool call    |
+
+### Use Cases
+
+CheckpointAction is designed for:
+
+1. **UI Display** — Show users what the Expert is doing in a clear, actionable format
+2. **Interactive Sessions** — Help users understand Expert behavior for effective collaboration
+3. **Logging** — Create human-readable execution logs
+4. **Debugging** — Trace specific actions without parsing raw events
+
+```typescript
+// Example: Displaying actions in a UI
+function ActionLog({ actions }: { actions: CheckpointAction[] }) {
+  return (
+    <ul>
+      {actions.map((action, i) => (
+        <li key={i}>
+          {action.type === "readTextFile" && `📄 Read ${action.path}`}
+          {action.type === "writeTextFile" && `✏️ Write ${action.path}`}
+          {action.type === "exec" && `⚡ Run ${action.command}`}
+          {action.type === "delegate" && `🤝 Delegate to ${action.expertKey}`}
+          {action.type === "complete" && `✅ Complete: ${action.text}`}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
 ## Architectural Distinction
 
 ### Primary vs Side Effects
 
-| Aspect           | RunEvent (Primary)              | RuntimeEvent (Side Effect)        |
-| ---------------- | ------------------------------- | --------------------------------- |
-| **What it tracks** | State machine transitions     | Runtime environment state         |
-| **Accumulation** | Accumulated as history          | Only latest state matters         |
-| **Determinism**  | Deterministic, reproducible     | Environment-dependent             |
-| **Persistence**  | Stored with checkpoints         | Typically not persisted           |
-| **Consumer use** | Execution logs, replay, audit   | UI updates, monitoring            |
+| Aspect             | RunEvent (Primary)            | RuntimeEvent (Side Effect) |
+| ------------------ | ----------------------------- | -------------------------- |
+| **What it tracks** | State machine transitions     | Runtime environment state  |
+| **Accumulation**   | Accumulated as history        | Only latest state matters  |
+| **Determinism**    | Deterministic, reproducible   | Environment-dependent      |
+| **Persistence**    | Stored with checkpoints       | Typically not persisted    |
+| **Consumer use**   | Execution logs, replay, audit | UI updates, monitoring     |
 
 ### Event Flow
 
