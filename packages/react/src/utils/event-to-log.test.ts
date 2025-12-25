@@ -495,4 +495,51 @@ describe("processRunEventToLog", () => {
     // Reasoning should be cleared
     expect(state.completedReasoning).toBeUndefined()
   })
+
+  it("logs new query when resuming incomplete checkpoint with different runId", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // First run (incomplete - no completeRun)
+    const startEvent1 = createBaseEvent({
+      type: "startRun",
+      runId: "run-1",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-1",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-1", text: "First query" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEvent1, (e) => logs.push(e))
+    expect(logs).toHaveLength(1)
+    expect(state.queryLogged).toBe(true)
+    expect(state.completionLogged).toBe(false)
+
+    // New run with different runId (resuming from incomplete checkpoint)
+    const startEvent2 = createBaseEvent({
+      id: "e-2",
+      runId: "run-2",
+      type: "startRun",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-2",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-2", text: "Second query" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEvent2, (e) => logs.push(e))
+
+    // Should have logged both queries
+    expect(logs).toHaveLength(2)
+    expect(logs[0].action.type).toBe("query")
+    expect(logs[1].action.type).toBe("query")
+    if (logs[1].action.type === "query") {
+      expect(logs[1].action.text).toBe("Second query")
+    }
+  })
 })

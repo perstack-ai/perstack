@@ -44,6 +44,7 @@ export type LogProcessState = {
   completionLogged: boolean
   isComplete: boolean
   completedReasoning?: string
+  currentRunId?: string
 }
 
 export function createInitialLogProcessState(): LogProcessState {
@@ -106,11 +107,13 @@ export function processRunEventToLog(
     const userMessage = startRunEvent.inputMessages.find((m) => m.type === "userMessage")
     const queryText = userMessage?.contents?.find((c) => c.type === "textPart")?.text
     if (queryText) {
-      // Reset state for new run if completion was already logged
-      if (state.completionLogged) {
+      // Reset state for new run (different runId or after completion)
+      const isNewRun = state.currentRunId !== event.runId
+      if (isNewRun || state.completionLogged) {
         state.completionLogged = false
         state.isComplete = false
         state.queryLogged = false
+        state.currentRunId = event.runId
       }
       if (!state.queryLogged) {
         addEntry({

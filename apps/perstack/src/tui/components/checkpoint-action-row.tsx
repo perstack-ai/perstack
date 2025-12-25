@@ -67,8 +67,8 @@ function renderAction(action: CheckpointAction): React.ReactNode {
           </ActionRow>
         )
       }
-      if (action.remainingTodos && action.remainingTodos.length > 0) {
-        const remaining = action.remainingTodos.filter((t) => !t.completed)
+      const remaining = action.remainingTodos?.filter((t) => !t.completed) ?? []
+      if (remaining.length > 0) {
         return (
           <ActionRow indicatorColor="yellow" label="Completion Blocked">
             <Text dimColor>
