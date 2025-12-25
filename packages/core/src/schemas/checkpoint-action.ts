@@ -398,15 +398,19 @@ export const checkpointActionCompleteSchema = baseCheckpointActionSchema.extend(
 })
 checkpointActionCompleteSchema satisfies z.ZodType<CheckpointActionComplete>
 
-/** Error action - When action interpretation fails */
+/** Error action - When run stopped by error */
 export interface CheckpointActionError extends BaseCheckpointAction {
   type: "error"
   error?: string
+  errorName?: string
+  isRetryable?: boolean
 }
 
 export const checkpointActionErrorSchema = baseCheckpointActionSchema.extend({
   type: z.literal("error"),
   error: z.string().optional(),
+  errorName: z.string().optional(),
+  isRetryable: z.boolean().optional(),
 })
 checkpointActionErrorSchema satisfies z.ZodType<CheckpointActionError>
 

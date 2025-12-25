@@ -43,6 +43,59 @@ const formatRuntimeName = (runtime: string): string => {
   return runtime.charAt(0).toUpperCase() + runtime.slice(1)
 }
 
+const BASE_SKILL_PREFIX = "@perstack/base"
+
+/** Parse JSON field from tool result */
+function parseResultField<T>(result: ToolResult["result"], field: string): T | undefined {
+  const textPart = result.find((p) => p.type === "textPart")
+  if (!textPart || !("text" in textPart) || typeof textPart.text !== "string") return undefined
+  try {
+    const parsed = JSON.parse(textPart.text) as Record<string, unknown>
+    return parsed[field] as T | undefined
+  } catch {
+    return undefined
+  }
+}
+
+type ListDirItem = { name?: string; path?: string; type?: string; size?: number; modified?: string }
+type TodoItem = { id?: number; title?: string; completed?: boolean }
+
+/** Parse list directory items from tool result */
+function parseListDirectoryItems(
+  result: ToolResult["result"],
+):
+  | Array<{
+      name: string
+      path: string
+      type: "file" | "directory"
+      size: number
+      modified: string
+    }>
+  | undefined {
+  const items = parseResultField<ListDirItem[]>(result, "items")
+  if (!Array.isArray(items)) return undefined
+  return items.map((item) => ({
+    name: String(item.name ?? ""),
+    path: String(item.path ?? ""),
+    type: item.type === "directory" ? ("directory" as const) : ("file" as const),
+    size: typeof item.size === "number" ? item.size : 0,
+    modified: String(item.modified ?? ""),
+  }))
+}
+
+/** Parse todos from tool result */
+function parseTodosFromResult(
+  result: ToolResult["result"],
+): Array<{ id: number; title: string; completed: boolean }> {
+  const todos = parseResultField<TodoItem[]>(result, "todos")
+  if (!Array.isArray(todos)) return []
+  return todos.map((t, i) => ({
+    id: typeof t.id === "number" ? t.id : i,
+    title: typeof t.title === "string" ? t.title : "",
+    completed: typeof t.completed === "boolean" ? t.completed : false,
+  }))
+}
+
 /** Convert tool call + result to CheckpointAction */
 function toolToCheckpointAction(
   toolCall: ToolCall,
@@ -65,8 +118,8 @@ function toolToCheckpointAction(
     }
   })()
 
-  // Base skill tools
-  if (skillName === "@perstack/base") {
+  // Base skill tools - use startsWith for consistency with core
+  if (skillName.startsWith(BASE_SKILL_PREFIX)) {
     switch (toolName) {
       case "attemptCompletion":
         return { type: "attemptCompletion", reasoning, error: errorText }
@@ -78,7 +131,7 @@ function toolToCheckpointAction(
           completedTodos: Array.isArray(args["completedTodos"])
             ? args["completedTodos"].map(Number)
             : undefined,
-          todos: [],
+          todos: parseTodosFromResult(result),
           error: errorText,
         }
       case "clearTodo":
@@ -88,6 +141,7 @@ function toolToCheckpointAction(
           type: "readTextFile",
           reasoning,
           path: String(args["path"] ?? ""),
+          content: parseResultField<string>(result, "content"),
           error: errorText,
         }
       case "writeTextFile":
@@ -150,6 +204,7 @@ function toolToCheckpointAction(
           type: "listDirectory",
           reasoning,
           path: String(args["path"] ?? ""),
+          items: parseListDirectoryItems(result),
           error: errorText,
         }
       case "getFileInfo":
@@ -180,6 +235,7 @@ function toolToCheckpointAction(
           command: String(args["command"] ?? ""),
           args: Array.isArray(args["args"]) ? args["args"].map(String) : [],
           cwd: String(args["cwd"] ?? ""),
+          output: parseResultField<string>(result, "output"),
           error: errorText,
         }
     }
@@ -421,19 +477,25 @@ const processEventToActions = (
   }
 
   // Process tool results
+  // Note: For parallel tool results, share reasoning across all actions, clear after loop
   if (isToolResultsEvent(event)) {
+    const reasoning = state.completedReasoning
+    let anyLogged = false
     for (const toolResult of event.toolResults) {
       const tool = state.tools.get(toolResult.id)
       if (tool && !tool.logged) {
-        const action = toolToCheckpointAction(tool.toolCall, toolResult, state.completedReasoning)
+        const action = toolToCheckpointAction(tool.toolCall, toolResult, reasoning)
         addAction({
           id: `action-${tool.id}`,
           type: "action",
           action,
         })
         tool.logged = true
-        state.completedReasoning = undefined
+        anyLogged = true
       }
+    }
+    if (anyLogged) {
+      state.completedReasoning = undefined
     }
   } else if (isToolResultEvent(event)) {
     const { toolResult } = event

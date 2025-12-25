@@ -662,5 +662,146 @@ describe("getCheckpointActions", () => {
       expect(actions[0].type).toBe("readTextFile")
       expect((actions[0] as { error?: string }).error).toBe("File not found")
     })
+
+    it("avoids false positive for text containing 'error' word", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/success.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [
+              { type: "textPart", id: "tp-1", text: "Successfully processed without error" },
+            ],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("readTextFile")
+      expect((actions[0] as { error?: string }).error).toBeUndefined()
+    })
+
+    it("captures error when text starts with 'Error:'", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [createToolCall({ toolName: "readTextFile", args: { path: "/missing.txt" } })],
+        toolResults: [
+          createToolResult({
+            toolName: "readTextFile",
+            result: [{ type: "textPart", id: "tp-1", text: "Error: File not found" }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect((actions[0] as { error?: string }).error).toBe("Error: File not found")
+    })
+  })
+
+  describe("stoppedByError status", () => {
+    it("returns error action when status is stoppedByError", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "stoppedByError",
+        error: {
+          name: "RateLimitError",
+          message: "Rate limit exceeded",
+          isRetryable: true,
+        },
+      })
+      const step = createBaseStep()
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("error")
+      if (actions[0].type === "error") {
+        expect(actions[0].error).toBe("Rate limit exceeded")
+        expect(actions[0].errorName).toBe("RateLimitError")
+        expect(actions[0].isRetryable).toBe(true)
+      }
+    })
+
+    it("handles stoppedByError with missing error details", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "stoppedByError",
+      })
+      const step = createBaseStep()
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("error")
+      if (actions[0].type === "error") {
+        expect(actions[0].error).toBe("Unknown error")
+      }
+    })
+  })
+
+  describe("stoppedByDelegate with empty delegateTo", () => {
+    it("returns retry action when delegateTo is empty", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "stoppedByDelegate",
+        delegateTo: [],
+      })
+      const step = createBaseStep()
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("retry")
+      if (actions[0].type === "retry") {
+        expect(actions[0].error).toBe("Delegate status but no delegation targets")
+      }
+    })
+
+    it("returns retry action when delegateTo is undefined", () => {
+      const checkpoint = createBaseCheckpoint({
+        status: "stoppedByDelegate",
+        delegateTo: undefined,
+      })
+      const step = createBaseStep()
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("retry")
+    })
+  })
+
+  describe("unknown base tool fallback", () => {
+    it("uses actual skillName for unknown base tools", () => {
+      const checkpoint = createBaseCheckpoint()
+      const step = createBaseStep({
+        toolCalls: [
+          createToolCall({
+            skillName: "@perstack/base",
+            toolName: "unknownTool",
+            args: { foo: "bar" },
+          }),
+        ],
+        toolResults: [
+          createToolResult({
+            skillName: "@perstack/base",
+            toolName: "unknownTool",
+            result: [{ type: "textPart", id: "tp-1", text: "result" }],
+          }),
+        ],
+      })
+
+      const actions = getCheckpointActions({ checkpoint, step })
+
+      expect(actions).toHaveLength(1)
+      expect(actions[0].type).toBe("generalTool")
+      if (actions[0].type === "generalTool") {
+        // Should preserve actual skillName from toolCall
+        expect(actions[0].skillName).toBe("@perstack/base")
+        expect(actions[0].toolName).toBe("unknownTool")
+      }
+    })
   })
 })

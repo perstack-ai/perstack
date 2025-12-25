@@ -44,8 +44,18 @@ export function getCheckpointActions(params: GetCheckpointActionsParams): Checkp
     return [createCompleteAction(step.newMessages, reasoning)]
   }
 
+  // Error status - use checkpoint error information
+  if (status === "stoppedByError") {
+    return [createErrorAction(checkpoint, reasoning)]
+  }
+
   // Parallel delegate actions - each delegation becomes a separate action
-  if (status === "stoppedByDelegate" && delegateTo && delegateTo.length > 0) {
+  if (status === "stoppedByDelegate") {
+    if (!delegateTo || delegateTo.length === 0) {
+      return [
+        createRetryAction(step.newMessages, reasoning, "Delegate status but no delegation targets"),
+      ]
+    }
     return delegateTo.map((d) => createDelegateAction(d, reasoning))
   }
 
@@ -134,14 +144,29 @@ function createInteractiveToolAction(
 function createRetryAction(
   newMessages: Message[],
   reasoning: string | undefined,
+  customError?: string,
 ): CheckpointAction {
   const lastMessage = newMessages[newMessages.length - 1]
   const textPart = lastMessage?.contents.find((c) => c.type === "textPart")
   return {
     type: "retry",
     reasoning,
-    error: "No tool call or result found",
+    error: customError ?? "No tool call or result found",
     message: textPart?.text ?? "",
+  }
+}
+
+function createErrorAction(
+  checkpoint: Checkpoint,
+  reasoning: string | undefined,
+): CheckpointAction {
+  const error = checkpoint.error
+  return {
+    type: "error",
+    reasoning,
+    error: error?.message ?? "Unknown error",
+    errorName: error?.name,
+    isRetryable: error?.isRetryable,
   }
 }
 
@@ -312,7 +337,8 @@ function createBaseToolAction(
       }
 
     default:
-      return createGeneralToolAction(BASE_SKILL_PREFIX, toolName, toolCall, toolResult, reasoning)
+      // Use actual skillName from toolCall, not the constant
+      return createGeneralToolAction(toolCall.skillName, toolName, toolCall, toolResult, reasoning)
   }
 }
 
@@ -344,8 +370,10 @@ function getErrorFromResult(result: MessagePart[]): string | undefined {
       return parsed.error
     }
   } catch {
-    // Not JSON, check for error in text
-    if (textPart.text.toLowerCase().includes("error")) {
+    // Not JSON - only treat as error if it starts with "Error:" or "error:"
+    // This avoids false positives from text containing "error" in other contexts
+    const trimmed = textPart.text.trim()
+    if (trimmed.toLowerCase().startsWith("error:") || trimmed.toLowerCase().startsWith("error ")) {
       return textPart.text
     }
   }
