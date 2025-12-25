@@ -849,7 +849,11 @@ describe("getCheckpointActions", () => {
           createToolResult({
             toolName: "readPdfFile",
             result: [
-              { type: "textPart", id: "tp-1", text: '{"mimeType": "application/pdf", "size": 2048}' },
+              {
+                type: "textPart",
+                id: "tp-1",
+                text: '{"mimeType": "application/pdf", "size": 2048}',
+              },
             ],
           }),
         ],
@@ -878,7 +882,7 @@ describe("getCheckpointActions", () => {
         toolResults: [
           createToolResult({
             toolName: "deleteDirectory",
-            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+            result: [{ type: "textPart", id: "tp-1", text: "{}" }],
           }),
         ],
       })
@@ -905,7 +909,7 @@ describe("getCheckpointActions", () => {
         toolResults: [
           createToolResult({
             toolName: "moveFile",
-            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+            result: [{ type: "textPart", id: "tp-1", text: "{}" }],
           }),
         ],
       })
@@ -979,7 +983,7 @@ describe("getCheckpointActions", () => {
         toolResults: [
           createToolResult({
             toolName: "createDirectory",
-            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+            result: [{ type: "textPart", id: "tp-1", text: "{}" }],
           }),
         ],
       })
@@ -1045,7 +1049,7 @@ describe("getCheckpointActions", () => {
         toolResults: [
           createToolResult({
             toolName: "clearTodo",
-            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+            result: [{ type: "textPart", id: "tp-1", text: "{}" }],
           }),
         ],
       })
@@ -1068,7 +1072,7 @@ describe("getCheckpointActions", () => {
         toolResults: [
           createToolResult({
             toolName: "appendTextFile",
-            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+            result: [{ type: "textPart", id: "tp-1", text: "{}" }],
           }),
         ],
       })
@@ -1095,7 +1099,7 @@ describe("getCheckpointActions", () => {
         toolResults: [
           createToolResult({
             toolName: "deleteFile",
-            result: [{ type: "textPart", id: "tp-1", text: '{}' }],
+            result: [{ type: "textPart", id: "tp-1", text: "{}" }],
           }),
         ],
       })
