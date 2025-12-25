@@ -361,6 +361,140 @@ describe("@perstack/runtime: callingToolLogic", () => {
     expect(event.type).toBe("attemptCompletion")
   })
 
+  it("routes attemptCompletion to completeRun when textPart exists in last message", async () => {
+    const setting = createRunSetting()
+    // Create checkpoint with an expertMessage containing textPart
+    const checkpoint = createCheckpoint({
+      messages: [
+        {
+          id: createId(),
+          type: "instructionMessage" as const,
+          contents: [
+            { id: createId(), type: "textPart" as const, text: "You are a helpful assistant." },
+          ],
+          cache: true,
+        },
+        {
+          id: createId(),
+          type: "expertMessage" as const,
+          contents: [
+            {
+              id: createId(),
+              type: "thinkingPart" as const,
+              thinking: "Reasoning about the task...",
+              signature: "sig",
+            },
+            {
+              id: createId(),
+              type: "textPart" as const,
+              text: "Hello! I am your assistant. How can I help you today?",
+            },
+            {
+              id: createId(),
+              type: "toolCallPart" as const,
+              toolCallId: "tc_123",
+              toolName: "attemptCompletion",
+              args: {},
+            },
+          ],
+        },
+      ],
+    })
+    const step = createStep({
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          args: {},
+        },
+      ],
+    })
+    const emptyResult = [{ type: "textPart", text: JSON.stringify({}), id: createId() }]
+    const skillManagers = {
+      "@perstack/base": createMockMcpSkillManager(
+        "@perstack/base",
+        "attemptCompletion",
+        emptyResult,
+      ),
+    }
+    const event = await callingToolLogic({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers,
+      llmExecutor: mockLLMExecutor,
+    })
+    expect(event.type).toBe("completeRun")
+    expect((event as { text: string }).text).toBe(
+      "Hello! I am your assistant. How can I help you today?",
+    )
+  })
+
+  it("routes attemptCompletion to attemptCompletion when textPart is empty", async () => {
+    const setting = createRunSetting()
+    // Create checkpoint with an expertMessage containing empty textPart
+    const checkpoint = createCheckpoint({
+      messages: [
+        {
+          id: createId(),
+          type: "instructionMessage" as const,
+          contents: [
+            { id: createId(), type: "textPart" as const, text: "You are a helpful assistant." },
+          ],
+          cache: true,
+        },
+        {
+          id: createId(),
+          type: "expertMessage" as const,
+          contents: [
+            {
+              id: createId(),
+              type: "textPart" as const,
+              text: "   ", // Whitespace only
+            },
+            {
+              id: createId(),
+              type: "toolCallPart" as const,
+              toolCallId: "tc_123",
+              toolName: "attemptCompletion",
+              args: {},
+            },
+          ],
+        },
+      ],
+    })
+    const step = createStep({
+      toolCalls: [
+        {
+          id: "tc_123",
+          skillName: "@perstack/base",
+          toolName: "attemptCompletion",
+          args: {},
+        },
+      ],
+    })
+    const emptyResult = [{ type: "textPart", text: JSON.stringify({}), id: createId() }]
+    const skillManagers = {
+      "@perstack/base": createMockMcpSkillManager(
+        "@perstack/base",
+        "attemptCompletion",
+        emptyResult,
+      ),
+    }
+    const event = await callingToolLogic({
+      setting,
+      checkpoint,
+      step,
+      eventListener: async () => {},
+      skillManagers,
+      llmExecutor: mockLLMExecutor,
+    })
+    // Should transition to GeneratingRunResult since textPart is empty
+    expect(event.type).toBe("attemptCompletion")
+  })
+
   it("routes attemptCompletion to resolveToolResults when remaining todos exist", async () => {
     const setting = createRunSetting()
     const checkpoint = createCheckpoint()

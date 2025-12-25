@@ -2,7 +2,7 @@ export { useExpertActions, useHistoryActions, useRunActions } from "./actions/in
 export { useErrorHandler, useLatestRef } from "./core/index.js"
 export {
   type InputAction,
-  useEventStore,
+  useActionStore,
   useInputState,
   useRuntimeInfo,
   useTextInput,

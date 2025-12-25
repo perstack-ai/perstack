@@ -299,6 +299,16 @@ export const runtimeStateMachine = setup({
               }) satisfies Step,
           }),
         },
+        completeRun: {
+          target: "Stopped",
+          actions: assign({
+            checkpoint: ({ event }) => ({ ...event.checkpoint, retryCount: 0 }),
+            step: ({ event }) => ({
+              ...event.step,
+              inputMessages: undefined,
+            }),
+          }),
+        },
       },
     },
 

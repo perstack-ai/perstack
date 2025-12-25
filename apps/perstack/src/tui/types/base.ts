@@ -1,15 +1,17 @@
-import type { RunEvent, RuntimeEvent } from "@perstack/core"
+import type { CheckpointAction, RunEvent, RuntimeEvent } from "@perstack/core"
 export type PerstackEvent = RunEvent | RuntimeEvent
-export type LogEntry =
+
+/**
+ * ActionEntry represents a completed action for display in the TUI.
+ * Uses CheckpointAction for tool/completion actions, with TUI-specific entries
+ * for queries, delegations, and infrastructure events.
+ */
+export type ActionEntry =
+  // User query at the start of a run
   | { id: string; type: "query"; text: string }
-  | {
-      id: string
-      type: "tool"
-      toolName: string
-      args: Record<string, unknown>
-      result?: Array<{ type: string; text?: string }>
-      isSuccess?: boolean
-    }
+  // CheckpointAction-based entries (tools, completion, retry, etc.)
+  | { id: string; type: "action"; action: CheckpointAction }
+  // Delegation lifecycle events
   | {
       id: string
       type: "delegation-started"
@@ -26,7 +28,7 @@ export type LogEntry =
       version: string
       result?: string
     }
-  | { id: string; type: "completion"; text: string }
+  // Docker infrastructure events
   | {
       id: string
       type: "docker-build"
@@ -42,6 +44,7 @@ export type LogEntry =
       service: string
       message?: string
     }
+  // Proxy access events
   | {
       id: string
       type: "proxy-access"
@@ -50,6 +53,7 @@ export type LogEntry =
       port: number
       reason?: string
     }
+  // Error events (run stopped by error)
   | {
       id: string
       type: "error"
@@ -57,16 +61,24 @@ export type LogEntry =
       message: string
       statusCode?: number
     }
-  | {
-      id: string
-      type: "completeReasoning"
-      text: string
-    }
-  | {
-      id: string
-      type: "retry"
-      reason: string
-    }
+
+/**
+ * Streaming state for real-time display (NOT for Static component).
+ * This state is cleared when streaming completes and content moves to ActionEntry.
+ */
+export type StreamingState = {
+  /** Accumulated reasoning text during extended thinking */
+  reasoning?: string
+  /** Accumulated result text during run result generation */
+  text?: string
+  /** Whether reasoning is currently streaming */
+  isReasoningActive?: boolean
+  /** Whether result text is currently streaming */
+  isTextActive?: boolean
+}
+
+/** @deprecated Use ActionEntry instead */
+export type LogEntry = ActionEntry
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
   runtimeVersion?: string

@@ -15,8 +15,8 @@ function getMetaInstruction(startedAt: number): string {
     2. Select Tools: Choose the next tool call based on current state, task planning, relevant knowledge, and available data APIs
     3. Wait for Execution: The selected tool action will be executed by the sandbox environment with new observations added to the event stream
     4. Iterate: Choose only one tool call per iteration, patiently repeat the above steps until task completion
-    5. Notify Task Completion: Call the attemptCompletion tool to inform the user when the task is complete
-    6. Generate Final Results: Produce a final result that clearly describes each task you performed, step by step
+    5. Notify Task Completion: Call attemptCompletion ONLY - do NOT include any text response with this tool call
+    6. Generate Final Results: AFTER attemptCompletion returns, you will be prompted to produce a final result in a SEPARATE response
 
     Conditions for ending the agent loop:
     If any of the following apply, **immediately call the attemptCompletion tool**.

@@ -9,7 +9,7 @@ import type {
   PerstackEvent,
 } from "../types/index.js"
 import { useExpertActions, useHistoryActions, useRunActions } from "./actions/index.js"
-import { useEventStore } from "./state/use-event-store.js"
+import { useActionStore } from "./state/use-action-store.js"
 import { useInputState } from "./state/use-input-state.js"
 import { useRuntimeInfo } from "./state/use-runtime-info.js"
 
@@ -51,7 +51,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadHistoricalEvents,
     onReady,
   } = props
-  const eventStore = useEventStore()
+  const actionStore = useActionStore()
   const {
     runtimeInfo,
     handleEvent,
@@ -75,7 +75,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onComplete,
     onContinue,
     onReady,
-    stepStoreAddEvent: eventStore.addEvent,
+    stepStoreAddEvent: actionStore.addEvent,
     handleEvent,
   })
   useEffect(() => {
@@ -103,7 +103,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadEvents,
     onResumeFromCheckpoint,
     onLoadHistoricalEvents,
-    setHistoricalEvents: eventStore.setHistoricalEvents,
+    setHistoricalEvents: actionStore.setHistoricalEvents,
     setCurrentStep,
     setContextWindowUsage,
     dispatch,
@@ -139,7 +139,7 @@ export const useAppState = (props: UseAppStateProps) => {
     ],
   )
   return {
-    eventStore,
+    actionStore,
     runtimeInfo,
     inputState,
     inputAreaContextValue,

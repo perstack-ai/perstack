@@ -1,8 +1,9 @@
-import { Box, Static, Text } from "ink"
-import { BrowserRouter, LogEntryRow, RunSetting } from "../components/index.js"
+import { Box, Static } from "ink"
+import { BrowserRouter, RunSetting, StaticEntryRow, StreamingDisplay } from "../components/index.js"
 import { InputAreaProvider } from "../context/index.js"
 import { useAppState } from "../hooks/index.js"
 import type {
+  ActionEntry,
   CheckpointHistoryItem,
   EventHistoryItem,
   ExpertOption,
@@ -31,8 +32,22 @@ type AppProps = {
   onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
   onReady: (addEvent: (event: PerstackEvent) => void) => void
 }
+
+/**
+ * Main TUI application with proper Static/Streaming separation.
+ *
+ * Architecture:
+ * 1. <Static> - Completed actions only (truly static, never re-renders)
+ * 2. <StreamingDisplay> - Active streaming content (reasoning/text)
+ * 3. Input controls (browser/run settings)
+ *
+ * This ensures:
+ * - Static content remains static (no unnecessary re-renders)
+ * - Streaming content is ephemeral and shown only during generation
+ * - When streaming completes, content is committed to Static via new entries
+ */
 export const App = (props: AppProps) => {
-  const { eventStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
+  const { actionStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
   const isBrowsing =
     inputState.type === "browsingHistory" ||
     inputState.type === "browsingExperts" ||
@@ -42,21 +57,18 @@ export const App = (props: AppProps) => {
   const showRunSetting = isEditing || inputState.type === "running"
   return (
     <Box flexDirection="column">
-      <Static items={eventStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
-        {(entry) => <LogEntryRow key={entry.id} entry={entry} />}
+      {/* Static section - completed actions only */}
+      <Static
+        items={actionStore.actions}
+        style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}
+      >
+        {(entry: ActionEntry) => <StaticEntryRow key={entry.id} entry={entry} />}
       </Static>
-      {eventStore.streamingReasoning && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text color="cyan">● Reasoning</Text>
-          <Text dimColor>└ {eventStore.streamingReasoning}</Text>
-        </Box>
-      )}
-      {eventStore.streamingText && (
-        <Box flexDirection="column">
-          <Text color="green">● Run Results</Text>
-          <Text dimColor>└ {eventStore.streamingText}</Text>
-        </Box>
-      )}
+
+      {/* Streaming section - active streaming content (sandwiched between static and input) */}
+      <StreamingDisplay streaming={actionStore.streaming} />
+
+      {/* Input controls */}
       <InputAreaProvider value={inputAreaContextValue}>
         {isBrowsing && (
           <BrowserRouter
@@ -72,7 +84,7 @@ export const App = (props: AppProps) => {
       {showRunSetting && (
         <RunSetting
           info={runtimeInfo}
-          eventCount={eventStore.eventCount}
+          eventCount={actionStore.eventCount}
           isEditing={isEditing}
           expertName={isEditing ? inputState.expertName : undefined}
           onQuerySubmit={isEditing ? inputAreaContextValue.onQuerySubmit : undefined}

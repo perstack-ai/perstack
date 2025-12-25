@@ -1,7 +1,7 @@
 import { Box, Static, Text, useApp } from "ink"
 import { useCallback, useEffect } from "react"
-import { LogEntryRow } from "../components/index.js"
-import { useEventStore } from "../hooks/state/use-event-store.js"
+import { StaticEntryRow, StreamingDisplay } from "../components/index.js"
+import { useActionStore } from "../hooks/state/use-action-store.js"
 import type { PerstackEvent } from "../types/index.js"
 
 type ProgressAppProps = {
@@ -10,23 +10,40 @@ type ProgressAppProps = {
   onExit?: () => void
 }
 
+/**
+ * Progress app with proper Static/Streaming separation.
+ *
+ * Structure:
+ * 1. <Static> - Completed actions only (never updates once rendered)
+ * 2. StreamingDisplay - Active streaming content (reasoning, text)
+ * 3. Status footer
+ *
+ * This architecture ensures that:
+ * - Static content is truly static (no re-renders)
+ * - Streaming content is ephemeral and only active during generation
+ * - When streaming completes, content moves to Static via new entries
+ */
 export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
   const { exit } = useApp()
-  const eventStore = useEventStore()
+  const actionStore = useActionStore()
+
   useEffect(() => {
-    onReady(eventStore.addEvent)
-  }, [onReady, eventStore.addEvent])
+    onReady(actionStore.addEvent)
+  }, [onReady, actionStore.addEvent])
+
   const handleExit = useCallback(() => {
     onExit?.()
     exit()
   }, [onExit, exit])
+
   useEffect(() => {
-    if (eventStore.isComplete) {
+    if (actionStore.isComplete) {
       const timer = setTimeout(handleExit, 500)
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [eventStore.isComplete, handleExit])
+  }, [actionStore.isComplete, handleExit])
+
   return (
     <Box flexDirection="column">
       {title && (
@@ -36,24 +53,22 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
           </Text>
         </Box>
       )}
-      <Static items={eventStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
-        {(entry) => <LogEntryRow key={entry.id} entry={entry} />}
+
+      {/* Static section - completed actions only */}
+      <Static
+        items={actionStore.actions}
+        style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}
+      >
+        {(entry) => <StaticEntryRow key={entry.id} entry={entry} />}
       </Static>
-      {eventStore.streamingReasoning && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text color="cyan">● Reasoning</Text>
-          <Text dimColor>└ {eventStore.streamingReasoning}</Text>
-        </Box>
-      )}
-      {eventStore.streamingText && (
-        <Box flexDirection="column">
-          <Text color="green">● Run Results</Text>
-          <Text dimColor>└ {eventStore.streamingText}</Text>
-        </Box>
-      )}
+
+      {/* Streaming section - active streaming content */}
+      <StreamingDisplay streaming={actionStore.streaming} />
+
+      {/* Status footer */}
       <Box marginTop={1}>
-        <Text color="gray">Events: {eventStore.eventCount}</Text>
-        {eventStore.isComplete && <Text color="green"> ✓ Complete</Text>}
+        <Text color="gray">Events: {actionStore.eventCount}</Text>
+        {actionStore.isComplete && <Text color="green"> ✓ Complete</Text>}
       </Box>
     </Box>
   )
