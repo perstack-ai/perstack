@@ -180,7 +180,7 @@ function renderAction(action: CheckpointAction): React.ReactNode {
 
     case "error":
       return (
-        <ActionRow indicatorColor="red" label="Error">
+        <ActionRow indicatorColor="red" label={action.errorName ?? "Error"}>
           <Text color="red">{action.error ?? "Unknown error"}</Text>
         </ActionRow>
       )
