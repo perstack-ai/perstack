@@ -348,4 +348,151 @@ describe("processRunEventToLog", () => {
       expect(logs[2].action.text).toBe("Second query")
     }
   })
+
+  it("processes callInteractiveTool event", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    const toolCall = createToolCall({ id: "interactive-1", toolName: "askUser" })
+    const callEvent = createBaseEvent({
+      type: "callInteractiveTool",
+      toolCall,
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    expect(logs).toHaveLength(0)
+    expect(state.tools.has("interactive-1")).toBe(true)
+  })
+
+  it("processes callDelegate event", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    const toolCall = createToolCall({ id: "delegate-1", toolName: "delegate" })
+    const callEvent = createBaseEvent({
+      type: "callDelegate",
+      toolCall,
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    expect(logs).toHaveLength(0)
+    expect(state.tools.has("delegate-1")).toBe(true)
+  })
+
+  it("processes attemptCompletion event with single toolResult", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // First add tool call
+    const toolCall = createToolCall({ id: "attempt-1", toolName: "attemptCompletion" })
+    const callEvent = createBaseEvent({
+      type: "callTools",
+      toolCalls: [toolCall],
+      newMessage: {} as RunEvent["newMessage"],
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+
+    // Then resolve with attemptCompletion event (single toolResult)
+    const toolResult = createToolResult({
+      id: "attempt-1",
+      toolName: "attemptCompletion",
+      result: [{ type: "textPart", id: "tp-1", text: "{}" }],
+    })
+    const resultEvent = createBaseEvent({
+      id: "e-2",
+      type: "attemptCompletion",
+      toolResult,
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+
+    expect(logs).toHaveLength(1)
+    expect(logs[0].action.type).toBe("attemptCompletion")
+  })
+
+  it("does not log query when startRun has no user message", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+    const event = createBaseEvent({
+      type: "startRun",
+      initialCheckpoint: {},
+      inputMessages: [{ id: "m-1", type: "systemMessage", contents: [] }],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, event, (e) => logs.push(e))
+    expect(logs).toHaveLength(0)
+  })
+
+  it("does not log query when user message has no text content", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+    const event = createBaseEvent({
+      type: "startRun",
+      initialCheckpoint: {},
+      inputMessages: [
+        { id: "m-1", type: "userMessage", contents: [{ type: "imagePart", id: "ip-1" }] },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, event, (e) => logs.push(e))
+    expect(logs).toHaveLength(0)
+  })
+
+  it("does not duplicate tool log when already logged", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    const toolCall = createToolCall()
+    const callEvent = createBaseEvent({
+      type: "callTools",
+      toolCalls: [toolCall],
+      newMessage: {} as RunEvent["newMessage"],
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+
+    const resultEvent = createBaseEvent({
+      id: "e-2",
+      type: "resolveToolResults",
+      toolResults: [createToolResult()],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+    // Try to log same result again
+    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+
+    expect(logs).toHaveLength(1)
+  })
+
+  it("clears reasoning after logging tool action", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // Set reasoning
+    const reasoningEvent: PerstackEvent = {
+      id: "e-1",
+      runId: "run-1",
+      jobId: "job-1",
+      type: "completeReasoning",
+      timestamp: Date.now(),
+      text: "My reasoning",
+    } as PerstackEvent
+    processRunEventToLog(state, reasoningEvent, (e) => logs.push(e))
+    expect(state.completedReasoning).toBe("My reasoning")
+
+    // Tool call and result
+    const callEvent = createBaseEvent({
+      id: "e-2",
+      type: "callTools",
+      toolCalls: [createToolCall()],
+      newMessage: {} as RunEvent["newMessage"],
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+
+    const resultEvent = createBaseEvent({
+      id: "e-3",
+      type: "resolveToolResults",
+      toolResults: [createToolResult()],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+
+    // Reasoning should be cleared
+    expect(state.completedReasoning).toBeUndefined()
+  })
 })
