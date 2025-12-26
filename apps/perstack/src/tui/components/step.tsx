@@ -2,14 +2,7 @@ import { Box, Text } from "ink"
 import type React from "react"
 import { RENDER_CONSTANTS, UI_CONSTANTS } from "../constants.js"
 import { shortenPath, summarizeOutput, truncateText } from "../helpers.js"
-import {
-  ActionRow,
-  ActionRowSimple,
-  CompletionRow,
-  ErrorRow,
-  QueryRow,
-  type StatusColor,
-} from "./action-row.js"
+import { ActionRow, ActionRowSimple, type StatusColor } from "./action-row.js"
 
 type ToolResult = Array<{ type: string; text?: string }>
 const getResultText = (result?: ToolResult): string => {
@@ -32,7 +25,7 @@ const renderThink = (args: Record<string, unknown>) => {
   const thought = getString(args, "thought")
   return <ActionRowSimple indicatorColor="white" text={thought} textDimColor={true} />
 }
-const renderCompleteReasoning = (text: string) => {
+const _renderCompleteReasoning = (text: string) => {
   const label = "Reasoning"
   const lines = text.split("\n")
   return (
@@ -336,7 +329,7 @@ const renderDefault = (toolName: string, args: Record<string, unknown>, color: S
     <Text dimColor>{truncateText(JSON.stringify(args), UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}</Text>
   </ActionRow>
 )
-const renderDelegationStarted = (
+const _renderDelegationStarted = (
   expertName: string,
   runtime: string,
   version: string,
@@ -349,7 +342,7 @@ const renderDelegationStarted = (
     </ActionRow>
   )
 }
-const renderDelegationCompleted = (
+const _renderDelegationCompleted = (
   expertName: string,
   runtime: string,
   version: string,
@@ -365,7 +358,7 @@ const renderDelegationCompleted = (
     </ActionRow>
   )
 }
-const renderDockerBuild = (
+const _renderDockerBuild = (
   stage: "pulling" | "building" | "complete" | "error",
   service: string,
   message: string,
@@ -384,7 +377,7 @@ const renderDockerBuild = (
     </ActionRow>
   )
 }
-const renderDockerContainer = (
+const _renderDockerContainer = (
   status: "starting" | "running" | "healthy" | "unhealthy" | "stopped" | "error",
   service: string,
   message?: string,
@@ -405,7 +398,7 @@ const renderDockerContainer = (
     </ActionRow>
   )
 }
-const renderProxyAccess = (
+const _renderProxyAccess = (
   action: "allowed" | "blocked",
   domain: string,
   port: number,
@@ -423,7 +416,7 @@ const renderProxyAccess = (
     </ActionRow>
   )
 }
-const renderToolFromLog = (
+const _renderToolFromLog = (
   toolName: string,
   args: Record<string, unknown>,
   result?: Array<{ type: string; text?: string }>,
