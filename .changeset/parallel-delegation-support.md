@@ -3,6 +3,8 @@
 "@perstack/react": minor
 "@perstack/runner": minor
 "@perstack/runtime": minor
+"@perstack/api-client": minor
+"@perstack/mock": minor
 "perstack": minor
 ---
 
