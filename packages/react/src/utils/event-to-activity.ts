@@ -15,7 +15,13 @@ export function toolToActivity(
   toolCall: ToolCall,
   toolResult: ToolResult,
   reasoning: string | undefined,
-  meta: { id: string; expertKey: string; runId: string; previousActivityId?: string },
+  meta: {
+    id: string
+    expertKey: string
+    runId: string
+    previousActivityId?: string
+    delegatedBy?: { expertKey: string; runId: string }
+  },
 ): Activity {
   const { skillName, toolName } = toolCall
 
@@ -30,6 +36,7 @@ export function toolToActivity(
     expertKey: meta.expertKey,
     runId: meta.runId,
     previousActivityId: meta.previousActivityId,
+    delegatedBy: meta.delegatedBy,
   } as Activity
 }
 
@@ -350,6 +357,7 @@ export function processRunEventToActivity(
           expertKey: event.expertKey,
           runId: event.runId,
           previousActivityId: runState.lastActivityId,
+          delegatedBy: runState.delegatedBy,
         })
         addActivity(activity)
         runState.lastActivityId = activityId
@@ -370,6 +378,7 @@ export function processRunEventToActivity(
         expertKey: event.expertKey,
         runId: event.runId,
         previousActivityId: runState.lastActivityId,
+        delegatedBy: runState.delegatedBy,
       })
       addActivity(activity)
       runState.lastActivityId = activityId
