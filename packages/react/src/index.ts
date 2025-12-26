@@ -21,13 +21,13 @@ export { createInitialRuntimeState } from "./types/index.js"
 
 // Utils
 export {
+  type ActivityProcessState as UtilActivityProcessState,
   createInitialActivityProcessState,
   createInitialLogProcessState,
   groupActivitiesByRun,
   groupLogsByRun,
   processRunEventToActivity,
   processRunEventToLog,
-  toolToActivity,
-  type ActivityProcessState as UtilActivityProcessState,
   type RunGroup,
+  toolToActivity,
 } from "./utils/index.js"

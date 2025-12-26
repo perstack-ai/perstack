@@ -1,5 +1,9 @@
 import type { Activity, PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
-import { BASE_SKILL_PREFIX, createBaseToolActivity, createGeneralToolActivity } from "@perstack/core"
+import {
+  BASE_SKILL_PREFIX,
+  createBaseToolActivity,
+  createGeneralToolActivity,
+} from "@perstack/core"
 
 const TOOL_RESULT_EVENT_TYPES = new Set(["resolveToolResults", "attemptCompletion"])
 
@@ -400,4 +404,3 @@ export type LogProcessState = ActivityProcessState
 export const createInitialLogProcessState = createInitialActivityProcessState
 /** @deprecated Use processRunEventToActivity instead */
 export const processRunEventToLog = processRunEventToActivity
-

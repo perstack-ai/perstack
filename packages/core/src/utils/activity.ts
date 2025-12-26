@@ -1,5 +1,5 @@
-import type { Checkpoint, DelegationTarget } from "../schemas/checkpoint.js"
 import type { Activity } from "../schemas/activity.js"
+import type { Checkpoint, DelegationTarget } from "../schemas/checkpoint.js"
 import type { Message } from "../schemas/message.js"
 import type { MessagePart, ThinkingPart } from "../schemas/message-part.js"
 import type { Step } from "../schemas/step.js"
@@ -53,7 +53,11 @@ export function getActivities(params: GetActivitiesParams): Activity[] {
   if (status === "stoppedByDelegate") {
     if (!delegateTo || delegateTo.length === 0) {
       return [
-        createRetryActivity(step.newMessages, reasoning, "Delegate status but no delegation targets"),
+        createRetryActivity(
+          step.newMessages,
+          reasoning,
+          "Delegate status but no delegation targets",
+        ),
       ]
     }
     return delegateTo.map((d) => createDelegateActivity(d, reasoning))
@@ -89,7 +93,9 @@ export function getActivities(params: GetActivitiesParams): Activity[] {
     if (skillName.startsWith(BASE_SKILL_PREFIX)) {
       activities.push(createBaseToolActivity(toolName, toolCall, toolResult, reasoning))
     } else {
-      activities.push(createGeneralToolActivity(skillName, toolName, toolCall, toolResult, reasoning))
+      activities.push(
+        createGeneralToolActivity(skillName, toolName, toolCall, toolResult, reasoning),
+      )
     }
   }
 
@@ -100,10 +106,7 @@ export function getActivities(params: GetActivitiesParams): Activity[] {
   return activities
 }
 
-function createCompleteActivity(
-  newMessages: Message[],
-  reasoning: string | undefined,
-): Activity {
+function createCompleteActivity(newMessages: Message[], reasoning: string | undefined): Activity {
   // Extract final text from the last expertMessage's textPart
   const lastExpertMessage = [...newMessages].reverse().find((m) => m.type === "expertMessage")
   const textPart = lastExpertMessage?.contents.find((c) => c.type === "textPart")
@@ -168,10 +171,7 @@ function createRetryActivity(
   }
 }
 
-function createErrorActivity(
-  checkpoint: Checkpoint,
-  reasoning: string | undefined,
-): Activity {
+function createErrorActivity(checkpoint: Checkpoint, reasoning: string | undefined): Activity {
   const error = checkpoint.error
   return {
     type: "error",
@@ -354,7 +354,13 @@ export function createBaseToolActivity(
 
     default:
       // Use actual skillName from toolCall, not the constant
-      return createGeneralToolActivity(toolCall.skillName, toolName, toolCall, toolResult, reasoning)
+      return createGeneralToolActivity(
+        toolCall.skillName,
+        toolName,
+        toolCall,
+        toolResult,
+        reasoning,
+      )
   }
 }
 
@@ -541,4 +547,3 @@ function parseListDirectoryFromResult(result: MessagePart[]):
 export const getCheckpointActions = getActivities
 /** @deprecated Use GetActivitiesParams instead */
 export type GetCheckpointActionsParams = GetActivitiesParams
-

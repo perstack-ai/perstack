@@ -1,7 +1,7 @@
 export {
+  type ActivityProcessState,
   createInitialActivityProcessState,
   createInitialLogProcessState,
-  type ActivityProcessState,
   type LogProcessState,
   processRunEventToActivity,
   processRunEventToLog,
