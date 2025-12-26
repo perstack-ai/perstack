@@ -1,7 +1,5 @@
 import type { PerstackEvent } from "@perstack/core"
-import type { LogEntry } from "@perstack/react"
 import { Box, Static, Text } from "ink"
-import { useMemo } from "react"
 import {
   BrowserRouter,
   CheckpointActionRow,
@@ -17,51 +15,6 @@ import type {
   InitialRuntimeConfig,
   JobHistoryItem,
 } from "../types/index.js"
-
-type StaticItem =
-  | { type: "header"; runId: string; expertKey: string }
-  | { type: "entry"; entry: LogEntry }
-  | { type: "footer"; runId: string }
-
-/**
- * Converts log entries into a flat list of static items with group headers/footers.
- * This enables efficient rendering with Ink's <Static> component.
- */
-function createStaticItems(logs: LogEntry[]): StaticItem[] {
-  const items: StaticItem[] = []
-  let lastRunId: string | undefined
-
-  for (const entry of logs) {
-    // Check if we're starting a new delegated group
-    if (entry.runId !== lastRunId) {
-      // Close previous group footer if it was delegated
-      if (lastRunId !== undefined) {
-        const prevEntry = logs.find((e) => e.runId === lastRunId && e.delegatedBy)
-        if (prevEntry?.delegatedBy) {
-          items.push({ type: "footer", runId: lastRunId })
-        }
-      }
-
-      // Add header for new delegated group
-      if (entry.delegatedBy) {
-        items.push({ type: "header", runId: entry.runId, expertKey: entry.expertKey })
-      }
-    }
-
-    items.push({ type: "entry", entry })
-    lastRunId = entry.runId
-  }
-
-  // Close final group footer if delegated
-  if (lastRunId !== undefined) {
-    const lastEntry = logs.find((e) => e.runId === lastRunId && e.delegatedBy)
-    if (lastEntry?.delegatedBy) {
-      items.push({ type: "footer", runId: lastRunId })
-    }
-  }
-
-  return items
-}
 
 type AppProps = {
   needsQueryInput?: boolean
@@ -107,30 +60,20 @@ export const App = (props: AppProps) => {
   const isEditing = inputState.type === "enteringQuery"
   const showRunSetting = isEditing || inputState.type === "running"
 
-  // Create static items with group headers/footers for efficient rendering
-  const staticItems = useMemo(() => createStaticItems(logStore.logs), [logStore.logs])
-
   return (
     <Box flexDirection="column">
       {/* Static section - completed actions (efficient, append-only rendering) */}
-      <Static items={staticItems}>
-        {(item) => {
-          if (item.type === "header") {
-            return (
-              <Text key={`header-${item.runId}`} dimColor>
-                ┌─ {item.expertKey} ─────────────────────────────
-              </Text>
-            )
-          }
-          if (item.type === "footer") {
-            return (
-              <Text key={`footer-${item.runId}`} dimColor>
-                └─────────────────────────────────────────────────
-              </Text>
-            )
-          }
-          return <CheckpointActionRow key={item.entry.id} action={item.entry.action} />
-        }}
+      {/* Uses log entries directly for stable references and O(N) performance */}
+      <Static items={logStore.logs}>
+        {(entry) => (
+          <Box key={entry.id} marginLeft={entry.delegatedBy ? 2 : 0}>
+            {/* Show expert indicator for delegated runs */}
+            {entry.delegatedBy && entry.action.type === "query" && (
+              <Text dimColor>[{entry.expertKey}] </Text>
+            )}
+            <CheckpointActionRow action={entry.action} />
+          </Box>
+        )}
       </Static>
 
       {/* Streaming section - active streaming content (sandwiched between static and input) */}
