@@ -1,8 +1,10 @@
 import {
   type Activity,
+  type Checkpoint,
   createEmptyUsage,
   type PerstackEvent,
   type RunEvent,
+  type Step,
   type ToolCall,
   type ToolResult,
 } from "@perstack/core"
@@ -70,8 +72,8 @@ describe("useRun processing logic", () => {
       id: "e-3",
       type: "completeRun",
       text: "Task completed",
-      checkpoint: {} as RunEvent["checkpoint"],
-      step: {} as RunEvent["step"],
+      checkpoint: {} as Checkpoint,
+      step: {} as Step,
       usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, completeEvent, addActivity)
@@ -89,8 +91,8 @@ describe("useRun processing logic", () => {
     const completeEvent = createBaseEvent({
       type: "completeRun",
       text: "Done",
-      checkpoint: {} as RunEvent["checkpoint"],
-      step: {} as RunEvent["step"],
+      checkpoint: {} as Checkpoint,
+      step: {} as Step,
       usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, completeEvent, addActivity)
@@ -106,8 +108,8 @@ describe("useRun processing logic", () => {
     const errorEvent = createBaseEvent({
       type: "stopRunByError",
       error: { name: "Error", message: "Failed", isRetryable: false },
-      checkpoint: {} as RunEvent["checkpoint"],
-      step: {} as RunEvent["step"],
+      checkpoint: {} as Checkpoint,
+      step: {} as Step,
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, errorEvent, addActivity)
 
@@ -123,8 +125,8 @@ describe("useRun processing logic", () => {
     const completeEvent = createBaseEvent({
       type: "completeRun",
       text: "Done",
-      checkpoint: {} as RunEvent["checkpoint"],
-      step: {} as RunEvent["step"],
+      checkpoint: {} as Checkpoint,
+      step: {} as Step,
       usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
 
