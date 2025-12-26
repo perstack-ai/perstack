@@ -142,33 +142,30 @@ export function processRunEventToLog(
   event: PerstackEvent,
   addEntry: (entry: LogEntry) => void,
 ): void {
-  // Track reasoning from completeReasoning (RuntimeEvent) for attaching to actions
-  // Note: reasoning is stored per-run in runState.completedReasoning
   if (isCompleteReasoningEvent(event)) {
-    // completeReasoning doesn't have runId, so we store it for the most recent runs
-    // This is a limitation - parallel runs sharing reasoning may get mixed
-    // For now, we'll track in a temporary variable and attach on next run event
-    ;(state as LogProcessState & { _pendingReasoning?: string })._pendingReasoning = (
-      event as { text: string }
-    ).text
+    const reasoningEvent = event as { text: string; runId: string }
+    const { runId, text } = reasoningEvent
+    const runState = state.runStates.get(runId)
+    if (runState) {
+      runState.completedReasoning = text
+    } else {
+      state.runStates.set(runId, {
+        expertKey: "",
+        queryLogged: false,
+        completionLogged: false,
+        isComplete: false,
+        pendingDelegateCount: 0,
+        completedReasoning: text,
+      })
+    }
     return
   }
 
-  // Only process RunEvent (has expertKey) for everything else
   if (!isRunEvent(event)) {
     return
   }
 
-  // Get or create per-run state
   const runState = getOrCreateRunState(state, event.runId, event.expertKey)
-
-  // Transfer pending reasoning to this run's state
-  const pendingReasoning = (state as LogProcessState & { _pendingReasoning?: string })
-    ._pendingReasoning
-  if (pendingReasoning) {
-    runState.completedReasoning = pendingReasoning
-    ;(state as LogProcessState & { _pendingReasoning?: string })._pendingReasoning = undefined
-  }
 
   // Handle startRun - extract query from inputMessages and delegatedBy
   if (event.type === "startRun") {

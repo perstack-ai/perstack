@@ -473,7 +473,7 @@ describe("processRunEventToLog", () => {
     const state = createInitialLogProcessState()
     const logs: LogEntry[] = []
 
-    // Set reasoning (stored as pending until a RunEvent arrives)
+    // Set reasoning via completeReasoning event (uses runId to store in correct RunState)
     const reasoningEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
@@ -501,8 +501,109 @@ describe("processRunEventToLog", () => {
     } as Partial<RunEvent>) as RunEvent
     processRunEventToLog(state, resultEvent, (e) => logs.push(e))
 
-    // Reasoning should be cleared
-    expect(state.completedReasoning).toBeUndefined()
+    // Reasoning should be cleared from the run state
+    expect(state.runStates.get("run-1")?.completedReasoning).toBeUndefined()
+  })
+
+  it("correctly attributes reasoning to the right run in parallel execution", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // Start two runs in parallel
+    const startEventA = createBaseEvent({
+      type: "startRun",
+      runId: "run-A",
+      expertKey: "expert-A@1.0.0",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-1",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-1", text: "Query A" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEventA, (e) => logs.push(e))
+
+    const startEventB = createBaseEvent({
+      id: "e-2",
+      type: "startRun",
+      runId: "run-B",
+      expertKey: "expert-B@1.0.0",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-2",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-2", text: "Query B" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEventB, (e) => logs.push(e))
+
+    // Expert A's reasoning arrives
+    const reasoningA: PerstackEvent = {
+      id: "r-1",
+      runId: "run-A",
+      jobId: "job-1",
+      type: "completeReasoning",
+      timestamp: Date.now(),
+      text: "Reasoning for A",
+    } as PerstackEvent
+    processRunEventToLog(state, reasoningA, (e) => logs.push(e))
+
+    // Expert B's reasoning arrives (should NOT overwrite A's)
+    const reasoningB: PerstackEvent = {
+      id: "r-2",
+      runId: "run-B",
+      jobId: "job-1",
+      type: "completeReasoning",
+      timestamp: Date.now(),
+      text: "Reasoning for B",
+    } as PerstackEvent
+    processRunEventToLog(state, reasoningB, (e) => logs.push(e))
+
+    // Expert B completes first
+    const completeB = createBaseEvent({
+      id: "e-3",
+      runId: "run-B",
+      expertKey: "expert-B@1.0.0",
+      type: "completeRun",
+      text: "Result B",
+      checkpoint: {},
+      step: {},
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, completeB, (e) => logs.push(e))
+
+    // Expert A completes later
+    const completeA = createBaseEvent({
+      id: "e-4",
+      runId: "run-A",
+      expertKey: "expert-A@1.0.0",
+      type: "completeRun",
+      text: "Result A",
+      checkpoint: {},
+      step: {},
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, completeA, (e) => logs.push(e))
+
+    // Verify reasoning is correctly attributed
+    const completionLogs = logs.filter((l) => l.action.type === "complete")
+    expect(completionLogs).toHaveLength(2)
+
+    const logB = completionLogs.find((l) => l.runId === "run-B")
+    const logA = completionLogs.find((l) => l.runId === "run-A")
+
+    expect(logB).toBeDefined()
+    expect(logA).toBeDefined()
+    if (logB?.action.type === "complete") {
+      expect(logB.action.reasoning).toBe("Reasoning for B")
+    }
+    if (logA?.action.type === "complete") {
+      expect(logA.action.reasoning).toBe("Reasoning for A")
+    }
   })
 
   it("logs new query when resuming incomplete checkpoint with different runId", () => {
