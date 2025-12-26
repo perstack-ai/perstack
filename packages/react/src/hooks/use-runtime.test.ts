@@ -5,7 +5,7 @@ import { createInitialRuntimeState } from "../types/index.js"
 function createRuntimeEvent<T extends RuntimeEvent["type"]>(
   type: T,
   data: Omit<Extract<RuntimeEvent, { type: T }>, "id" | "timestamp" | "jobId" | "runId" | "type">,
-): RuntimeEvent {
+): Extract<RuntimeEvent, { type: T }> {
   return {
     id: "e-1",
     timestamp: Date.now(),
@@ -13,7 +13,7 @@ function createRuntimeEvent<T extends RuntimeEvent["type"]>(
     runId: "run-1",
     type,
     ...data,
-  } as RuntimeEvent
+  } as Extract<RuntimeEvent, { type: T }>
 }
 
 describe("useRuntime state updates", () => {
