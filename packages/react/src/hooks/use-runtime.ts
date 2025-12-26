@@ -3,40 +3,32 @@ import { useCallback, useState } from "react"
 import type { RuntimeState } from "../types/index.js"
 import { createInitialRuntimeState } from "../types/index.js"
 
-const STREAMING_EVENT_TYPES = new Set([
-  "startReasoning",
-  "streamReasoning",
-  "completeReasoning",
-  "startRunResult",
-  "streamRunResult",
-])
-
 const RUNTIME_EVENT_TYPES = new Set([
   "initializeRuntime",
   "skillStarting",
   "skillConnected",
   "skillDisconnected",
+  "skillStderr",
   "dockerBuildProgress",
   "dockerContainerStatus",
   "proxyAccess",
-  ...STREAMING_EVENT_TYPES,
 ])
 
 const isRuntimeEvent = (event: PerstackEvent): event is RuntimeEvent =>
   "type" in event && RUNTIME_EVENT_TYPES.has(event.type)
 
-export type RuntimeStateResult = {
+export type RuntimeResult = {
   runtimeState: RuntimeState
   handleRuntimeEvent: (event: PerstackEvent) => boolean
-  clearStreaming: () => void
   resetRuntimeState: () => void
 }
 
 /**
  * Hook for managing RuntimeState from RuntimeEvent stream.
- * Only the latest state matters - this is not accumulated like LogEntry.
+ * Only handles infrastructure-level events (skills, docker, proxy).
+ * Streaming events are now handled by useRun.
  */
-export function useRuntimeState(): RuntimeStateResult {
+export function useRuntime(): RuntimeResult {
   const [runtimeState, setRuntimeState] = useState<RuntimeState>(createInitialRuntimeState)
 
   const handleRuntimeEvent = useCallback((event: PerstackEvent): boolean => {
@@ -92,6 +84,11 @@ export function useRuntimeState(): RuntimeStateResult {
         return true
       }
 
+      case "skillStderr":
+        // skillStderr events are informational only (for logging)
+        // No state update needed, but we still return true to indicate it's handled
+        return true
+
       case "dockerBuildProgress": {
         const e = event as RuntimeEvent & { type: "dockerBuildProgress" }
         setRuntimeState((prev) => ({
@@ -134,70 +131,9 @@ export function useRuntimeState(): RuntimeStateResult {
         return true
       }
 
-      case "startReasoning": {
-        setRuntimeState((prev) => ({
-          ...prev,
-          streaming: { ...prev.streaming, reasoning: "", isReasoningActive: true },
-        }))
-        return true
-      }
-
-      case "streamReasoning": {
-        const e = event as RuntimeEvent & { type: "streamReasoning" }
-        setRuntimeState((prev) => ({
-          ...prev,
-          streaming: {
-            ...prev.streaming,
-            reasoning: (prev.streaming.reasoning ?? "") + e.delta,
-          },
-        }))
-        return true
-      }
-
-      case "completeReasoning": {
-        setRuntimeState((prev) => ({
-          ...prev,
-          streaming: { ...prev.streaming, isReasoningActive: false },
-        }))
-        // Return false to allow event-to-log to also process this for reasoning attachment
-        return false
-      }
-
-      case "startRunResult": {
-        setRuntimeState((prev) => ({
-          ...prev,
-          streaming: {
-            reasoning: undefined,
-            isReasoningActive: false,
-            runResult: "",
-            isRunResultActive: true,
-          },
-        }))
-        return true
-      }
-
-      case "streamRunResult": {
-        const e = event as RuntimeEvent & { type: "streamRunResult" }
-        setRuntimeState((prev) => ({
-          ...prev,
-          streaming: {
-            ...prev.streaming,
-            runResult: (prev.streaming.runResult ?? "") + e.delta,
-          },
-        }))
-        return true
-      }
-
       default:
         return false
     }
-  }, [])
-
-  const clearStreaming = useCallback(() => {
-    setRuntimeState((prev) => ({
-      ...prev,
-      streaming: {},
-    }))
   }, [])
 
   const resetRuntimeState = useCallback(() => {
@@ -207,7 +143,6 @@ export function useRuntimeState(): RuntimeStateResult {
   return {
     runtimeState,
     handleRuntimeEvent,
-    clearStreaming,
     resetRuntimeState,
   }
 }

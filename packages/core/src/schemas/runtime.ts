@@ -233,10 +233,10 @@ export const runParamsSchema = z.object({
 })
 
 /**
- * Expert run events - emitted during execution for observability.
+ * Expert state events - state machine transitions during execution.
  * All events contain deeply serializable properties for checkpoint storage.
  */
-type ExpertEventPayloads = {
+type ExpertStatePayloads = {
   startRun: {
     initialCheckpoint: Checkpoint
     inputMessages: (InstructionMessage | UserMessage | ToolMessage)[]
@@ -317,7 +317,34 @@ type ExpertEventPayloads = {
   }
 }
 
-/** Base properties for all run events */
+/**
+ * Streaming events - reasoning/result streaming during LLM generation.
+ * Moved from RuntimeEvent to RunEvent to support proper attribution in parallel runs.
+ */
+type StreamingPayloads = {
+  /** Start of reasoning stream (display hint) */
+  startStreamingReasoning: object
+  /** Streaming reasoning delta */
+  streamReasoning: {
+    delta: string
+  }
+  /** Reasoning stream completion (extended thinking / test-time scaling) */
+  completeStreamingReasoning: {
+    text: string
+  }
+  /** Start of run result stream (display hint) */
+  startStreamingRunResult: object
+  /** Streaming run result delta */
+  streamRunResult: {
+    delta: string
+  }
+  /** Run result stream completion */
+  completeStreamingRunResult: {
+    text: string
+  }
+}
+
+/** Base properties for all run events (both state and streaming) */
 export interface BaseEvent {
   /** Unique event ID */
   id: string
@@ -333,27 +360,41 @@ export interface BaseEvent {
   stepNumber: number
 }
 
-/** All possible event types */
-export type EventType = keyof ExpertEventPayloads
+/** Expert state event types (state machine transitions) */
+export type ExpertStateEventType = keyof ExpertStatePayloads
 
-/** Union type of all run events */
-export type RunEvent = {
-  [K in EventType]: BaseEvent & { type: K } & ExpertEventPayloads[K]
-}[EventType]
+/** Streaming event types */
+export type StreamingEventType = keyof StreamingPayloads
+
+/** All run event types (state + streaming) */
+export type EventType = ExpertStateEventType | StreamingEventType
+
+/** Union type of expert state events */
+export type ExpertStateEvent = {
+  [K in ExpertStateEventType]: BaseEvent & { type: K } & ExpertStatePayloads[K]
+}[ExpertStateEventType]
+
+/** Union type of streaming events */
+export type StreamingEvent = {
+  [K in StreamingEventType]: BaseEvent & { type: K } & StreamingPayloads[K]
+}[StreamingEventType]
+
+/** Union type of all run events (state machine + streaming) */
+export type RunEvent = ExpertStateEvent | StreamingEvent
 
 /** Extract a specific event type */
 export type EventForType<T extends EventType> = Extract<RunEvent, { type: T }>
 
-/** Factory function to create typed events */
-export function createEvent<T extends EventType>(type: T) {
+/** Factory function to create expert state events */
+export function createEvent<T extends ExpertStateEventType>(type: T) {
   return (
     setting: RunSetting,
     checkpoint: Checkpoint,
     data: Omit<
-      EventForType<T>,
+      Extract<ExpertStateEvent, { type: T }>,
       "type" | "id" | "expertKey" | "timestamp" | "jobId" | "runId" | "stepNumber"
     >,
-  ): EventForType<T> => {
+  ): Extract<ExpertStateEvent, { type: T }> => {
     return {
       type,
       id: createId(),
@@ -363,8 +404,30 @@ export function createEvent<T extends EventType>(type: T) {
       runId: setting.runId,
       stepNumber: checkpoint.stepNumber,
       ...data,
-    } as EventForType<T>
+    } as Extract<ExpertStateEvent, { type: T }>
   }
+}
+
+/** Factory function to create streaming events */
+export function createStreamingEvent<T extends StreamingEventType>(
+  type: T,
+  setting: RunSetting,
+  checkpoint: Checkpoint,
+  data: Omit<
+    Extract<StreamingEvent, { type: T }>,
+    "type" | "id" | "expertKey" | "timestamp" | "jobId" | "runId" | "stepNumber"
+  >,
+): Extract<StreamingEvent, { type: T }> {
+  return {
+    type,
+    id: createId(),
+    expertKey: checkpoint.expert.key,
+    timestamp: Date.now(),
+    jobId: setting.jobId,
+    runId: setting.runId,
+    stepNumber: checkpoint.stepNumber,
+    ...data,
+  } as Extract<StreamingEvent, { type: T }>
 }
 
 export const startRun = createEvent("startRun")
@@ -385,7 +448,7 @@ export const stopRunByExceededMaxSteps = createEvent("stopRunByExceededMaxSteps"
 export const stopRunByError = createEvent("stopRunByError")
 export const continueToNextStep = createEvent("continueToNextStep")
 
-/** Base properties for runtime events */
+/** Base properties for runtime events (infrastructure-level, no expertKey) */
 interface BaseRuntimeEvent {
   /** Unique event ID */
   id: string
@@ -397,7 +460,7 @@ interface BaseRuntimeEvent {
   runId: string
 }
 
-/** Runtime event payloads (infrastructure-level events) */
+/** Runtime event payloads (infrastructure-level events only) */
 type RuntimeEventPayloads = {
   initializeRuntime: {
     runtimeVersion: string
@@ -439,9 +502,6 @@ type RuntimeEventPayloads = {
   skillDisconnected: {
     skillName: string
   }
-  streamingText: {
-    text: string
-  }
   /** Docker build progress event */
   dockerBuildProgress: {
     stage: "pulling" | "building" | "complete" | "error"
@@ -461,22 +521,6 @@ type RuntimeEventPayloads = {
     domain: string
     port: number
     reason?: string
-  }
-  /** Reasoning completion event (extended thinking / test-time scaling) */
-  completeReasoning: {
-    text: string
-  }
-  /** Start of reasoning stream (display hint) */
-  startReasoning: Record<string, never>
-  /** Streaming reasoning delta */
-  streamReasoning: {
-    delta: string
-  }
-  /** Start of run result stream (display hint) */
-  startRunResult: Record<string, never>
-  /** Streaming run result delta */
-  streamRunResult: {
-    delta: string
   }
 }
 

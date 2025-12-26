@@ -2,7 +2,7 @@ import { createId } from "@paralleldrive/cuid2"
 import {
   callTools,
   completeRun,
-  createRuntimeEvent,
+  createStreamingEvent,
   type RunEvent,
   retry,
   stopRunByError,
@@ -92,19 +92,21 @@ export async function generatingToolCallLogic({
   let reasoningCompletedViaCallback = false
 
   // Create streaming callbacks for fire-and-forget event emission
-  // Note: Only emit reasoning events here. Result streaming events (startRunResult, streamRunResult)
+  // Note: Only emit reasoning events here. Result streaming events (startStreamingRunResult, streamRunResult)
   // are NOT emitted in GeneratingToolCall because we don't know if there will be tool calls
   // until streaming completes. Result streaming is only done in GeneratingRunResult.
   const callbacks: StreamCallbacks = {
     onReasoningStart: () => {
-      eventListener(createRuntimeEvent("startReasoning", setting.jobId, setting.runId, {}))
+      eventListener(createStreamingEvent("startStreamingReasoning", setting, checkpoint, {}))
     },
     onReasoningDelta: (delta) => {
-      eventListener(createRuntimeEvent("streamReasoning", setting.jobId, setting.runId, { delta }))
+      eventListener(createStreamingEvent("streamReasoning", setting, checkpoint, { delta }))
     },
     onReasoningComplete: (text) => {
-      // Emit completeReasoning when reasoning phase ends
-      eventListener(createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, { text }))
+      // Emit completeStreamingReasoning when reasoning phase ends
+      eventListener(
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text }),
+      )
       reasoningCompletedViaCallback = true
     },
     // onResultStart and onResultDelta intentionally not set - result streaming only in GeneratingRunResult
@@ -169,11 +171,11 @@ export async function generatingToolCallLogic({
     const newMessage = createExpertMessage(contents)
     const newUsage = sumUsage(checkpoint.usage, usage)
 
-    // Note: completeReasoning is emitted via onReasoningComplete callback during streaming
+    // Note: completeStreamingReasoning is emitted via onReasoningComplete callback during streaming
     // Fallback emission only if callback wasn't triggered (should be rare)
     if (thinkingText && !reasoningCompletedViaCallback) {
       await eventListener(
-        createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, {
           text: thinkingText,
         }),
       )
@@ -241,11 +243,11 @@ export async function generatingToolCallLogic({
     > = [...thinkingParts, ...(text ? [{ type: "textPart" as const, text }] : []), ...toolCallParts]
     const allToolCalls = buildToolCalls(sorted)
 
-    // Note: completeReasoning is emitted via onReasoningComplete callback during streaming
+    // Note: completeStreamingReasoning is emitted via onReasoningComplete callback during streaming
     // Fallback emission only if callback wasn't triggered (should be rare)
     if (thinkingText && !reasoningCompletedViaCallback) {
       await eventListener(
-        createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, {
           text: thinkingText,
         }),
       )

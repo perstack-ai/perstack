@@ -20,7 +20,6 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStartRunEvent,
-  createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
 
@@ -281,9 +280,7 @@ export class CursorAdapter extends BaseAdapter {
           const text = content.text?.trim()
           if (content.type === "text" && text && text !== state.lastStreamingText) {
             state.lastStreamingText = text
-            const event = createStreamingTextEvent(jobId, runId, text)
-            state.events.push(event)
-            eventListener?.(event)
+            // Note: streamingText event was removed - text is accumulated in state.finalOutput
           }
         }
       }

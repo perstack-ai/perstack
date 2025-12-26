@@ -7,7 +7,6 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStartRunEvent,
-  createStreamingTextEvent,
   createToolMessage,
 } from "./event-creators.js"
 
@@ -113,17 +112,6 @@ describe("@perstack/core: event-creators", () => {
       if (event.type === "completeRun") {
         expect(event.text).toBe("Result")
         expect(event.checkpoint).toBe(checkpoint)
-      }
-    })
-  })
-
-  describe("createStreamingTextEvent", () => {
-    it("creates streaming text event", () => {
-      const event = createStreamingTextEvent("job-1", "run-1", "Hello")
-      expect(event.type).toBe("streamingText")
-      expect(event.jobId).toBe("job-1")
-      if (event.type === "streamingText") {
-        expect(event.text).toBe("Hello")
       }
     })
   })

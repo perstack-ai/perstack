@@ -1,6 +1,6 @@
 import {
   completeRun,
-  createRuntimeEvent,
+  createStreamingEvent,
   type RunEvent,
   retry,
   stopRunByError,
@@ -51,27 +51,36 @@ export async function generatingRunResultLogic({
   const { messages } = checkpoint
   const coreMessages = [...messages, toolMessage].map(messageToCoreMessage)
 
-  // Track if reasoning was completed via callback (to avoid duplicate emissions)
+  // Track if reasoning/result was completed via callback (to avoid duplicate emissions)
   let reasoningCompletedViaCallback = false
+  let resultCompletedViaCallback = false
 
   // Create streaming callbacks for fire-and-forget event emission
   const callbacks: StreamCallbacks = {
     onReasoningStart: () => {
-      eventListener(createRuntimeEvent("startReasoning", setting.jobId, setting.runId, {}))
+      eventListener(createStreamingEvent("startStreamingReasoning", setting, checkpoint, {}))
     },
     onReasoningDelta: (delta) => {
-      eventListener(createRuntimeEvent("streamReasoning", setting.jobId, setting.runId, { delta }))
+      eventListener(createStreamingEvent("streamReasoning", setting, checkpoint, { delta }))
     },
     onReasoningComplete: (text) => {
-      // Emit completeReasoning before result phase starts
-      eventListener(createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, { text }))
+      // Emit completeStreamingReasoning before result phase starts
+      eventListener(
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text }),
+      )
       reasoningCompletedViaCallback = true
     },
     onResultStart: () => {
-      eventListener(createRuntimeEvent("startRunResult", setting.jobId, setting.runId, {}))
+      eventListener(createStreamingEvent("startStreamingRunResult", setting, checkpoint, {}))
     },
     onResultDelta: (delta) => {
-      eventListener(createRuntimeEvent("streamRunResult", setting.jobId, setting.runId, { delta }))
+      eventListener(createStreamingEvent("streamRunResult", setting, checkpoint, { delta }))
+    },
+    onResultComplete: (text) => {
+      eventListener(
+        createStreamingEvent("completeStreamingRunResult", setting, checkpoint, { text }),
+      )
+      resultCompletedViaCallback = true
     },
   }
 
@@ -134,11 +143,11 @@ export async function generatingRunResultLogic({
   ]
   const newMessages = [toolMessage, createExpertMessage(expertContents)]
 
-  // Note: completeReasoning is emitted via onReasoningComplete callback during streaming
+  // Note: completeStreamingReasoning is emitted via onReasoningComplete callback during streaming
   // Fallback emission only if callback wasn't triggered (should be rare)
   if (thinkingText && !reasoningCompletedViaCallback) {
     await eventListener(
-      createRuntimeEvent("completeReasoning", setting.jobId, setting.runId, {
+      createStreamingEvent("completeStreamingReasoning", setting, checkpoint, {
         text: thinkingText,
       }),
     )

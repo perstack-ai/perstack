@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Checkpoint, Step, ToolCall, ToolResult } from "../index.js"
-import { getCheckpointActions } from "./checkpoint-action.js"
+import { getActivities } from "./activity.js"
 
 function createBaseCheckpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {
@@ -58,7 +58,7 @@ function createToolResult(overrides: Partial<ToolResult> = {}): ToolResult {
   }
 }
 
-describe("getCheckpointActions", () => {
+describe("getActivities", () => {
   describe("reasoning extraction", () => {
     it("extracts reasoning from thinkingParts in newMessages", () => {
       const checkpoint = createBaseCheckpoint()
@@ -82,11 +82,11 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
-      expect(actions[0].reasoning).toBe("Let me analyze this...")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
+      expect(activities[0].reasoning).toBe("Let me analyze this...")
     })
 
     it("combines multiple thinkingParts", () => {
@@ -111,10 +111,10 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].reasoning).toBe("First thought\n\nSecond thought")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].reasoning).toBe("First thought\n\nSecond thought")
     })
 
     it("returns undefined reasoning when no thinkingParts", () => {
@@ -136,15 +136,15 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].reasoning).toBeUndefined()
+      expect(activities).toHaveLength(1)
+      expect(activities[0].reasoning).toBeUndefined()
     })
   })
 
-  describe("delegate actions", () => {
-    it("returns single delegate action for single delegation", () => {
+  describe("delegate activities", () => {
+    it("returns single delegate activity for single delegation", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByDelegate",
         delegateTo: [
@@ -158,18 +158,17 @@ describe("getCheckpointActions", () => {
       })
       const step = createBaseStep()
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0]).toEqual({
-        type: "delegate",
-        reasoning: undefined,
-        expertKey: "child@1.0.0",
-        query: "do something",
-      })
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("delegate")
+      if (activities[0].type === "delegate") {
+        expect(activities[0].delegateExpertKey).toBe("child@1.0.0")
+        expect(activities[0].query).toBe("do something")
+      }
     })
 
-    it("returns multiple delegate actions for parallel delegations", () => {
+    it("returns multiple delegate activities for parallel delegations", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByDelegate",
         delegateTo: [
@@ -189,26 +188,22 @@ describe("getCheckpointActions", () => {
       })
       const step = createBaseStep()
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(2)
-      expect(actions[0]).toEqual({
-        type: "delegate",
-        reasoning: undefined,
-        expertKey: "child-a@1.0.0",
-        query: "do task A",
-      })
-      expect(actions[1]).toEqual({
-        type: "delegate",
-        reasoning: undefined,
-        expertKey: "child-b@1.0.0",
-        query: "do task B",
-      })
+      expect(activities).toHaveLength(2)
+      expect(activities[0].type).toBe("delegate")
+      expect(activities[1].type).toBe("delegate")
+      if (activities[0].type === "delegate" && activities[1].type === "delegate") {
+        expect(activities[0].delegateExpertKey).toBe("child-a@1.0.0")
+        expect(activities[0].query).toBe("do task A")
+        expect(activities[1].delegateExpertKey).toBe("child-b@1.0.0")
+        expect(activities[1].query).toBe("do task B")
+      }
     })
   })
 
-  describe("interactive tool actions", () => {
-    it("returns single interactiveTool action", () => {
+  describe("interactive tool activities", () => {
+    it("returns single interactiveTool activity", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByInteractiveTool",
       })
@@ -216,19 +211,17 @@ describe("getCheckpointActions", () => {
         toolCalls: [createToolCall({ skillName: "custom-skill", toolName: "askUser" })],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0]).toEqual({
-        type: "interactiveTool",
-        reasoning: undefined,
-        skillName: "custom-skill",
-        toolName: "askUser",
-        args: { path: "/test.txt" },
-      })
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("interactiveTool")
+      if (activities[0].type === "interactiveTool") {
+        expect(activities[0].skillName).toBe("custom-skill")
+        expect(activities[0].toolName).toBe("askUser")
+      }
     })
 
-    it("returns multiple interactiveTool actions for parallel interactive tools", () => {
+    it("returns multiple interactiveTool activities for parallel interactive tools", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByInteractiveTool",
       })
@@ -239,16 +232,16 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(2)
-      expect(actions[0].type).toBe("interactiveTool")
-      expect(actions[1].type).toBe("interactiveTool")
+      expect(activities).toHaveLength(2)
+      expect(activities[0].type).toBe("interactiveTool")
+      expect(activities[1].type).toBe("interactiveTool")
     })
   })
 
-  describe("retry action", () => {
-    it("returns retry action when no tool call or result", () => {
+  describe("retry activity", () => {
+    it("returns retry activity when no tool call or result", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         newMessages: [
@@ -260,20 +253,19 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0]).toEqual({
-        type: "retry",
-        reasoning: undefined,
-        error: "No tool call or result found",
-        message: "Something went wrong",
-      })
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("retry")
+      if (activities[0].type === "retry") {
+        expect(activities[0].error).toBe("No tool call or result found")
+        expect(activities[0].message).toBe("Something went wrong")
+      }
     })
   })
 
-  describe("complete action", () => {
-    it("returns complete action when status is completed", () => {
+  describe("complete activity", () => {
+    it("returns complete activity when status is completed", () => {
       const checkpoint = createBaseCheckpoint({
         status: "completed",
       })
@@ -292,17 +284,16 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0]).toEqual({
-        type: "complete",
-        reasoning: undefined,
-        text: "Task completed successfully!",
-      })
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("complete")
+      if (activities[0].type === "complete") {
+        expect(activities[0].text).toBe("Task completed successfully!")
+      }
     })
 
-    it("extracts reasoning from thinkingParts in complete action", () => {
+    it("extracts reasoning from thinkingParts in complete activity", () => {
       const checkpoint = createBaseCheckpoint({
         status: "completed",
       })
@@ -319,19 +310,19 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("complete")
-      expect(actions[0].reasoning).toBe("Final reasoning before completion")
-      if (actions[0].type === "complete") {
-        expect(actions[0].text).toBe("All done!")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("complete")
+      expect(activities[0].reasoning).toBe("Final reasoning before completion")
+      if (activities[0].type === "complete") {
+        expect(activities[0].text).toBe("All done!")
       }
     })
   })
 
   describe("parallel tool calls", () => {
-    it("returns multiple actions for parallel tool calls", () => {
+    it("returns multiple activities for parallel tool calls", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -352,20 +343,20 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(2)
-      expect(actions[0].type).toBe("readTextFile")
-      expect(actions[1].type).toBe("readTextFile")
-      if (actions[0].type === "readTextFile" && actions[1].type === "readTextFile") {
-        expect(actions[0].path).toBe("/file1.txt")
-        expect(actions[0].content).toBe("content 1")
-        expect(actions[1].path).toBe("/file2.txt")
-        expect(actions[1].content).toBe("content 2")
+      expect(activities).toHaveLength(2)
+      expect(activities[0].type).toBe("readTextFile")
+      expect(activities[1].type).toBe("readTextFile")
+      if (activities[0].type === "readTextFile" && activities[1].type === "readTextFile") {
+        expect(activities[0].path).toBe("/file1.txt")
+        expect(activities[0].content).toBe("content 1")
+        expect(activities[1].path).toBe("/file2.txt")
+        expect(activities[1].content).toBe("content 2")
       }
     })
 
-    it("returns actions only for tool calls with matching results", () => {
+    it("returns activities only for tool calls with matching results", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -382,13 +373,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
     })
 
-    it("shares same reasoning across all parallel actions", () => {
+    it("shares same reasoning across all parallel activities", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         newMessages: [
@@ -418,16 +409,16 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(2)
-      expect(actions[0].reasoning).toBe("Shared reasoning for both tools")
-      expect(actions[1].reasoning).toBe("Shared reasoning for both tools")
+      expect(activities).toHaveLength(2)
+      expect(activities[0].reasoning).toBe("Shared reasoning for both tools")
+      expect(activities[1].reasoning).toBe("Shared reasoning for both tools")
     })
   })
 
-  describe("base tool actions", () => {
-    it("returns attemptCompletion action", () => {
+  describe("base tool activities", () => {
+    it("returns attemptCompletion activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [createToolCall({ toolName: "attemptCompletion", args: {} })],
@@ -439,13 +430,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("attemptCompletion")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("attemptCompletion")
     })
 
-    it("returns todo action", () => {
+    it("returns todo activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -468,13 +459,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("todo")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("todo")
     })
 
-    it("returns clearTodo action", () => {
+    it("returns clearTodo activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [createToolCall({ toolName: "clearTodo", args: {} })],
@@ -486,13 +477,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("clearTodo")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("clearTodo")
     })
 
-    it("returns readTextFile action", () => {
+    it("returns readTextFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -515,19 +506,19 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
-      if (actions[0].type === "readTextFile") {
-        expect(actions[0].path).toBe("/test.txt")
-        expect(actions[0].content).toBe("file content")
-        expect(actions[0].from).toBe(1)
-        expect(actions[0].to).toBe(10)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
+      if (activities[0].type === "readTextFile") {
+        expect(activities[0].path).toBe("/test.txt")
+        expect(activities[0].content).toBe("file content")
+        expect(activities[0].from).toBe(1)
+        expect(activities[0].to).toBe(10)
       }
     })
 
-    it("returns editTextFile action", () => {
+    it("returns editTextFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -544,13 +535,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("editTextFile")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("editTextFile")
     })
 
-    it("returns writeTextFile action", () => {
+    it("returns writeTextFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -567,13 +558,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("writeTextFile")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("writeTextFile")
     })
 
-    it("returns exec action", () => {
+    it("returns exec activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -600,19 +591,19 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("exec")
-      if (actions[0].type === "exec") {
-        expect(actions[0].command).toBe("ls")
-        expect(actions[0].output).toBe("total 8\ndrwxr-xr-x 2 user user 4096")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("exec")
+      if (activities[0].type === "exec") {
+        expect(activities[0].command).toBe("ls")
+        expect(activities[0].output).toBe("total 8\ndrwxr-xr-x 2 user user 4096")
       }
     })
   })
 
-  describe("general tool action", () => {
-    it("returns generalTool action for non-base tools", () => {
+  describe("general tool activity", () => {
+    it("returns generalTool activity for non-base tools", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -631,14 +622,14 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("generalTool")
-      if (actions[0].type === "generalTool") {
-        expect(actions[0].skillName).toBe("custom-skill")
-        expect(actions[0].toolName).toBe("customTool")
-        expect(actions[0].args).toEqual({ foo: "bar" })
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("generalTool")
+      if (activities[0].type === "generalTool") {
+        expect(activities[0].skillName).toBe("custom-skill")
+        expect(activities[0].toolName).toBe("customTool")
+        expect(activities[0].args).toEqual({ foo: "bar" })
       }
     })
   })
@@ -656,11 +647,11 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
-      expect((actions[0] as { error?: string }).error).toBe("File not found")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
+      expect((activities[0] as { error?: string }).error).toBe("File not found")
     })
 
     it("avoids false positive for text containing 'error' word", () => {
@@ -677,11 +668,11 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
-      expect((actions[0] as { error?: string }).error).toBeUndefined()
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
+      expect((activities[0] as { error?: string }).error).toBeUndefined()
     })
 
     it("captures error when text starts with 'Error:'", () => {
@@ -696,15 +687,15 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect((actions[0] as { error?: string }).error).toBe("Error: File not found")
+      expect(activities).toHaveLength(1)
+      expect((activities[0] as { error?: string }).error).toBe("Error: File not found")
     })
   })
 
   describe("stoppedByError status", () => {
-    it("returns error action when status is stoppedByError", () => {
+    it("returns error activity when status is stoppedByError", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByError",
         error: {
@@ -715,14 +706,14 @@ describe("getCheckpointActions", () => {
       })
       const step = createBaseStep()
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("error")
-      if (actions[0].type === "error") {
-        expect(actions[0].error).toBe("Rate limit exceeded")
-        expect(actions[0].errorName).toBe("RateLimitError")
-        expect(actions[0].isRetryable).toBe(true)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("error")
+      if (activities[0].type === "error") {
+        expect(activities[0].error).toBe("Rate limit exceeded")
+        expect(activities[0].errorName).toBe("RateLimitError")
+        expect(activities[0].isRetryable).toBe(true)
       }
     })
 
@@ -732,44 +723,44 @@ describe("getCheckpointActions", () => {
       })
       const step = createBaseStep()
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("error")
-      if (actions[0].type === "error") {
-        expect(actions[0].error).toBe("Unknown error")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("error")
+      if (activities[0].type === "error") {
+        expect(activities[0].error).toBe("Unknown error")
       }
     })
   })
 
   describe("stoppedByDelegate with empty delegateTo", () => {
-    it("returns retry action when delegateTo is empty", () => {
+    it("returns retry activity when delegateTo is empty", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByDelegate",
         delegateTo: [],
       })
       const step = createBaseStep()
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("retry")
-      if (actions[0].type === "retry") {
-        expect(actions[0].error).toBe("Delegate status but no delegation targets")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("retry")
+      if (activities[0].type === "retry") {
+        expect(activities[0].error).toBe("Delegate status but no delegation targets")
       }
     })
 
-    it("returns retry action when delegateTo is undefined", () => {
+    it("returns retry activity when delegateTo is undefined", () => {
       const checkpoint = createBaseCheckpoint({
         status: "stoppedByDelegate",
         delegateTo: undefined,
       })
       const step = createBaseStep()
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("retry")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("retry")
     })
   })
 
@@ -793,20 +784,20 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("generalTool")
-      if (actions[0].type === "generalTool") {
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("generalTool")
+      if (activities[0].type === "generalTool") {
         // Should preserve actual skillName from toolCall
-        expect(actions[0].skillName).toBe("@perstack/base")
-        expect(actions[0].toolName).toBe("unknownTool")
+        expect(activities[0].skillName).toBe("@perstack/base")
+        expect(activities[0].toolName).toBe("unknownTool")
       }
     })
   })
 
   describe("additional base tool types", () => {
-    it("returns readImageFile action", () => {
+    it("returns readImageFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -825,18 +816,18 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readImageFile")
-      if (actions[0].type === "readImageFile") {
-        expect(actions[0].path).toBe("/image.png")
-        expect(actions[0].mimeType).toBe("image/png")
-        expect(actions[0].size).toBe(1024)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readImageFile")
+      if (activities[0].type === "readImageFile") {
+        expect(activities[0].path).toBe("/image.png")
+        expect(activities[0].mimeType).toBe("image/png")
+        expect(activities[0].size).toBe(1024)
       }
     })
 
-    it("returns readPdfFile action", () => {
+    it("returns readPdfFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -859,18 +850,18 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readPdfFile")
-      if (actions[0].type === "readPdfFile") {
-        expect(actions[0].path).toBe("/doc.pdf")
-        expect(actions[0].mimeType).toBe("application/pdf")
-        expect(actions[0].size).toBe(2048)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readPdfFile")
+      if (activities[0].type === "readPdfFile") {
+        expect(activities[0].path).toBe("/doc.pdf")
+        expect(activities[0].mimeType).toBe("application/pdf")
+        expect(activities[0].size).toBe(2048)
       }
     })
 
-    it("returns deleteDirectory action", () => {
+    it("returns deleteDirectory activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -887,17 +878,17 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("deleteDirectory")
-      if (actions[0].type === "deleteDirectory") {
-        expect(actions[0].path).toBe("/old-dir")
-        expect(actions[0].recursive).toBe(true)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("deleteDirectory")
+      if (activities[0].type === "deleteDirectory") {
+        expect(activities[0].path).toBe("/old-dir")
+        expect(activities[0].recursive).toBe(true)
       }
     })
 
-    it("returns moveFile action", () => {
+    it("returns moveFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -914,17 +905,17 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("moveFile")
-      if (actions[0].type === "moveFile") {
-        expect(actions[0].source).toBe("/old.txt")
-        expect(actions[0].destination).toBe("/new.txt")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("moveFile")
+      if (activities[0].type === "moveFile") {
+        expect(activities[0].source).toBe("/old.txt")
+        expect(activities[0].destination).toBe("/new.txt")
       }
     })
 
-    it("returns getFileInfo action", () => {
+    it("returns getFileInfo activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -959,19 +950,19 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("getFileInfo")
-      if (actions[0].type === "getFileInfo") {
-        expect(actions[0].path).toBe("/test.txt")
-        expect(actions[0].info?.exists).toBe(true)
-        expect(actions[0].info?.name).toBe("test.txt")
-        expect(actions[0].info?.size).toBe(100)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("getFileInfo")
+      if (activities[0].type === "getFileInfo") {
+        expect(activities[0].path).toBe("/test.txt")
+        expect(activities[0].info?.exists).toBe(true)
+        expect(activities[0].info?.name).toBe("test.txt")
+        expect(activities[0].info?.size).toBe(100)
       }
     })
 
-    it("returns createDirectory action", () => {
+    it("returns createDirectory activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -988,16 +979,16 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("createDirectory")
-      if (actions[0].type === "createDirectory") {
-        expect(actions[0].path).toBe("/new-dir")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("createDirectory")
+      if (activities[0].type === "createDirectory") {
+        expect(activities[0].path).toBe("/new-dir")
       }
     })
 
-    it("returns listDirectory action with items", () => {
+    it("returns listDirectory activity with items", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -1025,19 +1016,19 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("listDirectory")
-      if (actions[0].type === "listDirectory") {
-        expect(actions[0].path).toBe("/workspace")
-        expect(actions[0].items).toHaveLength(2)
-        expect(actions[0].items?.[0].name).toBe("file1.txt")
-        expect(actions[0].items?.[1].type).toBe("directory")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("listDirectory")
+      if (activities[0].type === "listDirectory") {
+        expect(activities[0].path).toBe("/workspace")
+        expect(activities[0].items).toHaveLength(2)
+        expect(activities[0].items?.[0].name).toBe("file1.txt")
+        expect(activities[0].items?.[1].type).toBe("directory")
       }
     })
 
-    it("returns clearTodo action", () => {
+    it("returns clearTodo activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -1054,13 +1045,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("clearTodo")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("clearTodo")
     })
 
-    it("returns appendTextFile action", () => {
+    it("returns appendTextFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -1077,17 +1068,17 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("appendTextFile")
-      if (actions[0].type === "appendTextFile") {
-        expect(actions[0].path).toBe("/log.txt")
-        expect(actions[0].text).toBe("new line")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("appendTextFile")
+      if (activities[0].type === "appendTextFile") {
+        expect(activities[0].path).toBe("/log.txt")
+        expect(activities[0].text).toBe("new line")
       }
     })
 
-    it("returns deleteFile action", () => {
+    it("returns deleteFile activity", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -1104,16 +1095,16 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("deleteFile")
-      if (actions[0].type === "deleteFile") {
-        expect(actions[0].path).toBe("/old.txt")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("deleteFile")
+      if (activities[0].type === "deleteFile") {
+        expect(activities[0].path).toBe("/old.txt")
       }
     })
 
-    it("returns attemptCompletion action with remainingTodos", () => {
+    it("returns attemptCompletion activity with remainingTodos", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -1138,17 +1129,17 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("attemptCompletion")
-      if (actions[0].type === "attemptCompletion") {
-        expect(actions[0].remainingTodos).toHaveLength(1)
-        expect(actions[0].remainingTodos?.[0].title).toBe("Task 1")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("attemptCompletion")
+      if (activities[0].type === "attemptCompletion") {
+        expect(activities[0].remainingTodos).toHaveLength(1)
+        expect(activities[0].remainingTodos?.[0].title).toBe("Task 1")
       }
     })
 
-    it("returns todo action with todos", () => {
+    it("returns todo activity with todos", () => {
       const checkpoint = createBaseCheckpoint()
       const step = createBaseStep({
         toolCalls: [
@@ -1177,15 +1168,15 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("todo")
-      if (actions[0].type === "todo") {
-        expect(actions[0].newTodos).toEqual(["Task A", "Task B"])
-        expect(actions[0].completedTodos).toEqual([0])
-        expect(actions[0].todos).toHaveLength(3)
-        expect(actions[0].todos[0].completed).toBe(true)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("todo")
+      if (activities[0].type === "todo") {
+        expect(activities[0].newTodos).toEqual(["Task A", "Task B"])
+        expect(activities[0].completedTodos).toEqual([0])
+        expect(activities[0].todos).toHaveLength(3)
+        expect(activities[0].todos[0].completed).toBe(true)
       }
     })
   })
@@ -1203,12 +1194,12 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
-      if (actions[0].type === "readTextFile") {
-        expect(actions[0].content).toBeUndefined()
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
+      if (activities[0].type === "readTextFile") {
+        expect(activities[0].content).toBeUndefined()
       }
     })
 
@@ -1224,10 +1215,10 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readTextFile")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readTextFile")
     })
 
     it("handles missing fields in parsed JSON", () => {
@@ -1242,13 +1233,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("getFileInfo")
-      if (actions[0].type === "getFileInfo") {
-        expect(actions[0].info?.exists).toBe(false)
-        expect(actions[0].info?.name).toBe("")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("getFileInfo")
+      if (activities[0].type === "getFileInfo") {
+        expect(activities[0].info?.exists).toBe(false)
+        expect(activities[0].info?.name).toBe("")
       }
     })
 
@@ -1264,12 +1255,12 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("listDirectory")
-      if (actions[0].type === "listDirectory") {
-        expect(actions[0].items).toBeUndefined()
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("listDirectory")
+      if (activities[0].type === "listDirectory") {
+        expect(activities[0].items).toBeUndefined()
       }
     })
 
@@ -1285,12 +1276,12 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("getFileInfo")
-      if (actions[0].type === "getFileInfo") {
-        expect(actions[0].info).toBeUndefined()
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("getFileInfo")
+      if (activities[0].type === "getFileInfo") {
+        expect(activities[0].info).toBeUndefined()
       }
     })
 
@@ -1312,20 +1303,20 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("todo")
-      if (actions[0].type === "todo") {
-        expect(actions[0].todos).toHaveLength(3)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("todo")
+      if (activities[0].type === "todo") {
+        expect(activities[0].todos).toHaveLength(3)
         // First item: uses index for id, empty string for title, false for completed
-        expect(actions[0].todos[0].id).toBe(0)
-        expect(actions[0].todos[0].title).toBe("")
-        expect(actions[0].todos[0].completed).toBe(false)
+        expect(activities[0].todos[0].id).toBe(0)
+        expect(activities[0].todos[0].title).toBe("")
+        expect(activities[0].todos[0].completed).toBe(false)
         // Second item: uses provided id
-        expect(actions[0].todos[1].id).toBe(5)
+        expect(activities[0].todos[1].id).toBe(5)
         // Third item: has title
-        expect(actions[0].todos[2].title).toBe("Test")
+        expect(activities[0].todos[2].title).toBe("Test")
       }
     })
 
@@ -1352,18 +1343,18 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("attemptCompletion")
-      if (actions[0].type === "attemptCompletion") {
-        expect(actions[0].remainingTodos).toHaveLength(2)
-        expect(actions[0].remainingTodos?.[0].id).toBe(1)
-        expect(actions[0].remainingTodos?.[0].completed).toBe(true)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("attemptCompletion")
+      if (activities[0].type === "attemptCompletion") {
+        expect(activities[0].remainingTodos).toHaveLength(2)
+        expect(activities[0].remainingTodos?.[0].id).toBe(1)
+        expect(activities[0].remainingTodos?.[0].completed).toBe(true)
         // Second item uses defaults
-        expect(actions[0].remainingTodos?.[1].id).toBe(1) // uses index
-        expect(actions[0].remainingTodos?.[1].title).toBe("")
-        expect(actions[0].remainingTodos?.[1].completed).toBe(false)
+        expect(activities[0].remainingTodos?.[1].id).toBe(1) // uses index
+        expect(activities[0].remainingTodos?.[1].title).toBe("")
+        expect(activities[0].remainingTodos?.[1].completed).toBe(false)
       }
     })
 
@@ -1391,17 +1382,17 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("listDirectory")
-      if (actions[0].type === "listDirectory") {
-        expect(actions[0].items).toHaveLength(3)
-        expect(actions[0].items?.[0].size).toBe(100)
-        expect(actions[0].items?.[1].type).toBe("directory")
-        expect(actions[0].items?.[1].size).toBe(0) // default
-        expect(actions[0].items?.[2].name).toBe("")
-        expect(actions[0].items?.[2].type).toBe("file") // default
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("listDirectory")
+      if (activities[0].type === "listDirectory") {
+        expect(activities[0].items).toHaveLength(3)
+        expect(activities[0].items?.[0].size).toBe(100)
+        expect(activities[0].items?.[1].type).toBe("directory")
+        expect(activities[0].items?.[1].size).toBe(0) // default
+        expect(activities[0].items?.[2].name).toBe("")
+        expect(activities[0].items?.[2].type).toBe("file") // default
       }
     })
 
@@ -1417,12 +1408,12 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("todo")
-      if (actions[0].type === "todo") {
-        expect(actions[0].todos).toEqual([])
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("todo")
+      if (activities[0].type === "todo") {
+        expect(activities[0].todos).toEqual([])
       }
     })
 
@@ -1438,12 +1429,12 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("listDirectory")
-      if (actions[0].type === "listDirectory") {
-        expect(actions[0].items).toBeUndefined()
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("listDirectory")
+      if (activities[0].type === "listDirectory") {
+        expect(activities[0].items).toBeUndefined()
       }
     })
 
@@ -1465,13 +1456,13 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("readImageFile")
-      if (actions[0].type === "readImageFile") {
-        expect(actions[0].mimeType).toBe("image/png")
-        expect(actions[0].size).toBeUndefined() // not a number
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("readImageFile")
+      if (activities[0].type === "readImageFile") {
+        expect(activities[0].mimeType).toBe("image/png")
+        expect(activities[0].size).toBeUndefined() // not a number
       }
     })
 
@@ -1493,14 +1484,14 @@ describe("getCheckpointActions", () => {
         ],
       })
 
-      const actions = getCheckpointActions({ checkpoint, step })
+      const activities = getActivities({ checkpoint, step })
 
-      expect(actions).toHaveLength(1)
-      expect(actions[0].type).toBe("exec")
-      if (actions[0].type === "exec") {
-        expect(actions[0].output).toBe("hi")
-        expect(actions[0].stdout).toBe("hi\n")
-        expect(actions[0].stderr).toBe("")
+      expect(activities).toHaveLength(1)
+      expect(activities[0].type).toBe("exec")
+      if (activities[0].type === "exec") {
+        expect(activities[0].output).toBe("hi")
+        expect(activities[0].stdout).toBe("hi\n")
+        expect(activities[0].stderr).toBe("")
       }
     })
   })

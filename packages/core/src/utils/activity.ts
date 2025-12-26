@@ -1,5 +1,5 @@
+import type { Activity } from "../schemas/activity.js"
 import type { Checkpoint, DelegationTarget } from "../schemas/checkpoint.js"
-import type { CheckpointAction } from "../schemas/checkpoint-action.js"
 import type { Message } from "../schemas/message.js"
 import type { MessagePart, ThinkingPart } from "../schemas/message-part.js"
 import type { Step } from "../schemas/step.js"
@@ -8,7 +8,7 @@ import type { ToolResult } from "../schemas/tool-result.js"
 
 export const BASE_SKILL_PREFIX = "@perstack/base"
 
-export type GetCheckpointActionsParams = {
+export type GetActivitiesParams = {
   checkpoint: Checkpoint
   step: Step
 }
@@ -30,55 +30,59 @@ function extractReasoning(newMessages: Message[]): string | undefined {
 }
 
 /**
- * Computes checkpoint actions from a checkpoint and step.
- * Returns an array of actions, supporting parallel tool calls and delegations.
- * Each tool call or delegation becomes a separate action in the array.
+ * Computes activities from a checkpoint and step.
+ * Returns an array of activities, supporting parallel tool calls and delegations.
+ * Each tool call or delegation becomes a separate activity in the array.
  */
-export function getCheckpointActions(params: GetCheckpointActionsParams): CheckpointAction[] {
+export function getActivities(params: GetActivitiesParams): Activity[] {
   const { checkpoint, step } = params
   const { status, delegateTo } = checkpoint
   const reasoning = extractReasoning(step.newMessages)
 
   // Completed run - final result generation (after attemptCompletion)
   if (status === "completed") {
-    return [createCompleteAction(step.newMessages, reasoning)]
+    return [createCompleteActivity(step.newMessages, reasoning)]
   }
 
   // Error status - use checkpoint error information
   if (status === "stoppedByError") {
-    return [createErrorAction(checkpoint, reasoning)]
+    return [createErrorActivity(checkpoint, reasoning)]
   }
 
-  // Parallel delegate actions - each delegation becomes a separate action
+  // Parallel delegate activities - each delegation becomes a separate activity
   if (status === "stoppedByDelegate") {
     if (!delegateTo || delegateTo.length === 0) {
       return [
-        createRetryAction(step.newMessages, reasoning, "Delegate status but no delegation targets"),
+        createRetryActivity(
+          step.newMessages,
+          reasoning,
+          "Delegate status but no delegation targets",
+        ),
       ]
     }
-    return delegateTo.map((d) => createDelegateAction(d, reasoning))
+    return delegateTo.map((d) => createDelegateActivity(d, reasoning))
   }
 
-  // Interactive tool actions - may be parallel
+  // Interactive tool activities - may be parallel
   if (status === "stoppedByInteractiveTool") {
     const toolCalls = step.toolCalls ?? []
     if (toolCalls.length === 0) {
-      return [createRetryAction(step.newMessages, reasoning)]
+      return [createRetryActivity(step.newMessages, reasoning)]
     }
     return toolCalls.map((tc) =>
-      createInteractiveToolAction(tc.skillName, tc.toolName, tc, reasoning),
+      createInteractiveToolActivity(tc.skillName, tc.toolName, tc, reasoning),
     )
   }
 
-  // Normal tool actions - may be parallel
+  // Normal tool activities - may be parallel
   const toolCalls = step.toolCalls ?? []
   const toolResults = step.toolResults ?? []
 
   if (toolCalls.length === 0) {
-    return [createRetryAction(step.newMessages, reasoning)]
+    return [createRetryActivity(step.newMessages, reasoning)]
   }
 
-  const actions: CheckpointAction[] = []
+  const activities: Activity[] = []
   for (const toolCall of toolCalls) {
     const toolResult = toolResults.find((tr) => tr.id === toolCall.id)
     if (!toolResult) {
@@ -87,53 +91,61 @@ export function getCheckpointActions(params: GetCheckpointActionsParams): Checkp
     }
     const { skillName, toolName } = toolCall
     if (skillName.startsWith(BASE_SKILL_PREFIX)) {
-      actions.push(createBaseToolAction(toolName, toolCall, toolResult, reasoning))
+      activities.push(createBaseToolActivity(toolName, toolCall, toolResult, reasoning))
     } else {
-      actions.push(createGeneralToolAction(skillName, toolName, toolCall, toolResult, reasoning))
+      activities.push(
+        createGeneralToolActivity(skillName, toolName, toolCall, toolResult, reasoning),
+      )
     }
   }
 
-  if (actions.length === 0) {
-    return [createRetryAction(step.newMessages, reasoning)]
+  if (activities.length === 0) {
+    return [createRetryActivity(step.newMessages, reasoning)]
   }
 
-  return actions
+  return activities
 }
 
-function createCompleteAction(
-  newMessages: Message[],
-  reasoning: string | undefined,
-): CheckpointAction {
+function createCompleteActivity(newMessages: Message[], reasoning: string | undefined): Activity {
   // Extract final text from the last expertMessage's textPart
   const lastExpertMessage = [...newMessages].reverse().find((m) => m.type === "expertMessage")
   const textPart = lastExpertMessage?.contents.find((c) => c.type === "textPart")
   return {
     type: "complete",
+    id: "",
+    expertKey: "",
+    runId: "",
     reasoning,
     text: textPart?.text ?? "",
   }
 }
 
-function createDelegateAction(
+function createDelegateActivity(
   delegate: DelegationTarget,
   reasoning: string | undefined,
-): CheckpointAction {
+): Activity {
   return {
     type: "delegate",
+    id: "",
+    expertKey: "",
+    runId: "",
     reasoning,
-    expertKey: delegate.expert.key,
+    delegateExpertKey: delegate.expert.key,
     query: delegate.query,
   }
 }
 
-function createInteractiveToolAction(
+function createInteractiveToolActivity(
   skillName: string,
   toolName: string,
   toolCall: ToolCall,
   reasoning: string | undefined,
-): CheckpointAction {
+): Activity {
   return {
     type: "interactiveTool",
+    id: "",
+    expertKey: "",
+    runId: "",
     reasoning,
     skillName,
     toolName,
@@ -141,28 +153,31 @@ function createInteractiveToolAction(
   }
 }
 
-function createRetryAction(
+function createRetryActivity(
   newMessages: Message[],
   reasoning: string | undefined,
   customError?: string,
-): CheckpointAction {
+): Activity {
   const lastMessage = newMessages[newMessages.length - 1]
   const textPart = lastMessage?.contents.find((c) => c.type === "textPart")
   return {
     type: "retry",
+    id: "",
+    expertKey: "",
+    runId: "",
     reasoning,
     error: customError ?? "No tool call or result found",
     message: textPart?.text ?? "",
   }
 }
 
-function createErrorAction(
-  checkpoint: Checkpoint,
-  reasoning: string | undefined,
-): CheckpointAction {
+function createErrorActivity(checkpoint: Checkpoint, reasoning: string | undefined): Activity {
   const error = checkpoint.error
   return {
     type: "error",
+    id: "",
+    expertKey: "",
+    runId: "",
     reasoning,
     error: error?.message ?? "Unknown error",
     errorName: error?.name,
@@ -170,22 +185,23 @@ function createErrorAction(
   }
 }
 
-export function createBaseToolAction(
+export function createBaseToolActivity(
   toolName: string,
   toolCall: ToolCall,
   toolResult: ToolResult,
   reasoning: string | undefined,
-): CheckpointAction {
+): Activity {
   const args = toolCall.args as Record<string, unknown>
   const resultContents = toolResult.result
   const errorText = getErrorFromResult(resultContents)
+  const baseFields = { id: "", expertKey: "", runId: "", reasoning }
 
   switch (toolName) {
     case "attemptCompletion": {
       const remainingTodos = parseRemainingTodosFromResult(resultContents)
       return {
         type: "attemptCompletion",
-        reasoning,
+        ...baseFields,
         remainingTodos,
         error: errorText,
       }
@@ -195,7 +211,7 @@ export function createBaseToolAction(
       const todos = parseTodosFromResult(resultContents)
       return {
         type: "todo",
-        reasoning,
+        ...baseFields,
         newTodos: Array.isArray(args["newTodos"]) ? args["newTodos"].map(String) : undefined,
         completedTodos: Array.isArray(args["completedTodos"])
           ? args["completedTodos"].map(Number)
@@ -208,14 +224,14 @@ export function createBaseToolAction(
     case "clearTodo":
       return {
         type: "clearTodo",
-        reasoning,
+        ...baseFields,
         error: errorText,
       }
 
     case "readImageFile":
       return {
         type: "readImageFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         mimeType: parseStringField(resultContents, "mimeType"),
         size: parseNumberField(resultContents, "size"),
@@ -225,7 +241,7 @@ export function createBaseToolAction(
     case "readPdfFile":
       return {
         type: "readPdfFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         mimeType: parseStringField(resultContents, "mimeType"),
         size: parseNumberField(resultContents, "size"),
@@ -235,7 +251,7 @@ export function createBaseToolAction(
     case "readTextFile":
       return {
         type: "readTextFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         content: parseStringField(resultContents, "content"),
         from: typeof args["from"] === "number" ? args["from"] : undefined,
@@ -246,7 +262,7 @@ export function createBaseToolAction(
     case "editTextFile":
       return {
         type: "editTextFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         newText: String(args["newText"] ?? ""),
         oldText: String(args["oldText"] ?? ""),
@@ -256,7 +272,7 @@ export function createBaseToolAction(
     case "appendTextFile":
       return {
         type: "appendTextFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         text: String(args["text"] ?? ""),
         error: errorText,
@@ -265,7 +281,7 @@ export function createBaseToolAction(
     case "writeTextFile":
       return {
         type: "writeTextFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         text: String(args["text"] ?? ""),
         error: errorText,
@@ -274,7 +290,7 @@ export function createBaseToolAction(
     case "deleteFile":
       return {
         type: "deleteFile",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         error: errorText,
       }
@@ -282,7 +298,7 @@ export function createBaseToolAction(
     case "deleteDirectory":
       return {
         type: "deleteDirectory",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         recursive: typeof args["recursive"] === "boolean" ? args["recursive"] : undefined,
         error: errorText,
@@ -291,7 +307,7 @@ export function createBaseToolAction(
     case "moveFile":
       return {
         type: "moveFile",
-        reasoning,
+        ...baseFields,
         source: String(args["source"] ?? ""),
         destination: String(args["destination"] ?? ""),
         error: errorText,
@@ -300,7 +316,7 @@ export function createBaseToolAction(
     case "getFileInfo":
       return {
         type: "getFileInfo",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         info: parseFileInfoFromResult(resultContents),
         error: errorText,
@@ -309,7 +325,7 @@ export function createBaseToolAction(
     case "createDirectory":
       return {
         type: "createDirectory",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         error: errorText,
       }
@@ -317,7 +333,7 @@ export function createBaseToolAction(
     case "listDirectory":
       return {
         type: "listDirectory",
-        reasoning,
+        ...baseFields,
         path: String(args["path"] ?? ""),
         items: parseListDirectoryFromResult(resultContents),
         error: errorText,
@@ -326,7 +342,7 @@ export function createBaseToolAction(
     case "exec":
       return {
         type: "exec",
-        reasoning,
+        ...baseFields,
         command: String(args["command"] ?? ""),
         args: Array.isArray(args["args"]) ? args["args"].map(String) : [],
         cwd: String(args["cwd"] ?? ""),
@@ -338,20 +354,29 @@ export function createBaseToolAction(
 
     default:
       // Use actual skillName from toolCall, not the constant
-      return createGeneralToolAction(toolCall.skillName, toolName, toolCall, toolResult, reasoning)
+      return createGeneralToolActivity(
+        toolCall.skillName,
+        toolName,
+        toolCall,
+        toolResult,
+        reasoning,
+      )
   }
 }
 
-export function createGeneralToolAction(
+export function createGeneralToolActivity(
   skillName: string,
   toolName: string,
   toolCall: ToolCall,
   toolResult: ToolResult,
   reasoning: string | undefined,
-): CheckpointAction {
+): Activity {
   const errorText = getErrorFromResult(toolResult.result)
   return {
     type: "generalTool",
+    id: "",
+    expertKey: "",
+    runId: "",
     reasoning,
     skillName,
     toolName,

@@ -1,31 +1,43 @@
-import type {
-  CheckpointAction,
-  PerstackEvent,
-  RunEvent,
-  ToolCall,
-  ToolResult,
+import type { Activity, PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
+import {
+  BASE_SKILL_PREFIX,
+  createBaseToolActivity,
+  createGeneralToolActivity,
 } from "@perstack/core"
-import { BASE_SKILL_PREFIX, createBaseToolAction, createGeneralToolAction } from "@perstack/core"
-import type { LogEntry } from "../types/index.js"
 
 const TOOL_RESULT_EVENT_TYPES = new Set(["resolveToolResults", "attemptCompletion"])
 
 /**
- * Converts a tool call and result to a CheckpointAction.
- * Delegates to core's createBaseToolAction/createGeneralToolAction to avoid duplication.
+ * Converts a tool call and result to an Activity.
+ * Delegates to core's createBaseToolActivity/createGeneralToolActivity to avoid duplication.
  */
-export function toolToCheckpointAction(
+export function toolToActivity(
   toolCall: ToolCall,
   toolResult: ToolResult,
-  reasoning?: string,
-): CheckpointAction {
+  reasoning: string | undefined,
+  meta: {
+    id: string
+    expertKey: string
+    runId: string
+    previousActivityId?: string
+    delegatedBy?: { expertKey: string; runId: string }
+  },
+): Activity {
   const { skillName, toolName } = toolCall
 
-  if (skillName.startsWith(BASE_SKILL_PREFIX)) {
-    return createBaseToolAction(toolName, toolCall, toolResult, reasoning)
-  }
+  const baseActivity = skillName.startsWith(BASE_SKILL_PREFIX)
+    ? createBaseToolActivity(toolName, toolCall, toolResult, reasoning)
+    : createGeneralToolActivity(skillName, toolName, toolCall, toolResult, reasoning)
 
-  return createGeneralToolAction(skillName, toolName, toolCall, toolResult, reasoning)
+  // Override the base fields with the correct metadata
+  return {
+    ...baseActivity,
+    id: meta.id,
+    expertKey: meta.expertKey,
+    runId: meta.runId,
+    previousActivityId: meta.previousActivityId,
+    delegatedBy: meta.delegatedBy,
+  } as Activity
 }
 
 type ToolState = {
@@ -44,7 +56,7 @@ type RunState = {
   completionLogged: boolean
   isComplete: boolean
   completedReasoning?: string
-  lastEntryId?: string
+  lastActivityId?: string
   delegatedBy?: {
     expertKey: string
     runId: string
@@ -54,31 +66,35 @@ type RunState = {
 }
 
 /**
- * State for processing RunEvent stream into LogEntry[].
- * This state tracks tool calls and their results to create complete LogEntry items.
+ * State for processing RunEvent stream into Activity[].
+ * This state tracks tool calls and their results to create complete Activity items.
  *
  * Supports the daisy chain architecture:
- * - Within-Run ordering via lastEntryId (per-run state)
+ * - Within-Run ordering via lastActivityId (per-run state)
  * - Cross-Run ordering via delegatedBy (per-run state)
  *
  * Note: `tools` is NOT cleared on new run to support delegation results
  * that arrive after parent expert resumes with a new runId.
  */
-export type LogProcessState = {
+export type ActivityProcessState = {
   /** Tool calls indexed by toolCallId - persisted across runs for delegation handling */
   tools: Map<string, ToolState>
   /** Per-run state to support parallel execution */
   runStates: Map<string, RunState>
 }
 
-export function createInitialLogProcessState(): LogProcessState {
+export function createInitialActivityProcessState(): ActivityProcessState {
   return {
     tools: new Map(),
     runStates: new Map(),
   }
 }
 
-function getOrCreateRunState(state: LogProcessState, runId: string, expertKey: string): RunState {
+function getOrCreateRunState(
+  state: ActivityProcessState,
+  runId: string,
+  expertKey: string,
+): RunState {
   let runState = state.runStates.get(runId)
   if (!runState) {
     runState = {
@@ -96,9 +112,8 @@ function getOrCreateRunState(state: LogProcessState, runId: string, expertKey: s
 const isRunEvent = (event: PerstackEvent): event is RunEvent =>
   "type" in event && "expertKey" in event
 
-// completeReasoning is a RuntimeEvent but we need to track it for reasoning attachment
-const isCompleteReasoningEvent = (event: PerstackEvent): boolean =>
-  "type" in event && event.type === "completeReasoning"
+const isCompleteStreamingReasoningEvent = (event: PerstackEvent): boolean =>
+  "type" in event && event.type === "completeStreamingReasoning"
 
 const isToolCallsEvent = (event: RunEvent): event is RunEvent & { toolCalls: ToolCall[] } =>
   (event.type === "callTools" || event.type === "callDelegate") && "toolCalls" in event
@@ -130,27 +145,27 @@ const isFinishAllToolCallsEvent = (
   event.type === "finishAllToolCalls" && "newMessages" in event
 
 /**
- * Processes a RunEvent and produces LogEntry items.
+ * Processes a RunEvent and produces Activity items.
  * Only processes RunEvent (state machine transitions), not RuntimeEvent.
  *
  * @param state - Mutable processing state
  * @param event - The event to process
- * @param addEntry - Callback to add a new LogEntry
+ * @param addActivity - Callback to add a new Activity
  */
-export function processRunEventToLog(
-  state: LogProcessState,
+export function processRunEventToActivity(
+  state: ActivityProcessState,
   event: PerstackEvent,
-  addEntry: (entry: LogEntry) => void,
+  addActivity: (activity: Activity) => void,
 ): void {
-  if (isCompleteReasoningEvent(event)) {
-    const reasoningEvent = event as { text: string; runId: string }
-    const { runId, text } = reasoningEvent
+  if (isCompleteStreamingReasoningEvent(event)) {
+    const reasoningEvent = event as { text: string; runId: string; expertKey: string }
+    const { runId, text, expertKey } = reasoningEvent
     const runState = state.runStates.get(runId)
     if (runState) {
       runState.completedReasoning = text
     } else {
       state.runStates.set(runId, {
-        expertKey: "",
+        expertKey,
         queryLogged: false,
         completionLogged: false,
         isComplete: false,
@@ -203,19 +218,17 @@ export function processRunEventToLog(
       startRunEvent.initialCheckpoint?.status === "stoppedByInteractiveTool"
 
     if (queryText && !runState.queryLogged && !isDelegationReturn) {
-      const entryId = `query-${event.runId}`
-      addEntry({
-        id: entryId,
-        action: {
-          type: "query",
-          text: queryText,
-        },
+      const activityId = `query-${event.runId}`
+      addActivity({
+        type: "query",
+        id: activityId,
         expertKey: event.expertKey,
         runId: event.runId,
-        previousEntryId: runState.lastEntryId,
+        previousActivityId: runState.lastActivityId,
         delegatedBy: runState.delegatedBy,
+        text: queryText,
       })
-      runState.lastEntryId = entryId
+      runState.lastActivityId = activityId
       runState.queryLogged = true
     }
     return
@@ -224,21 +237,19 @@ export function processRunEventToLog(
   // Handle retry
   if (event.type === "retry") {
     const retryEvent = event as { reason: string }
-    const entryId = `retry-${event.id}`
-    addEntry({
-      id: entryId,
-      action: {
-        type: "retry",
-        reasoning: runState.completedReasoning,
-        error: retryEvent.reason,
-        message: "",
-      },
+    const activityId = `retry-${event.id}`
+    addActivity({
+      type: "retry",
+      id: activityId,
       expertKey: event.expertKey,
       runId: event.runId,
-      previousEntryId: runState.lastEntryId,
+      previousActivityId: runState.lastActivityId,
       delegatedBy: runState.delegatedBy,
+      reasoning: runState.completedReasoning,
+      error: retryEvent.reason,
+      message: "",
     })
-    runState.lastEntryId = entryId
+    runState.lastActivityId = activityId
     runState.completedReasoning = undefined
     return
   }
@@ -247,20 +258,18 @@ export function processRunEventToLog(
   if (event.type === "completeRun") {
     if (!runState.completionLogged) {
       const text = (event as { text?: string }).text ?? ""
-      const entryId = `completion-${event.runId}`
-      addEntry({
-        id: entryId,
-        action: {
-          type: "complete",
-          reasoning: runState.completedReasoning,
-          text,
-        },
+      const activityId = `completion-${event.runId}`
+      addActivity({
+        type: "complete",
+        id: activityId,
         expertKey: event.expertKey,
         runId: event.runId,
-        previousEntryId: runState.lastEntryId,
+        previousActivityId: runState.lastActivityId,
         delegatedBy: runState.delegatedBy,
+        reasoning: runState.completedReasoning,
+        text,
       })
-      runState.lastEntryId = entryId
+      runState.lastActivityId = activityId
       runState.completionLogged = true
       runState.isComplete = true
       runState.completedReasoning = undefined
@@ -273,21 +282,19 @@ export function processRunEventToLog(
     const errorEvent = event as {
       error: { name: string; message: string; statusCode?: number; isRetryable?: boolean }
     }
-    const entryId = `error-${event.id}`
-    addEntry({
-      id: entryId,
-      action: {
-        type: "error",
-        errorName: errorEvent.error.name,
-        error: errorEvent.error.message,
-        isRetryable: errorEvent.error.isRetryable,
-      },
+    const activityId = `error-${event.id}`
+    addActivity({
+      type: "error",
+      id: activityId,
       expertKey: event.expertKey,
       runId: event.runId,
-      previousEntryId: runState.lastEntryId,
+      previousActivityId: runState.lastActivityId,
       delegatedBy: runState.delegatedBy,
+      errorName: errorEvent.error.name,
+      error: errorEvent.error.message,
+      isRetryable: errorEvent.error.isRetryable,
     })
-    runState.lastEntryId = entryId
+    runState.lastActivityId = activityId
     runState.isComplete = true
     runState.completedReasoning = undefined
     return
@@ -306,22 +313,20 @@ export function processRunEventToLog(
       if (!existingTool || !existingTool.logged) {
         state.tools.set(toolCall.id, { id: toolCall.id, toolCall, logged: true }) // Mark as logged
         // Create a delegation action immediately using "delegate" type
-        const entryId = `delegate-${toolCall.id}`
+        const activityId = `delegate-${toolCall.id}`
         const query = typeof toolCall.args?.query === "string" ? toolCall.args.query : ""
-        addEntry({
-          id: entryId,
-          action: {
-            type: "delegate",
-            expertKey: toolCall.skillName, // skillName is the delegate expert key
-            query,
-            reasoning,
-          },
+        addActivity({
+          type: "delegate",
+          id: activityId,
           expertKey: event.expertKey,
           runId: event.runId,
-          previousEntryId: runState.lastEntryId,
+          previousActivityId: runState.lastActivityId,
           delegatedBy: runState.delegatedBy,
+          delegateExpertKey: toolCall.skillName, // skillName is the delegate expert key
+          query,
+          reasoning,
         })
-        runState.lastEntryId = entryId
+        runState.lastActivityId = activityId
       }
     }
     // Don't clear reasoning here - it may be needed for other tool calls in the same step
@@ -346,17 +351,16 @@ export function processRunEventToLog(
     for (const toolResult of event.toolResults) {
       const tool = state.tools.get(toolResult.id)
       if (tool && !tool.logged) {
-        const action = toolToCheckpointAction(tool.toolCall, toolResult, reasoning)
-        const entryId = `action-${tool.id}`
-        addEntry({
-          id: entryId,
-          action,
+        const activityId = `action-${tool.id}`
+        const activity = toolToActivity(tool.toolCall, toolResult, reasoning, {
+          id: activityId,
           expertKey: event.expertKey,
           runId: event.runId,
-          previousEntryId: runState.lastEntryId,
+          previousActivityId: runState.lastActivityId,
           delegatedBy: runState.delegatedBy,
         })
-        runState.lastEntryId = entryId
+        addActivity(activity)
+        runState.lastActivityId = activityId
         tool.logged = true
         anyLogged = true
       }
@@ -368,38 +372,35 @@ export function processRunEventToLog(
     const { toolResult } = event
     const tool = state.tools.get(toolResult.id)
     if (tool && !tool.logged) {
-      const action = toolToCheckpointAction(tool.toolCall, toolResult, runState.completedReasoning)
-      const entryId = `action-${tool.id}`
-      addEntry({
-        id: entryId,
-        action,
+      const activityId = `action-${tool.id}`
+      const activity = toolToActivity(tool.toolCall, toolResult, runState.completedReasoning, {
+        id: activityId,
         expertKey: event.expertKey,
         runId: event.runId,
-        previousEntryId: runState.lastEntryId,
+        previousActivityId: runState.lastActivityId,
         delegatedBy: runState.delegatedBy,
       })
-      runState.lastEntryId = entryId
+      addActivity(activity)
+      runState.lastActivityId = activityId
       tool.logged = true
       runState.completedReasoning = undefined
     }
   } else if (isFinishAllToolCallsEvent(event)) {
-    // Handle finishAllToolCalls - add "delegation completed" log entry
+    // Handle finishAllToolCalls - add "delegation completed" activity
     // Only emit if this run had pending delegate calls (not for regular tool calls)
     // Individual delegation calls are already logged at callDelegate time
     if (runState.pendingDelegateCount > 0) {
-      const entryId = `delegation-complete-${event.id}`
-      addEntry({
-        id: entryId,
-        action: {
-          type: "delegationComplete",
-          count: runState.pendingDelegateCount,
-        },
+      const activityId = `delegation-complete-${event.id}`
+      addActivity({
+        type: "delegationComplete",
+        id: activityId,
         expertKey: event.expertKey,
         runId: event.runId,
-        previousEntryId: runState.lastEntryId,
+        previousActivityId: runState.lastActivityId,
         delegatedBy: runState.delegatedBy,
+        count: runState.pendingDelegateCount,
       })
-      runState.lastEntryId = entryId
+      runState.lastActivityId = activityId
       runState.pendingDelegateCount = 0 // Reset after logging
     }
   }

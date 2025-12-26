@@ -1,17 +1,16 @@
-// Types
-
 // Hooks
 export {
-  type LogProcessState,
-  type LogStoreResult,
-  type RuntimeStateResult,
-  useLogStore,
-  useRuntimeState,
+  type ActivityProcessState,
+  type RunResult,
+  type RuntimeResult,
+  useRun,
+  useRuntime,
 } from "./hooks/index.js"
+
+// Types
 export type {
   DockerBuildState,
   DockerContainerState,
-  LogEntry,
   ProxyAccessState,
   RuntimeState,
   SkillState,
@@ -21,9 +20,10 @@ export { createInitialRuntimeState } from "./types/index.js"
 
 // Utils
 export {
-  createInitialLogProcessState,
-  groupLogsByRun,
-  processRunEventToLog,
+  type ActivityProcessState as UtilActivityProcessState,
+  createInitialActivityProcessState,
+  groupActivitiesByRun,
+  processRunEventToActivity,
   type RunGroup,
-  toolToCheckpointAction,
+  toolToActivity,
 } from "./utils/index.js"

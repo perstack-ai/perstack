@@ -1,4 +1,3 @@
-export type { LogEntry } from "./log-entry.js"
 export type {
   DockerBuildState,
   DockerContainerState,
