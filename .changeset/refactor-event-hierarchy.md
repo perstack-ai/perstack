@@ -9,9 +9,20 @@
 "@perstack/docker": patch
 "@perstack/runner": patch
 "@perstack/filesystem-storage": patch
-"@perstack/v1-compatible": patch
-"@perstack/aws-s3": patch
-"@perstack/cloudflare-r2": patch
+"@perstack/s3-compatible-storage": patch
+"@perstack/s3-storage": patch
+"@perstack/r2-storage": patch
+"@perstack/provider-core": patch
+"@perstack/google-provider": patch
+"@perstack/deepseek-provider": patch
+"@perstack/bedrock-provider": patch
+"@perstack/azure-openai-provider": patch
+"@perstack/anthropic-provider": patch
+"@perstack/vertex-provider": patch
+"@perstack/ollama-provider": patch
+"@perstack/openai-provider": patch
+"@perstack/mock": patch
+"@perstack/api-client": patch
 "perstack": patch
 "create-expert": patch
 ---
