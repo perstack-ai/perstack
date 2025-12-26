@@ -1,6 +1,7 @@
 ---
 "@perstack/core": minor
 "@perstack/react": minor
+"@perstack/runner": minor
 "@perstack/runtime": minor
 "perstack": minor
 ---
