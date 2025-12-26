@@ -22,6 +22,8 @@ export { createInitialRuntimeState } from "./types/index.js"
 // Utils
 export {
   createInitialLogProcessState,
+  groupLogsByRun,
   processRunEventToLog,
+  type RunGroup,
   toolToCheckpointAction,
 } from "./utils/index.js"

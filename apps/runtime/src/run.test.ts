@@ -204,6 +204,7 @@ describe("@perstack/runtime: run", () => {
           expert: { key: "parent-expert", name: "Parent Expert", version: "1.0.0" },
           toolCallId: "tool-call-id",
           toolName: "delegate_parent",
+          runId: "parent-run-id",
         },
       })
       setupMockExecutor([{ checkpoint: completedCheckpoint }])
@@ -224,6 +225,7 @@ describe("@perstack/runtime: run", () => {
           expert: { key: "parent-expert", name: "Parent Expert", version: "1.0.0" },
           toolCallId: "tool-call-id",
           toolName: "delegate_parent",
+          runId: "parent-run-id",
         },
       })
       const parentCheckpoint = createCheckpoint({

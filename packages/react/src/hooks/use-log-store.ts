@@ -55,7 +55,12 @@ export function useLogStore(): LogStoreResult {
       setLogs((prev) => [...prev, ...newLogs])
     }
 
-    setIsComplete(stateRef.current.isComplete)
+    // Check if root run (no delegatedBy) is complete
+    // Only the root expert completion should end the job, not child delegations
+    const rootRunComplete = Array.from(stateRef.current.runStates.values()).some(
+      (rs) => rs.isComplete && !rs.delegatedBy,
+    )
+    setIsComplete(rootRunComplete)
   }, [])
 
   const addEvent = useCallback(
@@ -95,7 +100,12 @@ export function useLogStore(): LogStoreResult {
     }
 
     setEventCount((prev) => prev + historicalEvents.length)
-    setIsComplete(stateRef.current.isComplete)
+    // Check if root run (no delegatedBy) is complete
+    // Only the root expert completion should end the job, not child delegations
+    const rootRunComplete = Array.from(stateRef.current.runStates.values()).some(
+      (rs) => rs.isComplete && !rs.delegatedBy,
+    )
+    setIsComplete(rootRunComplete)
   }, [])
 
   return {

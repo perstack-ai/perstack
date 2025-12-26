@@ -155,9 +155,19 @@ function renderAction(action: CheckpointAction): React.ReactNode {
 
     case "delegate":
       return (
-        <ActionRow indicatorColor="yellow" label={`Delegate → ${action.expertKey}`}>
-          <Text dimColor>{truncateText(action.query, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}</Text>
+        <ActionRow indicatorColor="yellow" label={action.expertKey}>
+          <Text
+            dimColor
+          >{`{"query":"${truncateText(action.query, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}"}`}</Text>
         </ActionRow>
+      )
+
+    case "delegationComplete":
+      return (
+        <ActionRowSimple
+          indicatorColor="green"
+          text={`Delegation Complete (${action.count} delegate${action.count > 1 ? "s" : ""} returned)`}
+        />
       )
 
     case "interactiveTool":

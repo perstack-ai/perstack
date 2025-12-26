@@ -9,7 +9,7 @@ import {
 } from "@perstack/core"
 import { calculateContextWindowUsage } from "../../helpers/model.js"
 import { createEmptyUsage, sumUsage } from "../../helpers/usage.js"
-import { createToolMessage } from "../../messages/message.js"
+import { createExpertMessage, createToolMessage } from "../../messages/message.js"
 import { classifyToolCalls, toolExecutorFactory } from "../../tool-execution/index.js"
 import type { RunSnapshot } from "../machine.js"
 
@@ -91,13 +91,16 @@ export async function callingToolLogic({
         ),
       }
       const toolMessage = createToolMessage([toolResultPart])
+      // Create expertMessage with the existing text for delegation result handling
+      const expertMessage = createExpertMessage([{ type: "textPart", text: existingText }])
+      const newMessages = [toolMessage, expertMessage]
       const newUsage = sumUsage(checkpoint.usage, createEmptyUsage())
 
       // Complete run directly with the existing text
       return completeRun(setting, checkpoint, {
         checkpoint: {
           ...checkpoint,
-          messages: [...checkpoint.messages, toolMessage],
+          messages: [...checkpoint.messages, ...newMessages],
           usage: newUsage,
           contextWindowUsage: checkpoint.contextWindow
             ? calculateContextWindowUsage(newUsage, checkpoint.contextWindow)
@@ -106,7 +109,7 @@ export async function callingToolLogic({
         },
         step: {
           ...step,
-          newMessages: [...step.newMessages, toolMessage],
+          newMessages: [...step.newMessages, ...newMessages],
           toolResults: [toolResult],
           finishedAt: Date.now(),
         },

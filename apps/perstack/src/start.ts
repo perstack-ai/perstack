@@ -44,7 +44,6 @@ export const startCommand = new Command()
     "Timeout for each generation in milliseconds, default is 60000 (1 minute)",
   )
   .option("--job-id <jobId>", "Job ID for identifying the job")
-  .option("--run-id <runId>", "Run ID for identifying the run")
   .option(
     "--env-path <path>",
     "Path to the environment file (can be specified multiple times), default is .env and .env.local",
@@ -166,12 +165,10 @@ export const startCommand = new Command()
         return
       }
       let currentJobId = currentCheckpoint?.jobId ?? input.options.jobId
-      let currentRunId = currentCheckpoint?.runId ?? input.options.runId
       while (true) {
         const { checkpoint: runResult } = await dispatchToRuntime({
           setting: {
             jobId: currentJobId,
-            runId: currentRunId,
             expertKey: finalExpertKey,
             input:
               input.options.interactiveToolCallResult && currentCheckpoint
@@ -215,7 +212,6 @@ export const startCommand = new Command()
             finalQuery = nextQuery
             currentCheckpoint = runResult
             currentJobId = runResult.jobId
-            currentRunId = runResult.runId
           } else {
             break
           }

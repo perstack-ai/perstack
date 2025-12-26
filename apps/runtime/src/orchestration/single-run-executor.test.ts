@@ -185,6 +185,7 @@ describe("@perstack/runtime: single-run-executor", () => {
           toolCallId: "tc-1",
           toolName: "delegateTo",
           checkpointId: "parent-cp",
+          runId: "parent-run-id",
         },
       })
 

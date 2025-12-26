@@ -151,6 +151,7 @@ describe("@perstack/runtime: buildDelegationReturnState", () => {
       toolCallId: "tool-call-123",
       toolName: "delegateTool",
       checkpointId: "parent-checkpoint-id",
+      runId: "parent-run-id",
     },
   }
 
@@ -284,6 +285,7 @@ describe("@perstack/runtime: buildDelegateToState", () => {
       toolCallId: "tool-call-456",
       toolName: "delegateToChild",
       checkpointId: "parent-checkpoint-id",
+      runId: "run-123",
     })
   })
 

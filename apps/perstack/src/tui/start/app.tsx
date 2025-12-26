@@ -1,5 +1,5 @@
 import type { PerstackEvent } from "@perstack/core"
-import { Box, Static } from "ink"
+import { Box, Static, Text } from "ink"
 import {
   BrowserRouter,
   CheckpointActionRow,
@@ -59,11 +59,21 @@ export const App = (props: AppProps) => {
     inputState.type === "browsingEvents"
   const isEditing = inputState.type === "enteringQuery"
   const showRunSetting = isEditing || inputState.type === "running"
+
   return (
     <Box flexDirection="column">
-      {/* Static section - completed actions only */}
-      <Static items={logStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
-        {(entry) => <CheckpointActionRow key={entry.id} action={entry.action} />}
+      {/* Static section - completed actions (efficient, append-only rendering) */}
+      {/* Uses log entries directly for stable references and O(N) performance */}
+      <Static items={logStore.logs}>
+        {(entry) => (
+          <Box key={entry.id} marginLeft={entry.delegatedBy ? 2 : 0}>
+            {/* Show expert indicator for delegated runs */}
+            {entry.delegatedBy && entry.action.type === "query" && (
+              <Text dimColor>[{entry.expertKey}] </Text>
+            )}
+            <CheckpointActionRow action={entry.action} />
+          </Box>
+        )}
       </Static>
 
       {/* Streaming section - active streaming content (sandwiched between static and input) */}

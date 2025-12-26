@@ -47,7 +47,7 @@ export async function dispatchToRuntime(params: DispatchParams): Promise<Dispatc
   const setting = {
     ...params.setting,
     jobId: params.setting.jobId ?? createId(),
-    runId: params.setting.runId ?? createId(),
+    runId: createId(), // runId is always generated internally, never from external input
   }
   if (!isAdapterAvailable(runtime)) {
     const available = getRegisteredRuntimes().join(", ")

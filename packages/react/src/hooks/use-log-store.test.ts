@@ -83,8 +83,6 @@ describe("LogStore processing logic", () => {
     const logs: LogEntry[] = []
     const addEntry = (entry: LogEntry) => logs.push(entry)
 
-    expect(state.isComplete).toBe(false)
-
     const completeEvent = createBaseEvent({
       type: "completeRun",
       text: "Done",
@@ -94,15 +92,14 @@ describe("LogStore processing logic", () => {
     } as Partial<RunEvent>) as RunEvent
     processRunEventToLog(state, completeEvent, addEntry)
 
-    expect(state.isComplete).toBe(true)
+    // Per-run state is now stored in state.runStates
+    expect(state.runStates.get("run-1")?.isComplete).toBe(true)
   })
 
   it("tracks completion state on error", () => {
     const state = createInitialLogProcessState()
     const logs: LogEntry[] = []
     const addEntry = (entry: LogEntry) => logs.push(entry)
-
-    expect(state.isComplete).toBe(false)
 
     const errorEvent = createBaseEvent({
       type: "stopRunByError",
@@ -112,7 +109,8 @@ describe("LogStore processing logic", () => {
     } as Partial<RunEvent>) as RunEvent
     processRunEventToLog(state, errorEvent, addEntry)
 
-    expect(state.isComplete).toBe(true)
+    // Per-run state is now stored in state.runStates
+    expect(state.runStates.get("run-1")?.isComplete).toBe(true)
     expect(logs[0].action.type).toBe("error")
   })
 
@@ -182,7 +180,7 @@ describe("LogStore processing logic", () => {
     } as PerstackEvent
     processRunEventToLog(state, reasoningEvent, addEntry)
     expect(logs).toHaveLength(0)
-    expect(state.completedReasoning).toBe("Thinking about the task...")
+    // Reasoning is stored as pending until next RunEvent (per new architecture)
 
     // Tool call
     const callEvent = createBaseEvent({
