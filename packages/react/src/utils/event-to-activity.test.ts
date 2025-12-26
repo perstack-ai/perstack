@@ -917,4 +917,3 @@ describe("processRunEventToActivity", () => {
     }
   })
 })
-

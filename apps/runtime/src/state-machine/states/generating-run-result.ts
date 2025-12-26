@@ -64,7 +64,9 @@ export async function generatingRunResultLogic({
     },
     onReasoningComplete: (text) => {
       // Emit completeStreamingReasoning before result phase starts
-      eventListener(createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text }))
+      eventListener(
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text }),
+      )
       reasoningCompletedViaCallback = true
     },
     onResultStart: () => {
@@ -138,7 +140,9 @@ export async function generatingRunResultLogic({
   // Fallback emission only if callback wasn't triggered (should be rare)
   if (thinkingText && !reasoningCompletedViaCallback) {
     await eventListener(
-      createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text: thinkingText }),
+      createStreamingEvent("completeStreamingReasoning", setting, checkpoint, {
+        text: thinkingText,
+      }),
     )
   }
 

@@ -104,7 +104,9 @@ export async function generatingToolCallLogic({
     },
     onReasoningComplete: (text) => {
       // Emit completeStreamingReasoning when reasoning phase ends
-      eventListener(createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text }))
+      eventListener(
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text }),
+      )
       reasoningCompletedViaCallback = true
     },
     // onResultStart and onResultDelta intentionally not set - result streaming only in GeneratingRunResult
@@ -173,7 +175,9 @@ export async function generatingToolCallLogic({
     // Fallback emission only if callback wasn't triggered (should be rare)
     if (thinkingText && !reasoningCompletedViaCallback) {
       await eventListener(
-        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text: thinkingText }),
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, {
+          text: thinkingText,
+        }),
       )
     }
 
@@ -243,7 +247,9 @@ export async function generatingToolCallLogic({
     // Fallback emission only if callback wasn't triggered (should be rare)
     if (thinkingText && !reasoningCompletedViaCallback) {
       await eventListener(
-        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, { text: thinkingText }),
+        createStreamingEvent("completeStreamingReasoning", setting, checkpoint, {
+          text: thinkingText,
+        }),
       )
     }
 

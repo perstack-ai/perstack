@@ -55,7 +55,10 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
       )}
 
       {/* Static section - completed activities only */}
-      <Static items={runState.activities} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
+      <Static
+        items={runState.activities}
+        style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}
+      >
         {(activity) => <CheckpointActionRow key={activity.id} action={activity} />}
       </Static>
 
