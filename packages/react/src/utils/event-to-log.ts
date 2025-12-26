@@ -198,7 +198,13 @@ export function processRunEventToLog(
       }
     }
 
-    if (queryText && !runState.queryLogged) {
+    // Check if this is a delegation return (parent expert resuming after delegation)
+    // In this case, don't log the query again as it was already logged in the original run
+    const isDelegationReturn =
+      startRunEvent.initialCheckpoint?.status === "stoppedByDelegate" ||
+      startRunEvent.initialCheckpoint?.status === "stoppedByInteractiveTool"
+
+    if (queryText && !runState.queryLogged && !isDelegationReturn) {
       const entryId = `query-${event.runId}`
       addEntry({
         id: entryId,
@@ -320,7 +326,8 @@ export function processRunEventToLog(
         runState.lastEntryId = entryId
       }
     }
-    runState.completedReasoning = undefined
+    // Don't clear reasoning here - it may be needed for other tool calls in the same step
+    // Reasoning will be overwritten when the next completeReasoning event arrives
   } else if (isToolCallsEvent(event)) {
     for (const toolCall of event.toolCalls) {
       if (!state.tools.has(toolCall.id)) {
