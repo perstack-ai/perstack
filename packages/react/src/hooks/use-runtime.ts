@@ -84,6 +84,11 @@ export function useRuntime(): RuntimeResult {
         return true
       }
 
+      case "skillStderr":
+        // skillStderr events are informational only (for logging)
+        // No state update needed, but we still return true to indicate it's handled
+        return true
+
       case "dockerBuildProgress": {
         const e = event as RuntimeEvent & { type: "dockerBuildProgress" }
         setRuntimeState((prev) => ({
