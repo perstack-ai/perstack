@@ -1,7 +1,6 @@
 // Hooks
 export {
   type ActivityProcessState,
-  type LogProcessState,
   type RunResult,
   type RuntimeResult,
   useRun,
@@ -23,11 +22,8 @@ export { createInitialRuntimeState } from "./types/index.js"
 export {
   type ActivityProcessState as UtilActivityProcessState,
   createInitialActivityProcessState,
-  createInitialLogProcessState,
   groupActivitiesByRun,
-  groupLogsByRun,
   processRunEventToActivity,
-  processRunEventToLog,
   type RunGroup,
   toolToActivity,
 } from "./utils/index.js"

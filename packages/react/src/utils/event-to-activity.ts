@@ -396,11 +396,3 @@ export function processRunEventToActivity(
     }
   }
 }
-
-// Legacy aliases for backward compatibility
-/** @deprecated Use ActivityProcessState instead */
-export type LogProcessState = ActivityProcessState
-/** @deprecated Use createInitialActivityProcessState instead */
-export const createInitialLogProcessState = createInitialActivityProcessState
-/** @deprecated Use processRunEventToActivity instead */
-export const processRunEventToLog = processRunEventToActivity

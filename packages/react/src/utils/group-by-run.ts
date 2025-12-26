@@ -45,6 +45,3 @@ export function groupActivitiesByRun(activities: Activity[]): RunGroup[] {
 
   return order.map((runId) => groupMap.get(runId)!)
 }
-
-/** @deprecated Use groupActivitiesByRun instead */
-export const groupLogsByRun = groupActivitiesByRun

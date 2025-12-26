@@ -8,8 +8,6 @@ import {
 } from "../utils/event-to-activity.js"
 
 export type { ActivityProcessState }
-/** @deprecated Use ActivityProcessState instead */
-export type LogProcessState = ActivityProcessState
 
 const STREAMING_EVENT_TYPES = new Set([
   "startStreamingReasoning",

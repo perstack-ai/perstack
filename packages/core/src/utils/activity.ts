@@ -541,9 +541,3 @@ function parseListDirectoryFromResult(result: MessagePart[]):
     return undefined
   }
 }
-
-// Re-export for backward compatibility (will be removed in future)
-/** @deprecated Use getActivities instead */
-export const getCheckpointActions = getActivities
-/** @deprecated Use GetActivitiesParams instead */
-export type GetCheckpointActionsParams = GetActivitiesParams
