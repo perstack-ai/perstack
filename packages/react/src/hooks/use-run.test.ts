@@ -2,6 +2,7 @@ import {
   type Activity,
   type Checkpoint,
   createEmptyUsage,
+  type ExpertMessage,
   type PerstackEvent,
   type RunEvent,
   type Step,
@@ -56,7 +57,7 @@ describe("useRun processing logic", () => {
     const callEvent = createBaseEvent({
       type: "callTools",
       toolCalls: [createToolCall()],
-      newMessage: {} as RunEvent["newMessage"],
+      newMessage: {} as ExpertMessage,
       usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, callEvent, addActivity)
@@ -188,7 +189,7 @@ describe("useRun processing logic", () => {
       id: "e-2",
       type: "callTools",
       toolCalls: [createToolCall()],
-      newMessage: {} as RunEvent["newMessage"],
+      newMessage: {} as ExpertMessage,
       usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, callEvent, addActivity)
