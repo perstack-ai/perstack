@@ -156,7 +156,9 @@ function renderAction(action: CheckpointAction): React.ReactNode {
     case "delegate":
       return (
         <ActionRow indicatorColor="yellow" label={action.expertKey}>
-          <Text dimColor>{`{\"query\":\"${truncateText(action.query, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}\"}`}</Text>
+          <Text
+            dimColor
+          >{`{"query":"${truncateText(action.query, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}"}`}</Text>
         </ActionRow>
       )
 
