@@ -83,9 +83,9 @@ function getOrCreateRunState(state: LogProcessState, runId: string, expertKey: s
   if (!runState) {
     runState = {
       expertKey,
-    queryLogged: false,
-    completionLogged: false,
-    isComplete: false,
+      queryLogged: false,
+      completionLogged: false,
+      isComplete: false,
       pendingDelegateCount: 0,
     }
     state.runStates.set(runId, runState)
@@ -207,17 +207,17 @@ export function processRunEventToLog(
 
     if (queryText && !runState.queryLogged && !isDelegationReturn) {
       const entryId = `query-${event.runId}`
-        addEntry({
+      addEntry({
         id: entryId,
-          action: {
-            type: "query",
-            text: queryText,
-          },
+        action: {
+          type: "query",
+          text: queryText,
+        },
         expertKey: event.expertKey,
         runId: event.runId,
         previousEntryId: runState.lastEntryId,
         delegatedBy: runState.delegatedBy,
-        })
+      })
       runState.lastEntryId = entryId
       runState.queryLogged = true
     }
