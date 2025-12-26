@@ -55,7 +55,9 @@ export function useLogStore(): LogStoreResult {
       setLogs((prev) => [...prev, ...newLogs])
     }
 
-    setIsComplete(stateRef.current.isComplete)
+    // Check if any run is complete (per-run state architecture)
+    const anyComplete = Array.from(stateRef.current.runStates.values()).some((rs) => rs.isComplete)
+    setIsComplete(anyComplete)
   }, [])
 
   const addEvent = useCallback(
@@ -95,7 +97,9 @@ export function useLogStore(): LogStoreResult {
     }
 
     setEventCount((prev) => prev + historicalEvents.length)
-    setIsComplete(stateRef.current.isComplete)
+    // Check if any run is complete (per-run state architecture)
+    const anyComplete = Array.from(stateRef.current.runStates.values()).some((rs) => rs.isComplete)
+    setIsComplete(anyComplete)
   }, [])
 
   return {
