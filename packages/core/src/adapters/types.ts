@@ -3,8 +3,14 @@ import type { Expert } from "../schemas/expert.js"
 import type { PerstackConfig } from "../schemas/perstack-toml.js"
 import type { RunEvent, RunParamsInput, RuntimeEvent } from "../schemas/runtime.js"
 
+/** Setting type for adapter run - external input with required jobId and runId added by dispatcher */
+export type AdapterRunSetting = RunParamsInput["setting"] & {
+  jobId: string
+  runId: string
+}
+
 export type AdapterRunParams = {
-  setting: RunParamsInput["setting"]
+  setting: AdapterRunSetting
   config?: PerstackConfig
   checkpoint?: Checkpoint
   eventListener?: (event: RunEvent | RuntimeEvent) => void

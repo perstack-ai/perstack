@@ -1,5 +1,6 @@
 import type { PerstackEvent } from "@perstack/core"
-import { Box, Static } from "ink"
+import { groupLogsByRun } from "@perstack/react"
+import { Box, Text } from "ink"
 import {
   BrowserRouter,
   CheckpointActionRow,
@@ -59,12 +60,24 @@ export const App = (props: AppProps) => {
     inputState.type === "browsingEvents"
   const isEditing = inputState.type === "enteringQuery"
   const showRunSetting = isEditing || inputState.type === "running"
+  const runGroups = groupLogsByRun(logStore.logs)
+
   return (
     <Box flexDirection="column">
-      {/* Static section - completed actions only */}
-      <Static items={logStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
-        {(entry) => <CheckpointActionRow key={entry.id} action={entry.action} />}
-      </Static>
+      {/* Completed actions grouped by run */}
+      {runGroups.map((group) => (
+        <Box key={group.runId} flexDirection="column">
+          {group.delegatedBy && (
+            <Text dimColor>┌─ {group.expertKey} ─────────────────────────────</Text>
+          )}
+          {group.entries.map((entry) => (
+            <CheckpointActionRow key={entry.id} action={entry.action} />
+          ))}
+          {group.delegatedBy && (
+            <Text dimColor>└─────────────────────────────────────────────────</Text>
+          )}
+        </Box>
+      ))}
 
       {/* Streaming section - active streaming content (sandwiched between static and input) */}
       <StreamingDisplay streaming={logStore.runtimeState.streaming} />

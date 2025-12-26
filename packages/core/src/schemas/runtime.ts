@@ -125,7 +125,7 @@ export type RunParamsInput = {
     model: string
     providerConfig: ProviderConfig
     jobId?: string
-    runId?: string
+    // runId is generated internally, not accepted from external input
     expertKey: string
     input: RunInput
     experts?: Record<string, ExpertInput>

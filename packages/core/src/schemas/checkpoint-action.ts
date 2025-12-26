@@ -350,6 +350,18 @@ export const checkpointActionDelegateSchema = baseCheckpointActionSchema.extend(
 })
 checkpointActionDelegateSchema satisfies z.ZodType<CheckpointActionDelegate>
 
+/** Delegation complete action - All delegated experts have returned */
+export interface CheckpointActionDelegationComplete extends BaseCheckpointAction {
+  type: "delegationComplete"
+  count: number
+}
+
+export const checkpointActionDelegationCompleteSchema = baseCheckpointActionSchema.extend({
+  type: z.literal("delegationComplete"),
+  count: z.number(),
+})
+checkpointActionDelegationCompleteSchema satisfies z.ZodType<CheckpointActionDelegationComplete>
+
 /** Interactive tool action - Tool requiring user interaction */
 export interface CheckpointActionInteractiveTool extends BaseCheckpointAction {
   type: "interactiveTool"
@@ -448,6 +460,7 @@ export type CheckpointAction =
   | CheckpointActionListDirectory
   | CheckpointActionExec
   | CheckpointActionDelegate
+  | CheckpointActionDelegationComplete
   | CheckpointActionInteractiveTool
   | CheckpointActionGeneralTool
   | CheckpointActionError
@@ -473,6 +486,7 @@ export const checkpointActionSchema = z.discriminatedUnion("type", [
   checkpointActionListDirectorySchema,
   checkpointActionExecSchema,
   checkpointActionDelegateSchema,
+  checkpointActionDelegationCompleteSchema,
   checkpointActionInteractiveToolSchema,
   checkpointActionGeneralToolSchema,
   checkpointActionErrorSchema,

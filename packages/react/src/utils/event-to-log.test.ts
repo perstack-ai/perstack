@@ -363,17 +363,27 @@ describe("processRunEventToLog", () => {
     expect(state.tools.has("interactive-1")).toBe(true)
   })
 
-  it("processes callDelegate event", () => {
+  it("processes callDelegate event with toolCalls array - logs immediately", () => {
     const state = createInitialLogProcessState()
     const logs: LogEntry[] = []
 
-    const toolCall = createToolCall({ id: "delegate-1", toolName: "delegate" })
+    const toolCall = createToolCall({
+      id: "delegate-1",
+      skillName: "child-expert",
+      toolName: "delegate",
+      args: { query: "test query" },
+    })
     const callEvent = createBaseEvent({
       type: "callDelegate",
-      toolCall,
+      toolCalls: [toolCall],
     } as Partial<RunEvent>) as RunEvent
     processRunEventToLog(state, callEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    // callDelegate logs immediately (unlike other tool calls that wait for results)
+    expect(logs).toHaveLength(1)
+    expect(logs[0].action.type).toBe("delegate")
+    expect((logs[0].action as CheckpointAction & { type: "delegate" }).expertKey).toBe(
+      "child-expert",
+    )
     expect(state.tools.has("delegate-1")).toBe(true)
   })
 
@@ -543,11 +553,11 @@ describe("processRunEventToLog", () => {
     }
   })
 
-  it("clears tools map when new run starts", () => {
+  it("preserves tools map across runs for delegation handling", () => {
     const state = createInitialLogProcessState()
     const logs: LogEntry[] = []
 
-    // First run with tool
+    // First run with tool (e.g., delegation call)
     const startEvent1 = createBaseEvent({
       type: "startRun",
       runId: "run-1",
@@ -574,7 +584,7 @@ describe("processRunEventToLog", () => {
     processRunEventToLog(state, callEvent, (e) => logs.push(e))
     expect(state.tools.has("tc-1")).toBe(true)
 
-    // New run - tools should be cleared
+    // New run - tools should be PRESERVED (needed for delegation results)
     const startEvent2 = createBaseEvent({
       id: "e-3",
       runId: "run-2",
@@ -590,7 +600,196 @@ describe("processRunEventToLog", () => {
     } as Partial<RunEvent>) as RunEvent
     processRunEventToLog(state, startEvent2, (e) => logs.push(e))
 
-    // Tools map should be cleared
-    expect(state.tools.size).toBe(0)
+    // Tools map should be preserved for delegation result handling
+    expect(state.tools.has("tc-1")).toBe(true)
+  })
+
+  it("maintains daisy chain with previousEntryId within a run", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // Start run
+    const startEvent = createBaseEvent({
+      type: "startRun",
+      runId: "run-1",
+      initialCheckpoint: {},
+      inputMessages: [
+        {
+          id: "m-1",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-1", text: "Hello" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEvent, (e) => logs.push(e))
+
+    // Tool call and result
+    const toolCall = createToolCall({ id: "tc-1" })
+    const callEvent = createBaseEvent({
+      id: "e-2",
+      runId: "run-1",
+      type: "callTools",
+      toolCalls: [toolCall],
+      newMessage: {} as RunEvent["newMessage"],
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+
+    const resultEvent = createBaseEvent({
+      id: "e-3",
+      runId: "run-1",
+      type: "resolveToolResults",
+      toolResults: [createToolResult()],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+
+    // Verify daisy chain
+    expect(logs).toHaveLength(2)
+    expect(logs[0].previousEntryId).toBeUndefined() // First entry has no previous
+    expect(logs[1].previousEntryId).toBe(logs[0].id) // Second entry points to first
+  })
+
+  it("extracts delegatedBy from initialCheckpoint", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    const event = createBaseEvent({
+      type: "startRun",
+      runId: "child-run",
+      initialCheckpoint: {
+        delegatedBy: {
+          expert: { key: "parent-expert@1.0.0" },
+          toolCallId: "tc-1",
+          toolName: "delegate",
+          checkpointId: "cp-1",
+          runId: "parent-run",
+        },
+      },
+      inputMessages: [
+        {
+          id: "m-1",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-1", text: "Delegated task" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, event, (e) => logs.push(e))
+
+    expect(logs).toHaveLength(1)
+    expect(logs[0].delegatedBy).toEqual({
+      expertKey: "parent-expert@1.0.0",
+      runId: "parent-run",
+    })
+    expect(logs[0].expertKey).toBe("test-expert@1.0.0")
+    expect(logs[0].runId).toBe("child-run")
+  })
+
+  it("propagates delegatedBy to all entries in a delegated run", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // Start delegated run
+    const startEvent = createBaseEvent({
+      type: "startRun",
+      runId: "child-run",
+      initialCheckpoint: {
+        delegatedBy: {
+          expert: { key: "parent@1.0.0" },
+          toolCallId: "tc-1",
+          toolName: "delegate",
+          checkpointId: "cp-1",
+          runId: "parent-run",
+        },
+      },
+      inputMessages: [
+        {
+          id: "m-1",
+          type: "userMessage",
+          contents: [{ type: "textPart", id: "tp-1", text: "Task" }],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, startEvent, (e) => logs.push(e))
+
+    // Complete run
+    const completeEvent = createBaseEvent({
+      id: "e-2",
+      runId: "child-run",
+      type: "completeRun",
+      text: "Done",
+      checkpoint: {},
+      step: {},
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, completeEvent, (e) => logs.push(e))
+
+    // Both entries should have delegatedBy
+    expect(logs).toHaveLength(2)
+    expect(logs[0].delegatedBy).toBeDefined()
+    expect(logs[1].delegatedBy).toBeDefined()
+    expect(logs[0].delegatedBy?.runId).toBe("parent-run")
+    expect(logs[1].delegatedBy?.runId).toBe("parent-run")
+  })
+
+  it("processes finishAllToolCalls event for delegation results", () => {
+    const state = createInitialLogProcessState()
+    const logs: LogEntry[] = []
+
+    // First register delegate tool calls (callDelegate logs immediately)
+    const delegateToolCall1 = createToolCall({
+      id: "delegate-1",
+      skillName: "e2e-delegate-math",
+      toolName: "e2e-delegate-math",
+      args: { query: "test" },
+    })
+    const delegateToolCall2 = createToolCall({
+      id: "delegate-2",
+      skillName: "e2e-delegate-text",
+      toolName: "e2e-delegate-text",
+      args: { query: "test" },
+    })
+    const callEvent = createBaseEvent({
+      type: "callDelegate",
+      toolCalls: [delegateToolCall1, delegateToolCall2],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    // callDelegate logs immediately (2 delegate entries)
+    expect(logs).toHaveLength(2)
+    expect(logs[0].action.type).toBe("delegate")
+    expect(logs[1].action.type).toBe("delegate")
+    expect(state.tools.has("delegate-1")).toBe(true)
+    expect(state.tools.has("delegate-2")).toBe(true)
+
+    // Then process finishAllToolCalls with results in newMessages
+    const finishEvent = createBaseEvent({
+      id: "e-2",
+      type: "finishAllToolCalls",
+      newMessages: [
+        {
+          type: "toolMessage",
+          id: "tm-1",
+          contents: [
+            {
+              type: "toolResultPart",
+              toolCallId: "delegate-1",
+              toolName: "e2e-delegate-math",
+              contents: [{ type: "textPart", text: "Math result: 5", id: "tp-1" }],
+            },
+            {
+              type: "toolResultPart",
+              toolCallId: "delegate-2",
+              toolName: "e2e-delegate-text",
+              contents: [{ type: "textPart", text: "Text result: olleh", id: "tp-2" }],
+            },
+          ],
+        },
+      ],
+    } as Partial<RunEvent>) as RunEvent
+    processRunEventToLog(state, finishEvent, (e) => logs.push(e))
+
+    // Should have added delegationComplete entry (total: 2 delegates + 1 complete = 3)
+    expect(logs).toHaveLength(3)
+    expect(logs[2].action.type).toBe("delegationComplete")
+    expect((logs[2].action as CheckpointAction & { type: "delegationComplete" }).count).toBe(2)
   })
 })

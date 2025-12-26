@@ -84,6 +84,8 @@ export interface Checkpoint {
     toolName: string
     /** Checkpoint ID of the parent */
     checkpointId: string
+    /** Run ID of the parent */
+    runId: string
   }
   /** Accumulated token usage */
   usage: Usage
@@ -148,6 +150,7 @@ export const checkpointSchema = z.object({
       toolCallId: z.string(),
       toolName: z.string(),
       checkpointId: z.string(),
+      runId: z.string(),
     })
     .optional(),
   usage: usageSchema,

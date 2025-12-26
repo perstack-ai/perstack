@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2"
 import type { Checkpoint, Expert, RunSetting } from "@perstack/core"
 import { createEmptyUsage } from "./usage.js"
 
@@ -65,9 +66,12 @@ export function buildDelegationReturnState(
     )
   }
   const { expert, toolCallId, toolName } = delegatedBy
+  // New runId for delegation return - each run segment gets its own ID
+  const newRunId = createId()
   return {
     setting: {
       ...currentSetting,
+      runId: newRunId,
       expertKey: expert.key,
       input: {
         interactiveToolCallResult: {
@@ -80,6 +84,7 @@ export function buildDelegationReturnState(
     },
     checkpoint: {
       ...parentCheckpoint,
+      runId: newRunId,
       stepNumber: resultCheckpoint.stepNumber,
       usage: resultCheckpoint.usage,
       pendingToolCalls: parentCheckpoint.pendingToolCalls,
@@ -125,6 +130,7 @@ export function buildDelegateToState(
         toolCallId,
         toolName,
         checkpointId: resultCheckpoint.id,
+        runId: currentSetting.runId,
       },
       usage: resultCheckpoint.usage,
       pendingToolCalls: undefined,

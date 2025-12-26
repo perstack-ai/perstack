@@ -114,8 +114,12 @@ export class SingleDelegationStrategy implements DelegationStrategy {
     const delegation = delegations[0]
     const { expert, toolCallId, toolName, query } = delegation
 
+    // New runId for child expert - each delegation gets its own run
+    const childRunId = createId()
+
     const nextSetting: RunSetting = {
       ...setting,
+      runId: childRunId,
       expertKey: expert.key,
       input: { text: query },
     }
@@ -123,7 +127,7 @@ export class SingleDelegationStrategy implements DelegationStrategy {
     const nextCheckpoint: Checkpoint = {
       id: context.id,
       jobId: setting.jobId,
-      runId: setting.runId,
+      runId: childRunId,
       status: "init",
       stepNumber: context.stepNumber,
       messages: [], // Child starts fresh
@@ -141,6 +145,7 @@ export class SingleDelegationStrategy implements DelegationStrategy {
         toolCallId,
         toolName,
         checkpointId: context.id,
+        runId: setting.runId, // Parent's runId for traceability
       },
       usage: context.usage,
       contextWindow: context.contextWindow,
@@ -212,8 +217,12 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
       (tc) => !processedToolCallIds.has(tc.id) && tc.id !== firstDelegation.toolCallId,
     )
 
+    // New runId for delegation return - parent resumes with new run segment
+    const returnRunId = createId()
+
     const nextSetting: RunSetting = {
       ...setting,
+      runId: returnRunId,
       expertKey: parentExpert.key,
       input: {
         interactiveToolCallResult: {
@@ -229,7 +238,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
     const nextCheckpoint: Checkpoint = {
       id: context.id,
       jobId: setting.jobId,
-      runId: setting.runId,
+      runId: returnRunId,
       status: "stoppedByDelegate",
       stepNumber: maxStepNumber,
       messages: context.messages, // Restore parent's conversation history
@@ -288,6 +297,7 @@ export class ParallelDelegationStrategy implements DelegationStrategy {
         toolCallId,
         toolName,
         checkpointId: parentContext.id,
+        runId: parentSetting.runId,
       },
       usage: createEmptyUsage(),
       contextWindow: parentContext.contextWindow,

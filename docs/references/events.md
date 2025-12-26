@@ -342,6 +342,102 @@ function ActionLog({ actions }: { actions: CheckpointAction[] }) {
 }
 ```
 
+## LogEntry
+
+**LogEntry** wraps a CheckpointAction with metadata for tracking execution across multiple Runs, including parallel delegations.
+
+### Structure
+
+```typescript
+type LogEntry = {
+  /** Unique identifier for this entry */
+  id: string
+  /** The checkpoint action */
+  action: CheckpointAction
+  /** Expert that executed this action */
+  expertKey: string
+  /** Run ID this entry belongs to */
+  runId: string
+  /** Previous entry ID within the same Run (daisy chain) */
+  previousEntryId?: string
+  /** Parent Run information (for delegated Runs) */
+  delegatedBy?: {
+    expertKey: string
+    runId: string
+  }
+}
+```
+
+### Daisy Chain Architecture
+
+LogEntry uses a **two-level daisy chain** to maintain ordering:
+
+1. **Within-Run ordering**: `previousEntryId` links entries in the same Run
+2. **Cross-Run ordering**: `delegatedBy` links child Runs to their parent Run
+
+This architecture supports:
+- **Flat storage**: All entries in a single append-only array
+- **Run isolation**: Each Run forms an independent chain via `previousEntryId`
+- **Parallel delegation**: Multiple child Runs can share the same `delegatedBy.runId`
+- **Flexible rendering**: Group by `runId`, or flatten with `expertKey` labels
+
+### Example: Parallel Delegation
+
+```
+Run: parent-run (delegatedBy: undefined)
+  entry-1 (prev: null)     → query: "Process data"
+  entry-2 (prev: entry-1)  → readFile: config.json
+  entry-3 (prev: entry-2)  → delegate: [child-math, child-text]
+
+Run: child-math-run (delegatedBy: { expertKey: "parent", runId: "parent-run" })
+  entry-4 (prev: null)     → query: "Calculate sum"
+  entry-5 (prev: entry-4)  → complete: "Math result: 42"
+
+Run: child-text-run (delegatedBy: { expertKey: "parent", runId: "parent-run" })
+  entry-6 (prev: null)     → query: "Format text"
+  entry-7 (prev: entry-6)  → complete: "Text result: hello"
+
+Run: parent-run (resumed)
+  entry-8 (prev: entry-3)  → complete: "All done"
+```
+
+Key observations:
+- `entry-4` and `entry-6` both have `delegatedBy.runId: "parent-run"` (parallel)
+- `entry-8.previousEntryId` is `entry-3`, resuming the parent chain
+- Each Run's entries form a linked list via `previousEntryId`
+
+### Rendering Strategies
+
+**Group by Run** (recommended for TUI):
+```typescript
+const logsByRun = logs.reduce((acc, entry) => {
+  const list = acc.get(entry.runId) ?? []
+  list.push(entry)
+  acc.set(entry.runId, list)
+  return acc
+}, new Map<string, LogEntry[]>())
+
+// Render each Run as a separate <Static> component
+for (const [runId, entries] of logsByRun) {
+  render(<RunLog runId={runId} entries={entries} />)
+}
+```
+
+**Flatten with labels** (for simple logging):
+```typescript
+for (const entry of logs) {
+  console.log(`[${entry.expertKey}] ${formatAction(entry.action)}`)
+}
+```
+
+**Build tree structure** (for hierarchical display):
+```typescript
+function buildTree(logs: LogEntry[]): RunNode[] {
+  const rootRuns = logs.filter(e => !e.delegatedBy && !e.previousEntryId)
+  // ... recursively build tree using delegatedBy relationships
+}
+```
+
 ## Architectural Distinction
 
 ### Primary vs Side Effects

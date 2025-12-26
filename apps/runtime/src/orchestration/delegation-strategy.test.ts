@@ -139,6 +139,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
         toolCallId: "tc-1",
         toolName: "delegateTo",
         checkpointId: "parent-cp-id",
+        runId: "run-1",
       })
     })
   })
@@ -221,6 +222,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
         toolCallId: "gp-tc-1",
         toolName: "delegateTo",
         checkpointId: "gp-cp-id",
+        runId: "gp-run-id",
       }
       const context = createMockContext({ delegatedBy: parentDelegatedBy })
       const parentExpert = { key: "parent", name: "Parent", version: "1.0" }
@@ -499,6 +501,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
           toolCallId: "p-tc-1",
           toolName: "delegateTo",
           checkpointId: "p-cp-id",
+          runId: "p-run-id",
         },
         // These should NOT be included in context
         messages: [{ id: "m", type: "userMessage", contents: [] }],
@@ -531,6 +534,7 @@ describe("@perstack/runtime: delegation-strategy", () => {
           toolCallId: "tc-1",
           toolName: "delegateTo",
           checkpointId: "parent-cp",
+          runId: "parent-run-id",
         },
         messages: [
           {
