@@ -20,7 +20,6 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStartRunEvent,
-  createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
 
@@ -257,9 +256,7 @@ export class GeminiAdapter extends BaseAdapter {
         state.finalOutput = state.accumulatedText
         if (content !== state.lastStreamingText) {
           state.lastStreamingText = content
-          const event = createStreamingTextEvent(jobId, runId, state.accumulatedText)
-          state.events.push(event)
-          eventListener?.(event)
+          // Note: streamingText event was removed - text is accumulated in state.finalOutput
         }
       }
     } else if (parsed.type === "tool_use") {

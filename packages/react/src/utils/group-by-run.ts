@@ -1,12 +1,12 @@
-import type { LogEntry } from "../types/log-entry.js"
+import type { Activity } from "@perstack/core"
 
 /**
- * Represents a group of log entries belonging to the same run
+ * Represents a group of activities belonging to the same run
  */
 export type RunGroup = {
   runId: string
   expertKey: string
-  entries: LogEntry[]
+  activities: Activity[]
   delegatedBy?: {
     expertKey: string
     runId: string
@@ -14,34 +14,37 @@ export type RunGroup = {
 }
 
 /**
- * Groups log entries by their runId while preserving order.
+ * Groups activities by their runId while preserving order.
  *
- * This function groups logs so that each run can be displayed in its own
+ * This function groups activities so that each run can be displayed in its own
  * visual section (e.g., separate <Static> components in Ink).
  *
- * @param logs - Array of log entries to group
+ * @param activities - Array of activities to group
  * @returns Array of RunGroup objects, ordered by first appearance
  */
-export function groupLogsByRun(logs: LogEntry[]): RunGroup[] {
+export function groupActivitiesByRun(activities: Activity[]): RunGroup[] {
   const groupMap = new Map<string, RunGroup>()
   const order: string[] = []
 
-  for (const entry of logs) {
-    const { runId, expertKey, delegatedBy } = entry
+  for (const activity of activities) {
+    const { runId, expertKey, delegatedBy } = activity
 
     if (!groupMap.has(runId)) {
       groupMap.set(runId, {
         runId,
         expertKey,
-        entries: [],
+        activities: [],
         delegatedBy,
       })
       order.push(runId)
     }
 
     const group = groupMap.get(runId)!
-    group.entries.push(entry)
+    group.activities.push(activity)
   }
 
   return order.map((runId) => groupMap.get(runId)!)
 }
+
+/** @deprecated Use groupActivitiesByRun instead */
+export const groupLogsByRun = groupActivitiesByRun

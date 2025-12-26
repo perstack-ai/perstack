@@ -48,10 +48,10 @@ type AppProps = {
  * This ensures:
  * - Static content remains static (no unnecessary re-renders)
  * - Streaming content is ephemeral and shown only during generation
- * - When streaming completes, content is committed to Static via new entries
+ * - When streaming completes, content is committed to Static via new activities
  */
 export const App = (props: AppProps) => {
-  const { logStore, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
+  const { runState, runtimeInfo, inputState, inputAreaContextValue } = useAppState(props)
   const isBrowsing =
     inputState.type === "browsingHistory" ||
     inputState.type === "browsingExperts" ||
@@ -62,22 +62,22 @@ export const App = (props: AppProps) => {
 
   return (
     <Box flexDirection="column">
-      {/* Static section - completed actions (efficient, append-only rendering) */}
-      {/* Uses log entries directly for stable references and O(N) performance */}
-      <Static items={logStore.logs}>
-        {(entry) => (
-          <Box key={entry.id} marginLeft={entry.delegatedBy ? 2 : 0}>
+      {/* Static section - completed activities (efficient, append-only rendering) */}
+      {/* Uses activities directly for stable references and O(N) performance */}
+      <Static items={runState.activities}>
+        {(activity) => (
+          <Box key={activity.id} marginLeft={activity.delegatedBy ? 2 : 0}>
             {/* Show expert indicator for delegated runs */}
-            {entry.delegatedBy && entry.action.type === "query" && (
-              <Text dimColor>[{entry.expertKey}] </Text>
+            {activity.delegatedBy && activity.type === "query" && (
+              <Text dimColor>[{activity.expertKey}] </Text>
             )}
-            <CheckpointActionRow action={entry.action} />
+            <CheckpointActionRow action={activity} />
           </Box>
         )}
       </Static>
 
       {/* Streaming section - active streaming content (sandwiched between static and input) */}
-      <StreamingDisplay streaming={logStore.runtimeState.streaming} />
+      <StreamingDisplay streaming={runState.streaming} />
 
       {/* Input controls */}
       <InputAreaProvider value={inputAreaContextValue}>
@@ -95,7 +95,7 @@ export const App = (props: AppProps) => {
       {showRunSetting && (
         <RunSetting
           info={runtimeInfo}
-          eventCount={logStore.eventCount}
+          eventCount={runState.eventCount}
           isEditing={isEditing}
           expertName={isEditing ? inputState.expertName : undefined}
           onQuerySubmit={isEditing ? inputAreaContextValue.onQuerySubmit : undefined}

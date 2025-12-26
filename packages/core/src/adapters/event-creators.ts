@@ -120,17 +120,6 @@ export function createCompleteRunEvent(
   }
 }
 
-export function createStreamingTextEvent(jobId: string, runId: string, text: string): RuntimeEvent {
-  return {
-    type: "streamingText",
-    id: createId(),
-    timestamp: Date.now(),
-    jobId,
-    runId,
-    text,
-  }
-}
-
 export function createCallToolsEvent(
   jobId: string,
   runId: string,

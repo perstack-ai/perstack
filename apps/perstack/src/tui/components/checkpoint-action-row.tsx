@@ -1,4 +1,4 @@
-import type { CheckpointAction } from "@perstack/core"
+import type { Activity } from "@perstack/core"
 import { Box, Text } from "ink"
 import type React from "react"
 import { RENDER_CONSTANTS, UI_CONSTANTS } from "../constants.js"
@@ -6,7 +6,7 @@ import { shortenPath, summarizeOutput, truncateText } from "../helpers.js"
 import { ActionRow, ActionRowSimple, type StatusColor } from "./action-row.js"
 
 type CheckpointActionRowProps = {
-  action: CheckpointAction
+  action: Activity
 }
 
 export const CheckpointActionRow = ({ action }: CheckpointActionRowProps): React.ReactNode => {
@@ -36,7 +36,7 @@ function renderReasoning(text: string): React.ReactNode {
   )
 }
 
-function renderAction(action: CheckpointAction): React.ReactNode {
+function renderAction(action: Activity): React.ReactNode {
   const color: StatusColor =
     action.type === "error" || ("error" in action && action.error) ? "red" : "green"
 
@@ -155,7 +155,7 @@ function renderAction(action: CheckpointAction): React.ReactNode {
 
     case "delegate":
       return (
-        <ActionRow indicatorColor="yellow" label={action.expertKey}>
+        <ActionRow indicatorColor="yellow" label={action.delegateExpertKey}>
           <Text
             dimColor
           >{`{"query":"${truncateText(action.query, UI_CONSTANTS.TRUNCATE_TEXT_MEDIUM)}"}`}</Text>
@@ -204,7 +204,7 @@ function renderAction(action: CheckpointAction): React.ReactNode {
 }
 
 function renderTodo(
-  action: Extract<CheckpointAction, { type: "todo" }>,
+  action: Extract<Activity, { type: "todo" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { newTodos, completedTodos, todos } = action
@@ -268,7 +268,7 @@ function renderTodo(
 }
 
 function renderReadTextFile(
-  action: Extract<CheckpointAction, { type: "readTextFile" }>,
+  action: Extract<Activity, { type: "readTextFile" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { path, content, from, to } = action
@@ -294,7 +294,7 @@ function renderReadTextFile(
 }
 
 function renderWriteTextFile(
-  action: Extract<CheckpointAction, { type: "writeTextFile" }>,
+  action: Extract<Activity, { type: "writeTextFile" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { path, text } = action
@@ -318,7 +318,7 @@ function renderWriteTextFile(
 }
 
 function renderEditTextFile(
-  action: Extract<CheckpointAction, { type: "editTextFile" }>,
+  action: Extract<Activity, { type: "editTextFile" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { path, oldText, newText } = action
@@ -351,7 +351,7 @@ function renderEditTextFile(
 }
 
 function renderAppendTextFile(
-  action: Extract<CheckpointAction, { type: "appendTextFile" }>,
+  action: Extract<Activity, { type: "appendTextFile" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { path, text } = action
@@ -375,7 +375,7 @@ function renderAppendTextFile(
 }
 
 function renderListDirectory(
-  action: Extract<CheckpointAction, { type: "listDirectory" }>,
+  action: Extract<Activity, { type: "listDirectory" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { path, items } = action
@@ -397,7 +397,7 @@ function renderListDirectory(
 }
 
 function renderExec(
-  action: Extract<CheckpointAction, { type: "exec" }>,
+  action: Extract<Activity, { type: "exec" }>,
   color: StatusColor,
 ): React.ReactNode {
   const { command, args, cwd, output } = action

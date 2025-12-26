@@ -3,7 +3,7 @@ export { useErrorHandler, useLatestRef } from "./core/index.js"
 export {
   type InputAction,
   useInputState,
-  useLogStore,
+  useRun,
   useRuntimeInfo,
   useTextInput,
 } from "./state/index.js"

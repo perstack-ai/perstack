@@ -1,10 +1,9 @@
-import type { PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
+import type { Activity, PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
 import { describe, expect, it } from "vitest"
-import type { LogEntry } from "../types/index.js"
-import { createInitialLogProcessState, processRunEventToLog } from "../utils/event-to-log.js"
-
-// Since we can't use React hooks directly in Node.js tests,
-// we test the core processing logic that the hook uses
+import {
+  createInitialActivityProcessState,
+  processRunEventToActivity,
+} from "../utils/event-to-activity.js"
 
 function createToolCall(overrides: Partial<ToolCall> = {}): ToolCall {
   return {
@@ -39,30 +38,27 @@ function createBaseEvent(overrides: Partial<RunEvent> = {}): RunEvent {
   } as RunEvent
 }
 
-describe("LogStore processing logic", () => {
-  it("accumulates log entries from multiple events", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
-    const addEntry = (entry: LogEntry) => logs.push(entry)
+describe("useRun processing logic", () => {
+  it("accumulates activities from multiple events", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
+    const addActivity = (activity: Activity) => activities.push(activity)
 
-    // First: tool call
     const callEvent = createBaseEvent({
       type: "callTools",
       toolCalls: [createToolCall()],
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, addEntry)
+    processRunEventToActivity(state, callEvent, addActivity)
 
-    // Second: tool result
     const resultEvent = createBaseEvent({
       id: "e-2",
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, addEntry)
+    processRunEventToActivity(state, resultEvent, addActivity)
 
-    // Third: complete
     const completeEvent = createBaseEvent({
       id: "e-3",
       type: "completeRun",
@@ -71,17 +67,17 @@ describe("LogStore processing logic", () => {
       step: {} as RunEvent["step"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, completeEvent, addEntry)
+    processRunEventToActivity(state, completeEvent, addActivity)
 
-    expect(logs).toHaveLength(2)
-    expect(logs[0].action.type).toBe("readTextFile")
-    expect(logs[1].action.type).toBe("complete")
+    expect(activities).toHaveLength(2)
+    expect(activities[0].type).toBe("readTextFile")
+    expect(activities[1].type).toBe("complete")
   })
 
   it("tracks completion state", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
-    const addEntry = (entry: LogEntry) => logs.push(entry)
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
+    const addActivity = (activity: Activity) => activities.push(activity)
 
     const completeEvent = createBaseEvent({
       type: "completeRun",
@@ -90,16 +86,15 @@ describe("LogStore processing logic", () => {
       step: {} as RunEvent["step"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, completeEvent, addEntry)
+    processRunEventToActivity(state, completeEvent, addActivity)
 
-    // Per-run state is now stored in state.runStates
     expect(state.runStates.get("run-1")?.isComplete).toBe(true)
   })
 
   it("tracks completion state on error", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
-    const addEntry = (entry: LogEntry) => logs.push(entry)
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
+    const addActivity = (activity: Activity) => activities.push(activity)
 
     const errorEvent = createBaseEvent({
       type: "stopRunByError",
@@ -107,17 +102,16 @@ describe("LogStore processing logic", () => {
       checkpoint: {} as RunEvent["checkpoint"],
       step: {} as RunEvent["step"],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, errorEvent, addEntry)
+    processRunEventToActivity(state, errorEvent, addActivity)
 
-    // Per-run state is now stored in state.runStates
     expect(state.runStates.get("run-1")?.isComplete).toBe(true)
-    expect(logs[0].action.type).toBe("error")
+    expect(activities[0].type).toBe("error")
   })
 
   it("only logs completion once", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
-    const addEntry = (entry: LogEntry) => logs.push(entry)
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
+    const addActivity = (activity: Activity) => activities.push(activity)
 
     const completeEvent = createBaseEvent({
       type: "completeRun",
@@ -127,18 +121,17 @@ describe("LogStore processing logic", () => {
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
 
-    processRunEventToLog(state, completeEvent, addEntry)
-    processRunEventToLog(state, completeEvent, addEntry)
+    processRunEventToActivity(state, completeEvent, addActivity)
+    processRunEventToActivity(state, completeEvent, addActivity)
 
-    expect(logs).toHaveLength(1)
+    expect(activities).toHaveLength(1)
   })
 
-  it("ignores RuntimeEvent (except completeReasoning for reasoning attachment)", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
-    const addEntry = (entry: LogEntry) => logs.push(entry)
+  it("ignores RuntimeEvent", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
+    const addActivity = (activity: Activity) => activities.push(activity)
 
-    // RuntimeEvent should be ignored
     const dockerEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
@@ -149,7 +142,7 @@ describe("LogStore processing logic", () => {
       service: "runtime",
       message: "Building...",
     } as PerstackEvent
-    processRunEventToLog(state, dockerEvent, addEntry)
+    processRunEventToActivity(state, dockerEvent, addActivity)
 
     const skillEvent: PerstackEvent = {
       id: "e-2",
@@ -159,30 +152,29 @@ describe("LogStore processing logic", () => {
       timestamp: Date.now(),
       skillName: "@perstack/base",
     } as PerstackEvent
-    processRunEventToLog(state, skillEvent, addEntry)
+    processRunEventToActivity(state, skillEvent, addActivity)
 
-    expect(logs).toHaveLength(0)
+    expect(activities).toHaveLength(0)
   })
 
-  it("attaches reasoning from completeReasoning event", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
-    const addEntry = (entry: LogEntry) => logs.push(entry)
+  it("attaches reasoning from completeStreamingReasoning event", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
+    const addActivity = (activity: Activity) => activities.push(activity)
 
-    // completeReasoning (RuntimeEvent) should update state but not produce log
     const reasoningEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
       jobId: "job-1",
-      type: "completeReasoning",
+      expertKey: "test-expert@1.0.0",
+      stepNumber: 1,
+      type: "completeStreamingReasoning",
       timestamp: Date.now(),
       text: "Thinking about the task...",
     } as PerstackEvent
-    processRunEventToLog(state, reasoningEvent, addEntry)
-    expect(logs).toHaveLength(0)
-    // Reasoning is stored as pending until next RunEvent (per new architecture)
+    processRunEventToActivity(state, reasoningEvent, addActivity)
+    expect(activities).toHaveLength(0)
 
-    // Tool call
     const callEvent = createBaseEvent({
       id: "e-2",
       type: "callTools",
@@ -190,17 +182,16 @@ describe("LogStore processing logic", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, addEntry)
+    processRunEventToActivity(state, callEvent, addActivity)
 
-    // Tool result should have reasoning attached
     const resultEvent = createBaseEvent({
       id: "e-3",
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, addEntry)
+    processRunEventToActivity(state, resultEvent, addActivity)
 
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.reasoning).toBe("Thinking about the task...")
+    expect(activities).toHaveLength(1)
+    expect(activities[0].reasoning).toBe("Thinking about the task...")
   })
 })

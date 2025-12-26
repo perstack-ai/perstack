@@ -20,7 +20,6 @@ import {
   createResolveToolResultsEvent,
   createRuntimeInitEvent,
   createStartRunEvent,
-  createStreamingTextEvent,
   getFilteredEnv,
 } from "@perstack/core"
 
@@ -240,9 +239,7 @@ export class ClaudeCodeAdapter extends BaseAdapter {
             const text = content.text?.trim()
             if (text && text !== state.lastStreamingText) {
               state.lastStreamingText = text
-              const event = createStreamingTextEvent(jobId, runId, text)
-              state.events.push(event)
-              eventListener?.(event)
+              // Note: streamingText event was removed - text is tracked in state
             }
           } else if (content.type === "tool_use") {
             const toolCall: ToolCall = {
@@ -323,9 +320,7 @@ export class ClaudeCodeAdapter extends BaseAdapter {
       const delta = parsed.delta as { type?: string; text?: string }
       const text = delta.text?.trim()
       if (delta.type === "text_delta" && text) {
-        const event = createStreamingTextEvent(jobId, runId, text)
-        state.events.push(event)
-        eventListener?.(event)
+        // Note: streamingText event was removed - delta text is not streamed
       }
     }
   }

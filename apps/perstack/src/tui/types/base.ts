@@ -1,5 +1,5 @@
-export type { PerstackEvent } from "@perstack/core"
-export type { LogEntry, RuntimeState, StreamingState } from "@perstack/react"
+export type { Activity, PerstackEvent } from "@perstack/core"
+export type { RuntimeState, StreamingState } from "@perstack/react"
 
 export type EventResult = { initialized?: boolean; completed?: boolean; stopped?: boolean }
 export type RuntimeInfo = {
@@ -16,7 +16,6 @@ export type RuntimeInfo = {
   activeSkills: string[]
   contextWindowUsage: number
   runtime?: string
-  streamingText?: string
   /** Accumulated streaming reasoning text (extended thinking) */
   streamingReasoning?: string
   dockerState?: "building" | "starting" | "running" | "healthy" | "stopped" | "error"

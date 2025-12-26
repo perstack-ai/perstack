@@ -1,4 +1,4 @@
-import { useLogStore } from "@perstack/react"
+import { useRun } from "@perstack/react"
 import { useCallback, useEffect, useMemo } from "react"
 import type { InputAreaContextValue } from "../context/index.js"
 import type {
@@ -51,7 +51,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadHistoricalEvents,
     onReady,
   } = props
-  const logStore = useLogStore()
+  const runState = useRun()
   const {
     runtimeInfo,
     handleEvent,
@@ -75,7 +75,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onComplete,
     onContinue,
     onReady,
-    stepStoreAddEvent: logStore.addEvent,
+    stepStoreAddEvent: runState.addEvent,
     handleEvent,
   })
   useEffect(() => {
@@ -103,7 +103,7 @@ export const useAppState = (props: UseAppStateProps) => {
     onLoadEvents,
     onResumeFromCheckpoint,
     onLoadHistoricalEvents,
-    appendHistoricalEvents: logStore.appendHistoricalEvents,
+    appendHistoricalEvents: runState.appendHistoricalEvents,
     setCurrentStep,
     setContextWindowUsage,
     dispatch,
@@ -139,7 +139,7 @@ export const useAppState = (props: UseAppStateProps) => {
     ],
   )
   return {
-    logStore,
+    runState,
     runtimeInfo,
     inputState,
     inputAreaContextValue,

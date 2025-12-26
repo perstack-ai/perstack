@@ -1,11 +1,10 @@
-import type { PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
+import type { Activity, PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
 import { describe, expect, it } from "vitest"
-import type { LogEntry } from "../types/index.js"
 import {
-  createInitialLogProcessState,
-  processRunEventToLog,
-  toolToCheckpointAction,
-} from "./event-to-log.js"
+  createInitialActivityProcessState,
+  processRunEventToActivity,
+  toolToActivity,
+} from "./event-to-activity.js"
 
 function createToolCall(overrides: Partial<ToolCall> = {}): ToolCall {
   return {
@@ -40,19 +39,23 @@ function createBaseEvent(overrides: Partial<RunEvent> = {}): RunEvent {
   } as RunEvent
 }
 
-describe("toolToCheckpointAction", () => {
-  it("converts readTextFile tool to action", () => {
+describe("toolToActivity", () => {
+  it("converts readTextFile tool to activity", () => {
     const toolCall = createToolCall()
     const toolResult = createToolResult()
-    const action = toolToCheckpointAction(toolCall, toolResult)
-    expect(action.type).toBe("readTextFile")
-    if (action.type === "readTextFile") {
-      expect(action.path).toBe("/test.txt")
-      expect(action.content).toBe("file content")
+    const activity = toolToActivity(toolCall, toolResult, undefined, {
+      id: "act-1",
+      expertKey: "test@1.0.0",
+      runId: "run-1",
+    })
+    expect(activity.type).toBe("readTextFile")
+    if (activity.type === "readTextFile") {
+      expect(activity.path).toBe("/test.txt")
+      expect(activity.content).toBe("file content")
     }
   })
 
-  it("converts writeTextFile tool to action", () => {
+  it("converts writeTextFile tool to activity", () => {
     const toolCall = createToolCall({
       toolName: "writeTextFile",
       args: { path: "/new.txt", text: "new content" },
@@ -61,15 +64,19 @@ describe("toolToCheckpointAction", () => {
       toolName: "writeTextFile",
       result: [{ type: "textPart", id: "tp-1", text: "{}" }],
     })
-    const action = toolToCheckpointAction(toolCall, toolResult)
-    expect(action.type).toBe("writeTextFile")
-    if (action.type === "writeTextFile") {
-      expect(action.path).toBe("/new.txt")
-      expect(action.text).toBe("new content")
+    const activity = toolToActivity(toolCall, toolResult, undefined, {
+      id: "act-1",
+      expertKey: "test@1.0.0",
+      runId: "run-1",
+    })
+    expect(activity.type).toBe("writeTextFile")
+    if (activity.type === "writeTextFile") {
+      expect(activity.path).toBe("/new.txt")
+      expect(activity.text).toBe("new content")
     }
   })
 
-  it("converts exec tool to action", () => {
+  it("converts exec tool to activity", () => {
     const toolCall = createToolCall({
       toolName: "exec",
       args: { command: "ls", args: ["-la"], cwd: "/workspace" },
@@ -78,17 +85,21 @@ describe("toolToCheckpointAction", () => {
       toolName: "exec",
       result: [{ type: "textPart", id: "tp-1", text: '{"output": "file list"}' }],
     })
-    const action = toolToCheckpointAction(toolCall, toolResult)
-    expect(action.type).toBe("exec")
-    if (action.type === "exec") {
-      expect(action.command).toBe("ls")
-      expect(action.args).toEqual(["-la"])
-      expect(action.cwd).toBe("/workspace")
-      expect(action.output).toBe("file list")
+    const activity = toolToActivity(toolCall, toolResult, undefined, {
+      id: "act-1",
+      expertKey: "test@1.0.0",
+      runId: "run-1",
+    })
+    expect(activity.type).toBe("exec")
+    if (activity.type === "exec") {
+      expect(activity.command).toBe("ls")
+      expect(activity.args).toEqual(["-la"])
+      expect(activity.cwd).toBe("/workspace")
+      expect(activity.output).toBe("file list")
     }
   })
 
-  it("converts general tool to action", () => {
+  it("converts general tool to activity", () => {
     const toolCall = createToolCall({
       skillName: "custom-skill",
       toolName: "customTool",
@@ -99,27 +110,35 @@ describe("toolToCheckpointAction", () => {
       toolName: "customTool",
       result: [{ type: "textPart", id: "tp-1", text: "result" }],
     })
-    const action = toolToCheckpointAction(toolCall, toolResult)
-    expect(action.type).toBe("generalTool")
-    if (action.type === "generalTool") {
-      expect(action.skillName).toBe("custom-skill")
-      expect(action.toolName).toBe("customTool")
-      expect(action.args).toEqual({ foo: "bar" })
+    const activity = toolToActivity(toolCall, toolResult, undefined, {
+      id: "act-1",
+      expertKey: "test@1.0.0",
+      runId: "run-1",
+    })
+    expect(activity.type).toBe("generalTool")
+    if (activity.type === "generalTool") {
+      expect(activity.skillName).toBe("custom-skill")
+      expect(activity.toolName).toBe("customTool")
+      expect(activity.args).toEqual({ foo: "bar" })
     }
   })
 
   it("includes reasoning when provided", () => {
     const toolCall = createToolCall()
     const toolResult = createToolResult()
-    const action = toolToCheckpointAction(toolCall, toolResult, "My reasoning")
-    expect(action.reasoning).toBe("My reasoning")
+    const activity = toolToActivity(toolCall, toolResult, "My reasoning", {
+      id: "act-1",
+      expertKey: "test@1.0.0",
+      runId: "run-1",
+    })
+    expect(activity.reasoning).toBe("My reasoning")
   })
 })
 
-describe("processRunEventToLog", () => {
-  it("processes completeRun event to complete action", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+describe("processRunEventToActivity", () => {
+  it("processes completeRun event to complete activity", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "completeRun",
       text: "Done!",
@@ -127,70 +146,70 @@ describe("processRunEventToLog", () => {
       step: {} as RunEvent["step"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("complete")
-    if (logs[0].action.type === "complete") {
-      expect(logs[0].action.text).toBe("Done!")
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("complete")
+    if (activities[0].type === "complete") {
+      expect(activities[0].text).toBe("Done!")
     }
   })
 
-  it("processes stopRunByError event to error action", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("processes stopRunByError event to error activity", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "stopRunByError",
       error: { name: "TestError", message: "Something failed", isRetryable: false },
       checkpoint: {} as RunEvent["checkpoint"],
       step: {} as RunEvent["step"],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("error")
-    if (logs[0].action.type === "error") {
-      expect(logs[0].action.errorName).toBe("TestError")
-      expect(logs[0].action.error).toBe("Something failed")
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("error")
+    if (activities[0].type === "error") {
+      expect(activities[0].errorName).toBe("TestError")
+      expect(activities[0].error).toBe("Something failed")
     }
   })
 
   it("processes tool call and result events", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const callEvent = createBaseEvent({
       type: "callTools",
       toolCalls: [createToolCall()],
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
 
     const resultEvent = createBaseEvent({
       id: "e-2",
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("readTextFile")
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("readTextFile")
   })
 
-  it("processes completeReasoning and includes reasoning in next action", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("processes completeStreamingReasoning and includes reasoning in next activity", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
-    // completeReasoning is a RuntimeEvent
     const reasoningEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
       jobId: "job-1",
-      type: "completeReasoning",
+      expertKey: "test@1.0.0",
+      stepNumber: 1,
+      type: "completeStreamingReasoning",
       timestamp: Date.now(),
       text: "I should read the file",
     } as PerstackEvent
-    processRunEventToLog(state, reasoningEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
-    // Note: reasoning is now stored as pending until a RunEvent arrives
+    processRunEventToActivity(state, reasoningEvent, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
 
     const callEvent = createBaseEvent({
       id: "e-2",
@@ -199,23 +218,22 @@ describe("processRunEventToLog", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
 
     const resultEvent = createBaseEvent({
       id: "e-3",
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.reasoning).toBe("I should read the file")
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
+    expect(activities[0].reasoning).toBe("I should read the file")
   })
 
-  it("ignores RuntimeEvent (except completeReasoning)", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("ignores RuntimeEvent (except completeStreamingReasoning)", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
-    // RuntimeEvent should be ignored
     const runtimeEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
@@ -226,38 +244,38 @@ describe("processRunEventToLog", () => {
       service: "runtime",
       message: "Building image...",
     } as PerstackEvent
-    processRunEventToLog(state, runtimeEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    processRunEventToActivity(state, runtimeEvent, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
   })
 
   it("processes retry event", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "retry",
       reason: "Rate limit exceeded",
       newMessages: [],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("retry")
-    if (logs[0].action.type === "retry") {
-      expect(logs[0].action.error).toBe("Rate limit exceeded")
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("retry")
+    if (activities[0].type === "retry") {
+      expect(activities[0].error).toBe("Rate limit exceeded")
     }
   })
 
   it("ignores events without expertKey (not RunEvent)", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = { id: "e-1", runId: "run-1", type: "unknown" } as unknown as PerstackEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
   })
 
-  it("processes startRun event to query action", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("processes startRun event to query activity", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "startRun",
       initialCheckpoint: {},
@@ -269,17 +287,17 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("query")
-    if (logs[0].action.type === "query") {
-      expect(logs[0].action.text).toBe("Hello world")
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("query")
+    if (activities[0].type === "query") {
+      expect(activities[0].text).toBe("Hello world")
     }
   })
 
   it("only logs query once per run", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "startRun",
       initialCheckpoint: {},
@@ -291,14 +309,14 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
   })
 
   it("resets query state after completion for new run", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // First run
     const startEvent1 = createBaseEvent({
@@ -312,7 +330,7 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent1, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent1, (a) => activities.push(a))
 
     const completeEvent = createBaseEvent({
       id: "e-2",
@@ -322,7 +340,7 @@ describe("processRunEventToLog", () => {
       step: {},
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, completeEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, completeEvent, (a) => activities.push(a))
 
     // Second run
     const startEvent2 = createBaseEvent({
@@ -338,34 +356,34 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent2, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent2, (a) => activities.push(a))
 
-    expect(logs).toHaveLength(3)
-    expect(logs[0].action.type).toBe("query")
-    expect(logs[1].action.type).toBe("complete")
-    expect(logs[2].action.type).toBe("query")
-    if (logs[2].action.type === "query") {
-      expect(logs[2].action.text).toBe("Second query")
+    expect(activities).toHaveLength(3)
+    expect(activities[0].type).toBe("query")
+    expect(activities[1].type).toBe("complete")
+    expect(activities[2].type).toBe("query")
+    if (activities[2].type === "query") {
+      expect(activities[2].text).toBe("Second query")
     }
   })
 
   it("processes callInteractiveTool event", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     const toolCall = createToolCall({ id: "interactive-1", toolName: "askUser" })
     const callEvent = createBaseEvent({
       type: "callInteractiveTool",
       toolCall,
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
     expect(state.tools.has("interactive-1")).toBe(true)
   })
 
   it("processes callDelegate event with toolCalls array - logs immediately", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     const toolCall = createToolCall({
       id: "delegate-1",
@@ -377,19 +395,19 @@ describe("processRunEventToLog", () => {
       type: "callDelegate",
       toolCalls: [toolCall],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
     // callDelegate logs immediately (unlike other tool calls that wait for results)
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("delegate")
-    expect((logs[0].action as CheckpointAction & { type: "delegate" }).expertKey).toBe(
-      "child-expert",
-    )
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("delegate")
+    if (activities[0].type === "delegate") {
+      expect(activities[0].delegateExpertKey).toBe("child-expert")
+    }
     expect(state.tools.has("delegate-1")).toBe(true)
   })
 
   it("processes attemptCompletion event with single toolResult", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // First add tool call
     const toolCall = createToolCall({ id: "attempt-1", toolName: "attemptCompletion" })
@@ -399,7 +417,7 @@ describe("processRunEventToLog", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
 
     // Then resolve with attemptCompletion event (single toolResult)
     const toolResult = createToolResult({
@@ -412,27 +430,27 @@ describe("processRunEventToLog", () => {
       type: "attemptCompletion",
       toolResult,
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
 
-    expect(logs).toHaveLength(1)
-    expect(logs[0].action.type).toBe("attemptCompletion")
+    expect(activities).toHaveLength(1)
+    expect(activities[0].type).toBe("attemptCompletion")
   })
 
   it("does not log query when startRun has no user message", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "startRun",
       initialCheckpoint: {},
       inputMessages: [{ id: "m-1", type: "systemMessage", contents: [] }],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
   })
 
   it("does not log query when user message has no text content", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
     const event = createBaseEvent({
       type: "startRun",
       initialCheckpoint: {},
@@ -440,13 +458,13 @@ describe("processRunEventToLog", () => {
         { id: "m-1", type: "userMessage", contents: [{ type: "imagePart", id: "ip-1" }] },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
-    expect(logs).toHaveLength(0)
+    processRunEventToActivity(state, event, (a) => activities.push(a))
+    expect(activities).toHaveLength(0)
   })
 
   it("does not duplicate tool log when already logged", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     const toolCall = createToolCall()
     const callEvent = createBaseEvent({
@@ -455,34 +473,36 @@ describe("processRunEventToLog", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
 
     const resultEvent = createBaseEvent({
       id: "e-2",
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
     // Try to log same result again
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
 
-    expect(logs).toHaveLength(1)
+    expect(activities).toHaveLength(1)
   })
 
-  it("clears reasoning after logging tool action", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("clears reasoning after logging tool activity", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
-    // Set reasoning via completeReasoning event (uses runId to store in correct RunState)
+    // Set reasoning via completeStreamingReasoning event
     const reasoningEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
       jobId: "job-1",
-      type: "completeReasoning",
+      expertKey: "test@1.0.0",
+      stepNumber: 1,
+      type: "completeStreamingReasoning",
       timestamp: Date.now(),
       text: "My reasoning",
     } as PerstackEvent
-    processRunEventToLog(state, reasoningEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, reasoningEvent, (a) => activities.push(a))
 
     // Tool call and result
     const callEvent = createBaseEvent({
@@ -492,22 +512,22 @@ describe("processRunEventToLog", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
 
     const resultEvent = createBaseEvent({
       id: "e-3",
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
 
     // Reasoning should be cleared from the run state
     expect(state.runStates.get("run-1")?.completedReasoning).toBeUndefined()
   })
 
   it("correctly attributes reasoning to the right run in parallel execution", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // Start two runs in parallel
     const startEventA = createBaseEvent({
@@ -523,7 +543,7 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEventA, (e) => logs.push(e))
+    processRunEventToActivity(state, startEventA, (a) => activities.push(a))
 
     const startEventB = createBaseEvent({
       id: "e-2",
@@ -539,29 +559,33 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEventB, (e) => logs.push(e))
+    processRunEventToActivity(state, startEventB, (a) => activities.push(a))
 
     // Expert A's reasoning arrives
     const reasoningA: PerstackEvent = {
       id: "r-1",
       runId: "run-A",
       jobId: "job-1",
-      type: "completeReasoning",
+      expertKey: "expert-A@1.0.0",
+      stepNumber: 1,
+      type: "completeStreamingReasoning",
       timestamp: Date.now(),
       text: "Reasoning for A",
     } as PerstackEvent
-    processRunEventToLog(state, reasoningA, (e) => logs.push(e))
+    processRunEventToActivity(state, reasoningA, (a) => activities.push(a))
 
     // Expert B's reasoning arrives (should NOT overwrite A's)
     const reasoningB: PerstackEvent = {
       id: "r-2",
       runId: "run-B",
       jobId: "job-1",
-      type: "completeReasoning",
+      expertKey: "expert-B@1.0.0",
+      stepNumber: 1,
+      type: "completeStreamingReasoning",
       timestamp: Date.now(),
       text: "Reasoning for B",
     } as PerstackEvent
-    processRunEventToLog(state, reasoningB, (e) => logs.push(e))
+    processRunEventToActivity(state, reasoningB, (a) => activities.push(a))
 
     // Expert B completes first
     const completeB = createBaseEvent({
@@ -574,7 +598,7 @@ describe("processRunEventToLog", () => {
       step: {},
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, completeB, (e) => logs.push(e))
+    processRunEventToActivity(state, completeB, (a) => activities.push(a))
 
     // Expert A completes later
     const completeA = createBaseEvent({
@@ -587,28 +611,28 @@ describe("processRunEventToLog", () => {
       step: {},
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, completeA, (e) => logs.push(e))
+    processRunEventToActivity(state, completeA, (a) => activities.push(a))
 
     // Verify reasoning is correctly attributed
-    const completionLogs = logs.filter((l) => l.action.type === "complete")
-    expect(completionLogs).toHaveLength(2)
+    const completionActivities = activities.filter((a) => a.type === "complete")
+    expect(completionActivities).toHaveLength(2)
 
-    const logB = completionLogs.find((l) => l.runId === "run-B")
-    const logA = completionLogs.find((l) => l.runId === "run-A")
+    const activityB = completionActivities.find((a) => a.runId === "run-B")
+    const activityA = completionActivities.find((a) => a.runId === "run-A")
 
-    expect(logB).toBeDefined()
-    expect(logA).toBeDefined()
-    if (logB?.action.type === "complete") {
-      expect(logB.action.reasoning).toBe("Reasoning for B")
+    expect(activityB).toBeDefined()
+    expect(activityA).toBeDefined()
+    if (activityB?.type === "complete") {
+      expect(activityB.reasoning).toBe("Reasoning for B")
     }
-    if (logA?.action.type === "complete") {
-      expect(logA.action.reasoning).toBe("Reasoning for A")
+    if (activityA?.type === "complete") {
+      expect(activityA.reasoning).toBe("Reasoning for A")
     }
   })
 
   it("logs new query when resuming incomplete checkpoint with different runId", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // First run (incomplete - no completeRun)
     const startEvent1 = createBaseEvent({
@@ -623,9 +647,8 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent1, (e) => logs.push(e))
-    expect(logs).toHaveLength(1)
-    // Per-run state is now stored in state.runStates, verify via log output
+    processRunEventToActivity(state, startEvent1, (a) => activities.push(a))
+    expect(activities).toHaveLength(1)
 
     // New run with different runId (resuming from incomplete checkpoint)
     const startEvent2 = createBaseEvent({
@@ -641,20 +664,20 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent2, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent2, (a) => activities.push(a))
 
     // Should have logged both queries
-    expect(logs).toHaveLength(2)
-    expect(logs[0].action.type).toBe("query")
-    expect(logs[1].action.type).toBe("query")
-    if (logs[1].action.type === "query") {
-      expect(logs[1].action.text).toBe("Second query")
+    expect(activities).toHaveLength(2)
+    expect(activities[0].type).toBe("query")
+    expect(activities[1].type).toBe("query")
+    if (activities[1].type === "query") {
+      expect(activities[1].text).toBe("Second query")
     }
   })
 
   it("preserves tools map across runs for delegation handling", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // First run with tool (e.g., delegation call)
     const startEvent1 = createBaseEvent({
@@ -669,7 +692,7 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent1, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent1, (a) => activities.push(a))
 
     const toolCall = createToolCall({ id: "tc-1" })
     const callEvent = createBaseEvent({
@@ -680,7 +703,7 @@ describe("processRunEventToLog", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
     expect(state.tools.has("tc-1")).toBe(true)
 
     // New run - tools should be PRESERVED (needed for delegation results)
@@ -697,15 +720,15 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent2, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent2, (a) => activities.push(a))
 
     // Tools map should be preserved for delegation result handling
     expect(state.tools.has("tc-1")).toBe(true)
   })
 
-  it("maintains daisy chain with previousEntryId within a run", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("maintains daisy chain with previousActivityId within a run", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // Start run
     const startEvent = createBaseEvent({
@@ -720,7 +743,7 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent, (a) => activities.push(a))
 
     // Tool call and result
     const toolCall = createToolCall({ id: "tc-1" })
@@ -732,7 +755,7 @@ describe("processRunEventToLog", () => {
       newMessage: {} as RunEvent["newMessage"],
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
 
     const resultEvent = createBaseEvent({
       id: "e-3",
@@ -740,17 +763,17 @@ describe("processRunEventToLog", () => {
       type: "resolveToolResults",
       toolResults: [createToolResult()],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, resultEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, resultEvent, (a) => activities.push(a))
 
     // Verify daisy chain
-    expect(logs).toHaveLength(2)
-    expect(logs[0].previousEntryId).toBeUndefined() // First entry has no previous
-    expect(logs[1].previousEntryId).toBe(logs[0].id) // Second entry points to first
+    expect(activities).toHaveLength(2)
+    expect(activities[0].previousActivityId).toBeUndefined() // First activity has no previous
+    expect(activities[1].previousActivityId).toBe(activities[0].id) // Second activity points to first
   })
 
   it("extracts delegatedBy from initialCheckpoint", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     const event = createBaseEvent({
       type: "startRun",
@@ -772,20 +795,20 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, event, (e) => logs.push(e))
+    processRunEventToActivity(state, event, (a) => activities.push(a))
 
-    expect(logs).toHaveLength(1)
-    expect(logs[0].delegatedBy).toEqual({
+    expect(activities).toHaveLength(1)
+    expect(activities[0].delegatedBy).toEqual({
       expertKey: "parent-expert@1.0.0",
       runId: "parent-run",
     })
-    expect(logs[0].expertKey).toBe("test-expert@1.0.0")
-    expect(logs[0].runId).toBe("child-run")
+    expect(activities[0].expertKey).toBe("test-expert@1.0.0")
+    expect(activities[0].runId).toBe("child-run")
   })
 
-  it("propagates delegatedBy to all entries in a delegated run", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+  it("propagates delegatedBy to all activities in a delegated run", () => {
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // Start delegated run
     const startEvent = createBaseEvent({
@@ -808,7 +831,7 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, startEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, startEvent, (a) => activities.push(a))
 
     // Complete run
     const completeEvent = createBaseEvent({
@@ -820,19 +843,19 @@ describe("processRunEventToLog", () => {
       step: {},
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, completeEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, completeEvent, (a) => activities.push(a))
 
-    // Both entries should have delegatedBy
-    expect(logs).toHaveLength(2)
-    expect(logs[0].delegatedBy).toBeDefined()
-    expect(logs[1].delegatedBy).toBeDefined()
-    expect(logs[0].delegatedBy?.runId).toBe("parent-run")
-    expect(logs[1].delegatedBy?.runId).toBe("parent-run")
+    // Both activities should have delegatedBy
+    expect(activities).toHaveLength(2)
+    expect(activities[0].delegatedBy).toBeDefined()
+    expect(activities[1].delegatedBy).toBeDefined()
+    expect(activities[0].delegatedBy?.runId).toBe("parent-run")
+    expect(activities[1].delegatedBy?.runId).toBe("parent-run")
   })
 
   it("processes finishAllToolCalls event for delegation results", () => {
-    const state = createInitialLogProcessState()
-    const logs: LogEntry[] = []
+    const state = createInitialActivityProcessState()
+    const activities: Activity[] = []
 
     // First register delegate tool calls (callDelegate logs immediately)
     const delegateToolCall1 = createToolCall({
@@ -851,11 +874,11 @@ describe("processRunEventToLog", () => {
       type: "callDelegate",
       toolCalls: [delegateToolCall1, delegateToolCall2],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, callEvent, (e) => logs.push(e))
-    // callDelegate logs immediately (2 delegate entries)
-    expect(logs).toHaveLength(2)
-    expect(logs[0].action.type).toBe("delegate")
-    expect(logs[1].action.type).toBe("delegate")
+    processRunEventToActivity(state, callEvent, (a) => activities.push(a))
+    // callDelegate logs immediately (2 delegate activities)
+    expect(activities).toHaveLength(2)
+    expect(activities[0].type).toBe("delegate")
+    expect(activities[1].type).toBe("delegate")
     expect(state.tools.has("delegate-1")).toBe(true)
     expect(state.tools.has("delegate-2")).toBe(true)
 
@@ -884,11 +907,14 @@ describe("processRunEventToLog", () => {
         },
       ],
     } as Partial<RunEvent>) as RunEvent
-    processRunEventToLog(state, finishEvent, (e) => logs.push(e))
+    processRunEventToActivity(state, finishEvent, (a) => activities.push(a))
 
-    // Should have added delegationComplete entry (total: 2 delegates + 1 complete = 3)
-    expect(logs).toHaveLength(3)
-    expect(logs[2].action.type).toBe("delegationComplete")
-    expect((logs[2].action as CheckpointAction & { type: "delegationComplete" }).count).toBe(2)
+    // Should have added delegationComplete activity (total: 2 delegates + 1 complete = 3)
+    expect(activities).toHaveLength(3)
+    expect(activities[2].type).toBe("delegationComplete")
+    if (activities[2].type === "delegationComplete") {
+      expect(activities[2].count).toBe(2)
+    }
   })
 })
+

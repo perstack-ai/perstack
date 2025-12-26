@@ -2,9 +2,6 @@ import type { PerstackEvent, RuntimeEvent } from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import { createInitialRuntimeState } from "../types/index.js"
 
-// Since we can't use React hooks directly in Node.js tests,
-// we test the state update logic by simulating the handler behavior
-
 function createRuntimeEvent<T extends RuntimeEvent["type"]>(
   type: T,
   data: Omit<Extract<RuntimeEvent, { type: T }>, "id" | "timestamp" | "jobId" | "runId" | "type">,
@@ -19,7 +16,7 @@ function createRuntimeEvent<T extends RuntimeEvent["type"]>(
   } as RuntimeEvent
 }
 
-describe("RuntimeState updates", () => {
+describe("useRuntime state updates", () => {
   describe("initializeRuntime", () => {
     it("captures query, expertName, model, and runtime from event", () => {
       const state = createInitialRuntimeState()
@@ -34,7 +31,6 @@ describe("RuntimeState updates", () => {
         query: "Hello world",
       })
 
-      // Simulate state update
       const newState = {
         ...state,
         query: event.query,
@@ -153,80 +149,8 @@ describe("RuntimeState updates", () => {
     })
   })
 
-  describe("streaming events", () => {
-    it("handles startReasoning", () => {
-      const state = createInitialRuntimeState()
-
-      const newState = {
-        ...state,
-        streaming: { ...state.streaming, reasoning: "", isReasoningActive: true },
-      }
-
-      expect(newState.streaming.isReasoningActive).toBe(true)
-      expect(newState.streaming.reasoning).toBe("")
-    })
-
-    it("accumulates streamReasoning deltas", () => {
-      const state = {
-        ...createInitialRuntimeState(),
-        streaming: { reasoning: "Hello ", isReasoningActive: true },
-      }
-      const event = createRuntimeEvent("streamReasoning", { delta: "world" })
-
-      const newState = {
-        ...state,
-        streaming: {
-          ...state.streaming,
-          reasoning: (state.streaming.reasoning ?? "") + event.delta,
-        },
-      }
-
-      expect(newState.streaming.reasoning).toBe("Hello world")
-    })
-
-    it("handles startRunResult", () => {
-      const state = {
-        ...createInitialRuntimeState(),
-        streaming: { reasoning: "Some reasoning", isReasoningActive: false },
-      }
-
-      const newState = {
-        ...state,
-        streaming: {
-          reasoning: undefined,
-          isReasoningActive: false,
-          runResult: "",
-          isRunResultActive: true,
-        },
-      }
-
-      expect(newState.streaming.isRunResultActive).toBe(true)
-      expect(newState.streaming.runResult).toBe("")
-      expect(newState.streaming.reasoning).toBeUndefined()
-    })
-
-    it("accumulates streamRunResult deltas", () => {
-      const state = {
-        ...createInitialRuntimeState(),
-        streaming: { runResult: "Hello ", isRunResultActive: true },
-      }
-      const event = createRuntimeEvent("streamRunResult", { delta: "world" })
-
-      const newState = {
-        ...state,
-        streaming: {
-          ...state.streaming,
-          runResult: (state.streaming.runResult ?? "") + event.delta,
-        },
-      }
-
-      expect(newState.streaming.runResult).toBe("Hello world")
-    })
-  })
-
   describe("event filtering", () => {
-    it("returns false for non-RuntimeEvent", () => {
-      // RunEvent should not be handled by RuntimeState
+    it("returns false for non-RuntimeEvent (RunEvent)", () => {
       const event: PerstackEvent = {
         id: "e-1",
         runId: "run-1",
@@ -239,7 +163,6 @@ describe("RuntimeState updates", () => {
         inputMessages: [],
       } as PerstackEvent
 
-      // Check that it has expertKey (RunEvent identifier)
       expect("expertKey" in event).toBe(true)
     })
   })

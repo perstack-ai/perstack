@@ -1,5 +1,5 @@
 import type { PerstackEvent } from "@perstack/core"
-import { useLogStore } from "@perstack/react"
+import { useRun } from "@perstack/react"
 import { Box, Static, Text, useApp } from "ink"
 import { useCallback, useEffect } from "react"
 import { CheckpointActionRow, StreamingDisplay } from "../components/index.js"
@@ -21,15 +21,15 @@ type ProgressAppProps = {
  * This architecture ensures that:
  * - Static content is truly static (no re-renders)
  * - Streaming content is ephemeral and only active during generation
- * - When streaming completes, content moves to Static via new entries
+ * - When streaming completes, content moves to Static via new activities
  */
 export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
   const { exit } = useApp()
-  const logStore = useLogStore()
+  const runState = useRun()
 
   useEffect(() => {
-    onReady(logStore.addEvent)
-  }, [onReady, logStore.addEvent])
+    onReady(runState.addEvent)
+  }, [onReady, runState.addEvent])
 
   const handleExit = useCallback(() => {
     onExit?.()
@@ -37,12 +37,12 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
   }, [onExit, exit])
 
   useEffect(() => {
-    if (logStore.isComplete) {
+    if (runState.isComplete) {
       const timer = setTimeout(handleExit, 500)
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [logStore.isComplete, handleExit])
+  }, [runState.isComplete, handleExit])
 
   return (
     <Box flexDirection="column">
@@ -54,18 +54,18 @@ export const ProgressApp = ({ title, onReady, onExit }: ProgressAppProps) => {
         </Box>
       )}
 
-      {/* Static section - completed actions only */}
-      <Static items={logStore.logs} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
-        {(entry) => <CheckpointActionRow key={entry.id} action={entry.action} />}
+      {/* Static section - completed activities only */}
+      <Static items={runState.activities} style={{ flexDirection: "column", gap: 1, paddingBottom: 1 }}>
+        {(activity) => <CheckpointActionRow key={activity.id} action={activity} />}
       </Static>
 
       {/* Streaming section - active streaming content */}
-      <StreamingDisplay streaming={logStore.runtimeState.streaming} />
+      <StreamingDisplay streaming={runState.streaming} />
 
       {/* Status footer */}
       <Box marginTop={1}>
-        <Text color="gray">Events: {logStore.eventCount}</Text>
-        {logStore.isComplete && <Text color="green"> ✓ Complete</Text>}
+        <Text color="gray">Events: {runState.eventCount}</Text>
+        {runState.isComplete && <Text color="green"> ✓ Complete</Text>}
       </Box>
     </Box>
   )
