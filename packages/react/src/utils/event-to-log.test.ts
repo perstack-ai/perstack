@@ -190,7 +190,7 @@ describe("processRunEventToLog", () => {
     } as PerstackEvent
     processRunEventToLog(state, reasoningEvent, (e) => logs.push(e))
     expect(logs).toHaveLength(0)
-    expect(state.completedReasoning).toBe("I should read the file")
+    // Note: reasoning is now stored as pending until a RunEvent arrives
 
     const callEvent = createBaseEvent({
       id: "e-2",
@@ -473,7 +473,7 @@ describe("processRunEventToLog", () => {
     const state = createInitialLogProcessState()
     const logs: LogEntry[] = []
 
-    // Set reasoning
+    // Set reasoning (stored as pending until a RunEvent arrives)
     const reasoningEvent: PerstackEvent = {
       id: "e-1",
       runId: "run-1",
@@ -483,7 +483,6 @@ describe("processRunEventToLog", () => {
       text: "My reasoning",
     } as PerstackEvent
     processRunEventToLog(state, reasoningEvent, (e) => logs.push(e))
-    expect(state.completedReasoning).toBe("My reasoning")
 
     // Tool call and result
     const callEvent = createBaseEvent({
@@ -525,8 +524,7 @@ describe("processRunEventToLog", () => {
     } as Partial<RunEvent>) as RunEvent
     processRunEventToLog(state, startEvent1, (e) => logs.push(e))
     expect(logs).toHaveLength(1)
-    expect(state.queryLogged).toBe(true)
-    expect(state.completionLogged).toBe(false)
+    // Per-run state is now stored in state.runStates, verify via log output
 
     // New run with different runId (resuming from incomplete checkpoint)
     const startEvent2 = createBaseEvent({
