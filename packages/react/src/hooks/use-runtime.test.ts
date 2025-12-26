@@ -151,7 +151,8 @@ describe("useRuntime state updates", () => {
 
   describe("event filtering", () => {
     it("returns false for non-RuntimeEvent (RunEvent)", () => {
-      const event: PerstackEvent = {
+      // Minimal RunEvent for testing - only need expertKey to distinguish from RuntimeEvent
+      const event = {
         id: "e-1",
         runId: "run-1",
         expertKey: "test-expert@1.0.0",
@@ -161,7 +162,7 @@ describe("useRuntime state updates", () => {
         type: "startRun",
         initialCheckpoint: {},
         inputMessages: [],
-      } as PerstackEvent
+      } as unknown as PerstackEvent
 
       expect("expertKey" in event).toBe(true)
     })
