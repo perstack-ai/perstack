@@ -1,11 +1,11 @@
 ---
-"@perstack/core": minor
-"@perstack/react": minor
-"@perstack/runner": minor
-"@perstack/runtime": minor
-"@perstack/api-client": minor
-"@perstack/mock": minor
-"perstack": minor
+"@perstack/core": patch
+"@perstack/react": patch
+"@perstack/runner": patch
+"@perstack/runtime": patch
+"@perstack/api-client": patch
+"@perstack/mock": patch
+"perstack": patch
 ---
 
 Add parallel delegation support to TUI
