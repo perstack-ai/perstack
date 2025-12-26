@@ -34,6 +34,8 @@ export interface StreamCallbacks {
   onResultStart?: () => void
   /** Called for each result delta */
   onResultDelta?: (delta: string) => void
+  /** Called when result phase completes */
+  onResultComplete?: (text: string) => void
 }
 
 /** Parameters for streaming text generation */

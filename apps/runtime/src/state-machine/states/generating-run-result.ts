@@ -51,8 +51,9 @@ export async function generatingRunResultLogic({
   const { messages } = checkpoint
   const coreMessages = [...messages, toolMessage].map(messageToCoreMessage)
 
-  // Track if reasoning was completed via callback (to avoid duplicate emissions)
+  // Track if reasoning/result was completed via callback (to avoid duplicate emissions)
   let reasoningCompletedViaCallback = false
+  let resultCompletedViaCallback = false
 
   // Create streaming callbacks for fire-and-forget event emission
   const callbacks: StreamCallbacks = {
@@ -74,6 +75,12 @@ export async function generatingRunResultLogic({
     },
     onResultDelta: (delta) => {
       eventListener(createStreamingEvent("streamRunResult", setting, checkpoint, { delta }))
+    },
+    onResultComplete: (text) => {
+      eventListener(
+        createStreamingEvent("completeStreamingRunResult", setting, checkpoint, { text }),
+      )
+      resultCompletedViaCallback = true
     },
   }
 

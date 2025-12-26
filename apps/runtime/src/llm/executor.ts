@@ -171,6 +171,11 @@ export class LLMExecutor {
       const reasoning = await streamResult.reasoning
       const response = await streamResult.response
 
+      // Complete result streaming if it was started
+      if (resultStarted) {
+        callbacks.onResultComplete?.(text)
+      }
+
       // Construct a result compatible with GenerateTextResult
       const result = {
         text,
