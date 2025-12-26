@@ -1,4 +1,11 @@
-import type { Activity, PerstackEvent, RunEvent, ToolCall, ToolResult } from "@perstack/core"
+import {
+  type Activity,
+  createEmptyUsage,
+  type PerstackEvent,
+  type RunEvent,
+  type ToolCall,
+  type ToolResult,
+} from "@perstack/core"
 import { describe, expect, it } from "vitest"
 import {
   createInitialActivityProcessState,
@@ -48,7 +55,7 @@ describe("useRun processing logic", () => {
       type: "callTools",
       toolCalls: [createToolCall()],
       newMessage: {} as RunEvent["newMessage"],
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, callEvent, addActivity)
 
@@ -65,7 +72,7 @@ describe("useRun processing logic", () => {
       text: "Task completed",
       checkpoint: {} as RunEvent["checkpoint"],
       step: {} as RunEvent["step"],
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, completeEvent, addActivity)
 
@@ -84,7 +91,7 @@ describe("useRun processing logic", () => {
       text: "Done",
       checkpoint: {} as RunEvent["checkpoint"],
       step: {} as RunEvent["step"],
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, completeEvent, addActivity)
 
@@ -118,7 +125,7 @@ describe("useRun processing logic", () => {
       text: "Done",
       checkpoint: {} as RunEvent["checkpoint"],
       step: {} as RunEvent["step"],
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
 
     processRunEventToActivity(state, completeEvent, addActivity)
@@ -180,7 +187,7 @@ describe("useRun processing logic", () => {
       type: "callTools",
       toolCalls: [createToolCall()],
       newMessage: {} as RunEvent["newMessage"],
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      usage: createEmptyUsage(),
     } as Partial<RunEvent>) as RunEvent
     processRunEventToActivity(state, callEvent, addActivity)
 
