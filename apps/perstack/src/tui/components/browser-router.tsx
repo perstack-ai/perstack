@@ -13,8 +13,9 @@ import {
 type BrowsingState = Exclude<InputState, { type: "enteringQuery" } | { type: "running" }>
 type BrowserRouterProps = {
   inputState: BrowsingState
+  showEventsHint?: boolean
 }
-export const BrowserRouter = ({ inputState }: BrowserRouterProps) => {
+export const BrowserRouter = ({ inputState, showEventsHint = true }: BrowserRouterProps) => {
   const ctx = useInputAreaContext()
   const handleEventSelect = useCallback(
     (event: EventHistoryItem) => {
@@ -50,6 +51,7 @@ export const BrowserRouter = ({ inputState }: BrowserRouterProps) => {
           onCheckpointSelect={ctx.onCheckpointSelect}
           onCheckpointResume={ctx.onCheckpointResume}
           onBack={ctx.onBack}
+          showEventsHint={showEventsHint}
         />
       )
     case "browsingEvents":

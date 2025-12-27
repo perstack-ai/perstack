@@ -215,7 +215,10 @@ export const SelectionApp = (props: SelectionAppProps) => {
         {(state.type === "browsingHistory" ||
           state.type === "browsingExperts" ||
           state.type === "browsingCheckpoints") && (
-          <BrowserRouter inputState={state as Parameters<typeof BrowserRouter>[0]["inputState"]} />
+          <BrowserRouter
+            inputState={state as Parameters<typeof BrowserRouter>[0]["inputState"]}
+            showEventsHint={false}
+          />
         )}
       </InputAreaProvider>
 

@@ -9,6 +9,7 @@ export type BrowsingCheckpointsInputProps = {
   onCheckpointSelect: (checkpoint: CheckpointHistoryItem) => void
   onCheckpointResume: (checkpoint: CheckpointHistoryItem) => void
   onBack: () => void
+  showEventsHint?: boolean
 }
 export const BrowsingCheckpointsInput = ({
   job,
@@ -16,9 +17,10 @@ export const BrowsingCheckpointsInput = ({
   onCheckpointSelect,
   onCheckpointResume,
   onBack,
+  showEventsHint = true,
 }: BrowsingCheckpointsInputProps) => (
   <ListBrowser
-    title={`Checkpoints for ${job.expertKey} ${KEY_HINTS.NAVIGATE} ${KEY_HINTS.RESUME} ${KEY_HINTS.EVENTS} ${KEY_HINTS.BACK}`}
+    title={`Checkpoints for ${job.expertKey} ${KEY_HINTS.NAVIGATE} ${KEY_HINTS.RESUME} ${showEventsHint ? KEY_HINTS.EVENTS : ""} ${KEY_HINTS.BACK}`.trim()}
     items={checkpoints}
     onSelect={onCheckpointResume}
     onBack={onBack}
