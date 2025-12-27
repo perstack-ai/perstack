@@ -87,9 +87,9 @@ export const startCommand = new Command()
         key,
         name: key,
       }))
-      const recentExperts = await getRecentExperts(10)
+      const recentExperts = getRecentExperts(10)
       const historyJobs: JobHistoryItem[] = showHistory
-        ? (await getAllJobs()).map((j) => ({
+        ? getAllJobs().map((j) => ({
             jobId: j.id,
             status: j.status,
             expertKey: j.coordinatorExpertKey,
@@ -130,18 +130,18 @@ export const startCommand = new Command()
           resumeState.checkpoint = cp
         },
         onLoadCheckpoints: async (j: JobHistoryItem): Promise<CheckpointHistoryItem[]> => {
-          const checkpoints = await getCheckpointsWithDetails(j.jobId)
+          const checkpoints = getCheckpointsWithDetails(j.jobId)
           return checkpoints.map((cp) => ({ ...cp, jobId: j.jobId }))
         },
         onLoadEvents: async (
           j: JobHistoryItem,
           cp: CheckpointHistoryItem,
         ): Promise<EventHistoryItem[]> => {
-          const events = await getEventsWithDetails(j.jobId, cp.runId, cp.stepNumber)
+          const events = getEventsWithDetails(j.jobId, cp.runId, cp.stepNumber)
           return events.map((e) => ({ ...e, jobId: j.jobId }))
         },
         onLoadHistoricalEvents: async (cp: CheckpointHistoryItem) => {
-          return await getEventContents(cp.jobId, cp.runId, cp.stepNumber)
+          return getEventContents(cp.jobId, cp.runId, cp.stepNumber)
         },
       })
       const finalExpertKey = result.expertKey || input.expertKey
@@ -152,7 +152,7 @@ export const startCommand = new Command()
       }
       let currentCheckpoint =
         resumeState.checkpoint !== null
-          ? await getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.id)
+          ? getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.id)
           : checkpoint
       if (currentCheckpoint && currentCheckpoint.expert.key !== finalExpertKey) {
         console.error(
