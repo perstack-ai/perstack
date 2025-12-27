@@ -28,6 +28,7 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
 
   useInput((input, key) => {
     if (key.ctrl && input === "c") {
+      state.clearTimeout()
       exit()
     }
   })

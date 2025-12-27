@@ -25,6 +25,7 @@ export type ExecutionState = {
   runStatus: RunStatus
   isAcceptingContinue: boolean
   handleContinueSubmit: (query: string) => void
+  clearTimeout: () => void
 }
 
 export const useExecutionState = (options: UseExecutionStateOptions): ExecutionState => {
@@ -110,5 +111,6 @@ export const useExecutionState = (options: UseExecutionStateOptions): ExecutionS
     runStatus,
     isAcceptingContinue,
     handleContinueSubmit,
+    clearTimeout: clearTimeoutIfExists,
   }
 }
