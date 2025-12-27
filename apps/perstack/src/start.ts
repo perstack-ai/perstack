@@ -9,6 +9,7 @@ import { Command } from "commander"
 import { resolveRunContext } from "./lib/context.js"
 import { parseInteractiveToolCallResult } from "./lib/interactive.js"
 import {
+  getAllEventContentsForJob,
   getAllJobs,
   getCheckpointById,
   getCheckpointsWithDetails,
@@ -157,15 +158,16 @@ export const startCommand = new Command()
       let currentQuery: string | null = selection.query
       let currentJobId = currentCheckpoint?.jobId ?? input.options.jobId
 
+      // Track accumulated events across continues
+      // On first iteration, load all events for the job up to the checkpoint
+      // On subsequent iterations, append new events from the previous run
+      let accumulatedEvents: ReturnType<typeof getEventContents> | undefined = currentCheckpoint
+        ? getAllEventContentsForJob(currentCheckpoint.jobId, currentCheckpoint.stepNumber)
+        : undefined
+
       while (currentQuery !== null) {
-        // Load historical events for resume
-        const historicalEvents = currentCheckpoint
-          ? getEventContents(
-              currentCheckpoint.jobId,
-              currentCheckpoint.runId,
-              currentCheckpoint.stepNumber,
-            )
-          : undefined
+        // Use accumulated events for historical display
+        const historicalEvents = accumulatedEvents
 
         // Start execution TUI
         const { result: executionResult, eventListener } = renderExecution({
@@ -227,6 +229,14 @@ export const startCommand = new Command()
           currentQuery = result.nextQuery
           currentCheckpoint = runResult
           currentJobId = runResult.jobId
+
+          // Accumulate events from the completed run for the next iteration
+          const newRunEvents = getEventContents(runResult.jobId, runResult.runId)
+          if (accumulatedEvents) {
+            accumulatedEvents = [...accumulatedEvents, ...newRunEvents]
+          } else {
+            accumulatedEvents = newRunEvents
+          }
         } else {
           currentQuery = null
         }

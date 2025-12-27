@@ -117,3 +117,13 @@ export function getEventsWithDetails(
 export function getEventContents(jobId: string, runId: string, maxStepNumber?: number): RunEvent[] {
   return runtimeGetEventContents(jobId, runId, maxStepNumber)
 }
+
+export function getAllEventContentsForJob(jobId: string, maxStepNumber?: number): RunEvent[] {
+  const runs = getRunsByJobId(jobId)
+  const allEvents: RunEvent[] = []
+  for (const run of runs) {
+    const events = runtimeGetEventContents(jobId, run.runId, maxStepNumber)
+    allEvents.push(...events)
+  }
+  return allEvents.sort((a, b) => a.timestamp - b.timestamp)
+}
