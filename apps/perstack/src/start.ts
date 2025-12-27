@@ -160,7 +160,7 @@ export const startCommand = new Command()
       while (currentQuery !== null) {
         // Load historical events for resume
         const historicalEvents = currentCheckpoint
-          ? await getEventContents(
+          ? getEventContents(
               currentCheckpoint.jobId,
               currentCheckpoint.runId,
               currentCheckpoint.stepNumber,
