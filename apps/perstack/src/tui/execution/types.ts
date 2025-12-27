@@ -24,4 +24,3 @@ export type ExecutionParams = {
   /** Historical events to display (for resume) */
   historicalEvents?: PerstackEvent[]
 }
-

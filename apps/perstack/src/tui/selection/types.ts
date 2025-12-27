@@ -31,4 +31,3 @@ export type SelectionParams = {
   /** Callback to load checkpoints for a job */
   onLoadCheckpoints: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
 }
-

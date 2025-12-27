@@ -1,7 +1,7 @@
 import type { PerstackEvent } from "@perstack/core"
 import { useRun } from "@perstack/react"
 import { Box, Static, Text, useApp, useInput } from "ink"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CheckpointActionRow, RunSetting, StreamingDisplay } from "../components/index.js"
 import { useRuntimeInfo, useTextInput } from "../hooks/index.js"
 import type { ExecutionParams, ExecutionResult } from "./types.js"
@@ -12,27 +12,14 @@ type ExecutionAppProps = ExecutionParams & {
 }
 
 export const ExecutionApp = (props: ExecutionAppProps) => {
-  const {
-    expertKey,
-    query,
-    config,
-    continueTimeoutMs,
-    historicalEvents,
-    onReady,
-    onComplete,
-  } = props
+  const { expertKey, query, config, continueTimeoutMs, historicalEvents, onReady, onComplete } =
+    props
 
   const { exit } = useApp()
   const runState = useRun()
 
   // Runtime info state
-  const {
-    runtimeInfo,
-    handleEvent,
-    setQuery,
-    setCurrentStep,
-    setContextWindowUsage,
-  } = useRuntimeInfo({
+  const { runtimeInfo, handleEvent, setQuery } = useRuntimeInfo({
     initialExpertName: expertKey,
     initialConfig: config,
   })
@@ -133,11 +120,7 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
 
       {/* Status bar */}
       {runStatus === "running" ? (
-        <RunSetting
-          info={runtimeInfo}
-          eventCount={runState.eventCount}
-          isEditing={false}
-        />
+        <RunSetting info={runtimeInfo} eventCount={runState.eventCount} isEditing={false} />
       ) : (
         <Box flexDirection="column" borderStyle="single" borderColor="gray">
           <Text>
@@ -156,4 +139,3 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
     </Box>
   )
 }
-

@@ -1,4 +1,4 @@
-export { renderExecution, type ExecutionParams, type ExecutionResult } from "./execution/index.js"
+export { type ExecutionParams, type ExecutionResult, renderExecution } from "./execution/index.js"
 export { type ProgressHandle, renderProgress } from "./progress/render.js"
 export { renderPublish } from "./publish/render.js"
 export { renderSelection, type SelectionParams, type SelectionResult } from "./selection/index.js"

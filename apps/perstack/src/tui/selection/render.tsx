@@ -29,4 +29,3 @@ export async function renderSelection(params: SelectionParams): Promise<Selectio
       .catch(reject)
   })
 }
-

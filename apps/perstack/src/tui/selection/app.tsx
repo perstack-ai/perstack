@@ -1,14 +1,10 @@
 import { Box, Text, useApp, useInput } from "ink"
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react"
 import { BrowserRouter } from "../components/index.js"
-import { InputAreaProvider, type InputAreaContextValue } from "../context/index.js"
+import { type InputAreaContextValue, InputAreaProvider } from "../context/index.js"
 import { assertNever } from "../helpers.js"
 import { useTextInput } from "../hooks/index.js"
-import type {
-  CheckpointHistoryItem,
-  ExpertOption,
-  JobHistoryItem,
-} from "../types/index.js"
+import type { CheckpointHistoryItem, ExpertOption, JobHistoryItem } from "../types/index.js"
 import type { SelectionParams, SelectionResult } from "./types.js"
 
 // Selection-specific input states (excludes running state)
@@ -138,13 +134,16 @@ export const SelectionApp = (props: SelectionAppProps) => {
     [onLoadCheckpoints],
   )
 
-  const handleCheckpointResume = useCallback((checkpoint: CheckpointHistoryItem) => {
-    setSelectedCheckpoint(checkpoint)
-    // Need to get expertKey from the job - for now use empty and let parent handle
-    if (state.type === "browsingCheckpoints") {
-      dispatch({ type: "SELECT_EXPERT", expertKey: state.job.expertKey })
-    }
-  }, [state])
+  const handleCheckpointResume = useCallback(
+    (checkpoint: CheckpointHistoryItem) => {
+      setSelectedCheckpoint(checkpoint)
+      // Need to get expertKey from the job - for now use empty and let parent handle
+      if (state.type === "browsingCheckpoints") {
+        dispatch({ type: "SELECT_EXPERT", expertKey: state.job.expertKey })
+      }
+    },
+    [state],
+  )
 
   const handleBack = useCallback(() => {
     if (state.type === "browsingCheckpoints") {
@@ -203,9 +202,7 @@ export const SelectionApp = (props: SelectionAppProps) => {
         {(state.type === "browsingHistory" ||
           state.type === "browsingExperts" ||
           state.type === "browsingCheckpoints") && (
-          <BrowserRouter
-            inputState={state as Parameters<typeof BrowserRouter>[0]["inputState"]}
-          />
+          <BrowserRouter inputState={state as Parameters<typeof BrowserRouter>[0]["inputState"]} />
         )}
       </InputAreaProvider>
 
@@ -231,4 +228,3 @@ export const SelectionApp = (props: SelectionAppProps) => {
     </Box>
   )
 }
-
