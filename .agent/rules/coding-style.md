@@ -57,6 +57,44 @@ Use blank lines to separate logical sections, not to fragment related code.
 
 ## Prohibited Patterns
 
+### `as` type assertions
+
+**Never use `as` for type casting.** Use type guards with `in` operator instead.
+
+```typescript
+// Bad - unsafe cast, no runtime check
+const user = data as User
+const name = (response as { name: string }).name
+
+// Good - type guard with `in` operator
+if (typeof data === "object" && data !== null && "name" in data && "email" in data) {
+  // data is narrowed to have name and email properties
+  console.log(data.name)
+}
+
+// Good - user-defined type guard
+function isUser(data: unknown): data is User {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "name" in data &&
+    "email" in data
+  )
+}
+
+if (isUser(data)) {
+  // data is User
+  console.log(data.name)
+}
+```
+
+**Exception:** Only allowed in test mocks where type safety is explicitly traded for test ergonomics.
+
+```typescript
+// Allowed in *.test.ts only
+const mockFn = fn as ReturnType<typeof mock>
+```
+
 ### Semicolon-prefixed expressions
 
 ```typescript
@@ -85,6 +123,36 @@ spyOn(process, "exit").mockImplementation(mockExit)
 // @ts-ignore              // Never use
 // @ts-expect-error        // Never use
 // biome-ignore            // Never use
+```
+
+### Unnecessary `await`
+
+TypeScript warns when `await` has no effect. Remove these when found.
+
+```typescript
+// Bad
+await expect(somePromise).rejects.toThrow("error")
+
+// Good
+expect(somePromise).rejects.toThrow("error")
+```
+
+### Type aliases for simple types
+
+Do NOT create type aliases for simple types. Type aliases make grep searches ineffective.
+
+```typescript
+// Bad
+type Organization = typeof organizationsTable.$inferSelect
+type Expert = typeof expertsTable.$inferSelect
+
+function createExpert(organization: Organization, expert: Expert) {}
+
+// Good
+function createExpert(
+  organization: typeof organizationsTable.$inferSelect,
+  expert: typeof expertsTable.$inferSelect,
+) {}
 ```
 
 ## Tests
