@@ -84,15 +84,15 @@ const inputReducer = (_state: InputState, action: InputAction): InputState => {
   }
 }
 type UseInputStateOptions = {
-  showHistory?: boolean
-  needsQueryInput?: boolean
-  initialExpertName?: string
-  configuredExperts?: ExpertOption[]
-  recentExperts?: ExpertOption[]
-  historyJobs?: JobHistoryItem[]
+  showHistory: boolean
+  needsQueryInput: boolean
+  initialExpertName: string | undefined
+  configuredExperts: ExpertOption[]
+  recentExperts: ExpertOption[]
+  historyJobs: JobHistoryItem[]
 }
 const getInitialState = (options: UseInputStateOptions): InputState => {
-  if (options.showHistory && options.historyJobs) {
+  if (options.showHistory && options.historyJobs.length > 0) {
     return { type: "browsingHistory", jobs: options.historyJobs }
   }
   if (options.needsQueryInput) {

@@ -14,20 +14,19 @@ import type { InputAction } from "../state/use-input-state.js"
 
 type UseHistoryActionsOptions = {
   allExperts: ExpertOption[]
-  historyJobs?: JobHistoryItem[]
-  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
-  onLoadEvents?: (
+  historyJobs: JobHistoryItem[]
+  onLoadCheckpoints: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
+  onLoadEvents: (
     job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
-  onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
-  onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
+  onResumeFromCheckpoint: (checkpoint: CheckpointHistoryItem) => void
+  onLoadHistoricalEvents: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
   appendHistoricalEvents: (events: PerstackEvent[]) => void
   setCurrentStep: (step: number) => void
   setContextWindowUsage: (contextWindowUsage: number) => void
   dispatch: React.Dispatch<InputAction>
   setExpertName: (name: string) => void
-  onError?: (error: Error) => void
 }
 export const useHistoryActions = (options: UseHistoryActionsOptions) => {
   const {
@@ -42,19 +41,16 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     setContextWindowUsage,
     dispatch,
     setExpertName,
-    onError,
   } = options
   const [selectedJob, setSelectedJob] = useState<JobHistoryItem | null>(null)
-  const handleError = useErrorHandler(onError)
+  const handleError = useErrorHandler()
   const handleJobSelect = useCallback(
     async (job: JobHistoryItem) => {
       try {
         setSelectedJob(job)
         setExpertName(job.expertKey)
-        if (onLoadCheckpoints) {
-          const checkpoints = await onLoadCheckpoints(job)
-          dispatch({ type: "SELECT_JOB", job, checkpoints })
-        }
+        const checkpoints = await onLoadCheckpoints(job)
+        dispatch({ type: "SELECT_JOB", job, checkpoints })
       } catch (error) {
         handleError(error, "Failed to load checkpoints")
       }
@@ -66,19 +62,15 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
       try {
         setSelectedJob(job)
         setExpertName(job.expertKey)
-        if (onLoadCheckpoints && onResumeFromCheckpoint) {
-          const checkpoints = await onLoadCheckpoints(job)
-          const latestCheckpoint = checkpoints[0]
-          if (latestCheckpoint) {
-            if (onLoadHistoricalEvents) {
-              const events = await onLoadHistoricalEvents(latestCheckpoint)
-              appendHistoricalEvents(events)
-            }
-            setCurrentStep(latestCheckpoint.stepNumber)
-            setContextWindowUsage(latestCheckpoint.contextWindowUsage)
-            dispatch({ type: "RESUME_CHECKPOINT", expertKey: job.expertKey })
-            onResumeFromCheckpoint(latestCheckpoint)
-          }
+        const checkpoints = await onLoadCheckpoints(job)
+        const latestCheckpoint = checkpoints[0]
+        if (latestCheckpoint) {
+          const events = await onLoadHistoricalEvents(latestCheckpoint)
+          appendHistoricalEvents(events)
+          setCurrentStep(latestCheckpoint.stepNumber)
+          setContextWindowUsage(latestCheckpoint.contextWindowUsage)
+          dispatch({ type: "RESUME_CHECKPOINT", expertKey: job.expertKey })
+          onResumeFromCheckpoint(latestCheckpoint)
         }
       } catch (error) {
         handleError(error, "Failed to resume job")
@@ -99,7 +91,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
   const handleCheckpointSelect = useCallback(
     async (checkpoint: CheckpointHistoryItem) => {
       try {
-        if (selectedJob && onLoadEvents) {
+        if (selectedJob) {
           const eventsData = await onLoadEvents(selectedJob, checkpoint)
           dispatch({ type: "SELECT_CHECKPOINT", job: selectedJob, checkpoint, events: eventsData })
         }
@@ -111,16 +103,12 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
   )
   const handleCheckpointResume = useCallback(
     async (checkpoint: CheckpointHistoryItem) => {
-      if (onResumeFromCheckpoint) {
-        if (onLoadHistoricalEvents) {
-          const events = await onLoadHistoricalEvents(checkpoint)
-          appendHistoricalEvents(events)
-        }
-        setCurrentStep(checkpoint.stepNumber)
-        setContextWindowUsage(checkpoint.contextWindowUsage)
-        dispatch({ type: "RESUME_CHECKPOINT", expertKey: selectedJob?.expertKey || "" })
-        onResumeFromCheckpoint(checkpoint)
-      }
+      const events = await onLoadHistoricalEvents(checkpoint)
+      appendHistoricalEvents(events)
+      setCurrentStep(checkpoint.stepNumber)
+      setContextWindowUsage(checkpoint.contextWindowUsage)
+      dispatch({ type: "RESUME_CHECKPOINT", expertKey: selectedJob?.expertKey || "" })
+      onResumeFromCheckpoint(checkpoint)
     },
     [
       onResumeFromCheckpoint,
@@ -134,7 +122,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
   )
   const handleBackFromEvents = useCallback(async () => {
     try {
-      if (selectedJob && onLoadCheckpoints) {
+      if (selectedJob) {
         const checkpoints = await onLoadCheckpoints(selectedJob)
         dispatch({ type: "GO_BACK_FROM_EVENTS", job: selectedJob, checkpoints })
       }
@@ -143,10 +131,8 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     }
   }, [selectedJob, onLoadCheckpoints, dispatch, handleError])
   const handleBackFromCheckpoints = useCallback(() => {
-    if (historyJobs) {
-      setSelectedJob(null)
-      dispatch({ type: "GO_BACK_FROM_CHECKPOINTS", historyJobs })
-    }
+    setSelectedJob(null)
+    dispatch({ type: "GO_BACK_FROM_CHECKPOINTS", historyJobs })
   }, [historyJobs, dispatch])
   const handleEventSelect = useCallback(
     (state: BrowsingEventsState, event: EventHistoryItem) => {
@@ -189,9 +175,7 @@ export const useHistoryActions = (options: UseHistoryActionsOptions) => {
     dispatch({ type: "BROWSE_EXPERTS", experts: allExperts })
   }, [dispatch, allExperts])
   const handleSwitchToHistory = useCallback(() => {
-    if (historyJobs) {
-      dispatch({ type: "BROWSE_HISTORY", jobs: historyJobs })
-    }
+    dispatch({ type: "BROWSE_HISTORY", jobs: historyJobs })
   }, [dispatch, historyJobs])
   return {
     selectedJob,
