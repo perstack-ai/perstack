@@ -18,17 +18,28 @@ export function renderExecution(params: ExecutionParams): RenderExecutionResult 
   const eventQueue = new EventQueue()
 
   const result = new Promise<ExecutionResult>((resolve, reject) => {
+    let resolved = false
+
     const { waitUntilExit } = render(
       <ExecutionApp
         {...params}
         onReady={(handler) => {
           eventQueue.setHandler(handler)
         }}
-        onComplete={resolve}
+        onComplete={(result) => {
+          resolved = true
+          resolve(result)
+        }}
       />,
     )
 
-    waitUntilExit().catch(reject)
+    waitUntilExit()
+      .then(() => {
+        if (!resolved) {
+          reject(new Error("Execution cancelled"))
+        }
+      })
+      .catch(reject)
   })
 
   return {

@@ -118,18 +118,28 @@ export const SelectionApp = (props: SelectionAppProps) => {
 
   const handleJobSelect = useCallback(
     async (job: JobHistoryItem) => {
-      const checkpoints = await onLoadCheckpoints(job)
-      dispatch({ type: "SELECT_JOB", job, checkpoints })
+      try {
+        const checkpoints = await onLoadCheckpoints(job)
+        dispatch({ type: "SELECT_JOB", job, checkpoints })
+      } catch {
+        // Failed to load checkpoints, fallback to empty list
+        dispatch({ type: "SELECT_JOB", job, checkpoints: [] })
+      }
     },
     [onLoadCheckpoints],
   )
 
   const handleJobResume = useCallback(
     async (job: JobHistoryItem) => {
-      const checkpoints = await onLoadCheckpoints(job)
-      const latestCheckpoint = checkpoints[0]
-      if (latestCheckpoint) {
-        setSelectedCheckpoint(latestCheckpoint)
+      try {
+        const checkpoints = await onLoadCheckpoints(job)
+        const latestCheckpoint = checkpoints[0]
+        if (latestCheckpoint) {
+          setSelectedCheckpoint(latestCheckpoint)
+          dispatch({ type: "SELECT_EXPERT", expertKey: job.expertKey })
+        }
+      } catch {
+        // Failed to load checkpoints, just enter query mode without checkpoint
         dispatch({ type: "SELECT_EXPERT", expertKey: job.expertKey })
       }
     },
