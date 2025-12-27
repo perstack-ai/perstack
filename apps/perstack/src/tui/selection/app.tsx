@@ -136,8 +136,9 @@ export const SelectionApp = (props: SelectionAppProps) => {
         const latestCheckpoint = checkpoints[0]
         if (latestCheckpoint) {
           setSelectedCheckpoint(latestCheckpoint)
-          dispatch({ type: "SELECT_EXPERT", expertKey: job.expertKey })
         }
+        // Enter query mode regardless of whether checkpoint exists
+        dispatch({ type: "SELECT_EXPERT", expertKey: job.expertKey })
       } catch {
         // Failed to load checkpoints, just enter query mode without checkpoint
         dispatch({ type: "SELECT_EXPERT", expertKey: job.expertKey })

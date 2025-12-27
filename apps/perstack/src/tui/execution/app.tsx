@@ -39,7 +39,7 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
     if (historicalEvents && historicalEvents.length > 0) {
       runState.appendHistoricalEvents(historicalEvents)
     }
-  }, [historicalEvents, runState])
+  }, [historicalEvents, runState.appendHistoricalEvents])
 
   // Register event handler
   useEffect(() => {
@@ -67,7 +67,7 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
         }, continueTimeoutMs)
       }
     })
-  }, [onReady, runState, handleEvent, continueTimeoutMs, onComplete, exit])
+  }, [onReady, runState.addEvent, handleEvent, continueTimeoutMs, onComplete, exit])
 
   // Text input for continue query
   const { input: continueInput, handleInput: handleContinueInput } = useTextInput({
