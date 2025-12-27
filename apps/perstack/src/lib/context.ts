@@ -36,11 +36,11 @@ export async function resolveRunContext(input: ResolveRunContextInput): Promise<
     if (!input.continueJob) {
       throw new Error("--resume-from requires --continue-job")
     }
-    checkpoint = await getCheckpointById(input.continueJob, input.resumeFrom)
+    checkpoint = getCheckpointById(input.continueJob, input.resumeFrom)
   } else if (input.continueJob) {
-    checkpoint = await getMostRecentCheckpoint(input.continueJob)
+    checkpoint = getMostRecentCheckpoint(input.continueJob)
   } else if (input.continue) {
-    checkpoint = await getMostRecentCheckpoint()
+    checkpoint = getMostRecentCheckpoint()
   }
   if ((input.continue || input.continueJob || input.resumeFrom) && !checkpoint) {
     throw new Error("No checkpoint found")

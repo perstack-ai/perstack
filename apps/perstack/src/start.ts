@@ -87,9 +87,9 @@ export const startCommand = new Command()
         key,
         name: key,
       }))
-      const recentExperts = await getRecentExperts(10)
+      const recentExperts = getRecentExperts(10)
       const historyJobs: JobHistoryItem[] = showHistory
-        ? (await getAllJobs()).map((j) => ({
+        ? getAllJobs().map((j) => ({
             jobId: j.id,
             status: j.status,
             expertKey: j.coordinatorExpertKey,
@@ -152,7 +152,7 @@ export const startCommand = new Command()
       }
       let currentCheckpoint =
         resumeState.checkpoint !== null
-          ? await getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.id)
+          ? getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.id)
           : checkpoint
       if (currentCheckpoint && currentCheckpoint.expert.key !== finalExpertKey) {
         console.error(
