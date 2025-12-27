@@ -1,7 +1,7 @@
 import type { Activity } from "@perstack/core"
 import { Box, Static, Text } from "ink"
 import type React from "react"
-import { useRef } from "react"
+import { useMemo } from "react"
 import { CheckpointActionRow } from "../../components/index.js"
 
 type ActivityLogPanelProps = {
@@ -9,16 +9,20 @@ type ActivityLogPanelProps = {
 }
 
 export const ActivityLogPanel = ({ activities }: ActivityLogPanelProps): React.ReactNode => {
-  const seenRunIdsRef = useRef<Set<string>>(new Set())
+  const firstActivityIdByRunId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const activity of activities) {
+      if (!map.has(activity.runId)) {
+        map.set(activity.runId, activity.id)
+      }
+    }
+    return map
+  }, [activities])
 
   return (
     <Static items={activities}>
       {(activity) => {
-        const isFirstInGroup = !seenRunIdsRef.current.has(activity.runId)
-        if (isFirstInGroup) {
-          seenRunIdsRef.current.add(activity.runId)
-        }
-
+        const isFirstInGroup = firstActivityIdByRunId.get(activity.runId) === activity.id
         const showHeader = isFirstInGroup && activity.delegatedBy
 
         return (
