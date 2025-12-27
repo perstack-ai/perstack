@@ -17,23 +17,23 @@ import type {
 } from "../types/index.js"
 
 type AppProps = {
-  needsQueryInput?: boolean
-  showHistory?: boolean
-  initialExpertName?: string
-  initialQuery?: string
+  needsQueryInput: boolean
+  showHistory: boolean
+  initialExpertName: string | undefined
+  initialQuery: string | undefined
   initialConfig: InitialRuntimeConfig
-  configuredExperts?: ExpertOption[]
-  recentExperts?: ExpertOption[]
-  historyJobs?: JobHistoryItem[]
+  configuredExperts: ExpertOption[]
+  recentExperts: ExpertOption[]
+  historyJobs: JobHistoryItem[]
   onComplete: (expertKey: string, query: string) => void
-  onContinue?: (query: string) => void
-  onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
-  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
-  onLoadEvents?: (
+  onContinue: (query: string) => void
+  onResumeFromCheckpoint: (checkpoint: CheckpointHistoryItem) => void
+  onLoadCheckpoints: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
+  onLoadEvents: (
     job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
-  onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
+  onLoadHistoricalEvents: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
   onReady: (addEvent: (event: PerstackEvent) => void) => void
 }
 

@@ -2,6 +2,7 @@ import { render } from "ink"
 import type {
   CheckpointHistoryItem,
   EventHistoryItem,
+  ExpertOption,
   InitialRuntimeConfig,
   JobHistoryItem,
   PerstackEvent,
@@ -16,42 +17,42 @@ const createEventEmitter = () => {
     emit: (event: PerstackEvent) => eventQueue.emit(event),
   }
 }
-type RenderTuiInteractiveOptions = {
-  needsQueryInput?: boolean
-  showHistory?: boolean
-  initialExpertName?: string
-  initialQuery?: string
+
+type RenderStartParams = {
+  needsQueryInput: boolean
+  showHistory: boolean
+  initialExpertName: string | undefined
+  initialQuery: string | undefined
   initialConfig: InitialRuntimeConfig
-  configuredExperts?: Array<{ key: string; name: string }>
-  recentExperts?: Array<{ key: string; name: string; lastUsed?: number }>
-  historyJobs?: JobHistoryItem[]
-  onContinue?: (query: string) => void
-  onResumeFromCheckpoint?: (checkpoint: CheckpointHistoryItem) => void
-  onLoadCheckpoints?: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
-  onLoadEvents?: (
+  configuredExperts: ExpertOption[]
+  recentExperts: ExpertOption[]
+  historyJobs: JobHistoryItem[]
+  onContinue: (query: string) => void
+  onResumeFromCheckpoint: (checkpoint: CheckpointHistoryItem) => void
+  onLoadCheckpoints: (job: JobHistoryItem) => Promise<CheckpointHistoryItem[]>
+  onLoadEvents: (
     job: JobHistoryItem,
     checkpoint: CheckpointHistoryItem,
   ) => Promise<EventHistoryItem[]>
-  onLoadHistoricalEvents?: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
-  onError?: (error: unknown) => void
+  onLoadHistoricalEvents: (checkpoint: CheckpointHistoryItem) => Promise<PerstackEvent[]>
 }
 
 export async function renderStart(
-  options: RenderTuiInteractiveOptions,
+  params: RenderStartParams,
 ): Promise<{ expertKey: string; query: string; eventListener: (event: PerstackEvent) => void }> {
   return new Promise((resolve, reject) => {
     const emitter = createEventEmitter()
     let resolved = false
     const { waitUntilExit } = render(
       <App
-        needsQueryInput={options.needsQueryInput}
-        showHistory={options.showHistory}
-        initialExpertName={options.initialExpertName}
-        initialQuery={options.initialQuery}
-        initialConfig={options.initialConfig}
-        configuredExperts={options.configuredExperts}
-        recentExperts={options.recentExperts}
-        historyJobs={options.historyJobs}
+        needsQueryInput={params.needsQueryInput}
+        showHistory={params.showHistory}
+        initialExpertName={params.initialExpertName}
+        initialQuery={params.initialQuery}
+        initialConfig={params.initialConfig}
+        configuredExperts={params.configuredExperts}
+        recentExperts={params.recentExperts}
+        historyJobs={params.historyJobs}
         onComplete={(expertKey, query) => {
           resolved = true
           resolve({
@@ -60,11 +61,11 @@ export async function renderStart(
             eventListener: emitter.emit,
           })
         }}
-        onContinue={options.onContinue}
-        onResumeFromCheckpoint={options.onResumeFromCheckpoint}
-        onLoadCheckpoints={options.onLoadCheckpoints}
-        onLoadEvents={options.onLoadEvents}
-        onLoadHistoricalEvents={options.onLoadHistoricalEvents}
+        onContinue={params.onContinue}
+        onResumeFromCheckpoint={params.onResumeFromCheckpoint}
+        onLoadCheckpoints={params.onLoadCheckpoints}
+        onLoadEvents={params.onLoadEvents}
+        onLoadHistoricalEvents={params.onLoadHistoricalEvents}
         onReady={emitter.setHandler}
       />,
     )
@@ -74,9 +75,6 @@ export async function renderStart(
           reject(new Error("TUI exited without completing selection"))
         }
       })
-      .catch((error) => {
-        options.onError?.(error)
-        reject(error)
-      })
+      .catch(reject)
   })
 }
