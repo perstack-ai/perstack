@@ -52,6 +52,10 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
       } else if (result?.completed) {
         setRunStatus("completed")
         setIsAcceptingContinue(true)
+        // Clear any existing timeout before starting a new one
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+        }
         // Start timeout for continue input
         timeoutRef.current = setTimeout(() => {
           onComplete({ nextQuery: null })
@@ -60,6 +64,10 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
       } else if (result?.stopped) {
         setRunStatus("stopped")
         setIsAcceptingContinue(true)
+        // Clear any existing timeout before starting a new one
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+        }
         // Start timeout for continue input
         timeoutRef.current = setTimeout(() => {
           onComplete({ nextQuery: null })
