@@ -13,12 +13,12 @@ import {
   getCheckpointById,
   getCheckpointsWithDetails,
   getEventContents,
-  getEventsWithDetails,
   getRecentExperts,
 } from "./lib/run-manager.js"
 import { dispatchToRuntime } from "./lib/runtime-dispatcher.js"
-import type { CheckpointHistoryItem, EventHistoryItem, JobHistoryItem } from "./tui/index.js"
-import { renderStart } from "./tui/index.js"
+import { renderExecution } from "./tui/execution/index.js"
+import { renderSelection } from "./tui/selection/index.js"
+import type { CheckpointHistoryItem, JobHistoryItem } from "./tui/types/index.js"
 
 const CONTINUE_TIMEOUT_MS = 60_000
 
@@ -68,7 +68,9 @@ export const startCommand = new Command()
   .option("--workspace <workspace>", "Workspace directory for Docker runtime")
   .action(async (expertKey, query, options) => {
     const input = parseWithFriendlyError(startCommandInputSchema, { expertKey, query, options })
+
     try {
+      // Phase 1: Initialize context
       const { perstackConfig, checkpoint, env, providerConfig, model, experts } =
         await resolveRunContext({
           configPath: input.options.config,
@@ -80,14 +82,21 @@ export const startCommand = new Command()
           resumeFrom: input.options.resumeFrom,
           expertKey: input.expertKey,
         })
+
       const runtime = input.options.runtime ?? perstackConfig.runtime ?? "docker"
-      const showHistory = !input.expertKey && !input.query && !checkpoint
-      const needsQueryInput = !input.query && !checkpoint
+      const maxSteps = input.options.maxSteps ?? perstackConfig.maxSteps
+      const maxRetries = input.options.maxRetries ?? perstackConfig.maxRetries ?? defaultMaxRetries
+      const timeout = input.options.timeout ?? perstackConfig.timeout ?? defaultTimeout
+
+      // Prepare expert lists
       const configuredExperts = Object.keys(perstackConfig.experts ?? {}).map((key) => ({
         key,
         name: key,
       }))
       const recentExperts = getRecentExperts(10)
+
+      // Prepare history jobs (only if browsing is needed)
+      const showHistory = !input.expertKey && !input.query && !checkpoint
       const historyJobs: JobHistoryItem[] = showHistory
         ? getAllJobs().map((j) => ({
             jobId: j.id,
@@ -98,82 +107,92 @@ export const startCommand = new Command()
             finishedAt: j.finishedAt,
           }))
         : []
-      const resumeState: { checkpoint: CheckpointHistoryItem | null } = { checkpoint: null }
-      let resolveContinueQuery: ((query: string | null) => void) | null = null
-      const maxSteps = input.options.maxSteps ?? perstackConfig.maxSteps
-      const maxRetries = input.options.maxRetries ?? perstackConfig.maxRetries ?? defaultMaxRetries
-      const timeout = input.options.timeout ?? perstackConfig.timeout ?? defaultTimeout
-      const result = await renderStart({
+
+      // Phase 2: Selection - get expert, query, and optional checkpoint
+      const selection = await renderSelection({
         showHistory,
-        needsQueryInput,
-        initialExpertName: input.expertKey,
+        initialExpertKey: input.expertKey,
         initialQuery: input.query,
-        initialConfig: {
-          runtimeVersion: getRuntimeVersion(),
-          model,
-          maxSteps,
-          maxRetries,
-          timeout,
-          contextWindowUsage: checkpoint?.contextWindowUsage ?? 0,
-          runtime,
-        },
+        initialCheckpoint: checkpoint
+          ? {
+              id: checkpoint.id,
+              jobId: checkpoint.jobId,
+              runId: checkpoint.runId,
+              stepNumber: checkpoint.stepNumber,
+              contextWindowUsage: checkpoint.contextWindowUsage ?? 0,
+            }
+          : undefined,
         configuredExperts,
         recentExperts,
         historyJobs,
-        onContinue: (query: string) => {
-          if (resolveContinueQuery) {
-            resolveContinueQuery(query)
-            resolveContinueQuery = null
-          }
-        },
-        onResumeFromCheckpoint: (cp: CheckpointHistoryItem) => {
-          resumeState.checkpoint = cp
-        },
         onLoadCheckpoints: async (j: JobHistoryItem): Promise<CheckpointHistoryItem[]> => {
           const checkpoints = getCheckpointsWithDetails(j.jobId)
           return checkpoints.map((cp) => ({ ...cp, jobId: j.jobId }))
         },
-        onLoadEvents: async (
-          j: JobHistoryItem,
-          cp: CheckpointHistoryItem,
-        ): Promise<EventHistoryItem[]> => {
-          const events = getEventsWithDetails(j.jobId, cp.runId, cp.stepNumber)
-          return events.map((e) => ({ ...e, jobId: j.jobId }))
-        },
-        onLoadHistoricalEvents: async (cp: CheckpointHistoryItem) => {
-          return getEventContents(cp.jobId, cp.runId, cp.stepNumber)
-        },
       })
-      const finalExpertKey = result.expertKey || input.expertKey
-      let finalQuery = result.query || input.query
-      if (!finalExpertKey) {
+
+      // Validate selection
+      if (!selection.expertKey) {
         console.error("Expert key is required")
         return
       }
-      let currentCheckpoint =
-        resumeState.checkpoint !== null
-          ? getCheckpointById(resumeState.checkpoint.jobId, resumeState.checkpoint.id)
-          : checkpoint
-      if (currentCheckpoint && currentCheckpoint.expert.key !== finalExpertKey) {
-        console.error(
-          `Checkpoint expert key ${currentCheckpoint.expert.key} does not match input expert key ${finalExpertKey}`,
-        )
-        return
-      }
-      if (!finalQuery && !currentCheckpoint) {
+      if (!selection.query && !selection.checkpoint) {
         console.error("Query is required")
         return
       }
+
+      // Resolve checkpoint if selected from TUI
+      let currentCheckpoint = selection.checkpoint
+        ? getCheckpointById(selection.checkpoint.jobId, selection.checkpoint.id)
+        : checkpoint
+
+      if (currentCheckpoint && currentCheckpoint.expert.key !== selection.expertKey) {
+        console.error(
+          `Checkpoint expert key ${currentCheckpoint.expert.key} does not match input expert key ${selection.expertKey}`,
+        )
+        return
+      }
+
+      // Phase 3: Execution loop
+      let currentQuery: string | null = selection.query
       let currentJobId = currentCheckpoint?.jobId ?? input.options.jobId
-      while (true) {
+
+      while (currentQuery !== null) {
+        // Load historical events for resume
+        const historicalEvents = currentCheckpoint
+          ? await getEventContents(
+              currentCheckpoint.jobId,
+              currentCheckpoint.runId,
+              currentCheckpoint.stepNumber,
+            )
+          : undefined
+
+        // Start execution TUI
+        const { result: executionResult, eventListener } = renderExecution({
+          expertKey: selection.expertKey,
+          query: currentQuery,
+          config: {
+            runtimeVersion: getRuntimeVersion(),
+            model,
+            maxSteps,
+            maxRetries,
+            timeout,
+            contextWindowUsage: currentCheckpoint?.contextWindowUsage ?? 0,
+            runtime,
+          },
+          continueTimeoutMs: CONTINUE_TIMEOUT_MS,
+          historicalEvents,
+        })
+
+        // Run the expert
         const { checkpoint: runResult } = await dispatchToRuntime({
           setting: {
             jobId: currentJobId,
-            expertKey: finalExpertKey,
+            expertKey: selection.expertKey,
             input:
               input.options.interactiveToolCallResult && currentCheckpoint
-                ? parseInteractiveToolCallResult(finalQuery || "", currentCheckpoint)
-                : { text: finalQuery },
+                ? parseInteractiveToolCallResult(currentQuery, currentCheckpoint)
+                : { text: currentQuery },
             experts,
             model,
             providerConfig,
@@ -190,33 +209,26 @@ export const startCommand = new Command()
           checkpoint: currentCheckpoint,
           runtime,
           config: perstackConfig,
-          eventListener: result.eventListener,
+          eventListener,
           workspace: input.options.workspace,
           additionalEnvKeys: input.options.env,
         })
+
+        // Wait for execution TUI to complete (user input or timeout)
+        const result = await executionResult
+
+        // Check if user wants to continue
         if (
-          runResult.status === "completed" ||
-          runResult.status === "stoppedByExceededMaxSteps" ||
-          runResult.status === "stoppedByError"
+          result.nextQuery &&
+          (runResult.status === "completed" ||
+            runResult.status === "stoppedByExceededMaxSteps" ||
+            runResult.status === "stoppedByError")
         ) {
-          const nextQuery = await new Promise<string | null>((resolve) => {
-            resolveContinueQuery = resolve
-            setTimeout(() => {
-              if (resolveContinueQuery === resolve) {
-                resolveContinueQuery = null
-                resolve(null)
-              }
-            }, CONTINUE_TIMEOUT_MS)
-          })
-          if (nextQuery) {
-            finalQuery = nextQuery
-            currentCheckpoint = runResult
-            currentJobId = runResult.jobId
-          } else {
-            break
-          }
+          currentQuery = result.nextQuery
+          currentCheckpoint = runResult
+          currentJobId = runResult.jobId
         } else {
-          break
+          currentQuery = null
         }
       }
     } catch (error) {
