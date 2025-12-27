@@ -55,6 +55,7 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
         // Start timeout for continue input
         timeoutRef.current = setTimeout(() => {
           onComplete({ nextQuery: null })
+          exit()
         }, continueTimeoutMs)
       } else if (result?.stopped) {
         setRunStatus("stopped")
@@ -62,10 +63,11 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
         // Start timeout for continue input
         timeoutRef.current = setTimeout(() => {
           onComplete({ nextQuery: null })
+          exit()
         }, continueTimeoutMs)
       }
     })
-  }, [onReady, runState, handleEvent, continueTimeoutMs, onComplete])
+  }, [onReady, runState, handleEvent, continueTimeoutMs, onComplete, exit])
 
   // Text input for continue query
   const { input: continueInput, handleInput: handleContinueInput } = useTextInput({
@@ -76,6 +78,7 @@ export const ExecutionApp = (props: ExecutionAppProps) => {
           timeoutRef.current = null
         }
         onComplete({ nextQuery: newQuery.trim() })
+        exit()
       }
     },
   })

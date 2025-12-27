@@ -1,5 +1,6 @@
 import type { PerstackEvent } from "@perstack/core"
 import { render } from "ink"
+import { EventQueue } from "../utils/event-queue.js"
 import { ExecutionApp } from "./app.js"
 import type { ExecutionParams, ExecutionResult } from "./types.js"
 
@@ -14,14 +15,14 @@ type RenderExecutionResult = {
  * Also returns an event listener to feed events into the TUI.
  */
 export function renderExecution(params: ExecutionParams): RenderExecutionResult {
-  let eventHandler: ((event: PerstackEvent) => void) | null = null
+  const eventQueue = new EventQueue()
 
   const result = new Promise<ExecutionResult>((resolve, reject) => {
     const { waitUntilExit } = render(
       <ExecutionApp
         {...params}
         onReady={(handler) => {
-          eventHandler = handler
+          eventQueue.setHandler(handler)
         }}
         onComplete={resolve}
       />,
@@ -33,9 +34,7 @@ export function renderExecution(params: ExecutionParams): RenderExecutionResult 
   return {
     result,
     eventListener: (event: PerstackEvent) => {
-      if (eventHandler) {
-        eventHandler(event)
-      }
+      eventQueue.emit(event)
     },
   }
 }

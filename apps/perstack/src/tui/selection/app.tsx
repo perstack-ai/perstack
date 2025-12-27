@@ -91,8 +91,9 @@ export const SelectionApp = (props: SelectionAppProps) => {
         query: initialQuery,
         checkpoint: initialCheckpoint,
       })
+      exit()
     }
-  }, [initialExpertKey, initialQuery, initialCheckpoint, onComplete])
+  }, [initialExpertKey, initialQuery, initialCheckpoint, onComplete, exit])
 
   // Text input for query
   const { input: queryInput, handleInput: handleQueryInput } = useTextInput({
@@ -103,6 +104,7 @@ export const SelectionApp = (props: SelectionAppProps) => {
           query: query.trim(),
           checkpoint: selectedCheckpoint,
         })
+        exit()
       }
     },
   })
